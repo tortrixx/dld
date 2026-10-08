@@ -147,11 +147,30 @@ package puzzle_pkg is
     constant L2_TGT2 : std_logic_vector(7 downto 0) := "0100" & "0010";  -- (4,2)
     constant L2_TGT3 : std_logic_vector(7 downto 0) := "0100" & "0100";  -- (4,4)
 
-    -- Result-picture masks shown at the end of a game (self-designed)
-    -- WIN  : a "tick" mark
+    -- Result-picture masks shown at the end of a game (self-designed).
+    --
+    -- Requirement side (B9/B10): 拼图失败 → 点阵显示"失败图案"；第一关过关、第二关拼成
+    -- → 点阵显示"胜利图案".  图案本身没有规定，要求只有一个：**一眼能看懂**。
+    -- 自拟改进项 S5 还要求"闪示，便于远距离判读"。
+    --
+    -- WIN : 笑脸（成功）—— 42 格实心圆盘 + 两个眼睛 + 上扬的嘴。
+    --       比原来的"细对勾"直观得多：8x8 上细线勾不出形状，笑脸在远处也能读出来；
+    --       并且**左右对称、上下不对称**（眼睛在上、嘴在下），所以它同时对
+    --       ERR-015"取行时把画面上下颠倒"是一个天然回归判据
+    --       （scripts/check_geometry.py 里加了"眼睛必须在嘴上方"的检查）。
+    --       显示时**红+绿同时点亮 = 黄色**（8x8 上最亮），与红色的失败图案一眼可辨。
+    --   ..####..            row0 = 0x3C
+    --   .######.            row1 = 0x7E
+    --   ##.##.##            row2 = 0xDB   <- 眼睛
+    --   ##.##.##            row3 = 0xDB   <- 眼睛
+    --   ########            row4 = 0xFF
+    --   #.####.#            row5 = 0xBD   <- 嘴角
+    --   .#....#.            row6 = 0x42   <- 嘴
+    --   ..####..            row7 = 0x3C
     constant WIN_MASK : std_logic_vector(63 downto 0) :=
-        "0000000000000000000001000000011000000111001100011011000001100000";
-    -- FAIL : a cross
+        "0011110001000010101111011111111111011011110110110111111000111100";
+
+    -- FAIL : a cross（红色；形状/颜色都与胜利画面区分开）
     constant FAIL_MASK : std_logic_vector(63 downto 0) :=
         "0000000011000011011001100011110000111100011001101100001100000000";
 

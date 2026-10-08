@@ -286,6 +286,10 @@ architecture rtl of puzzle_top is
     signal mat_r    : std_logic_vector(7 downto 0);
     signal mat_g    : std_logic_vector(7 downto 0);
 
+    -- 结算画面（WIN/FAIL）的闪示节奏：数 2 Hz 半周期，数满后常亮
+    signal endflash_cnt : unsigned(2 downto 0) := (others => '0');
+    signal endflash_on  : std_logic := '0';
+
     -- row the matrix driver is currently lighting
     signal mrow      : unsigned(2 downto 0) := (others => '0');
     signal disp_data  : std_logic_vector(31 downto 0);
@@ -517,18 +521,50 @@ begin
                     FAIL_MASK(63 downto 56) when others;
 
     ----------------------------------------------------------------------------
+    -- 结算画面的闪烁节奏：先闪 **2 个 2 Hz 周期**（4 个半周期，抓注意力），
+    -- 然后常亮（远距离读图）。离开 WIN/FAIL 立刻复位。
+    ----------------------------------------------------------------------------
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if (rst = '1') then
+                endflash_cnt <= (others => '0');
+                endflash_on  <= '0';
+            elsif (state /= S_WIN) and (state /= S_FAIL) then
+                endflash_cnt <= (others => '0');
+                endflash_on  <= '0';
+            elsif (t_2hz = '1') then
+                if (endflash_cnt = 3) then
+                    endflash_on <= '1';          -- 4 个半周期后：常亮
+                else
+                    endflash_cnt <= endflash_cnt + 1;
+                end if;
+            end if;
+        end if;
+    end process;
+
+    ----------------------------------------------------------------------------
     -- Matrix content per state.
     --   SELF_TEST : whole panel yellow, flashing at 2 Hz   (requirement B1)
-    --   WIN       : the victory picture, flashing at 2 Hz
-    --   FAIL      : the failure picture, flashing at 2 Hz
+    --   WIN       : the victory picture (a smiling face), first flashing then steady
+    --   FAIL      : the failure picture (a cross), first flashing then steady
     --   otherwise : whatever the engine rendered (preview / playing)
+    --
+    -- ⚠️ 结算画面的两处改进（2026-10-08，用户反馈"对勾闪的效果不够好"）：
+    --   1) 图案换成**笑脸**（puzzle_pkg.WIN_MASK）：8x8 上细线勾不出形状，笑脸一眼可懂；
+    --   2) 颜色区分：胜利 = **黄**（红+绿同时亮，最亮）、失败 = **红**。远距离也能分辨；
+    --   3) 闪烁节奏：**先闪 2 个 2 Hz 周期抓注意力，然后常亮**——一直闪反而不利于
+    --      远距离读图（自拟改进项 S5 的原意是"便于远距离判读"）。
+    --      自检（B1）仍按需求无条件 2 Hz 闪烁。
     ----------------------------------------------------------------------------
-    process (state, gblink, mrow, eng_fr, eng_fg, win_row, fail_row, prev_row)
+    process (state, gblink, endflash_on, mrow, eng_fr, eng_fg, win_row, fail_row, prev_row)
         variable lv  : std_logic;
+        variable ev  : std_logic;        -- 结算画面的亮度：闪烁相位 or 常亮
         variable rw  : std_logic_vector(7 downto 0);
         variable gw  : std_logic_vector(7 downto 0);
     begin
         lv := gblink;
+        ev := gblink or endflash_on;
 
         -- slice the row the driver is lighting out of the 64-bit picture.
         -- bit index = 8*row + col with row 0 = TOP, so row 0 is the TOP slice.
@@ -559,10 +595,12 @@ begin
             mat_r <= prev_row;
             mat_g <= (others => '0');
         elsif (state = S_WIN) then
-            mat_r <= win_row and (lv & lv & lv & lv & lv & lv & lv & lv);
-            mat_g <= (others => '0');
+            -- 胜利：**黄色**笑脸（红+绿同时亮）；先闪 2 个周期，之后常亮
+            mat_r <= win_row and (ev & ev & ev & ev & ev & ev & ev & ev);
+            mat_g <= win_row and (ev & ev & ev & ev & ev & ev & ev & ev);
         elsif (state = S_FAIL) then
-            mat_r <= fail_row and (lv & lv & lv & lv & lv & lv & lv & lv);
+            -- 失败：**红色**十字（只点红，和黄色的胜利笑脸一眼可辨）
+            mat_r <= fail_row and (ev & ev & ev & ev & ev & ev & ev & ev);
             mat_g <= (others => '0');
         else
             -- S_PLAYING: the assembled picture from the engine

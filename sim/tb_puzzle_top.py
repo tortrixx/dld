@@ -157,7 +157,14 @@ T_L1_CONF = S0 + (KEYS_L1[-1][0] + 24) * ROUND       # 第一关最后一次确�
 T_L1_PREVIEW = T_L1_CONF + 1_000_000.0               # 应已进入第二关预览（预览 8 ms）
 T_L2_CONF = S0 + (KEYS_L2[-1][0] + 24) * ROUND       # 第二关最后一次确认之后
 T_WIN = T_L2_CONF + 1_000_000.0                      # 应已进入胜利状态
-DURATION = T_WIN + 4_000_000.0
+# 结算画面"先闪 2 个 2 Hz 周期（4×800 us = 3.2 ms）再常亮"，所以要留出观察常亮的窗口
+DURATION = T_WIN + 6_000_000.0
+
+# 胜利结算画面（设计值；tb 里独立抄一份当参考模型）：黄色笑脸，逐行掩码
+#   ..####..  0x3C      ##.##.##  0xDB(眼睛)      #.####.#  0xBD(嘴角)
+#   .######.  0x7E      ########  0xFF            .#....#.  0x42(嘴)
+#   ##.##.##  0xDB      ..####..  0x3C            ..####..  0x3C
+WIN_ROWS = [0x3C, 0x7E, 0xDB, 0xDB, 0xFF, 0xBD, 0x42, 0x3C]
 
 OBSERVE = ["clk", "sw7", "btn", "kp_row", "kp_col",
            "dot_row", "dot_colr", "dot_colg", "seg", "cat", "buzz",
@@ -537,6 +544,52 @@ def check(vf):
         got2[:7] == ["自检", "待机", "预览", "对局", "预览", "对局", "胜利"],
         "状态序列 = %s" % " → ".join(got2),
     ))
+
+    # ================================================================
+    # 胜利结算画面（2026-10-08 改进：细对勾 -> 黄色笑脸 + 先闪后常亮）
+    # ================================================================
+    # ⚠️ 不能用 `t > T_L2_CONF` 去找胜利跳变：T_L2_CONF 是"最后一次确认按下 + 24 轮"，
+    #    而按键是按下后第 16~17 轮被消抖接受的，判决再晚一个整帧（64 us）——
+    #    所以真正进 S_WIN 的时刻比 T_L2_CONF **早** 几十微秒（r15 就是这么误判成
+    #    "仿真窗口内没有进入胜利状态"）。改用第三场景开始（SW7 拨上去）之后即可。
+    wins = [t for (t, v) in _bus_trace(vf, "u_fsm|st") if v == 4 and t > T_SW_ON2]
+    t_win = wins[0] if wins else None
+    if t_win is None:
+        res.append(("⑬ 胜利结算画面", False, "仿真窗口内没有进入胜利状态"))
+        res.append(("⑭ 结算画面闪烁节奏", False, "仿真窗口内没有进入胜利状态"))
+    else:
+        # ⑬ 形状 + 颜色：红、绿两列同时按设计图案点亮（= 黄色笑脸）
+        rr, rg, _seen, _dig = scan_panel(vf, t_win + 50_000.0, DURATION - 500.0,
+                                        step=500.0)
+        res.append((
+            "⑬ ★ 胜利结算画面 = 设计好的**黄色笑脸**（8 行逐行比对；红、绿两列同时点亮 "
+            "→ 黄）。改版前是'细红色对勾'——8x8 上细线勾不出形状，远距离读不出来",
+            rr == WIN_ROWS and rg == WIN_ROWS,
+            "实测红=%s\n绿=%s\n期望=%s"
+            % ([hex(x) for x in rr], [hex(x) for x in rg], [hex(x) for x in WIN_ROWS]),
+        ))
+
+        # ⑭ 节奏：先按 2 Hz 闪 2 个周期，然后常亮（自拟改进项 S5：便于远距离判读）
+        def _lit(t):
+            st = panel_state(vf, t)
+            if st is None:
+                return None
+            cr, cg = st
+            return ((cr or 0) | (cg or 0)) != 0
+
+        flash = [x for x in (_lit(t_win + 200_000.0 + i * 100_000.0)
+                             for i in range(26)) if x is not None]
+        steady = [x for x in (_lit(t_win + 3_600_000.0 + i * 100_000.0)
+                              for i in range(9)) if x is not None]
+        res.append((
+            "⑭ ★ 结算画面节奏：**先按 2 Hz 闪 2 个周期**（抓注意力）再**常亮**"
+            "（远距离可读）—— 自拟改进项 S5；一直闪反而不利于判读",
+            bool(flash) and (not all(flash)) and len(steady) >= 5 and all(steady),
+            "前 2.6 ms 采样 %d 次：亮 %d、灭 %d（有'灭'说明真的在闪）；"
+            "3.6~4.4 ms 采样 %d 次：亮 %d（应全亮 = 常亮）"
+            % (len(flash), sum(flash), len(flash) - sum(flash),
+               len(steady), sum(steady)),
+        ))
 
     return res
 

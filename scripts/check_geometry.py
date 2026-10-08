@@ -137,5 +137,25 @@ for name, (pieces, anchors, target) in TGT.items():
         u |= {(r + ar, c + ac) for (r, c) in norm(pc)}
     chk(u == target, f"{name}: target picture == union of pieces at target anchors")
 
+# --- 结算画面（2026-10-08 改版：胜利 = 黄色笑脸，失败 = 红色十字）--------------
+# 这组检查有两条作用：
+#   1) 保证"胜利图案"真的是一张**能一眼看懂的笑脸**（眼睛/嘴/对称/够粗）；
+#   2) 它是一个天然的 ERR-015 回归判据 —— 取行时若把画面上下颠倒，
+#      "眼睛在嘴上方"立刻失败（旧的细对勾上下不对称不明显，断言抓不住）。
+print("\n-- 结算画面：胜利笑脸 / 失败十字")
+W, F = C["WIN_MASK"], C["FAIL_MASK"]
+EYES = [(2, 2), (3, 2), (2, 5), (3, 5)]
+MOUTH = [(5, 1), (5, 6)] + [(6, c) for c in range(2, 6)]
+chk(W != F, "胜利图案 != 失败图案")
+chk(all(((r, 7 - c) in W) == ((r, c) in W) for r in range(8) for c in range(8)),
+    "胜利笑脸左右对称（脸是正的）")
+chk(all(e not in W for e in EYES), "笑脸的**眼睛**是暗的（不在掩码里）")
+chk(all(m not in W for m in MOUTH), "笑脸的**嘴**是暗的（不在掩码里）")
+chk(max(r for r, _ in EYES) < min(r for r, _ in MOUTH),
+    "眼睛在嘴的**上方**（ERR-015 回归：取行时上下颠倒会立刻失败）")
+chk(30 <= len(W) <= 56, f"笑脸足够粗（亮格数 {len(W)} ∈ [30,56]），远距离可读")
+chk(all(((7 - r, c) in F) == ((r, c) in F) for r in range(8) for c in range(8)),
+    "失败十字上下对称")
+
 print("\n" + ("ALL CHECKS PASSED" if ok else "*** SOME CHECKS FAILED ***"))
 raise SystemExit(0 if ok else 1)
