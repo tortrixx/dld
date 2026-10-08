@@ -94,7 +94,14 @@ package puzzle_pkg is
     --   P1 : 1x3 horizontal bar        (3 cells)
     constant L1_P0 : std_logic_vector(63 downto 0) :=
         "0000000000000000000000000000000000000000000000000000000000000111";
-    --   P2 : cross shape               (6 cells)  -- this is the piece FIG 4-3 shows green
+    --   P2 : 6-cell staircase (3-2-1)
+    --        ⚠️ 2026-10-09 更正：这里原来写的是 "cross shape"，与实际掩码和课程 PDF 都不符 ——
+    --        掩码是 3-2-1 阶梯形（行5 col7 / 行6 col6,7 / 行7 col5,6,7）。依据：
+    --        `docs/03` §2 第 2 行——已用 `.ref/solve_l1.py` 对 **课程 PDF 图 4-2 逐像素解码**
+    --        核对过：PDF 里这一块就是 6 格阶梯形，三块形状逐格一致。
+    --        这属于 ERR-027 那类"注释与现实不符"，只是这次错的是注释而不是设计。
+    --        （面积 3+6+3 = 12，与 1×3 横条、L 形三格块一起恰好铺满目标；
+    --          由 scripts/check_geometry.py 的"目标图案 == 零片并集"检查保证。）
     constant L1_P1 : std_logic_vector(63 downto 0) :=
         "0000000000000000000000000000000000000000000000010000001100000111";
     --   P3 : L-tromino, cells at (0,1)(1,0)(1,1) of its 2x2 bbox   (3 cells)
