@@ -200,6 +200,9 @@ OBSERVE = ["clk", "sw7", "btn", "kp_row", "kp_col",
 # 段码 -> 数字（与 rtl/seg_scan.vhd 的共阴译码表一致；blank = 0x00）
 DIGITS = {0x3F: "0", 0x06: "1", 0x5B: "2", 0x4F: "3", 0x66: "4",
           0x6D: "5", 0x7D: "6", 0x07: "7", 0x7F: "8", 0x6F: "9", 0x00: " "}
+# 结算画面的字母段码（2026-10-08：胜利 "PASS"、失败 "FAIL"）
+#   ⚠️ 0x6D 既是 '5' 也是 'S'（段完全一样）、'I' 就是 '1' 的形状 —— 物理限制
+SEG_LETTER = {0x73: "P", 0x77: "A", 0x6D: "S", 0x71: "F", 0x38: "L", 0x06: "I"}
 
 
 # ---------------------------------------------------------------- 激励
@@ -587,14 +590,22 @@ def check(vf):
         res.append(("⑭ 结算画面闪烁节奏", False, "仿真窗口内没有进入胜利状态"))
     else:
         # ⑬ 形状 + 颜色：红、绿两列同时按设计图案点亮（= 黄色笑脸）
-        rr, rg, _seen, _dig = scan_panel(vf, t_win + 50_000.0, t_win_end - 50_000.0,
-                                        step=500.0)
+        rr, rg, _seen, dig_w = scan_panel(vf, t_win + 50_000.0, t_win_end - 50_000.0,
+                                         step=500.0)
+        # 结算信息（2026-10-08 用户拍板）：最左四位拼 "PASS"，其余四位全灭
+        want_disp = {7: 0x73, 6: 0x77, 5: 0x6D, 4: 0x6D}      # P A S S
+        got_disp = {k: sorted(v) for k, v in dig_w.items()}
+        disp_ok = (all(got_disp.get(k) == [want_disp[k]] for k in want_disp)
+                   and all(got_disp.get(k, [0]) == [0] for k in (0, 1, 2, 3)))
+        word = "".join(SEG_LETTER.get(want_disp[k], "?") for k in (7, 6, 5, 4))
         res.append((
             "⑬ ★ 胜利结算画面 = 设计好的**黄色笑脸**（8 行逐行比对；红、绿两列同时点亮 "
-            "→ 黄）。改版前是'细红色对勾'——8x8 上细线勾不出形状，远距离读不出来",
-            rr == WIN_ROWS and rg == WIN_ROWS,
-            "实测红=%s\n绿=%s\n期望=%s"
-            % ([hex(x) for x in rr], [hex(x) for x in rg], [hex(x) for x in WIN_ROWS]),
+            "→ 黄），数码管最左四位拼出 **PASS**。改版前是'细红色对勾'——8x8 上细线勾不出"
+            "形状，远距离读不出来；数码管则只是随意挑的 \"75\"",
+            rr == WIN_ROWS and rg == WIN_ROWS and disp_ok,
+            "实测红=%s\n绿=%s\n期望=%s\n数码管 DISP7..DISP4 段码 = %s（读作 %r）"
+            % ([hex(x) for x in rr], [hex(x) for x in rg], [hex(x) for x in WIN_ROWS],
+               [got_disp.get(k) for k in (7, 6, 5, 4)], word),
         ))
 
         # ⑭ 节奏：先按 2 Hz 闪 2 个周期，然后常亮（自拟改进项 S5：便于远距离判读）
@@ -630,16 +641,22 @@ def check(vf):
     if t_fail1 is None:
         res.append(("⑮ 失败结算画面（红色叉）", False, "仿真窗口内没有进入失败状态"))
     else:
-        rr_f, rg_f, _sf, _df = scan_panel(vf, t_fail1 + 50_000.0, DURATION - 500.0,
-                                          step=500.0)
+        rr_f, rg_f, _sf, dig_f = scan_panel(vf, t_fail1 + 50_000.0, DURATION - 500.0,
+                                           step=500.0)
+        want_f = {7: 0x71, 6: 0x77, 5: 0x06, 4: 0x38}          # F A I L
+        got_f = {k: sorted(v) for k, v in dig_f.items()}
+        disp_f_ok = (all(got_f.get(k) == [want_f[k]] for k in want_f)
+                     and all(got_f.get(k, [0]) == [0] for k in (0, 1, 2, 3)))
+        word_f = "".join(SEG_LETTER.get(want_f[k], "?") for k in (7, 6, 5, 4))
         res.append((
             "⑮ ★ 失败结算画面 = 原来的**红色叉**（逐行比对 FAIL_MASK；只点红列、绿列不亮），"
-            "与胜利的黄色笑脸一眼可辨 —— 第四场景：开新一局后三块直接确认（不摆位）→ "
+            "数码管最左四位拼出 **FAIL**——第四场景：开新一局后三块直接确认（不摆位）→ "
             "全部锁定但画面不对 → 判负（B9/B10 的失败图案；改版前这条路径无断言覆盖）",
-            rr_f == FAIL_ROWS and rg_f == [0] * 8,
-            "进入失败态时刻=%.0f ns；实测红=%s\n绿=%s\n期望红=%s、绿=全 0"
+            rr_f == FAIL_ROWS and rg_f == [0] * 8 and disp_f_ok,
+            "进入失败态时刻=%.0f ns；实测红=%s\n绿=%s\n期望红=%s、绿=全 0\n"
+            "数码管 DISP7..DISP4 段码 = %s（读作 %r）"
             % (t_fail1, [hex(x) for x in rr_f], [hex(x) for x in rg_f],
-               [hex(x) for x in FAIL_ROWS]),
+               [hex(x) for x in FAIL_ROWS], [got_f.get(k) for k in (7, 6, 5, 4)], word_f),
         ))
 
     return res

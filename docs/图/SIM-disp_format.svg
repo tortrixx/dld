@@ -70,6 +70,7 @@
 <line x1='568.9' y1='124' x2='568.9' y2='140' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='587.1' y1='124' x2='587.1' y2='140' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='605.4' y1='124' x2='605.4' y2='140' stroke='#5F5E5A' stroke-width='0.5'/>
+<line x1='623.6' y1='124' x2='623.6' y2='140' stroke='#5F5E5A' stroke-width='0.5'/>
 <text x='8' y='155' font-size='12' fill='#B5D4F4' dominant-baseline='middle'>o_blank</text>
 <line x1='150' y1='162' x2='660' y2='162' stroke='#5F5E5A' stroke-width='0.5'/>
 <path d='M150 150 H660' fill='none' stroke='#85B7EB' stroke-width='1.2'/>

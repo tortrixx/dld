@@ -270,14 +270,17 @@ def check(vf):
         "\n".join(bad) if bad else " ".join(rows),
     ))
 
-    # ---- ⑧ 胜负态：画面唯一且互不相同 ----
+    # ---- ⑧ 胜负态：结算信息用数码管拼字（2026-10-08 由 "75"/"00" 改成 PASS/FAIL）----
+    #    字位码 = puzzle_pkg.DIG_*：P=0xB A=0xA S=0xC / F=0xD A=0xA I=0x1 L=0xE
     dw, bw = _render(vf, T_OF[IDX["WIN"]])
     df, bf = _render(vf, T_OF[IDX["FAIL"]])
-    ok = (disp(dw, 7) == 7 and disp(dw, 6) == 5 and bw == 0x3F
-          and disp(df, 7) == 0 and disp(df, 6) == 0 and bf == 0x3F
+    ok = ([disp(dw, k) for k in (7, 6, 5, 4)] == [0xB, 0xA, 0xC, 0xC] and bw == 0x0F
+          and [disp(df, k) for k in (7, 6, 5, 4)] == [0xD, 0xA, 0x1, 0xE] and bf == 0x0F
           and dw != df)
     res.append((
-        "⑧ S_WIN → DISP7/DISP6 = '7'/'5'；S_FAIL → '0'/'0'；两者都只亮这两位且画面互不相同",
+        "⑧ S_WIN → DISP7..DISP4 = \"PASS\"（P A S S）；S_FAIL → \"FAIL\"（F A I L）；"
+        "两者都只亮这四位、画面互不相同（段形由 tb_seg_scan 断言 ③⑪ 校验；"
+        "7 段管里 S 与 5 同形、I 用 1 的形状 → 板上像 PA55 / FA1L）",
         ok,
         "WIN: o_data=%s o_blank=%s | FAIL: o_data=%s o_blank=%s"
         % (_hex(dw, 8), _hex(bw, 2), _hex(df, 8), _hex(bf, 2)),

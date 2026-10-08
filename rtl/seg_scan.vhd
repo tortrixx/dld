@@ -113,23 +113,30 @@ begin
     -- Written as full 8-bit literals on purpose: the segment-to-pin order is the
     -- single most error-prone part of this project, so every segment of every
     -- digit is spelled out instead of being shifted into place.
-    -- Digits outside 0..9 are drawn blank.
+    --
+    -- 0x0..0x9 = 数字，0xF = 灭，**0xA..0xE = 结算画面的字母 A/P/S/F/L**
+    -- （码值定义在 puzzle_pkg 的 DIG_*，见那里的说明：'S' 与 '5' 同形、'I' 用 '1'）。
     ----------------------------------------------------------------------------
     process (nib)
     begin
         case nib is
             --        AP g f e d c b a
             when "0000" => decoded <= "0" & "0111111";   -- 0: a b c d e f
-            when "0001" => decoded <= "0" & "0000110";   -- 1: b c
+            when "0001" => decoded <= "0" & "0000110";   -- 1: b c（也当字母 'I' 用）
             when "0010" => decoded <= "0" & "1011011";   -- 2: a b d e g
             when "0011" => decoded <= "0" & "1001111";   -- 3: a b c d g
             when "0100" => decoded <= "0" & "1100110";   -- 4: b c f g
-            when "0101" => decoded <= "0" & "1101101";   -- 5: a c d f g
+            when "0101" => decoded <= "0" & "1101101";   -- 5: a c d f g（= 字母 'S'）
             when "0110" => decoded <= "0" & "1111101";   -- 6: a c d e f g
             when "0111" => decoded <= "0" & "0000111";   -- 7: a b c
             when "1000" => decoded <= "0" & "1111111";   -- 8: all
             when "1001" => decoded <= "0" & "1101111";   -- 9: a b c d f g
-            when others => decoded <= "00000000";        -- blank
+            when "1010" => decoded <= "0" & "1110111";   -- A: a b c e f g
+            when "1011" => decoded <= "0" & "1110011";   -- P: a b e f g
+            when "1100" => decoded <= "0" & "1101101";   -- S: a c d f g（同 '5'）
+            when "1101" => decoded <= "0" & "1110001";   -- F: a e f g
+            when "1110" => decoded <= "0" & "0111000";   -- L: d e f
+            when others => decoded <= "00000000";        -- 1111 = 灭
         end case;
     end process;
 

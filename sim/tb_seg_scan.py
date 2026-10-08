@@ -22,13 +22,15 @@
     每窗口 640ns = 16 个 i_tick = 2 整帧，窗口边界都是 i_tick 的整数倍：
       W1 80~720     data=0x12345678 blank=0            8 位八个互异段码
       W2 720~1360   data=0x00000090 blank=0            补数字 0 与 9
-      W3 1360~2000  data=0xF2345678 blank=0            DISP7 非法 BCD(F) → 全灭
+      W3 1360~2000  data=0xF2345678 blank=0            DISP7 未定义字位码(F) → 全灭
       W4 2000~2640  data=0x12345678 blank=0x08         熄灭 DISP3
       W5 2640~3280  data=0x12345678 blank=0x81         熄灭两端 DISP0/DISP7
       W6 3280~3920  data=0xF2345678 blank=0  raw_en=1 raw=0x5A   raw 直通
       W7 3920~4560  data=0x12345678 blank=0x10 raw_en=1 raw=0xC3 熄灭压过 raw
       W8 4560~5200  data=0x12345678 en=0               整体熄灭（位选仍在扫）
       W9 5200~5840  data=0x12345678 en=1               恢复显示（两个方向都测）
+      W10 5840~6480 data=0xBACC0000 blank=0x0F         结算拼字 "PASS"（P A S S）
+      W11 6480~7120 data=0xDA1E0000 blank=0x0F         结算拼字 "FAIL"（F A I L）
 
 ⚠️ **复位必须显式给**：综合后网表寄存器初值是 X，idx / seg_r / cat_r 不复位即永远 X。
 """
@@ -36,22 +38,31 @@
 CLK_PERIOD = 20.0
 TICK_PERIOD = 40.0       # i_tick：1 clk 高 + 1 clk 低
 RST_END = 40.0
-DURATION = 5880.0        # = 9 窗口 × 640ns + 80ns（且是 clk 周期的整数倍）
+DURATION = 7160.0        # = 11 窗口 × 640ns + 40ns（且是 clk 周期的整数倍）
 GRID_PERIOD = 10.0
 SAMPLE_STEP = 10.0
 SAMPLE_OFFSET = 5.0      # 采样点取 ≡5 mod 10，避开 clk 沿
 
 # ---- 段集合（物理段 a~g 亮不亮）→ 共阴高位段码（AA→bit0 … AG→bit6，AP=bit7=0）----
-DIGIT_SEGS = {
-    0: "abcdef", 1: "bc",   2: "abdeg", 3: "abcdg", 4: "bcfg",
-    5: "acdfg",  6: "acdefg", 7: "abc",  8: "abcdefg", 9: "abcdfg",
+#      **键是"字位码"**，与 puzzle_pkg 的 DIG_* 常量、seg_scan 的 case 一一对应：
+#        0x0..0x9 = 数字，0xA..0xE = 结算画面的字母，0xF = 灭（不在表里 → 全灭）。
+#      ⚠️ 7 段管的固有限制（如实记录）：'S' 与 '5' 的段码**完全相同**、
+#         'I' 借用 '1' 的形状 → 板上 "PASS" 看着像 "PA55"、"FAIL" 像 "FA1L"。
+CODE_SEGS = {
+    0x0: "abcdef", 0x1: "bc",    0x2: "abdeg",  0x3: "abcdg", 0x4: "bcfg",
+    0x5: "acdfg",  0x6: "acdefg", 0x7: "abc",   0x8: "abcdefg", 0x9: "abcdfg",
+    0xA: "abcefg",      # 'A'
+    0xB: "abefg",       # 'P'
+    0xC: "acdfg",       # 'S'（与 '5' 同形）
+    0xD: "aefg",        # 'F'
+    0xE: "def",         # 'L'
 }
 SEG_BIT = {c: i for i, c in enumerate("abcdefg")}     # 板上位序 AA→0 … AG→6
 
 
 def code_of(d):
-    """数字 d 的共阴段码；d 不在 0~9 → 全灭 0x00。"""
-    segs = DIGIT_SEGS.get(d)
+    """字位码 d 的共阴段码；不在表里（含 0xF 灭码）→ 全灭 0x00。"""
+    segs = CODE_SEGS.get(d)
     if segs is None:
         return 0x00
     v = 0
@@ -75,6 +86,10 @@ WINDOWS = [
     dict(name="W7", start=3920.0, end=4560.0, data=0x12345678, blank=0x10, en=1, raw_en=1, raw=0xC3),
     dict(name="W8", start=4560.0, end=5200.0, data=0x12345678, blank=0x00, en=0, raw_en=0, raw=0x00),
     dict(name="W9", start=5200.0, end=5840.0, data=0x12345678, blank=0x00, en=1, raw_en=0, raw=0x00),
+    # W10/W11：**结算画面的拼字**（2026-10-08 由 "75"/"00" 改为 "PASS"/"FAIL"）
+    #   字位码 = puzzle_pkg 的 DIG_*（P=0xB A=0xA S=0xC / F=0xD A=0xA I=0x1 L=0xE）
+    dict(name="W10", start=5840.0, end=6480.0, data=0xBACC0000, blank=0x0F, en=1, raw_en=0, raw=0x00),
+    dict(name="W11", start=6480.0, end=7120.0, data=0xDA1E0000, blank=0x0F, en=1, raw_en=0, raw=0x00),
 ]
 
 
@@ -317,21 +332,24 @@ def check(vf):
     ))
 
     # ---------------------------------------------------------
-    # ⑤ 非法 BCD（A~F）→ 该位全灭
+    # ⑤ 未定义字位码 0xF → 该位全灭
+    #    （0xA..0xE 从 2026-10-08 起是结算字母 A/P/S/F/L，不再算"非法 BCD"，
+    #      它们的段形由断言 ③ 的独立模型 + 断言 ⑪ 的拼字结果校验）
     # ---------------------------------------------------------
     bad = []
     for w in WINDOWS:
         if w["raw_en"] or not w["en"]:
             continue
         for k in range(8):
-            if _nib(w["data"], k) > 9 and not ((w["blank"] >> k) & 1):
+            if _nib(w["data"], k) == 0xF and not ((w["blank"] >> k) & 1):
                 for (t, seg) in seg_live:
                     if w["start"] <= t < w["end"] and \
                             _digit_of(_busv(vf, "o_cat", t + 1e-9)) == k and seg != 0:
-                        bad.append("%s DISP%d nibble=%X 非法却 seg=%s"
-                                   % (w["name"], k, _nib(w["data"], k), _hx(seg)))
+                        bad.append("%s DISP%d nibble=F 未定义却 seg=%s"
+                                   % (w["name"], k, _hx(seg)))
     res.append((
-        "⑤ 非法 BCD(A~F) 全灭：W3 的 DISP7=F → 该位段码恒 0x00",
+        "⑤ 未定义字位码 0xF 全灭：W3 的 DISP7=F → 该位段码恒 0x00"
+        "（0xA..0xE 现为结算字母，见 ③⑪）",
         not bad,
         "\n".join(bad[:5]) if bad else "W3 DISP7（F）在整个窗口内段码恒 0x00，其余位正常",
     ))
@@ -447,6 +465,43 @@ def check(vf):
         "\n".join(bad[:5]) if bad else
         "idx 取值 %s、每拍 +1（%s）；%d 个 clk 沿的 cat_r / seg_r 全部与 idx、输入一致"
         % (sorted(set(iv)), step_ok, n_chk),
+    ))
+
+    # ---------------------------------------------------------
+    # ⑪ 结算画面拼字：把 W10/W11 里每位实际点亮的段**反解成字母**
+    #    （不比对模型，直接把"板上会看到什么字"读出来 —— 这张 tb 里最直观的一条）
+    # ---------------------------------------------------------
+    LETTER = {0xA: "A", 0xB: "P", 0xC: "S", 0xD: "F", 0xE: "L", 0x1: "I"}
+    SEG_OF = {frozenset(v): k for k, v in CODE_SEGS.items()}   # 段集合 -> 字位码
+    SEG_OF[frozenset("bc")] = 0x1          # 'I' 借用 '1' 的段形
+    words, bad = [], []
+    for wname in ("W10", "W11"):
+        w = next(x for x in WINDOWS if x["name"] == wname)
+        # ⚠️ 必须按**位槽**取样，不能只看 o_seg 的跳变：相邻两位段码相同时（W10 的两个
+        #    'S'）那一槽不会有跳变，靠跳变表就会漏掉一位（第一版正是这么漏的）。
+        #    位槽边界从 o_cat 的转移表取，槽中点读 o_seg。
+        per = {}
+        for (t, catv) in live:
+            k = _digit_of(catv)
+            if k is None or not (w["start"] + 2 * TICK_PERIOD <= t < w["end"]):
+                continue
+            per.setdefault(k, set()).add(_busv(vf, "o_seg", t + TICK_PERIOD / 2))
+        chars = []
+        for k in range(7, 3, -1):              # DISP7..DISP4（左→右）
+            codes = sorted(per.get(k, []))
+            if len(codes) != 1:
+                bad.append("%s DISP%d 段码不唯一：%s" % (wname, k, [_hx(s) for s in codes]))
+                chars.append("?")
+                continue
+            names = frozenset(c for c in "abcdefg" if (codes[0] >> SEG_BIT[c]) & 1)
+            chars.append(LETTER.get(SEG_OF.get(names), "?"))
+        words.append("".join(chars))
+    res.append((
+        "⑪ ★ 结算画面拼字：W10（胜利）→ 数码管最左四位读作 **PASS**、"
+        "W11（失败）→ **FAIL**（把每位实际点亮的段反解成字母；"
+        "注：7 段管里 'S' 与 '5' 同形、'I' 用 '1' 的形状，故板上分别看着像 PA55 / FA1L）",
+        words == ["PASS", "FAIL"],
+        "W10 读作 %r、W11 读作 %r（期望 'PASS' / 'FAIL'）" % (words[0], words[1]),
     ))
 
     return res

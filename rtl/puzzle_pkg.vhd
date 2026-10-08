@@ -249,6 +249,26 @@ package puzzle_pkg is
     constant K_LEFT    : std_logic_vector(3 downto 0) := "0110";  -- "left"
     constant K_RIGHT   : std_logic_vector(3 downto 0) := "0111";  -- "right"
 
+    ----------------------------------------------------------------------------
+    -- 9. DISP 字位码：disp_format 往 i_data 里放的 4 位码 == seg_scan 的译码输入
+    --
+    --   0x0..0x9 = 数字（BCD），0xF = 灭，**0xA..0xE = 结算画面用的字母**
+    --   （2026-10-08 由用户拍板：胜利显示 "PASS"、失败显示 "FAIL"；此前是随意挑的
+    --     "75"/"00"，被问"75 是什么意思"时无法自解释）。
+    --
+    --   ⚠️ 7 段管的固有限制（必须如实写进报告，不是 bug）：
+    --      · 'S' 与 '5' 的段完全一样 → "PASS" 看上去像 "PA55"；
+    --      · 'I' 只能用 "1" 的形状 → "FAIL" 看上去像 "FA1L"。
+    --      结算时点阵上同时给出笑脸/叉，语境下判读不受影响。
+    ----------------------------------------------------------------------------
+    constant DIG_BLANK : std_logic_vector(3 downto 0) := "1111";
+    constant DIG_A     : std_logic_vector(3 downto 0) := "1010";  -- A: a b c e f g
+    constant DIG_P     : std_logic_vector(3 downto 0) := "1011";  -- P: a b e f g
+    constant DIG_S     : std_logic_vector(3 downto 0) := "1100";  -- S: a c d f g（= '5'）
+    constant DIG_F     : std_logic_vector(3 downto 0) := "1101";  -- F: a e f g
+    constant DIG_L     : std_logic_vector(3 downto 0) := "1110";  -- L: d e f
+    constant DIG_I     : std_logic_vector(3 downto 0) := "0001";  -- I: 用 '1' 的形状
+
 end package puzzle_pkg;
 
 

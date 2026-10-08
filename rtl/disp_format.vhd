@@ -181,21 +181,25 @@ begin
                 end if;
 
             ------------------------------------------------------------------
-            -- win / fail : show a distinctive static pattern.
-            --   0.0.7.5 on the level-2 win, 0.0.0.0 on fail -- both are easy to
-            --   tell apart from anything else on the panel.
+            -- win / fail : 结算画面用**数码管拼字**（2026-10-08 用户拍板）
+            --   S_WIN  → DISP7..DISP4 = "PASS"
+            --   S_FAIL → DISP7..DISP4 = "FAIL"
+            --   原来只是随意挑的 "75"/"00"（唯一理由是"和其它状态都不重复"），
+            --   被问"75 是什么"时无法自解释；现在改成一眼能读懂的结算信息。
+            --   码值定义在 puzzle_pkg 的 DIG_*；'S' 与 '5' 同形、'I' 用 '1' 的形状
+            --   （7 段管的固有限制，报告里如实写明）。
             ------------------------------------------------------------------
             when S_WIN =>
-                d(31 downto 28) := bcd(7);
-                bl(7) := '0';
-                d(27 downto 24) := bcd(5);
-                bl(6) := '0';
+                d(31 downto 28) := DIG_P;  bl(7) := '0';
+                d(27 downto 24) := DIG_A;  bl(6) := '0';
+                d(23 downto 20) := DIG_S;  bl(5) := '0';
+                d(19 downto 16) := DIG_S;  bl(4) := '0';
 
             when S_FAIL =>
-                d(31 downto 28) := bcd(0);
-                bl(7) := '0';
-                d(27 downto 24) := bcd(0);
-                bl(6) := '0';
+                d(31 downto 28) := DIG_F;  bl(7) := '0';
+                d(27 downto 24) := DIG_A;  bl(6) := '0';
+                d(23 downto 20) := DIG_I;  bl(5) := '0';
+                d(19 downto 16) := DIG_L;  bl(4) := '0';
 
             when others =>
                 null;
