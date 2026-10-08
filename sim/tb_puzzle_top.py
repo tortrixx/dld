@@ -165,6 +165,25 @@ DURATION = T_WIN + 6_000_000.0
 #   .######.  0x7E      ########  0xFF            .#....#.  0x42(嘴)
 #   ##.##.##  0xDB      ..####..  0x3C            ..####..  0x3C
 WIN_ROWS = [0x3C, 0x7E, 0xDB, 0xDB, 0xFF, 0xBD, 0x42, 0x3C]
+# 失败结算画面（原样保留的"叉"，独立抄一份）：注意它只点红列
+#   ........  0x00      ..####..  0x3C
+#   ##....##  0xC3      ..####..  0x3C
+#   .##..##.  0x66      .##..##.  0x66
+#   ..####..  0x3C      ##....##  0xC3
+FAIL_ROWS = [0x00, 0xC3, 0x66, 0x3C, 0x3C, 0x66, 0xC3, 0x00]
+
+# ---- 第四场景：胜利画面之后按【开始】再开一局，故意"三块全确认但不摆位" ----
+# 目的：B9/B10 的**失败图案**是基本要求，而第三场景永远以胜利收场 —— 改版前
+#       顶层的失败分支没有任何仿真断言覆盖。这里补上：散落后（rnd 钉 0 → 回退锚点）
+#       直接确认三次 → 全部锁定但画面不对 → 失败图案（红色叉）。
+K3_START = 4950                                     # 胜利画面上按【开始】（必须晚于
+                                                    # 结算画面的观察窗，见 ⑬⑭：需 >3.2 ms）
+K3_CONF = K3_START + 21 + 500 + 80                  # 预览 5 s(=500 轮) 之后再按确认
+KEYS_FAIL, _k_after_fail = _plan_keys(K3_CONF, ["confirm"] * 3)
+KEY_PLAN3 = ([(K3_START, K3_START + HOLD - 1, 0, 1, "start(第四场景)")] + KEYS_FAIL)
+T_FAIL_CONF = S0 + (KEYS_FAIL[-1][0] + 24) * ROUND  # 第三次确认之后
+T_FAIL_SCREEN = T_FAIL_CONF + 1_000_000.0           # 应已显示失败图案
+DURATION = T_FAIL_SCREEN + 5_000_000.0              # 留出失败画面的观察窗口
 
 OBSERVE = ["clk", "sw7", "btn", "kp_row", "kp_col",
            "dot_row", "dot_colr", "dot_colg", "seg", "cat", "buzz",
@@ -264,7 +283,7 @@ def build(b):
                        (DURATION - T_SW_ON2, 1)])
 
     spans = []
-    for (k0, k1, r, c, _n) in (KEY_PLAN + KEY_PLAN2):
+    for (k0, k1, r, c, _n) in (KEY_PLAN + KEY_PLAN2 + KEY_PLAN3):
         for k in range(k0, k1 + 1):
             for (a, bb) in _round_windows(k, r, c):
                 spans.append((a, bb, 0xF & ~(1 << r)))
@@ -554,12 +573,21 @@ def check(vf):
     #    "仿真窗口内没有进入胜利状态"）。改用第三场景开始（SW7 拨上去）之后即可。
     wins = [t for (t, v) in _bus_trace(vf, "u_fsm|st") if v == 4 and t > T_SW_ON2]
     t_win = wins[0] if wins else None
+    # ⚠️ 结算画面的观察窗必须**止于胜利态结束**（第四场景按【开始】那一刻），不能取到
+    #    DURATION —— 否则下一个场景（预览图案 / 零片 / 失败叉）会被 OR 进来，
+    #    ⑬ 的"逐行比对"与 ⑭ 的"常亮"都会假失败（r17 就是这么挂的）。
+    st_all = _bus_trace(vf, "u_fsm|st")
+    t_win_end = DURATION
+    for _i, (_t, _v) in enumerate(st_all):
+        if _v == 4 and _t > T_SW_ON2:
+            t_win_end = st_all[_i + 1][0] if (_i + 1) < len(st_all) else DURATION
+            break
     if t_win is None:
         res.append(("⑬ 胜利结算画面", False, "仿真窗口内没有进入胜利状态"))
         res.append(("⑭ 结算画面闪烁节奏", False, "仿真窗口内没有进入胜利状态"))
     else:
         # ⑬ 形状 + 颜色：红、绿两列同时按设计图案点亮（= 黄色笑脸）
-        rr, rg, _seen, _dig = scan_panel(vf, t_win + 50_000.0, DURATION - 500.0,
+        rr, rg, _seen, _dig = scan_panel(vf, t_win + 50_000.0, t_win_end - 50_000.0,
                                         step=500.0)
         res.append((
             "⑬ ★ 胜利结算画面 = 设计好的**黄色笑脸**（8 行逐行比对；红、绿两列同时点亮 "
@@ -584,11 +612,34 @@ def check(vf):
         res.append((
             "⑭ ★ 结算画面节奏：**先按 2 Hz 闪 2 个周期**（抓注意力）再**常亮**"
             "（远距离可读）—— 自拟改进项 S5；一直闪反而不利于判读",
-            bool(flash) and (not all(flash)) and len(steady) >= 5 and all(steady),
+            bool(flash) and (not all(flash)) and len(steady) >= 5 and all(steady)
+            and (t_win_end - t_win) > 4_600_000.0,
+            "胜利态持续 %.2f ms（须 > 4.6 ms，否则常亮窗口落在下一个场景里）；"
             "前 2.6 ms 采样 %d 次：亮 %d、灭 %d（有'灭'说明真的在闪）；"
             "3.6~4.4 ms 采样 %d 次：亮 %d（应全亮 = 常亮）"
-            % (len(flash), sum(flash), len(flash) - sum(flash),
-               len(steady), sum(steady)),
+            % ((t_win_end - t_win) / 1e6, len(flash), sum(flash),
+               len(flash) - sum(flash), len(steady), sum(steady)),
+        ))
+
+    # ================================================================
+    # 第四场景：失败结算画面（B9/B10 的"失败图案"—— 基本要求里唯一
+    # 一直没有仿真断言覆盖的显示分支）
+    # ================================================================
+    fails = [t for (t, v) in _bus_trace(vf, "u_fsm|st") if v == 5 and t > T_SW_ON2]
+    t_fail1 = fails[0] if fails else None
+    if t_fail1 is None:
+        res.append(("⑮ 失败结算画面（红色叉）", False, "仿真窗口内没有进入失败状态"))
+    else:
+        rr_f, rg_f, _sf, _df = scan_panel(vf, t_fail1 + 50_000.0, DURATION - 500.0,
+                                          step=500.0)
+        res.append((
+            "⑮ ★ 失败结算画面 = 原来的**红色叉**（逐行比对 FAIL_MASK；只点红列、绿列不亮），"
+            "与胜利的黄色笑脸一眼可辨 —— 第四场景：开新一局后三块直接确认（不摆位）→ "
+            "全部锁定但画面不对 → 判负（B9/B10 的失败图案；改版前这条路径无断言覆盖）",
+            rr_f == FAIL_ROWS and rg_f == [0] * 8,
+            "进入失败态时刻=%.0f ns；实测红=%s\n绿=%s\n期望红=%s、绿=全 0"
+            % (t_fail1, [hex(x) for x in rr_f], [hex(x) for x in rg_f],
+               [hex(x) for x in FAIL_ROWS]),
         ))
 
     return res

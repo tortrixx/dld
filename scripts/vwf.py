@@ -59,6 +59,7 @@ vwf.py —— Quartus II 9.1 向量波形文件 (.vwf) 读写库
         print(t, v)
 """
 
+import bisect
 import re
 import sys
 
@@ -131,6 +132,8 @@ class VwfFile:
         self.signals = {}       # name -> Signal
         self.order = []         # 信号出现顺序
         self.transitions = {}   # name -> Node
+        self._step = {}         # name -> (时刻表, 电平表)  惰性编译的阶梯表（见 _steps）
+        self._trace = {}        # name -> [(时刻, 电平)]    同上，trace() 的缓存
 
     def add_signal(self, sig):
         if sig.name not in self.signals:
@@ -154,26 +157,36 @@ class VwfFile:
         展开成 [(起始时刻, 电平), ...]，即每个电平变化的时刻与取值。
         电平字符串（如 'X'）原样保留。
         """
-        seq = self.expand(name)
-        out = []
-        t = 0.0
-        for value, dur in seq:
-            if not out or out[-1][1] != value:
-                out.append((t, value))
-            t += dur
-        return out
+        if name not in self._trace:
+            times, vals = self._steps(name)
+            self._trace[name] = list(zip(times, vals))
+        return self._trace[name]
+
+    # ⚠️ 2026-10-08：这里原来**每次查询都重新 expand 整条节点**，而 bus_value_at 又要按位
+    #    各查一次 —— 查询数是"采样点 × 位宽"，每次都是 O(跳变数)，于是总代价 O(n²)。
+    #    22 ms / 25 Hz 扫描时还能忍；点阵扫描提到 125 Hz 之后 ⑬⑭ 的密集采样直接把
+    #    check 阶段拖到几十分钟（两个 run 同时卡住）。改成**编译一次阶梯表 + 二分查找**。
+    def _steps(self, name):
+        """(时刻表, 电平表)：只记录**变化点**，时刻是累计时长 —— value_at 用它做二分。"""
+        if name not in self._step:
+            times, vals, t = [], [], 0.0
+            for value, dur in self.expand(name):
+                if not times or vals[-1] != value:
+                    times.append(t)
+                    vals.append(value)
+                t += dur
+            self._step[name] = (times, vals)
+        return self._step[name]
 
     def value_at(self, name, time):
         """求 name 在 time 时刻的电平（阶梯保持）。"""
-        seq = self.expand(name)
-        t = 0.0
-        last = None
-        for value, dur in seq:
-            if time < t + dur:
-                return value
-            last = value
-            t += dur
-        return last
+        times, vals = self._steps(name)
+        if not times:
+            return None
+        i = bisect.bisect_right(times, time) - 1
+        if i < 0:
+            i = 0                       # 第一个变化点之前仍取第一个电平
+        return vals[i]
 
     def bus_value_at(self, name, time):
         """
