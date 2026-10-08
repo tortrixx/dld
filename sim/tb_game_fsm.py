@@ -33,7 +33,7 @@ CLK = 20.0
 T1 = 2000.0          # "1 Hz"节拍周期
 T2 = 1000.0          # "2 Hz"节拍周期
 GRID_PERIOD = 10.0
-DURATION = 158000.0
+DURATION = 192000.0
 
 S_SELF, S_IDLE, S_PREV, S_PLAY, S_WIN, S_FAIL = 0, 1, 2, 3, 4, 5
 T_PREVIEW, T_L1, T_L2 = 5, 30, 40          # 课程要求 B4 / B5 / B10
@@ -66,6 +66,9 @@ PRESSES = [
     (104000, RAW_START,   "胜利后重开"),
     (128000, RAW_START,   "第三场景：SW7 再拨上后开始（自检 2 s 已过）"),
     (142000, RAW_START,   "第四场景：残留判负后重开"),
+    (166000, RAW_START,   "第五场景：SW7 再拨一次后开始（B11 的'游戏结束后重开'已测过，"
+                          "这里专测**对局中**重开）"),
+    (180000, RAW_START,   "第五场景：**对局中**按开始 —— B11 要求可以随时开新一轮"),
 ]
 
 # i_solved / i_all_lock / i_shuf_busy 的时间窗
@@ -73,17 +76,22 @@ PRESSES = [
 #    残留到新一局对局开始之后**（上板现象：退出重进直接跳第二关 / 刚开局就判负），
 #    而 i_shuf_busy 故意晚 2 个时钟才起来（引擎要等"散落请求"那一两拍），
 #    这样就能精确复现"判决发生在散落之前"的窗口。
-SOLVED_WINS = [(88000.0, 90000.0), (100000.0, 102000.0), (142500.0, DURATION)]
-ALL_LOCK_WINS = [(116000.0, 118000.0), (122000.0, DURATION)]
+#    窗口到 154100 为止：之后的第五场景必须是"干干净净的新一局"（solved/all_lock 全 0），
+#    否则对局中重开这条会被残留的胜利判据搅乱。
+SOLVED_WINS = [(88000.0, 90000.0), (100000.0, 102000.0), (142500.0, 154100.0)]
+ALL_LOCK_WINS = [(116000.0, 118000.0), (122000.0, 154100.0)]
 # ⚠️ 2026-10-08 修正：本表原来只给**两个**对局建了散落忙窗，可 `game_fsm` 现在要求
 #    "本局至少看到过一次散落"（ERR-024）；而真实引擎**每一局**都会散落，所以这里
-#    给 6 个对局各建一个"开局后不久"的忙窗（也顺便更贴近真实时序：玩家不可能在
+#    给每一局各建一个"开局后不久"的忙窗（也顺便更贴近真实时序：玩家不可能在
 #    散落还没跑完时就拼好）。第一版漏建的两局直接把 ⑨⑩⑪⑬⑰ 拖挂（r08 = 12/17）。
 SHUF_BUSY_WINS = [(14060.0, 15000.0), (86060.0, 87000.0), (98060.0, 99000.0),
-                  (114060.0, 115000.0), (138060.0, 140060.0), (152060.0, 154060.0)]
+                  (114060.0, 115000.0), (138060.0, 140060.0), (152060.0, 154060.0),
+                  (176060.0, 177000.0)]
 T_SW_ON2 = 122000.0                       # SW7 再拨上去（自检 2 s -> 待机）
 T_PLAY3 = 138020.0                        # 第三局对局开始（推算：见 §1.2 时间表）
-SW_OFF = (120000.0, T_SW_ON2)
+# SW7 的拨动序列：(时刻, 电平)。第五场景需要**再清一次**，才能从干净的自检重新开局。
+SW_SPANS = [(0.0, 120000.0, 1), (120000.0, T_SW_ON2, 0), (T_SW_ON2, 158000.0, 1),
+            (158000.0, 160000.0, 0), (160000.0, DURATION, 1)]
 
 OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz",
            "i_solved", "i_all_lock", "i_shuf_busy",
@@ -161,9 +169,7 @@ def build(b):
 
     b.clock("i_clk", CLK)
     b.segments("i_rst", [(100.0, 1), (DURATION - 100.0, 0)])
-    b.segments("i_sw", _tl(DURATION, [(0.0, SW_OFF[0], 1),
-                                      (SW_OFF[0], SW_OFF[1], 0),
-                                      (SW_OFF[1], DURATION, 1)], 1))
+    b.segments("i_sw", _tl(DURATION, [(a, b_, v) for (a, b_, v) in SW_SPANS], 1))
     b.segments("i_tick_1hz", _tick(DURATION, T1))
     b.segments("i_tick_2hz", _tick(DURATION, T2))
 
@@ -295,10 +301,10 @@ def check(vf):
     # ⑥ ★ ERR-006 回归：每局散落请求 o_go 只上升一次
     go_r = _rises(vf, "o_go")
     res.append((
-        "⑥ ★ o_go 每局只上升一次、全流程共 6 局 = 6 次（ERR-006：散落握手必须有"
+        "⑥ ★ o_go 每局只上升一次、全流程共 8 局 = 8 次（ERR-006：散落握手必须有"
         "'完成'记忆，否则会无限重复散落、清掉选中/锁定，按键全部失效）",
-        len(go_r) == 6,
-        "o_go 上升沿时刻：%s（共 %d 次，期望 6）"
+        len(go_r) == 8,
+        "o_go 上升沿时刻：%s（共 %d 次，期望 8）"
         % (", ".join("%.0f" % t for t in go_r), len(go_r)),
     ))
 
@@ -430,6 +436,29 @@ def check(vf):
         "（必须晚于散落结束 154060 ns）、此刻 o_level=%s"
         % (st_wait, S_PLAY, "-" if t_prev4 is None else "%.0f ns" % t_prev4,
            _bit_at(vf, "o_level", (t_prev4 or 0) + 100.0)),
+    ))
+
+    # ---------------------------------------------------------
+    # ⑱ ★ B11：**对局中**按【开始】也要能重开一轮
+    #    此前只覆盖了"超时判负后重开"（76000）与"胜利后重开"（104000），对局中这条
+    #    分支（game_fsm 的 S_PLAYING 里判 K_START）一直没有断言 —— 收尾时补上。
+    #    判定方式：按下去之后必须**回到预览**，并且**再走满 5 秒预览后重新散落**
+    #    （o_go 再次上升），这才叫"完整重开一轮"而不是停在原地。
+    # ---------------------------------------------------------
+    prev_after = [t for (t, v) in st_tr if v == S_PREV and t > 179000.0]
+    play_after = [t for (t, v) in st_tr if v == S_PLAY and t > 179000.0]
+    go_after = [t for t in go_r if t > 179000.0]
+    d_prev = (prev_after[0] - 180000.0) if prev_after else -1
+    d_go = (go_after[0] - prev_after[0]) if (prev_after and go_after) else -1
+    res.append((
+        "⑱ ★【B11】**对局中**按【开始】→ 立刻回到预览，并**完整重开一轮**"
+        "（预览 5 秒后再次散落）；此前只测了'失败后重开''胜利后重开'",
+        bool(prev_after) and 0 <= d_prev <= 2 * T1 and bool(play_after)
+        and len(go_after) >= 1 and 0.9 * T_PREVIEW * T1 <= d_go <= 1.1 * T_PREVIEW * T1,
+        "按下后进预览时刻=%s（比按键晚 %.0f ns，期望 0~%0.f）；此后再次散落时刻=%s"
+        "（距进预览 %.0f ns，期望约 %d）"
+        % ("%.0f" % prev_after[0] if prev_after else "无", d_prev, 2 * T1,
+           "%.0f" % go_after[0] if go_after else "无", d_go, T_PREVIEW * T1),
     ))
 
     return res
