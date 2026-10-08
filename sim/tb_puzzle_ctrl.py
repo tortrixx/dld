@@ -521,27 +521,38 @@ def check(vf):
                 kc |= cs
             if selCol == i:
                 selr |= cs
-        tgt = set((r, c) for r in range(8) for c in range(8)
-                  if (L1_TGT_MASK >> (8 * r + c)) & 1)
+        tgt = mask_cells(L1_TGT_MASK)
         badc = []
         for r in range(8):
             for c in range(8):
                 cell = (r, c)
-                want_r = 1 if ((cell in cov and cell not in selr)
-                               or (cell in tgt and cell not in cov)) else 0
+                # ⚠️ ERR-023：**不再画目标鬼影**。引擎帧只在 S_PLAYING 显示（顶层状态
+                # 多路器只在别的状态显示图案/胜利/失败图），而对局态又不该用红色虚影
+                # 盖住零片（ERR-013）；原来靠顶层把 i_target 置零来实现"不画鬼影"，
+                # 结果把成功判据也一起废掉了。现在改为引擎内直接不画鬼影、
+                # i_target 始终是真实目标图案（判据要用）。
+                want_r = 1 if (cell in cov and cell not in selr) else 0
                 want_g = 1 if (cell in kc or cell in selr) else 0
                 if (frame_cell(fr, r, c), frame_cell(fg, r, c)) != (want_r, want_g):
                     badc.append("(%d,%d) 实测红%d绿%d 期望红%d绿%d"
                                 % (r, c, frame_cell(fr, r, c), frame_cell(fg, r, c),
                                    want_r, want_g))
+        # 未覆盖的目标格子必须**不亮**（这正是"不画鬼影"的可执行判据：
+        # 旧实现把 i_target 置零是为了这个，现在由引擎自己保证）
+        ghost_lit = [(r, c) for (r, c) in (tgt - cov)
+                     if frame_cell(fr, r, c) == 1 or frame_cell(fg, r, c) == 1]
         sel_on = all(frame_cell(fr, r, c) == 0 and frame_cell(fg, r, c) == 1
                      for (r, c) in selr)
         res.append((
             "⑧ 着色逐格与模型一致：选中零片=**纯绿**（红必须为 0，ERR-007 回归）、"
-            "已锁定零片=黄(红=绿=1)、其余零片=红、目标鬼影=红（B6/B8）",
-            (not badc) and sel_on,
-            "全部 64 格一致；选中零片 %d 格全部红0绿1；锁定零片 %d 格 红1绿1"
-            % (len(selr), len(kc)) if not badc else "；".join(badc[:6]),
+            "已锁定零片=黄(红=绿=1)、其余零片=红，且**不画目标鬼影**"
+            "（未覆盖的目标格子不亮 —— ERR-023 的引擎侧判据；旧实现靠顶层把 "
+            "i_target 置零来消鬼影，代价是成功判据永远不成立）",
+            (not badc) and (not ghost_lit) and sel_on,
+            "全部 64 格一致；选中零片 %d 格全部红0绿1；锁定零片 %d 格 红1绿1；"
+            "未覆盖目标格 %d 个、其中被点亮的 %d 个"
+            % (len(selr), len(kc), len(tgt - cov), len(ghost_lit))
+            if not badc else "；".join(badc[:6]),
         ))
 
     # ⑨ 三块全部到位并锁定 -> o_solved = 1

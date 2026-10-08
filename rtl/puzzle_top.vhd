@@ -277,10 +277,6 @@ architecture rtl of puzzle_top is
     signal shape_w  : dim_arr_t;
     signal piece_n  : std_logic_vector(2 downto 0);
     signal tgt_mask : std_logic_vector(63 downto 0);
-    -- what the ENGINE is shown as the target: blank while playing, so the
-    -- play field contains only the scattered pieces (requirement B4 shows
-    -- the complete picture during the PREVIEW, not during play)
-    signal tgt_play : std_logic_vector(63 downto 0);
 
     -- engine output: a complete 64-bit frame per colour plane
     signal eng_fr   : std_logic_vector(63 downto 0);
@@ -401,10 +397,17 @@ begin
             o_val  => rnd_val
         );
 
-    -- The engine sees the target only during the preview; during play it is
-    -- blanked so the pieces are not hidden under a red outline.
-    tgt_play <= tgt_mask when (state = S_PREVIEW or state = S_SELF_TEST)
-                else (others => '0');
+    -- ⚠️ ERR-023 : the engine is **always** given the real target picture.
+    --
+    -- The success test (ERR-021) compares the assembled picture with the target,
+    -- so blanking i_target during play made the test impossible to satisfy: the
+    -- measured bench symptom was "level 1 assembled correctly, press confirm,
+    -- and the game still shows the cross".
+    --
+    -- The earlier reason for blanking it -- "do not hide the pieces under a red
+    -- outline during play" (ERR-013) -- is now handled inside the engine: it
+    -- simply does not draw the target ghost (see puzzle_ctrl's ERR-023 note).
+    -- The PREVIEW still shows the complete picture, from tgt_mask via prev_row.
 
     -- S4 : puzzle engine
     u_puzzle : puzzle_ctrl
@@ -427,7 +430,7 @@ begin
             i_w1      => shape_w(1),
             i_w2      => shape_w(2),
             i_w3      => shape_w(3),
-            i_target  => tgt_play,
+            i_target  => tgt_mask,
             i_go      => go,
             i_select  => sel,
             i_move    => move,

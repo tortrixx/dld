@@ -409,12 +409,21 @@ begin
 
                 -- Colour of this row.
                 --   green = selected piece OR locked piece
-                --   red   = every OTHER piece cell, plus the part of the target
-                --           that no piece covers (the ghost)
+                --   red   = every piece cell that is not the selected one
                 -- Excluding exactly the selected cells from red is what makes the
                 -- selected piece pure GREEN; without it green was a subset of red
                 -- and the piece showed up as yellow, the same as a locked one.
-                redrow := (cov and (not selrow)) or (tgtrow and (not cov));
+                --
+                -- ⚠️ ERR-023 : the target "ghost" is NOT drawn any more.  The engine
+                -- frame is only ever displayed while S_PLAYING (puzzle_top's state
+                -- mux shows the pattern / win / fail pictures in every other state),
+                -- and during play a red ghost outline must not sit under the pieces
+                -- (ERR-013).  That was previously achieved by blanking i_target at
+                -- the top level -- which also killed the ERR-021 success test,
+                -- because the test compares the assembled picture with i_target.
+                -- Now i_target always carries the real picture (the test needs it)
+                -- and the ghost is simply not drawn here.
+                redrow := cov and (not selrow);
                 grnrow := kc or selrow;
 
                 -- ---- merge the row into the frame ----------------------------
