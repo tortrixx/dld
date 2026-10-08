@@ -308,13 +308,22 @@ begin
     -- while the engine rebuilds row r for the next frame.  Driving the two from
     -- different ticks (40 Hz scan vs 200 Hz render) made displayed row and
     -- rendered row unrelated, which looked like flicker.
+    --
+    -- ⚠️ 2026-10-08 用户反馈"点阵和数码管都闪得比较明显" —— 根因就是这里的**节拍**：
+    --    原来 mrow 走 tick_200（200 Hz），8 行轮一遍 = 8×5 ms = 40 ms，
+    --    帧刷新率只有 **25 Hz**，低于临界闪烁融合（LED 一般要 > 60 Hz）→ 肉眼可见闪。
+    --    上一条注释说的"40 Hz 扫描 vs 200 Hz 渲染不同源"是**错行**问题，当时把两边都
+    --    改成 200 Hz 消掉了错行，但帧率仍是 25 Hz，闪依旧在。
+    --    现在统一改走 **tick_1k**（1 kHz）：8 行 = 8 ms → **125 Hz**；
+    --    占空比仍是 1/8，亮度不变，只是不再闪。引擎渲染器（puzzle_ctrl）与
+    --    数码管位选（seg_scan）**同步改成 1 kHz**，三者不再有错行问题。
     ----------------------------------------------------------------------------
     process (clk)
     begin
         if rising_edge(clk) then
             if (rst = '1') then
                 mrow <= (others => '0');
-            elsif (t_200 = '1') then
+            elsif (t_1k = '1') then
                 mrow <= mrow + 1;
             end if;
         end if;
@@ -418,7 +427,11 @@ begin
         port map (
             i_clk     => clk,
             i_rst     => rst,
-            i_tick    => t_200,
+            i_tick    => t_200,         -- 引擎行渲染仍 200 Hz（8 行 = 40 ms 内容更新）。
+                                        -- ⚠️ 实测：把它也提到 1 kHz 会让整机从 1188 涨到
+                                        -- 1264/1270 LE（100%，只剩 6 个）—— 闪烁与"内容
+                                        -- 更新率"无关（见 mrow 的注释），只与**扫描率**
+                                        -- 有关，所以这里保持 200 Hz，别为了美观把面积吃光。
             rnd_step  => rnd_step,
             rnd_val   => rnd_val,
             i_level   => level,
@@ -469,7 +482,8 @@ begin
         port map (
             i_clk    => clk,
             i_rst    => rst,
-            i_tick   => t_200,
+            i_tick   => t_1k,           -- 1 kHz：8 位轮一遍 = 8 ms -> 125 Hz/位
+                                        -- （原来 200 Hz -> 25 Hz/位，用户反馈"数码管也闪"）
             i_en     => sw7,
             i_data   => disp_data,
             i_blank  => disp_blank,
@@ -611,8 +625,9 @@ begin
 
     ----------------------------------------------------------------------------
     -- S6 : dot-matrix driver.
-    -- The engine publishes one row per 5 ticks of tick_200 and the driver samples
-    -- on the 40 Hz tick, so each published row is displayed exactly once.
+    -- i_row comes from this file's row counter (mrow), which advances on tick_1k:
+    -- 8 rows = 8 ms -> **125 Hz** frame refresh.  改版前 mrow 走 tick_200，帧率只有
+    -- 25 Hz，肉眼可见闪（用户 2026-10-08 上板反馈）。
     ----------------------------------------------------------------------------
     u_dot : dot_matrix_scan
         port map (

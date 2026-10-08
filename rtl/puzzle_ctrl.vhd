@@ -55,7 +55,9 @@ entity puzzle_ctrl is
     port (
         i_clk     : in  std_logic;
         i_rst     : in  std_logic;
-        i_tick    : in  std_logic;                      -- 200 Hz row-scan tick
+        i_tick    : in  std_logic;                      -- 行渲染节拍：顶层给 **200 Hz**
+                                                        -- （画面内容 25 Hz 更新；**扫描**在
+                                                        -- 顶层另走 1 kHz → 125 Hz，见下）
         rnd_step  : out std_logic;
         rnd_val   : in  std_logic_vector(7 downto 0);
         i_level   : in  std_logic;                      -- '0' level 1, '1' level 2
@@ -253,7 +255,7 @@ begin
     -- implementation's 32-phase frame engine.
 
     ----------------------------------------------------------------------------
-    -- FRAME RENDERER -- one ROW per 200 Hz tick, whole frame every 8 ticks.
+    -- FRAME RENDERER -- one ROW per i_tick, whole frame every 8 ticks.
     --
     -- WHY IT IS ORGANISED THIS WAY
     -- Two earlier arrangements were MEASURED on the board:
@@ -263,8 +265,18 @@ begin
     --     large to fit the EPC1270.
     -- So the multiplexing runs over ROWS: each tick still evaluates only one
     -- row_mask per piece slot (so the shared shifter stays cheap), but the frame
-    -- is assembled 8 bits at a time into a 64-bit register.  A frame is complete
-    -- in 8 ticks and the refresh rate is 200/8 = 25 Hz, above flicker fusion.
+    -- is assembled 8 bits at a time into a 64-bit register.
+    --
+    -- ⚠️ 2026-10-08 更正："200/8 = 25 Hz, above flicker fusion" 是**错的**：
+    --    25 Hz 对 LED 明显可见闪（用户上板反馈"点阵和数码管都闪"）。
+    --    但要分清两件事：
+    --      · **闪烁 = 亮度调制**，只取决于**扫描率**。顶层把点阵行计数器 mrow 与数码管
+    --        位选 seg_scan 都改成 1 kHz → 8 行/位 = 8 ms → **125 Hz**，闪就没了
+    --        （占空比仍 1/8，亮度不变）；
+    --      · **本模块的 i_tick 仍保持 200 Hz**（内容 25 Hz 更新）。实测把它也提到 1 kHz
+    --        会让整机 1188 → **1264 / 1270 LE（100%，只剩 6 个）**，+76 LE 换一个
+    --        "移动零片时画面滚动 ≤40 ms 的涂抹感"——不值，所以没改。
+    --    每拍的组合逻辑量**没有变化**（仍然一拍只算一行的 row_mask），与节拍无关。
     --
     -- The 64-bit frame is simply held; the matrix driver slices the row it is
     -- scanning, so the panel never sees a partially built row and no lockstep

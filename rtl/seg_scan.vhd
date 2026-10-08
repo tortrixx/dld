@@ -40,7 +40,9 @@ entity seg_scan is
     port (
         i_clk   : in  std_logic;
         i_rst   : in  std_logic;                        -- active HIGH
-        i_tick  : in  std_logic;                        -- 200 Hz scan tick
+        i_tick  : in  std_logic;                        -- 位选推进节拍：设计用 1 kHz
+                                                        -- -> 每位 125 Hz 刷新（200 Hz 只有
+                                                        -- 25 Hz/位，肉眼可见闪）
         i_en    : in  std_logic;                        -- '0' = all digits dark
         i_data  : in  std_logic_vector(31 downto 0);    -- 8 x 4-bit BCD, digit7..digit0
         i_blank : in  std_logic_vector(7 downto 0);     -- '1' = this digit is blanked
@@ -69,8 +71,11 @@ architecture rtl of seg_scan is
 begin
 
     ----------------------------------------------------------------------------
-    -- Digit multiplexer counter: 200 Hz tick / 8 digits = 25 Hz refresh per
-    -- digit, which is comfortably above flicker fusion.
+    -- 位选计数器：**1 kHz** 节拍 / 8 位 = **125 Hz/位**（舒适地高于临界闪烁融合）。
+    -- ⚠️ 原注释写"200 Hz / 8 = 25 Hz，comfortably above flicker fusion"是**错的**：
+    --    25 Hz 对 LED 明显可见闪（2026-10-08 用户实测反馈"数码管闪得比较明显"）。
+    --    顶层因此把 i_tick 从 tick_200 改成 tick_1k；本模块本身与节拍无关，
+    --    只是把"该给多少"的注释改正过来。
     ----------------------------------------------------------------------------
     process (i_clk)
     begin

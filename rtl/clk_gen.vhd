@@ -12,7 +12,7 @@
 --
 --  Time base produced
 --    tick_1k   : 1   kHz  (1 ms)      -> game seconds, reset timing
---    tick_200  : 200 Hz  (5 ms)       -> dot-matrix / keypad scan round
+--    tick_200  : 200 Hz  (5 ms)       -> keypad scan round (NOT the displays)
 --    tick_100  : 100 Hz  (10 ms)      -> generic 10 ms grid
 --    tick_2hz  : 2   Hz (500 ms)      -> self-test flash, "blink" flag
 --    tick_1hz  : 1   Hz (1 s)         -> one-second game counter
@@ -35,9 +35,11 @@ entity clk_gen is
         o_tick_100 : out std_logic;                    -- 10 ms pulse
         o_tick_2hz : out std_logic;                    -- 500 ms pulse
         o_tick_1hz : out std_logic;                    -- 1 s pulse
-        -- 200 Hz / 5 = 40 Hz.  The puzzle engine builds a display row in 5 ticks
-        -- of the 200 Hz tick, so the dot-matrix driver must advance one row per
-        -- 40 Hz pulse to stay exactly in step with the row the engine publishes.
+        -- 200 Hz / 5 = 40 Hz.
+        -- ⚠️ 2026-10-08：这一路**已不再使用**。它当初是为了"点阵行扫描与引擎渲染
+        --    同源"而加的，但两者都走 40 Hz 时帧率只有 40/8 = 5 Hz（闪得厉害），
+        --    后来两边都改成 200 Hz（帧率 25 Hz，仍然可见闪），最终统一到 **1 kHz**
+        --    （帧率 125 Hz）。输出保留，避免动 tb_clk_gen 的节拍断言。
         o_tick_40  : out std_logic
     );
 end entity clk_gen;
