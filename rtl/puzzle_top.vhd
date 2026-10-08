@@ -560,16 +560,17 @@ begin
     ----------------------------------------------------------------------------
     -- Matrix content per state.
     --   SELF_TEST : whole panel yellow, flashing at 2 Hz   (requirement B1)
-    --   WIN       : the victory picture (a smiling face), first flashing then steady
+    --   WIN       : the victory picture (a BOLD tick), first flashing then steady
     --   FAIL      : the failure picture (a cross), first flashing then steady
     --   otherwise : whatever the engine rendered (preview / playing)
     --
-    -- ⚠️ 结算画面的两处改进（2026-10-08，用户反馈"对勾闪的效果不够好"）：
-    --   1) 图案换成**笑脸**（puzzle_pkg.WIN_MASK）：8x8 上细线勾不出形状，笑脸一眼可懂；
-    --   2) 颜色区分：胜利 = **黄**（红+绿同时亮，最亮）、失败 = **红**。远距离也能分辨；
-    --   3) 闪烁节奏：**先闪 2 个 2 Hz 周期抓注意力，然后常亮**——一直闪反而不利于
-    --      远距离读图（自拟改进项 S5 的原意是"便于远距离判读"）。
-    --      自检（B1）仍按需求无条件 2 Hz 闪烁。
+    -- ⚠️ 结算画面的演进（都来自上板反馈）：
+    --   2026-10-08 ① "细对勾闪得效果不好" → 换成**黄色笑脸**（细线勾不出形状）；
+    --              ② 闪烁节奏改成**先闪 2 个 2 Hz 周期再常亮**（一直闪不利于远距离读图，
+    --                 这是自拟改进项 S5 的原意）；自检（B1）仍无条件 2 Hz 闪。
+    --   2026-10-09 ③ 上板再看，笑脸仍"不够直观" → 换回**粗红对勾**（24 格、笔画 3 格宽）：
+    --                 ✓/✗ 是通用"对/错"符号，红色对勾正是中国阅卷的"答对"记号。
+    --                 胜利与失败同为红色，靠**形状**区分（对勾 vs 叉）。
     ----------------------------------------------------------------------------
     process (state, gblink, endflash_on, mrow, eng_fr, eng_fg, win_row, fail_row, prev_row)
         variable lv  : std_logic;
@@ -609,9 +610,13 @@ begin
             mat_r <= prev_row;
             mat_g <= (others => '0');
         elsif (state = S_WIN) then
-            -- 胜利：**黄色**笑脸（红+绿同时亮）；先闪 2 个周期，之后常亮
+            -- 胜利：**粗红对勾**（红阅卷勾 = "答对"，比笑脸更直观）。
+            --   2026-10-09 用户上板反馈"笑脸不够直观"，从黄笑脸换回对勾（加粗版）。
+            --   ⚠️ 与失败的红叉**同为红色**，靠形状区分（对勾 vs 叉）。
+            --      若想改成"绿对勾 / 红叉"的交通灯配色，把下面两行的 mat_g 改成
+            --      win_row and (ev & ...)（即红绿同亮=黄，或红列置 0 只点绿）即可。
             mat_r <= win_row and (ev & ev & ev & ev & ev & ev & ev & ev);
-            mat_g <= win_row and (ev & ev & ev & ev & ev & ev & ev & ev);
+            mat_g <= (others => '0');
         elsif (state = S_FAIL) then
             -- 失败：**红色**十字（只点红，和黄色的胜利笑脸一眼可辨）
             mat_r <= fail_row and (ev & ev & ev & ev & ev & ev & ev & ev);

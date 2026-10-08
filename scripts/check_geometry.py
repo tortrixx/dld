@@ -137,23 +137,25 @@ for name, (pieces, anchors, target) in TGT.items():
         u |= {(r + ar, c + ac) for (r, c) in norm(pc)}
     chk(u == target, f"{name}: target picture == union of pieces at target anchors")
 
-# --- 结算画面（2026-10-08 改版：胜利 = 黄色笑脸，失败 = 红色十字）--------------
-# 这组检查有两条作用：
-#   1) 保证"胜利图案"真的是一张**能一眼看懂的笑脸**（眼睛/嘴/对称/够粗）；
-#   2) 它是一个天然的 ERR-015 回归判据 —— 取行时若把画面上下颠倒，
-#      "眼睛在嘴上方"立刻失败（旧的细对勾上下不对称不明显，断言抓不住）。
-print("\n-- 结算画面：胜利笑脸 / 失败十字")
+# --- 结算画面（2026-10-09：胜利 = 粗红对勾，失败 = 红叉）------------------------
+# 检查目的：
+#   1) 胜利图案必须是一张**够粗、方向正确**的对勾（细线在 8x8 上读不出形状——那是
+#      2026-10-08 第一次上板反馈的问题）；
+#   2) 它是 ERR-015（取行时把画面上下颠倒 / 左右镜像）的天然回归判据：对勾是斜的，
+#      一旦翻转，"最高行在右半边、最低行在左半边"立刻不成立。
+print("\n-- 结算画面：胜利粗对勾 / 失败叉")
 W, F = C["WIN_MASK"], C["FAIL_MASK"]
-EYES = [(2, 2), (3, 2), (2, 5), (3, 5)]
-MOUTH = [(5, 1), (5, 6)] + [(6, c) for c in range(2, 6)]
 chk(W != F, "胜利图案 != 失败图案")
-chk(all(((r, 7 - c) in W) == ((r, c) in W) for r in range(8) for c in range(8)),
-    "胜利笑脸左右对称（脸是正的）")
-chk(all(e not in W for e in EYES), "笑脸的**眼睛**是暗的（不在掩码里）")
-chk(all(m not in W for m in MOUTH), "笑脸的**嘴**是暗的（不在掩码里）")
-chk(max(r for r, _ in EYES) < min(r for r, _ in MOUTH),
-    "眼睛在嘴的**上方**（ERR-015 回归：取行时上下颠倒会立刻失败）")
-chk(30 <= len(W) <= 56, f"笑脸足够粗（亮格数 {len(W)} ∈ [30,56]），远距离可读")
+top_r = min(r for r, _ in W)
+bot_r = max(r for r, _ in W)
+chk(all(c >= 4 for _r, c in W if _r == top_r),
+    f"对勾最高行(row {top_r})只出现在**右半边**（列 {sorted(c for _r, c in W if _r == top_r)}）")
+chk(all(c <= 3 for _r, c in W if _r == bot_r),
+    f"对勾最低行(row {bot_r})只出现在**左半边**（列 {sorted(c for _r, c in W if _r == bot_r)}）"
+    "　=> 上下颠倒或左右镜像都会失败（ERR-015 回归）")
+chk(16 <= len(W) <= 40, f"对勾够粗（亮格数 {len(W)} ∈ [16,40]），8x8 上远距离可读")
+chk(len({r for r, _ in W}) >= 6 and len({c for _, c in W}) >= 6,
+    "对勾铺满 ≥6 行 × ≥6 列（不是缩在角落里的小勾）")
 chk(all(((7 - r, c) in F) == ((r, c) in F) for r in range(8) for c in range(8)),
     "失败十字上下对称")
 
