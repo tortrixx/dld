@@ -134,7 +134,26 @@ def _bus_trace(vf, name):
     return out
 
 
-def render_svg(vf, names, title, max_sig=24):
+def _subsample(tr, max_n):
+    """把跳变序列抽稀到最多 max_n 个点（整机长仿真会生成上百万个跳变）。
+
+    ⚠️ 2026-10-08 实测：tb_puzzle_top 的整机端到端场景（79 ms）生成
+    `docs/图/SIM-puzzle_top.svg` **93 MB** —— 因为这里按跳变逐条画线。
+    93 MB 的波形图既打不开也推不上仓库（推送反复 Connection reset）。
+    所以按固定步长抽稀，并**保留最后一个跳变**（终值不能丢），
+    同时在图上注明"已抽稀"，免得读者以为信号真的只有这么几个跳变。
+    """
+    n = len(tr)
+    if n <= max_n or max_n <= 0:
+        return tr, False
+    step = (n + max_n - 1) // max_n
+    out = tr[::step]
+    if tr[-1] not in out:
+        out.append(tr[-1])
+    return out, True
+
+
+def render_svg(vf, names, title, max_sig=24, max_trans=400):
     names = [n for n in names if _has_wave(vf, n)][:max_sig]
     if not names:
         return "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 680 40'/>"
@@ -150,12 +169,15 @@ def render_svg(vf, names, title, max_sig=24):
            % (W, H),
            "<title>%s 功能仿真波形</title>" % title,
            "<rect width='%d' height='%d' fill='none'/>" % (W, H)]
+    thinned = False
     y0 = 34
     for i, name in enumerate(names):
         y = y0 + i * ROW_H
         sig = vf.signals.get(name)
         is_bus = bool(sig and sig.width > 1)
         tr = _bus_trace(vf, name) if is_bus else vf.trace(name)
+        tr, cut = _subsample(tr, max_trans)
+        thinned = thinned or cut
         out.append("<text x='8' y='%d' font-size='12' fill='#B5D4F4' "
                    "dominant-baseline='middle'>%s</text>" % (y + ROW_H // 2, name))
         out.append("<line x1='%d' y1='%d' x2='%d' y2='%d' stroke='#5F5E5A' "
@@ -177,6 +199,10 @@ def render_svg(vf, names, title, max_sig=24):
             out.append("<path d='%s' fill='none' stroke='#85B7EB' stroke-width='1.2'/>"
                        % " ".join(d))
     out.append("</svg>")
+    if thinned:
+        # 在图上如实注明"抽稀"，避免被误读成"信号真的只有这么几个跳变"
+        out.insert(2, "<desc>为控制文件体积，每条信号最多绘制 %d 个跳变（按步长抽稀，"
+                      "保留终值）</desc>" % max_trans)
     return "\n".join(out)
 
 

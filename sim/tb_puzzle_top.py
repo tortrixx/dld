@@ -34,9 +34,12 @@
 
 CLK = 20.0
 GRID_PERIOD = 10.0
-DURATION = 22_000_000.0            # 22 ms（1 秒 = 1.6 ms）
 
-RTL_PATCHES = [("puzzle_pkg.vhd", "50_000_000", "80_000")]
+RTL_PATCHES = [("puzzle_pkg.vhd", "50_000_000", "80_000"),
+               # 第三场景要按"哪一块会落到哪里"写出按键计划，所以把随机源钉成 0
+               # （只作用于 .tmp 隔离工程）：rnd_val 恒 0 → 每块候选恒为 (0,0)
+               # → 16 次重试后落到**确定性回退锚点**
+               ("puzzle_pkg.vhd", 'x"5A"', 'x"00"')]
 
 T200 = 8000.0                      # tick_200 周期 (ns)
 # 第 0 轮扫描的 SETTLE 拍。上电复位在 14.4 us 释放，复位后的第一个 tick_200
@@ -72,6 +75,89 @@ KEY_PLAN = [
     (1192, 1212, 1, 2, "确认 KEY11"),
 ]
 RAW_START, RAW_SELECT = 1, 3
+
+# ============================================================================
+# 第三场景：**整机端到端连过两关**（确定性散落 + 真实按键）
+#
+# 【要回答什么】上板现象："第一关拼好按确认 → 出叉；退出重进又直接跳进第二关"。
+#   这是在**整机**层面复现与回归 ERR-023（对局态目标图案被置零 → 成功判据永不成立）
+#   与 ERR-024（新一局开始时上一局的 locked/pos 残留 → 还没散落就判胜/判负）。
+#
+# 【为什么要把随机源钉死】按键计划必须知道"哪一块会落在哪里"才能写出走法。
+#   rnd_val 恒 0 时每块候选恒为 (0,0)，16 次重试后落到**确定性回退锚点**：
+#     一关 (0,0)/(0,4)/(4,0)；二关 (0,0)/(0,4)/(4,0)/(4,4)
+#   走法直接沿用 tb_puzzle_ctrl 已经验过的两份计划（那边是引擎级命令，这里换成按键）。
+# ============================================================================
+
+# 控制键在 4x4 矩阵上的位置 (行, 列)：键号 = 4*行+列，与 game_fsm.key_of() 一致
+CTRL_KEY = {"start": (0, 1), "select": (0, 3), "confirm": (1, 2),
+            "up": (2, 2), "down": (0, 2), "left": (1, 1), "right": (1, 3)}
+
+# 一关：三块从回退锚点搬到目标锚点 (0,0)->(2,2)、(0,4)->(3,2)、(4,0)->(4,3)
+PLAN_L1 = (["select"] + ["down"] * 3 + ["left"] * 2 +
+           ["select"] + ["down"] * 2 + ["right"] * 3 + ["up"] * 2 +
+           ["select"] + ["down"] * 2 + ["right"] * 2 +
+           ["confirm"] * 3)
+# 二关：四块 2x2 摆成目标锚点集的**一个置换**（P0 与 P2 交换）—— 画面仍是目标图案，
+#       但锚点元组 != 写死的 L2_TGT，正是 ERR-021 的回归点
+PLAN_L2 = (["right"] * 2 + ["down"] * 4 +
+           ["select"] + ["down"] * 2 +
+           ["select"] + ["up"] * 2 + ["right"] * 2 +
+           ["select"] + ["confirm"] * 4)
+
+HOLD = 22          # 按住多少轮（消抖要 16 轮，留 6 轮余量）
+GAP_NEW = 25       # 换一个键：间隔轮数（松开 3 轮即可，因为换了键号）
+GAP_SAME = 44      # **同一个键要再按一次**：必须先让扫描器看到"松开"——
+                   # keypad_scan 的消抖是"连续 16 轮不同才改 stable"，所以松开窗口
+                   # 必须 > 16 轮，否则第二次按同一个键根本不会被识别。
+
+# SW7 再拨上去之后的基轮号（自检 2 s = 200 轮之后）
+K2_START = 1980    # 待机里按【开始】
+K2_L1 = 2600       # 第一关第一个动作（预览 5 s = 500 轮之后，留 100 轮余量）
+
+
+def _plan_keys(k0, names):
+    """命令名序列 -> [(首轮, 末轮, 行, 列, 名字)]，返回 (按键计划, 下一个可用轮号)。
+
+    ⚠️ 间隔必须看**下一个**命令用的是不是同一个键：`_plan_keys` 第一版按"当前命令
+    与上一个命令是否同键"来留间隔（差一位），于是 `down,down` 之间只隔了 25 轮 ——
+    松开窗口只有 3 轮，扫描器的消抖（连续 16 轮不同才改 stable）根本看不到松开，
+    第二次按同一个键会被**静默丢掉**。离线复盘脚本 .tmp/plan_top.py 把这个排期
+    打印出来才发现（按键计划也要能"看到"自己的时间表，不能只看走法对不对）。
+    """
+    out, k = [], k0
+    for i, nm in enumerate(names):
+        r, c = CTRL_KEY[nm]
+        out.append((k, k + HOLD - 1, r, c, nm))
+        nxt = names[i + 1] if (i + 1) < len(names) else None
+        k += GAP_SAME if (nxt == nm) else GAP_NEW
+    return out, k
+
+
+KEYS_L1, _k_after_l1 = _plan_keys(K2_L1, PLAN_L1)
+# 第一关最后一次确认 -> 判据最多 1 帧(40 ms)发布 -> 进第二关预览 5 s(=500 轮) -> 对局
+# 21 轮 = 最后一次确认的消抖余量；80 轮 = 余量
+K2_L2 = _k_after_l1 + 21 + 500 + 80
+KEYS_L2, _k_after_l2 = _plan_keys(K2_L2, PLAN_L2)
+
+KEY_PLAN2 = ([(K2_START, K2_START + HOLD - 1, 0, 1, "start(第二场景)")] +
+             KEYS_L1 + KEYS_L2)
+
+# ---- 各阶段时间点（ns）----
+T_SELFTEST = (300_000.0, 3_100_000.0)
+T_IDLE = (3_225_000.0, 3_385_000.0)        # 进待机(3.20 ms)之后、按开始生效之前
+T_PREVIEW = (4_500_000.0, 10_800_000.0)
+T_PLAY = (11_900_000.0, 15_000_000.0)      # 散落完成后的对局（sel = 0）
+T_PLAY_SEL = (15_800_000.0, 17_300_000.0)  # 按过"选择"之后
+T_DIR = (17_600_000.0, 19_900_000.0)       # ★ 按方向键的时段（ERR-020 的回归窗口）
+T_SW_OFF = 21_200_000.0                    # SW7 拨下去（B1）
+T_OFF = (21_800_000.0, 22_600_000.0)       # SW7=0 之后
+T_SW_ON2 = 27_000_000.0                    # SW7 再拨上去（自检 2 s -> 待机）
+T_L1_CONF = S0 + (KEYS_L1[-1][0] + 24) * ROUND       # 第一关最后一次确认之后
+T_L1_PREVIEW = T_L1_CONF + 1_000_000.0               # 应已进入第二关预览（预览 8 ms）
+T_L2_CONF = S0 + (KEYS_L2[-1][0] + 24) * ROUND       # 第二关最后一次确认之后
+T_WIN = T_L2_CONF + 1_000_000.0                      # 应已进入胜利状态
+DURATION = T_WIN + 4_000_000.0
 
 OBSERVE = ["clk", "sw7", "btn", "kp_row", "kp_col",
            "dot_row", "dot_colr", "dot_colg", "seg", "cat", "buzz",
@@ -160,11 +246,18 @@ def build(b):
     b.clock("clk", CLK)
     # BTN0 空闲为低（按下才是高）—— 不按，交给上电复位
     b.segments("btn", [(DURATION, 0)])
-    # SW7：前 18 ms 为 1，之后为 0（B1：关掉开关全部不显示）
-    b.segments("sw7", [(T_SW_OFF, 1), (DURATION - T_SW_OFF, 0)])
+    # SW7：前 21.2 ms 为 1；随后拨下去（B1：关掉开关全部不显示）；
+    #      27 ms 再拨上去 —— 第二场景要在一局"完整的两关"上跑
+    # ⚠️ 这里**不能**用 _tl()：本文件的 _tl 是按"事件排序"实现的，两段**首尾相接**
+    #    的区间在同一时刻上一段结束、下一段开始，排序会把"恢复默认 1"排在后面，
+    #    于是 0 那一段被吃掉（实测断言 ⑥ 立刻报"SW7=0 后点阵仍亮 12 格"）。
+    #    直接给 (时长, 值) 序列最稳。
+    b.segments("sw7", [(T_SW_OFF, 1),
+                       (T_SW_ON2 - T_SW_OFF, 0),
+                       (DURATION - T_SW_ON2, 1)])
 
     spans = []
-    for (k0, k1, r, c, _n) in KEY_PLAN:
+    for (k0, k1, r, c, _n) in (KEY_PLAN + KEY_PLAN2):
         for k in range(k0, k1 + 1):
             for (a, bb) in _round_windows(k, r, c):
                 spans.append((a, bb, 0xF & ~(1 << r)))
@@ -394,6 +487,55 @@ def check(vf):
         len(anchors - cur) > 0,
         "方向窗口内 chk_pos 出现过的值 = %s；当前各块锚点 = %s"
         % (sorted(hex(a) for a in anchors), sorted(hex(c) for c in cur)),
+    ))
+
+    # ================================================================
+    # 第三场景：整机端到端连过两关（ERR-023 / ERR-024 的回归判据）
+    # ================================================================
+    # ⑩ ★ 第一关：真实按键拼回目标锚点 + 逐块确认 → 必须进**第二关预览**
+    pos1 = vf.bus_value_at("u_puzzle|pos", T_L1_CONF)
+    lock1 = vf.bus_value_at("u_puzzle|locked", T_L1_CONF)
+    st_l1 = vf.bus_value_at("u_fsm|st", T_L1_PREVIEW)
+    lv_l1 = vf.value_at("u_fsm|level", T_L1_PREVIEW)
+    res.append((
+        "⑩ ★【整机·第一关】用真实矩阵按键把三块摆回目标锚点并逐块确认后，"
+        "状态机必须进入**第二关预览**（o_level=1）—— 修复前这里是判负出叉"
+        "（ERR-023：对局态喂给引擎的目标图案被置零，成功判据永远不可能成立）",
+        pos1 == 0x22324300 and lock1 is not None and (lock1 & 0x7) == 0x7
+        and st_l1 == 2 and lv_l1 == "1",
+        "确认后锚点=0x%s（期望 0x22324300）、locked=%s；1 ms 后 o_state=%s（2=预览）、"
+        "o_level=%s"
+        % ("--------" if pos1 is None else format(pos1, "08X"),
+           "----" if lock1 is None else format(lock1, "04b"), st_l1, lv_l1),
+    ))
+
+    # ⑪ ★ 第二关：四块 2x2 摆成目标锚点集的**一个置换**（画面与目标一致）+ 全确认 → 胜利
+    pos2 = vf.bus_value_at("u_puzzle|pos", T_L2_CONF)
+    lock2 = vf.bus_value_at("u_puzzle|locked", T_L2_CONF)
+    st_l2 = vf.bus_value_at("u_fsm|st", T_WIN)
+    res.append((
+        "⑪ ★【整机·第二关】四块摆成目标锚点集的**一个置换**（画面与目标图案逐格一致，"
+        "但锚点元组 != 写死的 L2_TGT）并全部确认 → **胜利状态**（B10；ERR-021 的整机回归）",
+        pos2 == 0x42242244 and lock2 == 0xF and st_l2 == 4,
+        "确认后锚点=0x%s（期望 0x42242244）、locked=%s；1 ms 后 o_state=%s（4=胜利）"
+        % ("--------" if pos2 is None else format(pos2, "08X"),
+           "----" if lock2 is None else format(lock2, "04b"), st_l2),
+    ))
+
+    # ⑫ 整个第三场景的状态序列：自检 → 待机 → 预览 → 对局 → 预览 → 对局 → 胜利
+    #    ⚠️ 窗口从 **T_SW_OFF**（拨下去那一刻）开始数，不是 T_SW_ON2：SW7=0 期间
+    #    状态机就停在"自检"上，拨回来时不会再产生一次跳变，所以从 T_SW_ON2 起数会
+    #    看不到开头那个"自检"（第一版就是这么错的）。
+    seq2 = []
+    for (tt, v) in _bus_trace(vf, "u_fsm|st"):
+        if tt >= T_SW_OFF and (not seq2 or seq2[-1][1] != v):
+            seq2.append((tt, v))
+    got2 = [names.get(v, str(v)) for (_t, v) in seq2]
+    res.append((
+        "⑫ 第三场景的状态序列 = 自检 → 待机 → 预览 → 对局 → **预览 → 对局 → 胜利**"
+        "（即真的连过两关；也说明没有「还没散落就判胜/判负」的残留状态跳变）",
+        got2[:7] == ["自检", "待机", "预览", "对局", "预览", "对局", "胜利"],
+        "状态序列 = %s" % " → ".join(got2),
     ))
 
     return res

@@ -138,6 +138,21 @@ architecture rtl of game_fsm is
     signal kdec    : std_logic_vector(3 downto 0) := K_NONE;  -- decoded game key
     signal go_done : std_logic := '0';   -- scatter already requested this session
 
+    ----------------------------------------------------------------------------
+    -- ⚠️ ERR-024 : 判决必须等**本局的散落**跑过之后才生效。
+    --
+    -- puzzle_ctrl 的 locked/pos 只在 i_go（散落）时才清零，所以刚进 S_PLAYING
+    -- 的那一两拍，引擎里还是**上一局**的残留状态（全锁定 + 上一局的拼法）。
+    -- 旧实现无条件采信 i_solved/i_all_lock，于是：
+    --   · 上一局拼对了 → 新一局刚开局就"过关"，直接跳进第二关；
+    --   · 上一局拼错了但已全锁 → 新一局刚开局就判负（还没散落就出叉）。
+    -- 上板现象（2026-10-08）："第一关拼好按确认出叉，退出重进又直接跳第二关"。
+    -- 仿真证据：tb_game_fsm 断言 ⑯⑰（修复前 r07 = 15/17，对局开始后 3 拍就已
+    -- 经跳到失败/第二关）。
+    -- 修法：本局至少要**看见过一次**散落的忙态，判决才被允许。
+    ----------------------------------------------------------------------------
+    signal shuf_seen : std_logic := '0';
+
 begin
 
     ----------------------------------------------------------------------------
@@ -208,7 +223,8 @@ begin
                             cnt   <= to_unsigned(T_PREVIEW, 6);
                             level <= '0';
                             st    <= S_PREVIEW;
-                        elsif (i_solved = '1') then
+                        elsif (i_solved = '1') and (shuf_seen = '1')
+                              and (i_shuf_busy = '0') then
                             if (level = '0') then
                                 level <= '1';              -- B9: go to level 2
                                 cnt   <= to_unsigned(T_PREVIEW, 6);
@@ -216,7 +232,8 @@ begin
                             else
                                 st <= S_WIN;               -- B10: victory
                             end if;
-                        elsif ((i_all_lock = '1') and (i_shuf_busy = '0')) then
+                        elsif (i_all_lock = '1') and (shuf_seen = '1')
+                              and (i_shuf_busy = '0') then
                             st <= S_FAIL;                  -- B9: wrong assembly
                         elsif (i_tick_1hz = '1') then
                             if (cnt <= 1) then
@@ -258,6 +275,7 @@ begin
                 left_r  <= '0'; right_r <= '0';
                 move_r  <= '0';
                 req_go  <= '0';
+                shuf_seen <= '0';
             else
                 -- defaults: every command is a one-clock strobe
                 sel_r  <= '0';
@@ -296,6 +314,15 @@ begin
                     req_go  <= '0';                -- ...accepted by the engine
                     go_done <= '1';                -- never request again this session
                 end if;
+
+                -- ⚠️ ERR-024 : 判决的前置条件 —— 本局已经看到过散落的忙态。
+                -- 引擎的 locked/pos 只由散落清零，所以在这之前 i_solved/i_all_lock
+                -- 反映的是**上一局**的状态，绝不能用来判决。
+                if (st /= S_PLAYING) then
+                    shuf_seen <= '0';
+                elsif (i_shuf_busy = '1') then
+                    shuf_seen <= '1';
+                end if;
             end if;
         end if;
     end process;
@@ -329,16 +356,17 @@ begin
         end if;
     end process;
 
-    process (st, i_press, i_key, i_solved, i_all_lock)
+    process (st, i_press, i_key, i_solved, i_all_lock, shuf_seen)
     begin
         case st is
             when S_SELF_TEST => sound_r <= "001";        -- power-on jingle
             when S_IDLE      => sound_r <= "000";        -- silent
             when S_PREVIEW   => sound_r <= "010";        -- preview beep
             when S_PLAYING =>
-                if (i_solved = '1') then
+                -- ERR-024: 判据齐备（散落已跑过）之前的残留状态不许出声
+                if (i_solved = '1') and (shuf_seen = '1') then
                     sound_r <= "011";                    -- correct: rising beep
-                elsif (i_all_lock = '1') then
+                elsif (i_all_lock = '1') and (shuf_seen = '1') then
                     sound_r <= "100";                    -- wrong: falling beep
                 elsif (i_press = '1') then
                     sound_r <= "101";                    -- key click

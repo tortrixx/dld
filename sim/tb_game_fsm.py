@@ -33,7 +33,7 @@ CLK = 20.0
 T1 = 2000.0          # "1 Hz"节拍周期
 T2 = 1000.0          # "2 Hz"节拍周期
 GRID_PERIOD = 10.0
-DURATION = 126000.0
+DURATION = 158000.0
 
 S_SELF, S_IDLE, S_PREV, S_PLAY, S_WIN, S_FAIL = 0, 1, 2, 3, 4, 5
 T_PREVIEW, T_L1, T_L2 = 5, 30, 40          # 课程要求 B4 / B5 / B10
@@ -64,13 +64,26 @@ PRESSES = [
     (27000,  RAW_RIGHT,   "一关对局：右"),
     (76000,  RAW_START,   "超时失败后重开"),
     (104000, RAW_START,   "胜利后重开"),
+    (128000, RAW_START,   "第三场景：SW7 再拨上后开始（自检 2 s 已过）"),
+    (142000, RAW_START,   "第四场景：残留判负后重开"),
 ]
 
 # i_solved / i_all_lock / i_shuf_busy 的时间窗
-SOLVED_WINS = [(88000.0, 90000.0), (100000.0, 102000.0)]
-ALL_LOCK_WINS = [(116000.0, 118000.0)]
-SHUF_BUSY_WINS = [(15000.0, 30000.0), (99500.0, 108000.0)]
-SW_OFF = (120000.0, DURATION)
+# ⚠️ 第三/第四场景是 ERR-024 的回归激励：**故意让上一局的 i_solved / i_all_lock
+#    残留到新一局对局开始之后**（上板现象：退出重进直接跳第二关 / 刚开局就判负），
+#    而 i_shuf_busy 故意晚 2 个时钟才起来（引擎要等"散落请求"那一两拍），
+#    这样就能精确复现"判决发生在散落之前"的窗口。
+SOLVED_WINS = [(88000.0, 90000.0), (100000.0, 102000.0), (142500.0, DURATION)]
+ALL_LOCK_WINS = [(116000.0, 118000.0), (122000.0, DURATION)]
+# ⚠️ 2026-10-08 修正：本表原来只给**两个**对局建了散落忙窗，可 `game_fsm` 现在要求
+#    "本局至少看到过一次散落"（ERR-024）；而真实引擎**每一局**都会散落，所以这里
+#    给 6 个对局各建一个"开局后不久"的忙窗（也顺便更贴近真实时序：玩家不可能在
+#    散落还没跑完时就拼好）。第一版漏建的两局直接把 ⑨⑩⑪⑬⑰ 拖挂（r08 = 12/17）。
+SHUF_BUSY_WINS = [(14060.0, 15000.0), (86060.0, 87000.0), (98060.0, 99000.0),
+                  (114060.0, 115000.0), (138060.0, 140060.0), (152060.0, 154060.0)]
+T_SW_ON2 = 122000.0                       # SW7 再拨上去（自检 2 s -> 待机）
+T_PLAY3 = 138020.0                        # 第三局对局开始（推算：见 §1.2 时间表）
+SW_OFF = (120000.0, T_SW_ON2)
 
 OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz",
            "i_solved", "i_all_lock", "i_shuf_busy",
@@ -148,7 +161,9 @@ def build(b):
 
     b.clock("i_clk", CLK)
     b.segments("i_rst", [(100.0, 1), (DURATION - 100.0, 0)])
-    b.segments("i_sw", _tl(DURATION, [(0.0, SW_OFF[0], 1), (SW_OFF[0], DURATION, 0)], 1))
+    b.segments("i_sw", _tl(DURATION, [(0.0, SW_OFF[0], 1),
+                                      (SW_OFF[0], SW_OFF[1], 0),
+                                      (SW_OFF[1], DURATION, 1)], 1))
     b.segments("i_tick_1hz", _tick(DURATION, T1))
     b.segments("i_tick_2hz", _tick(DURATION, T2))
 
@@ -280,10 +295,10 @@ def check(vf):
     # ⑥ ★ ERR-006 回归：每局散落请求 o_go 只上升一次
     go_r = _rises(vf, "o_go")
     res.append((
-        "⑥ ★ o_go 每局只上升一次、全流程共 4 局 = 4 次（ERR-006：散落握手必须有"
+        "⑥ ★ o_go 每局只上升一次、全流程共 6 局 = 6 次（ERR-006：散落握手必须有"
         "'完成'记忆，否则会无限重复散落、清掉选中/锁定，按键全部失效）",
-        len(go_r) == 4,
-        "o_go 上升沿时刻：%s（共 %d 次，期望 4）"
+        len(go_r) == 6,
+        "o_go 上升沿时刻：%s（共 %d 次，期望 6）"
         % (", ".join("%.0f" % t for t in go_r), len(go_r)),
     ))
 
@@ -385,6 +400,36 @@ def check(vf):
         len(rises) >= 20 and hi_w and abs(med - T2) < 2 * CLK,
         "上升沿 %d 次（期望约 %d）；高电平宽度中位数=%.0f ns"
         % (len(rises), n_t2 // 2, med),
+    ))
+
+    # ================================================================
+    # 第三/第四场景：ERR-024（新一局开头拿上一局的残留状态判决）
+    # ================================================================
+    # ⑯ 残留的 i_all_lock=1 不得在散落之前判负
+    st_after_play = _bus_at(vf, "o_state", T_PLAY3 + 60.0)     # 对局开始后 3 拍
+    fails3 = [t for (t, v) in st_tr if v == S_FAIL and t > 135000.0]
+    t_fail3 = fails3[0] if fails3 else None
+    res.append((
+        "⑯ ★【ERR-024】新一局对局刚开始、散落还没起来时，上一局残留的 i_all_lock=1 "
+        "**不得**判负：状态机必须在 S_PLAYING 里等散落（忙→闲）之后才判决",
+        st_after_play == S_PLAY and t_fail3 is not None and t_fail3 > 140060.0,
+        "对局开始后 3 拍仍是 %s（期望 %d 对局）；本轮首次判负时刻=%s（必须晚于散落结束 140060 ns）"
+        % (st_after_play, S_PLAY, "-" if t_fail3 is None else "%.0f ns" % t_fail3),
+    ))
+
+    # ⑰ 残留的 i_solved=1 不得在散落之前把关卡推进到第二关
+    prevs4 = [t for (t, v) in st_tr if v == S_PREV and t > 150000.0]
+    t_prev4 = prevs4[0] if prevs4 else None
+    st_wait = _bus_at(vf, "o_state", 152100.0)                 # 对局开始后 4 拍
+    res.append((
+        "⑰ ★【ERR-024】新一局对局刚开始时残留的 i_solved=1 **不得**立刻推进关卡："
+        "必须先看到散落（忙→闲），之后才允许按 i_solved 进第二关预览（o_level=1）",
+        st_wait == S_PLAY and t_prev4 is not None and t_prev4 > 154060.0
+        and _bit_at(vf, "o_level", t_prev4 + 100.0) == "1",
+        "对局开始后 4 拍仍是 %s（期望 %d 对局）；进第二关预览时刻=%s"
+        "（必须晚于散落结束 154060 ns）、此刻 o_level=%s"
+        % (st_wait, S_PLAY, "-" if t_prev4 is None else "%.0f ns" % t_prev4,
+           _bit_at(vf, "o_level", (t_prev4 or 0) + 100.0)),
     ))
 
     return res
