@@ -1,0 +1,77 @@
+{
+  "module": "disp_format",
+  "round": 2,
+  "timestamp": "2026-10-08 17:18:50",
+  "duration_ns": 2800.0,
+  "rtl_patches": [],
+  "passed": 13,
+  "total": 13,
+  "all_pass": true,
+  "assertions": [
+    {
+      "name": "⓪ 激励自检：16+ 个采样窗口的 i_state 实测值 == 期望值（防止`测错了对象`）",
+      "ok": true,
+      "detail": "全部一致（28 个窗口）"
+    },
+    {
+      "name": "① B1 自检态 + i_blink='0' → o_data 八位全 '8'(0x88888888)，o_blank=0xFF（整排灭）",
+      "ok": true,
+      "detail": "o_data=0x88888888  o_blank=0xFF"
+    },
+    {
+      "name": "② B1 自检态 + i_blink='1' → o_data 八位全 '8'，o_blank=0x00（整排亮）—— 与 ① 合起来即 2 Hz 闪烁（半周期亮/半周期灭）",
+      "ok": true,
+      "detail": "o_data=0x88888888  o_blank=0x00"
+    },
+    {
+      "name": "③ B2/B3 待机态 → DISP7='5'、DISP0=关卡号(第一关 1 / 第二关 2)，DISP1~6 全灭（o_blank=0x7E）",
+      "ok": true,
+      "detail": "IDLE1: o_data=0x50000001 o_blank=0x7E（DISP7=5 DISP0=1）\nIDLE2: o_data=0x50000002 o_blank=0x7E（DISP7=5 DISP0=2）"
+    },
+    {
+      "name": "④ B4 预览态 → DISP7 = 倒计时秒数(单数字)，DISP0 = 关卡号，其余灭",
+      "ok": true,
+      "detail": "PREV4: DISP7=4（期望 4） DISP0=1 o_blank=0x7E\nPREV5: DISP7=5（期望 5） DISP0=2 o_blank=0x7E"
+    },
+    {
+      "name": "⑤ B5 游戏中(第一关, t=27) → DISP4=2 DISP3=7（两位都亮）、DISP0=1，DISP2 灭（o_blank=0xE6）",
+      "ok": true,
+      "detail": "o_data=0x00027001 o_blank=0xE6"
+    },
+    {
+      "name": "⑥ B9 游戏中(第二关, t=27) → DISP2 额外显示 '2' 并点亮，DISP0=关卡号 2（o_blank=0xE2）",
+      "ok": true,
+      "detail": "o_data=0x00027202 o_blank=0xE2（DISP2=2 应为 2）"
+    },
+    {
+      "name": "⑦ B5 倒计时十位/个位拆分（那张 64 项 case 表）：16 个进位边界值全部等于 独立算出的 t//10 与 t%10（0/9/10/19/20/29/30/39/40/49/50/59/60/63）",
+      "ok": true,
+      "detail": "t= 0→00 t= 1→01 t= 9→09 t=10→10 t=11→11 t=19→19 t=20→20 t=29→29 t=30→30 t=39→39 t=40→40 t=49→49 t=50→50 t=59→59 t=60→60 t=63→63"
+    },
+    {
+      "name": "⑧ S_WIN → DISP7/DISP6 = '7'/'5'；S_FAIL → '0'/'0'；两者都只亮这两位且画面互不相同",
+      "ok": true,
+      "detail": "WIN: o_data=0x75000000 o_blank=0x3F | FAIL: o_data=0x00000000 o_blank=0x3F"
+    },
+    {
+      "name": "⑨ 状态码 「110」/「111」（state_t 未定义值）→ 确定行为：o_blank 全 1（整排灭），不会误显示上一状态的内容",
+      "ok": true,
+      "detail": "110: o_blank=0xFF | 111: o_blank=0xFF"
+    },
+    {
+      "name": "⑩ 28 个窗口的画面 (o_data,o_blank) 互不相同 —— 仅允许两处有语义的重合：待机(第二关) vs 预览 5 秒（B2 的 '5' 与 B4 的起始值本来就是同一个画面）、两个未定义状态码同为全灭",
+      "ok": true,
+      "detail": "28 个窗口 → 26 种不同画面；重合的两组：[['IDLE2', 'PREV5'], ['UNDEF6', 'UNDEF7']]"
+    },
+    {
+      "name": "⑪ ⭐ 中间信号解释输出：网表内部节点 LessThan2~2 == o_data[18]（DISP4 的 bit2）、r~9 == o_data[13]（DISP3 的 bit1），在 17 个采样点上逐点相同（这两个数据线是从这两个中间节点送出去的；对应关系由探针跑逐点相关得到）",
+      "ok": true,
+      "detail": "LessThan2~2: ['0', '1', '1'] | r~9: ['0', '0', '0']（在 17 个采样点上与端口逐位一致）"
+    },
+    {
+      "name": "⑫ 中间信号 tens~1:0 / ones~3:0（case 表的译码中间项）在 28 个采样点上取值全部为确定 0/1，且组合随 i_state/i_time 变化（不是常量、不是 X）",
+      "ok": true,
+      "detail": "28 个窗口共出现 12 种不同组合（≥2 即说明确实随输入变化）"
+    }
+  ]
+}

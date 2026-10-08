@@ -1,0 +1,37 @@
+{
+  "module": "pattern_rom",
+  "round": 1,
+  "timestamp": "2026-10-08 17:08:16",
+  "duration_ns": 400.0,
+  "rtl_patches": [],
+  "passed": 5,
+  "total": 5,
+  "all_pass": true,
+  "assertions": [
+    {
+      "name": "① i_level='0' 时 o_mask 精确等于图 4-1（第 2~5 行 x 第 2~4 列实心矩形）",
+      "ok": true,
+      "detail": "实测 0x00001C1C1C1C0000，期望 0x00001C1C1C1C0000"
+    },
+    {
+      "name": "② 第一关图案面积 = 12 格（= 三块零片 3+6+3，面积守恒的前提）",
+      "ok": true,
+      "detail": "实测 popcount = 12，期望 12"
+    },
+    {
+      "name": "③ i_level='1' 时 o_mask 精确等于第二关 4x4 方块（第 2~5 行 x 第 2~5 列）",
+      "ok": true,
+      "detail": "实测 0x00003C3C3C3C0000，期望 0x00003C3C3C3C0000"
+    },
+    {
+      "name": "④ 第二关图案面积 = 16 格（= 四块 2x2 零片 4x4）",
+      "ok": true,
+      "detail": "实测 popcount = 16，期望 16"
+    },
+    {
+      "name": "⑤ 第一关图案是第二关图案的真子集（两关共用同一区域，第二关右扩一列）",
+      "ok": true,
+      "detail": "m1 & ~m2 = 0x0000000000000000"
+    }
+  ]
+}

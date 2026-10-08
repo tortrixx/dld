@@ -1,0 +1,42 @@
+{
+  "module": "dot_matrix_scan",
+  "round": 4,
+  "timestamp": "2026-10-08 17:52:16",
+  "duration_ns": 2200.0,
+  "rtl_patches": [],
+  "passed": 6,
+  "total": 6,
+  "all_pass": true,
+  "assertions": [
+    {
+      "name": "① 显示相 o_row **恰好一位为低**、且拉低位 = 7-row（144 个采样点）",
+      "ok": true,
+      "detail": "全部 144 个采样点都是「恰一位为低」且行号映射正确"
+    },
+    {
+      "name": "② 8 个行号全部扫到且映射不重不漏（行号→拉低位是双射 {0..7}→{7..0}）",
+      "ok": true,
+      "detail": "行号→拉低位 = {0: 7, 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1, 7: 0}"
+    },
+    {
+      "name": "③ 消隐相全灭：i_en='0'（W8，16 点）与 i_rst 期间 → o_row=0xFF、o_colr=0x00、o_colg=0x00",
+      "ok": true,
+      "detail": "W8 的 16 个采样点全灭；rst 期间 t=30ns：row=0xFF colr=0x00 colg=0x00"
+    },
+    {
+      "name": "④ o_colr / o_colg 互斥：单色内容下任何一列都不同时为高（160 个采样点，含 3 组交错图案）",
+      "ok": true,
+      "detail": "全部 160 个采样点的 colr & colg = 0"
+    },
+    {
+      "name": "⑤ 直通与同拍更新：o_colr==i_colr、o_colg==i_colg，且 (o_row,o_colr,o_colg) 逐点等于期望三元组（无鬼影混合态）",
+      "ok": true,
+      "detail": "全部 160 个采样点三元组与期望完全一致"
+    },
+    {
+      "name": "⑥ 中间信号：内部寄存器节点（o_row[7]~reg0 / o_row[0]~reg0 / o_colr[0]~reg0 / o_colg[7]~reg0）逐点 == 输出端口对应位（640 次比对）",
+      "ok": true,
+      "detail": "四个内部寄存器节点与端口逐点一致；process_0~0（rst/en 熄灭控制）取值 = ['0', '1']"
+    }
+  ]
+}
