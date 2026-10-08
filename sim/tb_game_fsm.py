@@ -38,9 +38,18 @@ DURATION = 126000.0
 S_SELF, S_IDLE, S_PREV, S_PLAY, S_WIN, S_FAIL = 0, 1, 2, 3, 4, 5
 T_PREVIEW, T_L1, T_L2 = 5, 30, 40          # 课程要求 B4 / B5 / B10
 
-# 键码（模块内部译码前的**原始键号**，与 game_fsm.key_of 的映射表一致）
+# 键码（模块内部译码前的**原始键号** = 4*行 + 列，与 game_fsm.key_of 的映射表一致）
+#
+# ⚠️ 2026-10-08 全量重跑时抓到的一处 **tb 陈旧常量**（不是 RTL 缺陷）：
+#    键位表按板子手册附图26 重排后（开始=1/KEY14、选择=3/KEY16、上=10/KEY7、
+#    下=2/KEY15、左=5/KEY10、右=7/KEY12、确认=6/KEY11），本文件的 RAW_UP/DOWN/
+#    LEFT/RIGHT 仍是**旧表**的 (4,5,0,2) —— 在新表里这四码分别译成
+#    K_NONE / K_LEFT / K_NONE / K_DOWN，于是"上""右"两键根本没产生动作脉冲。
+#    当时 game_fsm 的轮次记录（r04, 17:56）是**重排之前**跑的，所以没暴露；
+#    重排提交（18:45）之后一直没人重跑这个模块 → 记录是"陈旧绿"。
+#    教训：改了 key_of() 必须重跑 game_fsm；汇总"全部通过"时要看每条的**时间戳**。
 RAW_START, RAW_SELECT, RAW_CONFIRM = 1, 3, 6
-RAW_UP, RAW_DOWN, RAW_LEFT, RAW_RIGHT = 4, 5, 0, 2
+RAW_UP, RAW_DOWN, RAW_LEFT, RAW_RIGHT = 10, 2, 5, 7
 
 # 按键事件：(时刻, 原始键号, 备注)
 PRESSES = [
