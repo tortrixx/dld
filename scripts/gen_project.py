@@ -195,8 +195,11 @@ if __name__ == "__main__":
             % (top, unlisted, top)
         )
     PROJ.mkdir(parents=True, exist_ok=True)
-    (PROJ / "puzzle.qpf").write_text(qpf(top), encoding="ascii")
-    (PROJ / "puzzle.qsf").write_text(qsf(top), encoding="ascii")
+    # ⚠️ newline="\n" 是必须的：Windows 上 write_text 默认写 CRLF，而
+    #    .gitattributes 规定仓库内文本一律 LF —— 不统一的话每台机器上
+    #    `git status` 都会因为换行符抖动而显示"文件被修改"（假 diff）。
+    (PROJ / "puzzle.qpf").write_text(qpf(top), encoding="ascii", newline="\n")
+    (PROJ / "puzzle.qsf").write_text(qsf(top), encoding="ascii", newline="\n")
     n = sum(len(PINS[g]) if isinstance(PINS[g], list) else 1
             for g in TOP_PORTS[top])
     print("wrote quartus/puzzle.qpf and quartus/puzzle.qsf  (top=%s, %d pins)" % (top, n))

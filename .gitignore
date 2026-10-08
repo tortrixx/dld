@@ -13,6 +13,15 @@
 # ============================================================
 # Quartus II 编译产物（全部可由 scripts/build.tcl 重新生成）
 # ============================================================
+#
+# ⚠️ puzzle.qpf 单独说明：它由 scripts/gen_project.py 生成，但 **Quartus 每次
+#    project_open/编译都会往里写一行 `DATE = "时:分:秒 月 日, 年"`** —— 那个时间戳
+#    没有任何信息量，却会让 `git status` 每编译一次就"脏"两行。
+#    所以 .qpf 不入库；**仓库里保留的是 puzzle.qsf（引脚真值源的输出，无时间戳）
+#    和 puzzle.sdc（时序约束）**。
+#    克隆后照 HANDOFF §4.1 走：先 `python scripts/gen_project.py puzzle_top`
+#    （它会一次生成 .qpf + .qsf），再编译。缺 .qpf 时 Quartus 打不开工程是**预期行为**。
+quartus/puzzle.qpf
 quartus/db/
 quartus/incremental_db/
 quartus/output_files/
