@@ -46,6 +46,8 @@
     所以可以用远高于 200 Hz 的节拍把整场对局压进几百微秒。
 """
 
+import pathlib
+
 CLK = 20.0
 TICK = 200.0
 GRID_PERIOD = 5.0
@@ -65,6 +67,26 @@ L1 = [
 ]
 NP = 3
 FALLBACK = [(0, 0), (0, 4), (4, 0), (4, 4)]      # RTL 里写死的回退锚点
+
+# ------------------------------------------------------------------ 第二关（4 块 2x2）
+# 【本阶段要回答什么】"第二关拼对了却出叉"（ERR-021）。
+#
+# 第二关的四块零片**形状完全相同**（都是 2x2 方块），而玩家在屏幕上只看得到
+# 「四块零片的并集」：把 4 个方块填满 4x4 方块的 24 种摆法，**画面完全一样**。
+# 修复前的成功判据却是"每一块的锚点分别等于写死的 L2_TGT0..3"，于是 24 种等价
+# 摆法里有 23 种被判失败（`.tmp/analyze_win.py` 枚举出来的；一关的 2 种等价铺法
+# 同理，命中率只有 1/2 —— 只是"能不能过一关"更像运气，没被察觉）。
+#
+# 所以本阶段故意摆成 L2_TGT 的一个**置换**（P0 与 P2 交换锚点），画面仍是目标图案：
+#     目标锚点集 {(2,2),(2,4),(4,2),(4,4)}，实测锚点 ((4,2),(2,4),(2,2),(4,4))
+# 断言 ⑭ 要求 o_solved = 1（修复前为 0）；断言 ⑮ 是反例：全锁定但画面不对时必须为 0。
+L2_P = int("0000000000000000000000000000000000000000000000000000001100000011", 2)
+L2_TARGET = int("0000000000000000001111000011110000111100001111000000000000000000", 2)
+L2_TGT = [(2, 2), (2, 4), (4, 2), (4, 4)]        # puzzle_pkg.L2_TGT0..3
+L2_FALLBACK = [(0, 0), (0, 4), (4, 0), (4, 4)]   # rnd_val 恒 0 -> 确定性回退锚点
+NP2 = 4
+# 置换后的落位（P0 与 P2 交换）：并集 == L2_TARGET，锚点元组 != L2_TGT
+L2_PERM = [(4, 2), (2, 4), (2, 2), (4, 4)]
 
 # ------------------------------------------------------------------ 时间表
 T_GO_1 = 1000.0          # 散落①：rnd_val 恒 12 -> 复现 ERR-018b（回退锚点未查重叠）
@@ -125,7 +147,47 @@ CMDS_D, T_AFTER_D = _cmds(T_CMD_D, EDGE_PLAN)
 T_EDGE_DONE = T_AFTER_D + 2000.0        # 最后一次 move 之后的稳定采样点
 
 T_SAMPLE_COLOR = T_AFTER_D + 3000.0
-DURATION = T_SAMPLE_COLOR + 5000.0
+
+# ------------------------------------------------------------------ 第二关时间表
+T_L2 = T_SAMPLE_COLOR + 6000.0          # 切到第二关：i_level / 形状 / 目标一起换
+T_GO_L2 = T_L2 + 20000.0                # 第二关散落（rnd_val 恒 0 → 16 次失败 → 回退锚点）
+T_CMD_L2 = T_GO_L2 + 20000.0            # 回退散落最坏 ~16x3 次尝试 ≈ 14 us，留 20 us 余量
+
+# 把四块 2x2 摆成 L2_TGT 的**置换**（P0 与 P2 交换）：
+#   P0 (0,0) -R R-> (0,2) -D D D D-> (4,2)
+#   P1 (0,4) -------- D D --------> (2,4)
+#   P2 (4,0) -U U-> (2,0) -R R----> (2,2)
+#   P3 (4,4) 原地不动               (4,4)
+# 每一步的中间位置都用独立几何模型验过不重叠（见 overlap_report 的复用）。
+L2_PLAN = [
+    ("move", "R", "P0 右移"), ("move", "R", "P0 右移到第 2 列"),
+    ("move", "D", "P0 下移"), ("move", "D", "P0 下移"),
+    ("move", "D", "P0 下移"), ("move", "D", "P0 下移到 (4,2)"),
+    ("sel", None, "选中 P1"),
+    ("move", "D", "P1 下移"), ("move", "D", "P1 下移到 (2,4)"),
+    ("sel", None, "选中 P2"),
+    ("move", "U", "P2 上移"), ("move", "U", "P2 上移"),
+    ("move", "R", "P2 右移"), ("move", "R", "P2 右移到 (2,2)"),
+    ("sel", None, "选中 P3"),
+    ("confirm", None, "锁定 P3"),
+    ("confirm", None, "锁定 P0"),
+    ("confirm", None, "锁定 P1"),
+    ("confirm", None, "锁定 P2 -> 四块全锁、并集 == 目标图案"),
+]
+CMDS_L2, T_AFTER_L2 = _cmds(T_CMD_L2, L2_PLAN)
+T_L2_SETTLE = T_AFTER_L2 + 4000.0       # 一次整帧渲染 8 个 tick = 1600 ns，留 4 us
+
+# 反例：再散落一次，四块**原地**全锁定 —— 画面（并集）不等于目标图案 → 必须判失败
+T_GO_L2B = T_L2_SETTLE + 20000.0
+T_CMD_L2B = T_GO_L2B + 20000.0
+WRONG_PLAN = [
+    ("confirm", None, "锁定第 1 块"), ("confirm", None, "锁定第 2 块"),
+    ("confirm", None, "锁定第 3 块"), ("confirm", None, "锁定第 4 块 -> 全锁但画面错"),
+]
+CMDS_L2B, T_AFTER_L2B = _cmds(T_CMD_L2B, WRONG_PLAN)
+T_L2B_SETTLE = T_AFTER_L2B + 4000.0
+
+DURATION = T_L2B_SETTLE + 5000.0
 
 OBSERVE = ["i_clk", "i_rst", "i_tick", "i_level", "i_go", "i_select", "i_move",
            "i_confirm", "i_up", "i_down", "i_left", "i_right", "rnd_val",
@@ -133,6 +195,20 @@ OBSERVE = ["i_clk", "i_rst", "i_tick", "i_level", "i_go", "i_select", "i_move",
            "o_solved", "o_all_lock", "o_rowr", "o_rowg",
            "chk_row", "chk_orow", "chk_prow", "chk_pos", "chk_hit", "frow",
            "mv", "mv_pend"]
+
+# ------------------------------------------------------------------ 修复前/后的同一个 tb
+# ERR-021 的修复给 puzzle_ctrl 加了「整帧画面判据」寄存器（frm_ok / frm_valid /
+# frm_bad / pos_frm）。仿真用的是**综合后网表**，观测一个不存在的节点会直接报
+# "观测点缺失" —— 那样就没法用**同一个 tb** 分别在修复前/修复后各跑一轮做 A/B 对照。
+# 所以这里显式探测仓库 RTL 里有没有这些寄存器：
+#   · 修复前的 RTL：不观测（断言 ⑭ 会因为 o_solved = 0 直接失败 → 复现缺陷）
+#   · 修复后的 RTL：观测（额外断言帧判据本身）
+_CTRL_SRC = (pathlib.Path(__file__).resolve().parent.parent
+             / "rtl" / "puzzle_ctrl.vhd").read_text(encoding="utf-8")
+HAS_FRAME_VERDICT = "frm_ok" in _CTRL_SRC
+VERDICT_NODES = ["frm_ok", "frm_valid", "frm_bad", "pos_frm"]
+if HAS_FRAME_VERDICT:
+    OBSERVE = OBSERVE + VERDICT_NODES
 
 
 # ---------------------------------------------------------------- 独立几何模型
@@ -183,6 +259,25 @@ def overlap_report(pos, npc=NP):
                 bad.append("P%d@%s 与 P%d 在格子 %s 重叠" % (i, pos[i], used[cell], cell))
             used[cell] = i
     return oob, bad
+
+
+# ---------------------------------------------------------------- 二关用几何模型
+# 二关四块形状完全相同（2x2 方块），所以模型直接按 (mask, h, w) 算格子，不按块编号。
+def mask_cells(m):
+    """64 位掩码 -> {(行,列)}（bit = 8*行 + 列，bit0 = 左上角）。"""
+    return {(r, c) for r in range(8) for c in range(8) if (m >> (8 * r + c)) & 1}
+
+
+def union_cells(pos, npc, mask, hw):
+    """npc 块同形状零片放在 pos 上时，它们覆盖的格子并集。"""
+    h, w = hw
+    u = set()
+    for i in range(npc):
+        ar, ac = pos[i]
+        for (r, c) in mask_cells(mask):
+            if r < h and c < w:
+                u.add((ar + r, ac + c))
+    return u
 
 
 # ---------------------------------------------------------------- 激励
@@ -257,22 +352,31 @@ def build(b):
         else:
             b.output_bus(n, w)
         _buried(b, n, w)
+    if HAS_FRAME_VERDICT:                     # 只在修复后的 RTL 里存在（见文件上方说明）
+        for n, w in (("frm_ok", 1), ("frm_valid", 1), ("frm_bad", 1), ("pos_frm", 32)):
+            if w == 1:
+                b.output_bit(n)
+            else:
+                b.output_bus(n, w)
+            _buried(b, n, w)
 
     b.clock("i_clk", CLK)
     b.segments("i_rst", [(500.0, 1), (DURATION - 500.0, 0)])
     b.segments("i_tick", _tl(DURATION, [(t, t + CLK, 1)
                                         for t in _ticks(DURATION, TICK)], 0))
-    b.segments("i_level", [(DURATION, 0)])            # 一关（3 块）
+    # 一关（3 块 1x3+3x3+2x2）→ 到 T_L2 切二关（4 块 2x2）
+    b.segments("i_level", [(T_L2, 0), (DURATION - T_L2, 1)])
 
-    # 形状 / 目标
+    # 形状 / 目标：两关各一段，T_L2 处整组切换（与 puzzle_top 里 piece_rom/pattern_rom
+    # 受同一个 level 选择的行为一致）
     for i, sh in enumerate(L1):
-        b.bus_segments("i_sh%d" % i, [(DURATION, sh["mask"])])
-        b.bus_segments("i_h%d" % i, [(DURATION, sh["h"])])
-        b.bus_segments("i_w%d" % i, [(DURATION, sh["w"])])
-    b.bus_segments("i_sh3", [(DURATION, 0)])
-    b.bus_segments("i_h3", [(DURATION, 0)])
-    b.bus_segments("i_w3", [(DURATION, 0)])
-    b.bus_segments("i_target", [(DURATION, L1_TGT_MASK)])
+        b.bus_segments("i_sh%d" % i, [(T_L2, sh["mask"]), (DURATION - T_L2, L2_P)])
+        b.bus_segments("i_h%d" % i, [(T_L2, sh["h"]), (DURATION - T_L2, 2)])
+        b.bus_segments("i_w%d" % i, [(T_L2, sh["w"]), (DURATION - T_L2, 2)])
+    b.bus_segments("i_sh3", [(T_L2, 0), (DURATION - T_L2, L2_P)])
+    b.bus_segments("i_h3", [(T_L2, 0), (DURATION - T_L2, 2)])
+    b.bus_segments("i_w3", [(T_L2, 0), (DURATION - T_L2, 2)])
+    b.bus_segments("i_target", [(T_L2, L1_TGT_MASK), (DURATION - T_L2, L2_TARGET)])
 
     # rnd_val：① 恒 12（复现 ERR-018b）② 每 100 ns 换一个值（真随机）③ 恒 0（可复现）
     rnd = [(T_GO_2, 12)]
@@ -284,13 +388,15 @@ def build(b):
     rnd.append((DURATION - t, 0))
     b.bus_segments("rnd_val", rnd)
 
-    # 命令
-    b.segments("i_go", _tl(DURATION, _pulse_spans([T_GO_1, T_GO_2, T_GO_3, T_GO_D]), 0))
+    # 命令（一关的三/四阶段 + 二关的两阶段，共用同一条命令流水）
+    cmds = CMDS_C + CMDS_D + CMDS_L2 + CMDS_L2B
+    b.segments("i_go", _tl(DURATION, _pulse_spans(
+        [T_GO_1, T_GO_2, T_GO_3, T_GO_D, T_GO_L2, T_GO_L2B]), 0))
     b.segments("i_select", _tl(DURATION, _pulse_spans(
-        [t for (t, k, _a, _l) in (CMDS_C + CMDS_D) if k == "sel"]), 0))
+        [t for (t, k, _a, _l) in cmds if k == "sel"]), 0))
     b.segments("i_confirm", _tl(DURATION, _pulse_spans(
-        [t for (t, k, _a, _l) in (CMDS_C + CMDS_D) if k == "confirm"]), 0))
-    moves = [(t, a) for (t, k, a, _l) in (CMDS_C + CMDS_D) if k == "move"]
+        [t for (t, k, _a, _l) in cmds if k == "confirm"]), 0))
+    moves = [(t, a) for (t, k, a, _l) in cmds if k == "move"]
     b.segments("i_move", _tl(DURATION, _pulse_spans([t for (t, _a) in moves]), 0))
     for ch, name in (("U", "i_up"), ("D", "i_down"), ("L", "i_left"), ("R", "i_right")):
         # 方向必须在 i_move 之后的两拍内保持有效（引擎要把它锁进 mv_dir）
@@ -385,8 +491,9 @@ def check(vf):
     ))
 
     # ⑦ 一关只有 3 块 -> 选择索引不出现 3
+    #    ⚠️ 只在**一关**的时间窗内统计：T_L2 之后是二关（4 块），sel 会出现 3
     sel_vals, t = set(), T_GO_3
-    while t < DURATION:
+    while t < T_L2:
         v = _bus(vf, "o_sel_idx", t)
         if v is not None:
             sel_vals.add(v)
@@ -511,6 +618,64 @@ def check(vf):
         "散落①(rnd_val 恒 12) 实测 P0=%s P1=%s P2=%s；命中回退锚点的零片=%s；%s"
         % (posErr[0], posErr[1], posErr[2], used_fallback,
            "；".join(badE) if badE else "未复现重叠（若已修复请更新本条）"),
+    ))
+
+    # ================================================================
+    # 第二关（ERR-021）：成功判据必须是「拼出来的画面」而不是「每块的锚点编号」
+    # ================================================================
+    tQ = mask_cells(L2_TARGET)
+
+    # ⑬ 二关散落：4 块 2x2 落在确定性回退锚点，未锁定时不许判成功
+    tQ0 = T_GO_L2 + 18000.0
+    posQ = split_pos(_bus(vf, "o_pos", tQ0))
+    uQ = union_cells(posQ, NP2, L2_P, (2, 2))
+    res.append((
+        "⑬ 第二关（i_level=1，4 块 2x2）散落完成：四块落在确定性回退锚点、互不重叠"
+        "（16 格），且未锁定时 o_solved = 0",
+        tuple(posQ[:NP2]) == tuple(L2_FALLBACK) and len(uQ) == 16 and uQ != tQ
+        and _v(vf, "o_solved", tQ0) == "0",
+        "锚点 = %s（期望 %s）；并集 %d 格；并集==目标 = %s；o_solved = %s"
+        % (posQ[:NP2], L2_FALLBACK, len(uQ), uQ == tQ, _v(vf, "o_solved", tQ0)),
+    ))
+
+    # ⑭ ★ ERR-021 的回归判据
+    posP = split_pos(_bus(vf, "o_pos", T_L2_SETTLE))
+    uP = union_cells(posP, NP2, L2_P, (2, 2))
+    lockP = _bus(vf, "o_lock", T_L2_SETTLE)
+    solP = _v(vf, "o_solved", T_L2_SETTLE)
+    okP = (tuple(posP[:NP2]) == tuple(L2_PERM) and uP == tQ and lockP == 0xF
+           and solP == "1")
+    detailP = ("锚点 = %s；写死的 L2_TGT = %s（本阶段故意摆成它的置换 %s）；"
+               "并集==目标图案 = %s（%d 格）；o_lock = %s；o_solved = %s"
+               % (posP[:NP2], L2_TGT, L2_PERM, uP == tQ, len(uP), format(lockP, "04b"), solP))
+    if HAS_FRAME_VERDICT:
+        fok = _v(vf, "frm_ok", T_L2_SETTLE)
+        fva = _v(vf, "frm_valid", T_L2_SETTLE)
+        okP = okP and fok == "1" and fva == "1"
+        detailP += "；frm_ok = %s、frm_valid = %s（整帧画面判据）" % (fok, fva)
+    res.append((
+        "⑭ ★【ERR-021 回归判据】第二关把四块摆成目标锚点集的**一个置换**"
+        "（画面与目标图案逐格一致、四块全锁）→ o_solved = 1。"
+        "修复前判据是「第 k 块的锚点 == 写死的 L2_TGT[k]」，四块形状完全相同、"
+        "24 种等价摆法里只认 1 种 → 玩家拼对了也出叉",
+        okP, detailP,
+    ))
+
+    # ⑮ 反例：别把判据放宽成"永远成功"
+    posW = split_pos(_bus(vf, "o_pos", T_L2B_SETTLE))
+    uW = union_cells(posW, NP2, L2_P, (2, 2))
+    lockW = _bus(vf, "o_lock", T_L2B_SETTLE)
+    solW = _v(vf, "o_solved", T_L2B_SETTLE)
+    allW = _v(vf, "o_all_lock", T_L2B_SETTLE)
+    res.append((
+        "⑮ 反例：第二关四块**原地全锁定**（不摆到目标位置上），画面并集 != 目标图案 → "
+        "o_solved = 0 且 o_all_lock = 1（必须判失败；防止修 ERR-021 时把判据放宽成永远成功）",
+        tuple(posW[:NP2]) == tuple(L2_FALLBACK) and uW != tQ and lockW == 0xF
+        and solW == "0" and allW == "1",
+        "锚点 = %s；并集 %d 格（目标 %d 格、%s）；o_lock = %s；o_solved = %s；"
+        "o_all_lock = %s"
+        % (posW[:NP2], len(uW), len(tQ), "相同" if uW == tQ else "不同",
+           format(lockW, "04b"), solW, allW),
     ))
 
     return res

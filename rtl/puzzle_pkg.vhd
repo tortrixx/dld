@@ -122,18 +122,26 @@ package puzzle_pkg is
     constant L2_P3 : std_logic_vector(63 downto 0) :=
         "0000000000000000000000000000000000000000000000000000001100000011";
 
-    -- Target anchors: the position each piece must reach for the puzzle to count
-    -- as solved (requirement B9: "position and shape identical to the original").
-    -- Solved offline by exhaustive search (.ref/solve_l1.py): the three level-1
-    -- pieces tile the figure-4-1 rectangle in exactly 2 ways; this is the
-    -- symmetric one.  Encoded as a packed 8-bit value: (row & col), 4 bits each.
+    -- Target anchors: where each piece is EXPECTED to end up.  They describe the
+    -- intended arrangement and are verified against the pictures by
+    -- scripts/check_geometry.py ("target picture == union of the pieces at these
+    -- anchors").
+    --
+    -- ⚠️ ERR-021: these constants are **NOT** the success test any more.  Comparing
+    --    each piece's anchor with the value below rejects every equivalent tiling:
+    --    level 2 is four IDENTICAL 2x2 squares (24 equivalent placements, 1 accepted)
+    --    and level 1's rectangle has 2 equivalent tilings (1 accepted), so a player
+    --    who assembled the picture correctly was still told "wrong".
+    --    puzzle_ctrl now compares the assembled picture (union of the pieces) with
+    --    the target mask.  Solved offline by exhaustive search (.ref/solve_l1.py).
     constant L1_TGT0 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- (2,2)
     constant L1_TGT1 : std_logic_vector(7 downto 0) := "0011" & "0010";  -- (3,2)
     constant L1_TGT2 : std_logic_vector(7 downto 0) := "0100" & "0011";  -- (4,3)
     constant L1_TGT3 : std_logic_vector(7 downto 0) := "0000" & "0000";  -- unused
 
     -- Level-2 targets: the four 2x2 squares tile the 4x4 block at rows 2..5 x
-    -- cols 2..5 as (2,2) (2,4) (4,2) (4,4).
+    -- cols 2..5 as (2,2) (2,4) (4,2) (4,4).  (Any permutation of the four is an
+    -- equally correct assembly -- see the ERR-021 note above.)
     constant L2_TGT0 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- (2,2)
     constant L2_TGT1 : std_logic_vector(7 downto 0) := "0010" & "0100";  -- (2,4)
     constant L2_TGT2 : std_logic_vector(7 downto 0) := "0100" & "0010";  -- (4,2)

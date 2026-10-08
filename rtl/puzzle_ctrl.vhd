@@ -39,6 +39,11 @@
 --  the shape inside the 8x8 field AND the pieces do not share a cell.  The
 --  overlap test is EXACT (row masks ANDed), not a bounding box: a bounding box
 --  would reject legal moves of the cross and of the L-tromino in level 1.
+--
+--  Success (B9) is decided on the ASSEMBLED PICTURE, not on piece identities:
+--  o_solved rises when the union of the pieces equals i_target AND every piece is
+--  locked.  See the ERR-021 note at the signal declarations -- comparing anchor
+--  numbers against hardcoded targets made equivalent tilings fail.
 -- ============================================================================
 
 library IEEE;
@@ -159,15 +164,38 @@ architecture rtl of puzzle_ctrl is
     signal sh_att : unsigned(3 downto 0) := (others => '0');
 
     signal mv     : std_logic := '0';
-    signal solved_r  : std_logic;
     signal alllock_r : std_logic;
-    signal solved_c  : std_logic;
-    signal alllock_c : std_logic;
 
     signal scanrow : unsigned(2 downto 0) := (others => '0');  -- row being scanned
     signal frow    : unsigned(2 downto 0) := (others => '0');  -- row being built
     signal frame_r : std_logic_vector(63 downto 0) := (others => '0');
     signal frame_g : std_logic_vector(63 downto 0) := (others => '0');
+
+    ----------------------------------------------------------------------------
+    -- ⚠️ ERR-021 : 成功判据 = 「**拼出来的画面** == 目标图案」
+    --
+    -- 要求 B9 的原话是"位置和形状与初始拼图一致"，H8 把它读成"零片要拼回原图案"，
+    -- 也就是**玩家看到的那幅画面**必须等于目标图案。而最初的实现比的是
+    -- "第 k 块的锚点 == 写死的 L*_TGT[k]"，这是一个**过强**的判据：零片只要形状
+    -- 允许，同"一幅画面"可以有多种等价摆法，玩家无从分辨该把哪一块放到哪里。
+    --
+    -- 实测（tb_puzzle_ctrl 断言 ⑭，修复前 r10 复现）：
+    --   · 第二关四块是**完全相同**的 2x2 方块，填满 4x4 方块的摆法有 4! = 24 种，
+    --     画面逐格都一样，而锚点判据只认其中 1 种 → 拼对了按"确认"仍然出叉；
+    --   · 第一关的 4x3 矩形也有 2 种等价铺法（.ref/solve_l1.py 早就数出来过，
+    --     但当时只当成"可解性通过"，没意识到另一条铺法会被误判）→ 命中率只有 1/2。
+    --
+    -- 修法：不给零片编号，直接比**并集**。渲染器本来就一拍算一行的
+    -- "本行被零片覆盖的格子"（cov）和"目标图案本行的格子"（tgtrow），所以
+    -- "8 行的 cov 都等于 tgtrow"就等价于"零片并集 == 目标图案"，判定几乎不花面积。
+    --
+    -- 只在**整帧画完**时发布判据，而且要求这一帧里 pos/level 没变过
+    -- （pos_frm/lvl_frm 快照）：否则一帧可能混着两种摆法的行，把错的看成对的。
+    signal frm_bad   : std_logic := '0';      -- 当前帧出现过行不匹配
+    signal frm_ok    : std_logic := '0';      -- 上一整帧（且未被扰动）并集 == 目标
+    signal frm_valid : std_logic := '0';      -- 上一整帧是"干净"的一帧（判据可用）
+    signal pos_frm   : std_logic_vector(31 downto 0) := (others => '0');
+    signal lvl_frm   : std_logic := '0';
 
 begin
 
@@ -186,34 +214,28 @@ begin
                  pos(7 downto 0)   when others;
 
     ----------------------------------------------------------------------------
-    -- SOLVED / ALL-LOCKED: straight equality tests (no loops, no indexed reads)
+    -- ALL-LOCKED : straight equality test (no loops, no indexed reads)
+    --
+    -- ⚠️ ERR-021: "零片都到位了吗"不再由这里回答。这里只回答"是不是全部已确认锁定"；
+    --    画面是否正确由下面的整帧判据（frm_ok）回答 —— 玩家能看到的只有零片的并集。
     ----------------------------------------------------------------------------
-    process (pos, locked, i_level)
+    process (locked, i_level)
     begin
         if (i_level = '0') then
-            if (pos(31 downto 24) = L1_TGT0) and (pos(23 downto 16) = L1_TGT1)
-               and (pos(15 downto 8) = L1_TGT2) and (locked(2 downto 0) = "111") then
-                solved_r <= '1';
-            else
-                solved_r <= '0';
-            end if;
             if (locked(2 downto 0) = "111") then alllock_r <= '1';
             else                               alllock_r <= '0'; end if;
         else
-            if (pos(31 downto 24) = L2_TGT0) and (pos(23 downto 16) = L2_TGT1)
-               and (pos(15 downto 8) = L2_TGT2) and (pos(7 downto 0) = L2_TGT3)
-               and (locked = "1111") then
-                solved_r <= '1';
-            else
-                solved_r <= '0';
-            end if;
             if (locked = "1111") then alllock_r <= '1';
             else                       alllock_r <= '0'; end if;
         end if;
     end process;
 
-    o_solved   <= solved_r;
-    o_all_lock <= alllock_r;
+    -- 成功 = 整帧画面 == 目标图案 **且** 全部零片已确认锁定
+    o_solved   <= frm_ok and alllock_r;
+    -- 对外"全部锁定"的含义是"判据齐备"：还要等一个完整且未被扰动的帧把画面判据
+    -- 算完（最多 1 帧 = 40 ms）。否则刚确认最后一块的那一拍会拿上一帧的旧判据，
+    -- 拼对了也会被判成失败 —— 那正是本次要修的症状，不能在新判据里再留一次。
+    o_all_lock <= alllock_r and frm_valid;
     o_busy     <= '0' when (sh = SH_IDLE) else '1';
 
     ----------------------------------------------------------------------------
@@ -267,6 +289,7 @@ begin
         variable selrow : std_logic_vector(7 downto 0);
         variable grnrow : std_logic_vector(7 downto 0);
         variable islck0 : boolean;
+        variable bad    : std_logic;      -- ERR-021: 本行 cov 是否 != 目标图案本行
     begin
         if rising_edge(i_clk) then
             if (i_rst = '1') then
@@ -274,6 +297,11 @@ begin
                 scanrow <= (others => '0');
                 frame_r <= (others => '0');
                 frame_g <= (others => '0');
+                frm_bad   <= '0';
+                frm_ok    <= '0';
+                frm_valid <= '0';
+                pos_frm   <= (others => '0');
+                lvl_frm   <= '0';
             elsif (i_tick = '1') then
                 r   := to_integer(frow);
                 cov    := (others => '0');
@@ -343,6 +371,41 @@ begin
                     when 6      => tgtrow := i_target(55 downto 48);
                     when others => tgtrow := i_target(63 downto 56);
                 end case;
+
+                -- ---- ERR-021: 整帧画面判据 -----------------------------------
+                -- cov = 本行被零片覆盖的格子并集，tgtrow = 目标图案本行的格子。
+                -- 8 行的 cov 全等 tgtrow  <=>  零片并集 == 目标图案。
+                -- 这就是 B9"位置和形状与初始拼图一致"的可执行定义：与"哪一块在哪"
+                -- 无关，只与玩家看到的画面有关（等价摆法必须算成功）。
+                if (cov = tgtrow) then bad := '0'; else bad := '1'; end if;
+
+                if (r = 0) then
+                    -- 帧头：重启本帧的失配累加器，并把本帧各行结果所依赖的东西
+                    -- （零片锚点、关卡）拍个快照
+                    frm_bad <= bad;
+                    pos_frm <= pos;
+                    lvl_frm <= i_level;
+                elsif (r = 7) then
+                    -- 帧尾：发布判据。"干净"= 这一帧里 pos 与 level 都没变过，
+                    -- 否则 8 行可能取自两种不同摆法，错的会被看成对的。
+                    -- 跟踪 level 就够：i_target 与 i_sh* 都由 puzzle_top 的
+                    -- pattern_rom / piece_rom 直接按 level 选择，level 没变
+                    -- ⇒ 目标图案与零片形状都没变（这条接线约定必须保持）。
+                    if (pos_frm = pos) and (lvl_frm = i_level) then
+                        frm_valid <= '1';
+                        if (frm_bad = '0') and (bad = '0') then
+                            frm_ok <= '1';
+                        else
+                            frm_ok <= '0';
+                        end if;
+                    else
+                        frm_valid <= '0';
+                        frm_ok    <= '0';
+                    end if;
+                    frm_bad <= '0';
+                else
+                    frm_bad <= frm_bad or bad;
+                end if;
 
                 -- Colour of this row.
                 --   green = selected piece OR locked piece
