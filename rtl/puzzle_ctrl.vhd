@@ -66,7 +66,11 @@ entity puzzle_ctrl is
                                                         -- 顶层另走 1 kHz → 125 Hz，见下）
         rnd_step  : out std_logic;
         rnd_val   : in  std_logic_vector(7 downto 0);
-        i_level   : in  std_logic;                      -- '0' level 1, '1' level 2
+        i_level   : in  std_logic;                      -- '0' level 1, '1' level 2/3
+                                                        -- （⚠️ D2 起是三关：第二关与
+                                                        --   第三关共用 '1' —— 本模块只关心
+                                                        --   "三块还是四块"，关口编号由
+                                                        --   game_fsm 的 lvl3 负责）
         i_pat     : in  std_logic_vector(1 downto 0);   -- 图案库下标（A2/S1）：
                                                         -- 与 i_level 一起决定 i_target
                                                         -- （顶层 pattern_rom 按 (level,pat)
@@ -252,6 +256,11 @@ architecture rtl of puzzle_ctrl is
     -- ⚠️ 2026-10-09（A2/S1）：i_target 现在由 (i_level, i_pat) 一起决定，所以"本帧干净"
     --    的快照必须**同时**跟踪 pat —— 只跟踪 level 的话，图案库切换（开局那一拍）
     --    可能让一帧里混着两幅图案的行，判据就不可信了。成本只有 2 个寄存器 + 比较。
+    -- ⚠️ 2026-10-09（D2 三关）：**第二关→第三关时 i_level 不变**（若第三关恰好抽到
+    --    PAT3，连 i_pat 也不变）→ 这份快照分辨不出"换关"。**不影响判决**：换关一定伴随
+    --    一次新的散落（pos 变、locked 清零），而判决还要求 shuf_seen='1'（本局必须看见过
+    --    散落忙态）且 i_shuf_busy='0' —— 见 game_fsm 与 sim/tb_puzzle_top 的三关连过场景。
+    --    没有为此再加一位（那会动到既有高扇出网、又占面积，实测代价见 docs/06 §13.3）。
     signal pat_frm   : std_logic_vector(1 downto 0) := (others => '0');
 
 begin
@@ -586,7 +595,8 @@ begin
         variable prow   : integer;
         variable srow   : integer;
         variable rw     : std_logic_vector(7 downto 0);
-        variable lvl2   : boolean;
+        variable lvl2   : boolean;   -- "不是第一关"：四块零片 / 四槽可选
+                                     -- （D2 起覆盖第二关与第三关，名字沿用历史；语义 == i_level='1'）
         variable me     : std_logic_vector(1 downto 0);   -- piece being validated
         variable xr, xc : integer;                        -- ERR-032: bounded candidates
     begin

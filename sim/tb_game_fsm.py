@@ -17,11 +17,18 @@
       ⑥ 一关 30 秒到 → 失败（B9 超时判负）；
       ⑦ 失败后按"开始"可重开，且回到**第一关**（B11）；
       ⑧ 一关 i_solved=1 → 进第二关，预览后 **o_time = 40**（B10）；
-      ⑨ 二关 i_solved=1 → 胜利（B10）；
-      ⑩ 胜利后按"开始"又能进预览（B11）；
-      ⑪ 对局中 i_all_lock=1 且引擎空闲 → 判负（B9"拼错"）；
-      ⑫ SW7=0 → 立刻回到自检并清空（B1）；
-      ⑬ o_blink 是 **2 Hz 方波（电平持续半个周期）**，不是单时钟脉冲（ERR-011）。
+      ⑨ 二关 i_solved=1 → 进**第三关**预览（A2"增加游戏关数"），预览后 o_time = 40；
+      ⑩ 三关 i_solved=1 → **胜利**（A2/D2：第三关是最后一关）；
+      ⑪ 胜利后按"开始"又能进预览（B11，且关卡回第一关）；
+      ⑫ 对局中 i_all_lock=1 且引擎空闲 → 判负（B9"拼错"）；
+      ⑬ SW7=0 → 立刻回到自检并清空（B1）；
+      ⑭ o_blink 是 **2 Hz 方波（电平持续半个周期）**，不是单时钟脉冲（ERR-011）。
+
+【D2（2026-10-09 第 12 工作阶段）：第三关的时间轴】
+    场景 2 现在要连过三关（二关拼对不再直接胜利），所以 104000 之后的**全部**事件、
+    判据窗口与采样时刻统一后移 `D3_SHIFT`（= 20000 ns）；第三关自己新增了一对窗口
+    （散落忙窗 110060~111000、拼对窗 116000~118000）→ 第三关拼对后进胜利。
+    所有尾段常量都由 `D3_SHIFT` 推导，不许写死字面量（ERR-034 的教训）。
 
 【时间刻度】这里用一个"仿真秒" = 2000 ns（100 个 20 ns 时钟）。
     1 Hz 节拍在 t = 2000, 4000, 6000 ... 各来一个时钟宽；2 Hz 节拍每 1000 ns。
@@ -34,10 +41,22 @@ T1 = 2000.0          # "1 Hz"节拍周期
 T2 = 1000.0          # tick_2hz（500 ms 一个脉冲；本 tb 只把它接进端口，不再当闪烁）
 T4 = 500.0           # tick_4hz（250 ms，= 2 Hz 方波的半周期）—— B1"2 Hz 闪烁"用它
 GRID_PERIOD = 10.0
-DURATION = 192000.0
+
+# ---- D2（第三关）时间轴后移量 ---------------------------------------------------
+# ⚠️ 2026-10-09（第 12 工作阶段）：场景 2 现在**多了一关** —— 二关拼对（100000）
+#    → 三关预览 → 三关对局（40 s）→ 三关拼对 → 胜利；原来是"二关拼对 = 胜利"。
+#    为了让这三步有时间跑，把 **104000 之后的全部事件**（按键、判据窗口、SW7 拨动、
+#    所有采样时刻）整体后移 D3_SHIFT ns。**尾段常量一律由它推导**，不再手改字面量：
+#    ERR-034 的教训就是"按旧时间轴标定的常量在流程变长后失效，而那种错只有整机重跑才暴露"。
+#    后移后每一局的"散落忙窗 / 判据窗"仍与该局的对局起点保持原来的相对关系
+#    （它们一起平移），所以 ERR-024 的残留场景语义不变。
+D3_SHIFT = 20000.0
+
+DURATION = 192000.0 + D3_SHIFT
 
 S_SELF, S_IDLE, S_PREV, S_PLAY, S_WIN, S_FAIL = 0, 1, 2, 3, 4, 5
 T_PREVIEW, T_L1, T_L2 = 5, 30, 40          # 课程要求 B4 / B5 / B10
+T_L3 = 40                                  # A2 第三关（题目没规定 → 自拟 40 s，= T_LEVEL3）
 
 # 键码（模块内部译码前的**原始键号** = 4*行 + 列，与 game_fsm.key_of 的映射表一致）
 #
@@ -64,12 +83,12 @@ PRESSES = [
     (25000,  RAW_LEFT,    "一关对局：左"),
     (27000,  RAW_RIGHT,   "一关对局：右"),
     (76000,  RAW_START,   "超时失败后重开"),
-    (104000, RAW_START,   "胜利后重开"),
-    (128000, RAW_START,   "第三场景：SW7 再拨上后开始（自检 2 s 已过）"),
-    (142000, RAW_START,   "第四场景：残留判负后重开"),
-    (166000, RAW_START,   "第五场景：SW7 再拨一次后开始（B11 的'游戏结束后重开'已测过，"
+    (104000 + D3_SHIFT, RAW_START, "**胜利**后重开（D2 之后胜利发生在第三关，见 ⑪c）"),
+    (128000 + D3_SHIFT, RAW_START, "第三场景：SW7 再拨上后开始（自检 2 s 已过）"),
+    (142000 + D3_SHIFT, RAW_START, "第四场景：残留判负后重开"),
+    (166000 + D3_SHIFT, RAW_START, "第五场景：SW7 再拨一次后开始（B11 的'游戏结束后重开'已测过，"
                           "这里专测**对局中**重开）"),
-    (180000, RAW_START,   "第五场景：**对局中**按开始 —— B11 要求可以随时开新一轮"),
+    (180000 + D3_SHIFT, RAW_START, "第五场景：**对局中**按开始 —— B11 要求可以随时开新一轮"),
 ]
 
 # i_solved / i_all_lock / i_shuf_busy 的时间窗
@@ -79,26 +98,39 @@ PRESSES = [
 #    这样就能精确复现"判决发生在散落之前"的窗口。
 #    窗口到 154100 为止：之后的第五场景必须是"干干净净的新一局"（solved/all_lock 全 0），
 #    否则对局中重开这条会被残留的胜利判据搅乱。
-SOLVED_WINS = [(88000.0, 90000.0), (100000.0, 102000.0), (142500.0, 154100.0)]
-ALL_LOCK_WINS = [(116000.0, 118000.0), (122000.0, 154100.0)]
+SOLVED_WINS = [(88000.0, 90000.0),                 # 一关拼对 → 第二关预览
+               (100000.0, 102000.0),               # 二关拼对 → **第三关预览**（D2 新增的一关）
+               (116000.0, 118000.0),               # ★ 三关拼对 → **胜利**（D2 新增）
+               (142500.0 + D3_SHIFT, 154100.0 + D3_SHIFT)]
+ALL_LOCK_WINS = [(116000.0 + D3_SHIFT, 118000.0 + D3_SHIFT),
+                 (122000.0 + D3_SHIFT, 154100.0 + D3_SHIFT)]
 # ⚠️ 2026-10-08 修正：本表原来只给**两个**对局建了散落忙窗，可 `game_fsm` 现在要求
 #    "本局至少看到过一次散落"（ERR-024）；而真实引擎**每一局**都会散落，所以这里
 #    给每一局各建一个"开局后不久"的忙窗（也顺便更贴近真实时序：玩家不可能在
 #    散落还没跑完时就拼好）。第一版漏建的两局直接把 ⑨⑩⑪⑬⑰ 拖挂（r08 = 12/17）。
+#    ⚠️ 2026-10-09（D2）：第三关那一局（对局起点 110020）也要有自己的忙窗 —— 见
+#       下面 (110060, 111000)；"第三关拼对 → 胜利"必须在**看见了第三关的散落**之后
+#       才允许，否则那个"胜利"是拿上一局的残留判据判出来的（正是 ERR-024 的形态）。
 SHUF_BUSY_WINS = [(14060.0, 15000.0), (86060.0, 87000.0), (98060.0, 99000.0),
-                  (114060.0, 115000.0), (138060.0, 140060.0), (152060.0, 154060.0),
-                  (176060.0, 177000.0)]
-T_SW_ON2 = 122000.0                       # SW7 再拨上去（自检 2 s -> 待机）
-T_PLAY3 = 138020.0                        # 第三局对局开始（推算：见 §1.2 时间表）
+                  (110060.0, 111000.0),            # ★ 第三关对局开局散落（D2 新增）
+                  (114060.0 + D3_SHIFT, 115000.0 + D3_SHIFT),
+                  (138060.0 + D3_SHIFT, 140060.0 + D3_SHIFT),
+                  (152060.0 + D3_SHIFT, 154060.0 + D3_SHIFT),
+                  (176060.0 + D3_SHIFT, 177000.0 + D3_SHIFT)]
+T_SW_OFF2 = 120000.0 + D3_SHIFT           # SW7 拨下去（⑭）
+T_SW_ON2 = 122000.0 + D3_SHIFT             # SW7 再拨上去（自检 2 s -> 待机）
+T_SW_OFF3 = 158000.0 + D3_SHIFT            # 第二次拨下去
+T_SW_ON3 = 160000.0 + D3_SHIFT             # 第三次拨上去
+T_PLAY3 = 138020.0 + D3_SHIFT              # 第三局对局开始（推算：见 §1.2 时间表）
 # SW7 的拨动序列：(时刻, 电平)。第五场景需要**再清一次**，才能从干净的自检重新开局。
-SW_SPANS = [(0.0, 120000.0, 1), (120000.0, T_SW_ON2, 0), (T_SW_ON2, 158000.0, 1),
-            (158000.0, 160000.0, 0), (160000.0, DURATION, 1)]
+SW_SPANS = [(0.0, T_SW_OFF2, 1), (T_SW_OFF2, T_SW_ON2, 0), (T_SW_ON2, T_SW_OFF3, 1),
+            (T_SW_OFF3, T_SW_ON3, 0), (T_SW_ON3, DURATION, 1)]
 
 OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz", "i_tick_4hz",
            "i_solved", "i_all_lock", "i_shuf_busy",
-           "o_state", "o_level", "o_time", "o_blink", "o_go",
+           "o_state", "o_level", "o_lvl3", "o_time", "o_blink", "o_go",
            "o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right",
-           "st", "cnt", "level", "req_go", "go_done", "blink_r"]
+           "st", "cnt", "level", "lvl3", "req_go", "go_done", "blink_r"]
 
 
 # ---------------------------------------------------------------- 激励
@@ -151,6 +183,7 @@ def build(b):
     b.input_bit("i_shuf_busy")
     b.output_bus("o_state", 3)
     b.output_bit("o_level")
+    b.output_bit("o_lvl3")
     b.output_bus("o_time", 6)
     b.output_bit("o_blink")
     b.output_bit("o_go")
@@ -161,7 +194,7 @@ def build(b):
     b.output_bit("o_down")
     b.output_bit("o_left")
     b.output_bit("o_right")
-    for n, w in (("st", 3), ("cnt", 6), ("level", 1), ("req_go", 1),
+    for n, w in (("st", 3), ("cnt", 6), ("level", 1), ("lvl3", 1), ("req_go", 1),
                  ("go_done", 1), ("blink_r", 1)):
         if w == 1:
             b.output_bit(n)
@@ -302,13 +335,19 @@ def check(vf):
     ))
 
     # ⑥ ★ ERR-006 回归：每局散落请求 o_go 只上升一次
+    #    ⚠️ 2026-10-09（D2）：期望值不再写死"8 局"——**从前面的状态轨迹独立数出**
+    #    "进入对局的次数"（每次进 S_PLAYING 必须且只许有一次散落请求）。加一关之后
+    #    局数本来就变了，写死的数字只会变成下一个 ERR-034。
     go_r = _rises(vf, "o_go")
+    play_entries = [t for i, (t, v) in enumerate(st_tr)
+                    if v == S_PLAY and (i == 0 or st_tr[i - 1][1] != S_PLAY)]
     res.append((
-        "⑥ ★ o_go 每局只上升一次、全流程共 8 局 = 8 次（ERR-006：散落握手必须有"
-        "'完成'记忆，否则会无限重复散落、清掉选中/锁定，按键全部失效）",
-        len(go_r) == 8,
-        "o_go 上升沿时刻：%s（共 %d 次，期望 8）"
-        % (", ".join("%.0f" % t for t in go_r), len(go_r)),
+        "⑥ ★ o_go 每局只上升一次，且次数 == 进入对局的次数（从状态轨迹独立数出）；"
+        "ERR-006：散落握手必须有'完成'记忆，否则会无限重复散落、清掉选中/锁定，按键全部失效",
+        len(go_r) == len(play_entries) and len(go_r) > 0,
+        "o_go 上升沿时刻：%s（共 %d 次）| 进入对局 %d 次（时刻 %s）"
+        % (", ".join("%.0f" % t for t in go_r), len(go_r), len(play_entries),
+           ", ".join("%.0f" % t for t in play_entries)),
     ))
 
     # ⑦ 一关 30 秒到 -> 失败
@@ -357,39 +396,78 @@ def check(vf):
            _bus_at(vf, "o_time", (t_p2 or 0) + 100.0), T_L2),
     ))
 
-    # ⑪ 二关拼对 -> 胜利
-    t_win = _first_state(vf, S_WIN)
+    # ⑪ 二关拼对 -> **进第三关**（A2"增加游戏关数"；D2 之前这里是"直接胜利"）
+    cand3 = [t for (t, v) in st_tr if v == S_PREV and t > 100000.0]
+    t_l3prev = cand3[0] if cand3 else None
     res.append((
-        "⑪ 第二关对局中 i_solved=1 → 胜利状态（B10）",
-        t_win is not None,
-        "进胜利状态时刻=%s" % ("%.0f ns" % t_win if t_win else "从未进入"),
+        "⑪ 第二关对局中 i_solved=1 → 进入**第三关预览**（A2『增加游戏关数』）："
+        "o_level=1 且 o_lvl3=1、o_time=5（预览仍是 5 秒）",
+        t_l3prev is not None and _bit_at(vf, "o_level", t_l3prev + 100.0) == "1"
+        and _bit_at(vf, "o_lvl3", t_l3prev + 100.0) == "1"
+        and _bus_at(vf, "o_time", t_l3prev + 100.0) == T_PREVIEW,
+        "三关预览时刻=%s（o_level=%s o_lvl3=%s o_time=%s）"
+        % ("%.0f ns" % t_l3prev if t_l3prev else "无",
+           _bit_at(vf, "o_level", (t_l3prev or 0) + 100.0),
+           _bit_at(vf, "o_lvl3", (t_l3prev or 0) + 100.0),
+           _bus_at(vf, "o_time", (t_l3prev or 0) + 100.0)),
     ))
 
-    # ⑫ 胜利后按开始 -> 预览
-    t_prev3 = [t for (t, v) in st_tr if v == S_PREV and t > 100500.0]
+    # ⑪b 三关对局限时 = 40 s（自拟 T_LEVEL3；题目只规定了 B5 的 30 s 与 B10 的 40 s）
+    cand_l3play = [t for (t, v) in st_tr if v == S_PLAY and t > 105000.0]
+    t_p3 = cand_l3play[0] if cand_l3play else None
     res.append((
-        "⑫ 胜利后按【开始】再次进入预览（B11：游戏结束后可开新一轮）",
-        len(t_prev3) > 0,
-        "胜利后的预览时刻：%s" % (["%.0f" % t for t in t_prev3] or "无"),
+        "⑪b 第三关对局 o_time 被加载为 %d（A2 第三关自拟 40 s = pkg.T_LEVEL3）" % T_L3,
+        t_p3 is not None and _bus_at(vf, "o_time", t_p3 + 100.0) == T_L3
+        and _bit_at(vf, "o_lvl3", t_p3 + 100.0) == "1",
+        "三关对局时刻=%s，o_time=%s（期望 %d）、o_lvl3=%s"
+        % ("%.0f ns" % t_p3 if t_p3 else "无",
+           _bus_at(vf, "o_time", (t_p3 or 0) + 100.0), T_L3,
+           _bit_at(vf, "o_lvl3", (t_p3 or 0) + 100.0)),
+    ))
+
+    # ⑪c 三关拼对 -> 胜利（"胜利图案"现在由第三关给出：第三关是最后一关）
+    t_win = _first_state(vf, S_WIN)
+    res.append((
+        "⑪c 第三关对局中 i_solved=1 → **胜利**状态（A2：第三关是最后一关，"
+        "这是胜利图案真正的出口；D2 之前出口在第二关）",
+        t_win is not None and t_win > 110000.0,
+        "进胜利状态时刻=%s（必须晚于第三关对局起点 110020 ns）"
+        % ("%.0f ns" % t_win if t_win else "从未进入"),
+    ))
+
+    # ⑫ 胜利后按开始 -> 预览（且关卡号与第三关标志都回到第一关）
+    t_prev3 = ([t for (t, v) in st_tr if v == S_PREV and t > t_win] if t_win else [])
+    res.append((
+        "⑫ 胜利后按【开始】再次进入预览，且 o_level=0、o_lvl3=0（B11：游戏结束后可开新一轮）",
+        len(t_prev3) > 0 and _bit_at(vf, "o_level", t_prev3[0] + 100.0) == "0"
+        and _bit_at(vf, "o_lvl3", t_prev3[0] + 100.0) == "0",
+        "胜利后的预览时刻：%s；o_level=%s o_lvl3=%s"
+        % (["%.0f" % t for t in t_prev3] or "无",
+           _bit_at(vf, "o_level", (t_prev3[0] if t_prev3 else 0) + 100.0),
+           _bit_at(vf, "o_lvl3", (t_prev3[0] if t_prev3 else 0) + 100.0)),
     ))
 
     # ⑬ 拼错判负：i_all_lock=1 且引擎空闲
+    T13 = 116100.0 + D3_SHIFT
     res.append((
         "⑬ 对局中 i_all_lock=1 且 i_shuf_busy=0 → 判负（B9：全部锁定但位置形状不对）",
-        _bus_at(vf, "o_state", 116100.0) == S_FAIL,
+        _bus_at(vf, "o_state", T13) == S_FAIL,
         "i_all_lock 置位后的状态 = %s（期望 %d 失败）"
-        % (_bus_at(vf, "o_state", 116100.0), S_FAIL),
+        % (_bus_at(vf, "o_state", T13), S_FAIL),
     ))
 
     # ⑭ SW7=0 立刻回自检并清空
+    T14 = 120100.0 + D3_SHIFT
     res.append((
         "⑭ SW7=0 立刻回到自检并清零（B1：开关关掉时全部不显示）",
-        _bus_at(vf, "o_state", 120100.0) == S_SELF
-        and _bit_at(vf, "o_level", 120100.0) == "0"
-        and _bus_at(vf, "o_time", 120100.0) == 0,
-        "SW 拉低后 o_state=%s（期望 %d）、o_level=%s、o_time=%s"
-        % (_bus_at(vf, "o_state", 120100.0), S_SELF,
-           _bit_at(vf, "o_level", 120100.0), _bus_at(vf, "o_time", 120100.0)),
+        _bus_at(vf, "o_state", T14) == S_SELF
+        and _bit_at(vf, "o_level", T14) == "0"
+        and _bit_at(vf, "o_lvl3", T14) == "0"
+        and _bus_at(vf, "o_time", T14) == 0,
+        "SW 拉低后 o_state=%s（期望 %d）、o_level=%s、o_lvl3=%s、o_time=%s"
+        % (_bus_at(vf, "o_state", T14), S_SELF,
+           _bit_at(vf, "o_level", T14), _bit_at(vf, "o_lvl3", T14),
+           _bus_at(vf, "o_time", T14)),
     ))
 
     # ⑮ o_blink 是 2 Hz 方波（电平），不是单时钟脉冲
@@ -417,28 +495,31 @@ def check(vf):
     # ================================================================
     # ⑯ 残留的 i_all_lock=1 不得在散落之前判负
     st_after_play = _bus_at(vf, "o_state", T_PLAY3 + 60.0)     # 对局开始后 3 拍
-    fails3 = [t for (t, v) in st_tr if v == S_FAIL and t > 135000.0]
+    fails3 = [t for (t, v) in st_tr if v == S_FAIL and t > 135000.0 + D3_SHIFT]
     t_fail3 = fails3[0] if fails3 else None
+    T16_END = 140060.0 + D3_SHIFT
     res.append((
         "⑯ ★【ERR-024】新一局对局刚开始、散落还没起来时，上一局残留的 i_all_lock=1 "
         "**不得**判负：状态机必须在 S_PLAYING 里等散落（忙→闲）之后才判决",
-        st_after_play == S_PLAY and t_fail3 is not None and t_fail3 > 140060.0,
-        "对局开始后 3 拍仍是 %s（期望 %d 对局）；本轮首次判负时刻=%s（必须晚于散落结束 140060 ns）"
-        % (st_after_play, S_PLAY, "-" if t_fail3 is None else "%.0f ns" % t_fail3),
+        st_after_play == S_PLAY and t_fail3 is not None and t_fail3 > T16_END,
+        "对局开始后 3 拍仍是 %s（期望 %d 对局）；本轮首次判负时刻=%s（必须晚于散落结束 %.0f ns）"
+        % (st_after_play, S_PLAY, "-" if t_fail3 is None else "%.0f ns" % t_fail3, T16_END),
     ))
 
     # ⑰ 残留的 i_solved=1 不得在散落之前把关卡推进到第二关
-    prevs4 = [t for (t, v) in st_tr if v == S_PREV and t > 150000.0]
+    prevs4 = [t for (t, v) in st_tr if v == S_PREV and t > 150000.0 + D3_SHIFT]
     t_prev4 = prevs4[0] if prevs4 else None
-    st_wait = _bus_at(vf, "o_state", 152100.0)                 # 对局开始后 4 拍
+    T17 = 152100.0 + D3_SHIFT                                  # 对局开始后 4 拍
+    T17_END = 154060.0 + D3_SHIFT
+    st_wait = _bus_at(vf, "o_state", T17)
     res.append((
         "⑰ ★【ERR-024】新一局对局刚开始时残留的 i_solved=1 **不得**立刻推进关卡："
         "必须先看到散落（忙→闲），之后才允许按 i_solved 进第二关预览（o_level=1）",
-        st_wait == S_PLAY and t_prev4 is not None and t_prev4 > 154060.0
+        st_wait == S_PLAY and t_prev4 is not None and t_prev4 > T17_END
         and _bit_at(vf, "o_level", t_prev4 + 100.0) == "1",
         "对局开始后 4 拍仍是 %s（期望 %d 对局）；进第二关预览时刻=%s"
-        "（必须晚于散落结束 154060 ns）、此刻 o_level=%s"
-        % (st_wait, S_PLAY, "-" if t_prev4 is None else "%.0f ns" % t_prev4,
+        "（必须晚于散落结束 %.0f ns）、此刻 o_level=%s"
+        % (st_wait, S_PLAY, "-" if t_prev4 is None else "%.0f ns" % t_prev4, T17_END,
            _bit_at(vf, "o_level", (t_prev4 or 0) + 100.0)),
     ))
 
@@ -449,10 +530,10 @@ def check(vf):
     #    判定方式：按下去之后必须**回到预览**，并且**再走满 5 秒预览后重新散落**
     #    （o_go 再次上升），这才叫"完整重开一轮"而不是停在原地。
     # ---------------------------------------------------------
-    prev_after = [t for (t, v) in st_tr if v == S_PREV and t > 179000.0]
-    play_after = [t for (t, v) in st_tr if v == S_PLAY and t > 179000.0]
-    go_after = [t for t in go_r if t > 179000.0]
-    d_prev = (prev_after[0] - 180000.0) if prev_after else -1
+    prev_after = [t for (t, v) in st_tr if v == S_PREV and t > 179000.0 + D3_SHIFT]
+    play_after = [t for (t, v) in st_tr if v == S_PLAY and t > 179000.0 + D3_SHIFT]
+    go_after = [t for t in go_r if t > 179000.0 + D3_SHIFT]
+    d_prev = (prev_after[0] - (180000.0 + D3_SHIFT)) if prev_after else -1
     d_go = (go_after[0] - prev_after[0]) if (prev_after and go_after) else -1
     res.append((
         "⑱ ★【B11】**对局中**按【开始】→ 立刻回到预览，并**完整重开一轮**"

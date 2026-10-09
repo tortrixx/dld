@@ -161,8 +161,12 @@ package puzzle_pkg is
     -- 【面积账】零片与图案仍然全是**编译期常量**：piece_rom 0 LE、pattern_rom 4 LE
     --   与改版前**逐位相同** —— 换成异形零片没多花一个 LE（"装不下"的不是这里）。
     --
-    -- 【选取点】每局进入 S_PREVIEW（按【开始】/过关）那一拍锁存 rng_lfsr 低 2 位成
-    --   pat_sel（rtl/puzzle_top.vhd）；第一关按 B4 恒为图 4-1，i_pat 只对第二关有效。
+    -- 【选取点】每次进入 S_PREVIEW（按【开始】开局、或过关进入下一关）那**晚一拍**锁存：
+    --     · **第二关**（level='1' 且 lvl3='0'）→ 恒锁 `L2_FIXED_PAT`（PAT3 阶梯，固定）
+    --     · **第三关**（lvl3='1'，A2 新增）  → 锁 rng_lfsr 低 2 位 → 四幅里随机选
+    --   第一关按 B4 恒为图 4-1（pattern_rom 在 level='0' 时忽略 i_pat）。
+    --   ⚠️ 2026-10-09 之前是"每局第二关都随机"；现在是"第二关固定、第三关随机"，
+    --      原因见上面 L2_FIXED_PAT 的说明。
     ----------------------------------------------------------------------------
     constant L2_PAT0 : std_logic_vector(63 downto 0) :=
         "0000000000000000001111000011110000111100001111000000000000000000";  -- 田（= 原图案）
@@ -177,6 +181,27 @@ package puzzle_pkg is
     type pat_arr_t is array (0 to 3) of std_logic_vector(63 downto 0);
     constant L2_PATS : pat_arr_t := (L2_PAT0, L2_PAT1, L2_PAT2, L2_PAT3);
     constant L2_PAT_N : integer := 4;
+
+    -- ⚠️ 2026-10-09（用户拍板，第 12 工作阶段 / D2 设计）：**第二关图案改成固定**，
+    --   不再每局随机；"多种图案随机选择"移到**新增的第三关**。
+    --
+    -- 【为什么改】B10 只说"完整拼图图案自拟"（= 由设计者自己定，不是题目指定），
+    --   而"**多种拼图图案随机选择**"是**提高要求 2**里的内容，且与"**增加游戏关数**"
+    --   写在同一条里。把随机图案放在**基本要求**的第二关上，等于把加分项提前用掉，
+    --   而"增加关数"那一半一直欠账（旧文档如实记为"A2 只做了一半"）。新口径：
+    --       第一关 = 图 4-1（B4 指定，固定）
+    --       第二关 = **本常量指定的这一幅**（自拟但固定，与第一关同等对待 → B10 字面）
+    --       第三关 = 从 L2_PATS 四幅里**随机选**（A2：增加关数 + 多种图案随机选择，见
+    --                rtl/game_fsm.vhd 的 lvl3 与 rtl/puzzle_top.vhd 的 pat_sel 锁存）
+    --
+    -- 【为什么选 PAT3 阶梯，而不是原来的 4x4 田】
+    --   ① 用户明确要求"第二关的固定图案不要用原来的 4x4"；
+    --   ② PAT3 是四幅里**唯一有 2 种**等价铺法的图案（PAT0/PAT1/PAT2 各只有 1 种），
+    --      于是 ERR-021 的"看画面判成败"回归用例**就落在基本要求的正常流程里** ——
+    --      第二关无论玩家拼成两种等价铺法中的哪一种，都必须判成功（不再只在仿真里跑）。
+    --      ⚠️ 这也意味着第二关比"唯一铺法"稍宽容：这是有意的（难度阶梯 = 第二关稍易、
+    --         第三关随图案 0/1/2 最难）。
+    constant L2_FIXED_PAT : std_logic_vector(1 downto 0) := "11";   -- 3 == L2_PAT3（阶梯）
 
     -- 第二关四块零片：3 + 2 + 5 + 6 = 16 格（== 每幅图案的 16 格）
     --   （相对形状：bit = 8*行 + 列，行 0 在最低 8 位；与第一关零片同一约定）
@@ -213,6 +238,18 @@ package puzzle_pkg is
     constant L2_TGT1 : std_logic_vector(7 downto 0) := "0100" & "0010";  -- Q1 @ (4,2)
     constant L2_TGT2 : std_logic_vector(7 downto 0) := "0010" & "0011";  -- Q2 @ (2,3)
     constant L2_TGT3 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- Q3 @ (2,2)
+
+    -- ⚠️ 2026-10-09（D2）：第二关的**固定图案**现在换成了 PAT3（阶梯，见 L2_FIXED_PAT），
+    --   所以它的见证铺法也要有常量（check_geometry.py 用它核对"文档里的锚点 == 穷举
+    --   出来的第 0 种铺法"）。PAT3 有 **2 种**铺法，这里是第 0 种；第 1 种由
+    --   scripts/check_geometry.py 打印，并由 scripts/check_plans.py 复核
+    --   "两种铺法都必须判成功"（ERR-021 回归）。
+    --   L2_TGT0..3（上面那组）保留不动：它们描述的是**图案库第 0 幅（田）**的唯一铺法，
+    --   现在那一幅只出现在**第三关的随机池**里，旧证据（ERR-021/023）继续有效。
+    constant L2_PAT3_TGT0 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- Q0 @ (2,2)
+    constant L2_PAT3_TGT1 : std_logic_vector(7 downto 0) := "0010" & "0001";  -- Q1 @ (2,1)
+    constant L2_PAT3_TGT2 : std_logic_vector(7 downto 0) := "0011" & "0011";  -- Q2 @ (3,3)
+    constant L2_PAT3_TGT3 : std_logic_vector(7 downto 0) := "0011" & "0010";  -- Q3 @ (3,2)
 
     -- Result-picture masks shown at the end of a game (self-designed).
     --
@@ -298,6 +335,9 @@ package puzzle_pkg is
     constant T_PREVIEW  : integer := 5;    -- B4/B10: preview lasts 5 s
     constant T_LEVEL1   : integer := 30;   -- B5    : level-1 time limit 30 s
     constant T_LEVEL2   : integer := 40;   -- B10   : level-2 time limit 40 s
+    -- 第三关（A2"增加游戏关数"的扩展关，2026-10-09）：题目**没有规定**，自拟。
+    -- 与第二关同为 40 s：零片、图案库完全一样，唯一区别是图案**从四幅里随机选**。
+    constant T_LEVEL3   : integer := 40;   -- A2    : level-3 time limit 40 s（自拟）
 
     ----------------------------------------------------------------------------
     -- 6. Misc

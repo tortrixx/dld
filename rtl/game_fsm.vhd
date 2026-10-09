@@ -13,15 +13,33 @@
 --        --"start"-->  S_PREVIEW
 --      S_PREVIEW    5 s preview, countdown on DISP7 (B4)
 --        --preview ends--> scatter pieces, S_PLAYING
---      S_PLAYING     30 s (level 1) / 40 s (level 2) countdown on DISP4:DISP3
+--      S_PLAYING     30 s (level 1) / 40 s (level 2) / 40 s (level 3) countdown on DISP4:DISP3
 --                    "select" cycles the selected piece (B6)
 --                    arrows move it, validated by puzzle_ctrl (B7)
 --                    "confirm" locks it (B8)
---                    all locked and on target  -> S_WIN (level 1 -> level 2)
+--                    all locked and on target  -> S_WIN (level 1 -> level 2, level 2 -> level 3)
 --                    all locked but wrong, or timeout -> S_FAIL (B9, B10)
 --      S_WIN / S_FAIL   picture shown; "start" begins a new game (B11)
 --
 --  "start" also works DURING play, which is requirement B11.
+--
+--  ---------------------------------------------------------------------------
+--  ⚠️ 2026-10-09（第 12 工作阶段 / D2 设计）：**关数从 2 关变成 3 关**。
+--
+--    提高要求 2 的原文是"**增加游戏关数，多种拼图图案随机选择**"——两件事写在同一条里。
+--    旧实现把"多种图案随机选择"放在**基本要求的第二关**上（每局随机），"增加关数"欠账；
+--    现在改成正面的口径：
+--       第一关 = 图 4-1（B4 指定，固定）      level='0'
+--       第二关 = 自拟图案，**固定为 PAT3**    level='1', lvl3='0'   （B10 字面）
+--       第三关 = 图案从四幅库**随机选**       level='1', lvl3='1'   （A2 新增关）
+--    所以"关数"用**两位信息**表示：`level` 保持原来的含义（'0'=第一关、'1'=第二关及以后），
+--    新增一位 `lvl3` 表示"已经过了第二关"。这样做的原因是**实测**出来的：
+--    把 `o_level` 直接加宽成 2 位（最直观的写法）会在 `piece_rom`/`pattern_rom`/
+--    `puzzle_ctrl` 前面各插一级比较器，同一个第三关功能让 Fmax 从 48.87 掉到 46 以下
+--    （13 个 fitter seed 的最好值）；保持 `level` 那位寄存器**一个字节都不动**、
+--    另加一个独立标志，Fmax 几乎不动（48.87，默认 seed）。教训：**在 98% 占用率下，
+--    "动了哪根既有网"比"加了多少逻辑"重要得多**。
+--  ---------------------------------------------------------------------------
 -- ============================================================================
 
 library IEEE;
@@ -49,7 +67,8 @@ entity game_fsm is
         o_down     : out std_logic;
         o_left     : out std_logic;
         o_right    : out std_logic;
-        o_level    : out std_logic;                      -- '0' = level 1, '1' = level 2
+        o_level    : out std_logic;                      -- '0' = level 1, '1' = level 2/3
+        o_lvl3     : out std_logic;                      -- '1' = third level (A2: 增加关数)
         o_state    : out std_logic_vector(2 downto 0);   -- state_t
         o_time     : out std_logic_vector(5 downto 0);   -- countdown seconds
         o_blink    : out std_logic;                      -- 2 Hz blink flag
@@ -120,6 +139,9 @@ architecture rtl of game_fsm is
 
     signal st      : state_t := S_SELF_TEST;
     signal level   : std_logic := '0';
+    -- ⚠️ 第三关标志（A2"增加游戏关数"）。与 `level` 分开是**实测**的决定，不是风格问题：
+    --    见文件头的说明（加宽 o_level 会让 Fmax 掉 2~5 MHz）。
+    signal lvl3    : std_logic := '0';
     signal cnt     : unsigned(5 downto 0) := (others => '0');
     signal selfc   : unsigned(1 downto 0) := (others => '0');   -- self-test seconds
 
@@ -170,6 +192,7 @@ begin
             if (i_rst = '1') then
                 st    <= S_SELF_TEST;
                 level <= '0';
+                lvl3  <= '0';
                 cnt   <= (others => '0');
                 selfc <= (others => '0');
             elsif (i_sw = '0') then
@@ -178,6 +201,7 @@ begin
                 -- self-test / idle rather than resuming a half-played game.
                 st    <= S_SELF_TEST;
                 level <= '0';
+                lvl3  <= '0';
                 cnt   <= (others => '0');
                 selfc <= (others => '0');
             else
@@ -197,6 +221,7 @@ begin
                         if (i_press = '1') and (kdec = K_START) then
                             cnt   <= to_unsigned(T_PREVIEW, 6);
                             level <= '0';                  -- a new game starts at level 1
+                            lvl3  <= '0';
                             st    <= S_PREVIEW;
                         end if;
 
@@ -205,16 +230,20 @@ begin
                             -- B11: start again at any time
                             cnt   <= to_unsigned(T_PREVIEW, 6);
                             level <= '0';
+                            lvl3  <= '0';
                             st    <= S_PREVIEW;
                         elsif (i_tick_1hz = '1') then
                             if (cnt <= 1) then
                                 -- Preview over.  Load the level's TIME LIMIT here
-                                -- (requirement B5 = 30 s, B10 = 40 s).  This was
-                                -- missing: cnt stayed at 1 from the preview, so
-                                -- the first playing tick immediately timed out and
-                                -- the game ended after under a second.
+                                -- (requirement B5 = 30 s, B10 = 40 s, third level =
+                                -- 40 s self-designed).  This was missing: cnt stayed
+                                -- at 1 from the preview, so the first playing tick
+                                -- immediately timed out and the game ended after
+                                -- under a second.
                                 if (level = '0') then
                                     cnt <= to_unsigned(T_LEVEL1, 6);
+                                elsif (lvl3 = '1') then
+                                    cnt <= to_unsigned(T_LEVEL3, 6);
                                 else
                                     cnt <= to_unsigned(T_LEVEL2, 6);
                                 end if;
@@ -228,6 +257,7 @@ begin
                         if (i_press = '1') and (kdec = K_START) then
                             cnt   <= to_unsigned(T_PREVIEW, 6);
                             level <= '0';
+                            lvl3  <= '0';
                             st    <= S_PREVIEW;
                         elsif (i_solved = '1') and (shuf_seen = '1')
                               and (i_shuf_busy = '0') then
@@ -235,8 +265,12 @@ begin
                                 level <= '1';              -- B9: go to level 2
                                 cnt   <= to_unsigned(T_PREVIEW, 6);
                                 st    <= S_PREVIEW;
+                            elsif (lvl3 = '0') then
+                                lvl3  <= '1';              -- A2: extra level 3
+                                cnt   <= to_unsigned(T_PREVIEW, 6);
+                                st    <= S_PREVIEW;
                             else
-                                st <= S_WIN;               -- B10: victory
+                                st <= S_WIN;               -- victory (last level done)
                             end if;
                         elsif (i_all_lock = '1') and (shuf_seen = '1')
                               and (i_shuf_busy = '0') then
@@ -253,6 +287,7 @@ begin
                         if (i_press = '1') and (kdec = K_START) then
                             cnt   <= to_unsigned(T_PREVIEW, 6);
                             level <= '0';
+                            lvl3  <= '0';
                             st    <= S_PREVIEW;            -- B11
                         end if;
 
@@ -400,6 +435,7 @@ begin
 
     o_state    <= st;
     o_level    <= level;
+    o_lvl3     <= lvl3;
     o_time     <= std_logic_vector(cnt);
     o_blink    <= blink_r;
     o_go       <= req_go;

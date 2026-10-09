@@ -9,6 +9,17 @@
 --    B4  preview   : DISP7 counts down the 5 s preview
 --    B5  playing   : DISP4:DISP3 show the two-digit remaining time
 --    B9  level 2   : DISP2 additionally shows "2"
+--    B10 level 2   : the complete picture is self-designed but FIXED (PAT3)
+--    A2  level 3   : extra level (增加游戏关数); the picture is drawn at random
+--                    from the four-picture library -- the DISPLAY does not care
+--                    which one, it only shows the level number on DISP0
+--
+--  Level encoding (2026-10-09 / D2): two inputs, deliberately NOT one 2-bit bus
+--    i_level='0'            -> level 1        DISP0 = 1
+--    i_level='1', i_lvl3='0'-> level 2        DISP0 = 2, DISP2 = '2' (B9)
+--    i_level='1', i_lvl3='1'-> level 3 (A2)   DISP0 = 3, DISP2 blank
+--  Reason for two signals rather than a 2-bit level: see rtl/game_fsm.vhd --
+--  widening the existing level net cost 2~5 MHz of Fmax on this 98%-full device.
 --
 --  Digit numbering (matches the board: DISP7 is the left-most digit):
 --    bits 31..28 = DISP7, bits 27..24 = DISP6, ... bits 3..0 = DISP0
@@ -26,7 +37,8 @@ use work.puzzle_pkg.ALL;
 entity disp_format is
     port (
         i_state : in  std_logic_vector(2 downto 0);   -- state_t
-        i_level : in  std_logic;                      -- '0' = level 1, '1' = level 2
+        i_level : in  std_logic;                      -- '0' = level 1, '1' = level 2/3
+        i_lvl3  : in  std_logic;                      -- '1' = third level (A2)
         i_time  : in  std_logic_vector(5 downto 0);   -- countdown value in seconds
         i_blink : in  std_logic;                      -- 2 Hz blink flag (self-test)
         o_data  : out std_logic_vector(31 downto 0);  -- 8 x BCD
@@ -50,20 +62,23 @@ architecture rtl of disp_format is
 
 begin
 
-    process (i_state, i_level, i_time, i_blink)
+    process (i_state, i_level, i_lvl3, i_time, i_blink)
         variable d    : std_logic_vector(31 downto 0);
         variable bl   : std_logic_vector(7 downto 0);
         variable t    : integer range 0 to 99;
         variable tens : integer range 0 to 9;
         variable ones : integer range 0 to 9;
-        variable lvlv : integer range 1 to 2;
+        variable lvlv : integer range 1 to 3;
     begin
         d  := (others => '0');
         bl := (others => '1');            -- blank everything by default
         t  := to_integer(unsigned(i_time));
 
+        -- B3: DISP0 always shows the CURRENT level -- 1, 2 or (A2) 3.
         if (i_level = '0') then
             lvlv := 1;
+        elsif (i_lvl3 = '1') then
+            lvlv := 3;
         else
             lvlv := 2;
         end if;
@@ -108,6 +123,11 @@ begin
             ------------------------------------------------------------------
             -- B5 playing : DISP4:DISP3 = remaining seconds (two digits),
             -- DISP0 = level, and on level 2 DISP2 = "2" (requirement B9).
+            --   ⚠️ 2026-10-09（D2）：DISP2 只在**第二关**亮 —— B9 的原文是
+            --      "游戏进入第二关，数码管DISP2 显示'2'"；第三关（A2 新增，题目
+            --      没有规定）与第一关一样熄灭。这条口径是否要改成"第二关起一直亮
+            --      / 第三关改亮 '3'"，用户 2026-10-09 决定**先问老师**，
+            --      见 docs/06 §12、HANDOFF §1.4b（Q2b）。
             --
             -- The tens/ones split uses a LOOKUP TABLE, not "/ 10" and "mod 10".
             -- Quartus inferred an lpm_divide for the division, and the reported
@@ -175,8 +195,8 @@ begin
                 d(3 downto 0) := bcd(lvlv);      -- DISP0
                 bl(0) := '0';
 
-                if (i_level = '1') then
-                    d(11 downto 8) := bcd(2);    -- DISP2
+                if (i_level = '1') and (i_lvl3 = '0') then
+                    d(11 downto 8) := bcd(2);    -- DISP2：仅第二关（B9）
                     bl(2) := '0';
                 end if;
 

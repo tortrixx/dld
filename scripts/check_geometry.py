@@ -215,6 +215,29 @@ for i, p in enumerate(PATS):
         print(f"   L2_PAT{i} 见证铺法（槽 0..3 的锚点）: {sols[0]}")
 chk(len(set(frozenset(p) for p in PATS)) == PAT_N,
     f"{PAT_N} 幅图案互不相同（去重后 {len(set(frozenset(p) for p in PATS))} 幅）")
+
+# --- D2（2026-10-09 第 12 工作阶段）：**哪一幅是第二关的固定图案** ----------------
+# 口径（用户拍板）：第一关 = 图 4-1（B4 指定，固定）；第二关 = **自拟但固定**的一幅
+# （B10 只要求"自拟"，随机选择属提高要求 A2）；第三关 = 从库里**随机选**（A2）。
+# 这里把"固定的是哪一幅"钉死，并核对它确实来自这个库、且它的见证铺法能被穷举出来。
+print("\n-- D2：第二关固定图案（B10 自拟但固定）与第三关随机库（A2）")
+mf = re.search(r"constant\s+L2_FIXED_PAT\s*:\s*std_logic_vector\(1 downto 0\)\s*:=\s*\"([01]{2})\"",
+               src, re.S)
+chk(mf is not None, "puzzle_pkg 里有 L2_FIXED_PAT（第二关固定图案的下标）")
+if mf:
+    FIXED = int(mf.group(1), 2)
+    chk(0 <= FIXED < PAT_N, f"L2_FIXED_PAT = {FIXED} 落在图案库 0..{PAT_N-1} 内")
+    chk(FIXED == 3,
+        "第二关固定图案 = PAT3（阶梯）—— 用户 2026-10-09 明确要求**不要**用原来的 4x4 田；"
+        "且 PAT3 是四幅里唯一有 2 种等价铺法的图案 → ERR-021 的'画面判据'回归落在正常流程里")
+    sols3 = tilings_no_rotation(PATS[3], L2P)
+    W3 = [const_anchor(f"L2_PAT3_TGT{i}") for i in range(4)]
+    chk(tuple(W3) in sols3,
+        f"L2_PAT3_TGT0..3 写的见证铺法 {W3} 确实是 PAT3 的 {len(sols3)} 种铺法之一"
+        "（文档里的锚点不是手抄的，而是穷举出来的）")
+    chk(len(sols3) == 2, f"PAT3 恰好 2 种铺法（实测 {len(sols3)} 种）—— ERR-021 回归用例")
+    if len(sols3) == 2:
+        print(f"   PAT3 的两种铺法: {sols3[0]} / {sols3[1]}")
 for i, p in enumerate(PATS):
     print(f"   L2_PAT{i}:")
     print("\n".join("     " + l for l in fig(p).split("\n")))

@@ -67,22 +67,35 @@ PLAN_L1 = (["select"] + ["down"] * 3 + ["left"] * 2 +
            ["select"] + ["down"] * 2 + ["right"] * 3 + ["up"] * 2 +
            ["select"] + ["down"] * 2 + ["right"] * 2 + ["confirm"] * 3)
 
-# 第二关走法：**第 11 工作阶段（异形零片）重新解出来的**，解算器/最小化目标 =
-# "按键次数"（每次换零片要按 (k'-k) mod 4 次【选择】），见 .tmp/opt/solve_l2plan.py。
-# 两份计划与 sim/tb_puzzle_top.py 里的必须**逐字一致** —— 本脚本就是它们的守卫。
-PLAN_L2_PAT0 = (["select"] + ["left"] + ["down"] * 4 + ["select"] + ["up"] * 3 +
+# 第二关走法（**固定 PAT3 = 阶梯**，D2：2026-10-09 起第二关图案不再随机）
+#   解算器/最小化目标 = "按键次数"（每次换零片要按 (k'-k) mod 4 次【选择】），
+#   见 .tmp/opt/solve_l2plan.py；PAT3 有 **2 种**等价铺法，计划走第 0 种
+#   （槽 0..3 → (2,2) (2,1) (3,3) (3,2)）→ 33 条命令。
+PLAN_L2_PAT3 = (["down"] + ["select"] + ["left"] + ["select"] + ["up"] + ["right"] +
+                ["up"] + ["select"] + ["down"] + ["left"] * 2 + ["up"] +
+                ["select"] * 3 + ["right"] * 2 + ["down"] + ["select"] + ["up"] +
+                ["select"] + ["down"] + ["right"] * 2 + ["select"] + ["left"] * 2 +
+                ["down"] * 2 + ["confirm"] * 4)
+
+# 第三关走法（A2"增加游戏关数 + 多种拼图图案随机选择"）：图案由 rng 决定，
+#   整机 tb 用 DLD_L3PAT 把随机值钉住，于是这里给出两种模式各一份计划：
+#     模式 A（图案 0 田）：唯一铺法（槽 0..3 → (5,3) (4,2) (2,3) (2,2)），42 条命令
+#     模式 B（图案 2 S/Z）：唯一铺法（槽 0..3 → (5,1) (4,4) (2,1) (2,4)），36 条命令
+#   两份计划与 sim/tb_puzzle_top.py 里的必须**逐字一致** —— 本脚本就是它们的守卫。
+PLAN_L3_PAT0 = (["select"] + ["left"] + ["down"] * 4 + ["select"] + ["up"] * 3 +
                 ["right"] * 3 + ["down"] + ["select"] * 2 + ["down"] * 6 + ["select"] +
                 ["left"] * 2 + ["select"] * 2 + ["left"] * 2 + ["up"] * 2 + ["select"] +
                 ["right"] * 2 + ["up"] + ["right"] + ["select"] + ["right"] +
                 ["confirm"] * 4)
-PLAN_L2_PAT2 = (["right"] + ["down"] * 3 + ["right"] * 2 + ["select"] + ["down"] +
+PLAN_L3_PAT2 = (["right"] + ["down"] * 3 + ["right"] * 2 + ["select"] + ["down"] +
                 ["select"] + ["up"] * 4 + ["right"] + ["select"] + ["right"] +
                 ["select"] + ["left"] * 2 + ["down"] * 2 + ["select"] + ["down"] * 3 +
                 ["select"] + ["down"] * 2 + ["select"] + ["up"] * 2 + ["left"] +
                 ["confirm"] * 4)
 
-# tb 里断言 ⑪ 用的落点期望（槽 0..3 各 (行,列) 打包成 1 字节，pos(31:24) = 槽 0）
-L2_EXPECT_POS = {0: 0x53422322, 2: 0x51442124}
+# tb 里断言 ⑪/⑪b 用的落点期望（槽 0..3 各 (行,列) 打包成 1 字节，pos(31:24) = 槽 0）
+L2_EXPECT_POS = 0x22213332                       # PAT3 第 0 种铺法
+L3_EXPECT_POS = {0: 0x53422322, 2: 0x51442124}   # 第三关：模式 A / 模式 B
 
 
 def cells(mask, r0, c0):
@@ -366,16 +379,43 @@ def main():
     print("  %s 四块零片 × (行/列)：候选集合 == 合法域（含最后一行/列）%s"
           % ("[OK]  " if not bad_pc else "[FAIL]", "" if not bad_pc else "：" + "；".join(bad_pc)))
 
-    print("\n-- 三份走法计划")
+    print("\n-- 三份走法计划（第二关固定 PAT3 + 第三关两种模式）")
     ok &= check("一关（3 块异形：1x3 横条 + 6 格阶梯 + L 三格）→ 拼回图 4-1",
                 PLAN_L1, L1_SHAPES, L1_START, False,
                 const_bits("L1_TARGET_MASK", SRC))
-    ok &= check("二关 · 图案 0（田，4x4 方块）→ 拼成唯一铺法（模式 A）",
-                PLAN_L2_PAT0, L2_SHAPES, L2_START, True, L2_PAT[0],
-                expect_pos=L2_EXPECT_POS[0])
-    ok &= check("二关 · 图案 2（S/Z 锯齿）→ 拼成唯一铺法（模式 B，端到端出绿对勾）",
-                PLAN_L2_PAT2, L2_SHAPES, L2_START, True, L2_PAT[2],
-                expect_pos=L2_EXPECT_POS[2])
+    ok &= check("二关 · **固定** 图案 3（阶梯，D2；有 2 种铺法，走第 0 种）"
+                "→ 画面逐格 == 图案（判据只看画面，不看锚点常量）",
+                PLAN_L2_PAT3, L2_SHAPES, L2_START, True, L2_PAT[3],
+                expect_pos=L2_EXPECT_POS)
+    ok &= check("三关 · 图案 0（田，模式 A；第三关图案由 rng 决定，tb 钉在 0）"
+                "→ 拼成唯一铺法",
+                PLAN_L3_PAT0, L2_SHAPES, L2_START, True, L2_PAT[0],
+                expect_pos=L3_EXPECT_POS[0])
+    ok &= check("三关 · 图案 2（S/Z 锯齿，模式 B）→ 拼成唯一铺法（端到端出绿对勾）",
+                PLAN_L3_PAT2, L2_SHAPES, L2_START, True, L2_PAT[2],
+                expect_pos=L3_EXPECT_POS[2])
+
+    # ---- 守卫：RTL 里的"第二关固定图案"必须就是第二关计划解的那一幅 --------------
+    print("\n-- D2 守卫：RTL 的 L2_FIXED_PAT ↔ 第二关计划 ↔ 图案库")
+    mf = re.search(r"constant\s+L2_FIXED_PAT\s*:\s*std_logic_vector\(1 downto 0\)\s*:=\s*\"([01]{2})\"",
+                   SRC, re.S)
+    fixed = int(mf.group(1), 2) if mf else None
+    ok &= (fixed == 3)
+    print("  %s RTL 的 L2_FIXED_PAT = %s（期望 3 == PAT3 阶梯）；第二关计划解的就是 PAT3"
+          % ("[OK]  " if fixed == 3 else "[FAIL]", fixed))
+
+    # ---- 守卫：关卡限时常量（题目值 + 自拟的第三关）必须两边一致 ------------------
+    #    ERR-031/034/038 这一类"时间/轮数算错"的缺陷全都出在常量漂移上，所以这里
+    #    直接把 pkg 与 tb 的关卡限时对账（第三关是自拟值，更容易写着写着就漂）。
+    print("\n-- 守卫：关卡限时常量（pkg ↔ tb_game_fsm）")
+    pkg_t = {}
+    for n in ("T_PREVIEW", "T_LEVEL1", "T_LEVEL2", "T_LEVEL3"):
+        m = re.search(r"constant\s+%s\s*:\s*integer\s*:=\s*(\d+)" % n, SRC)
+        pkg_t[n] = int(m.group(1)) if m else None
+    want_t = {"T_PREVIEW": 5, "T_LEVEL1": 30, "T_LEVEL2": 40, "T_LEVEL3": 40}
+    ok &= (pkg_t == want_t)
+    print("  %s pkg: T_PREVIEW/LEVEL1/2/3 = %s（B4 预览 5 s、B5 30 s、B10 40 s；"
+          "第三关 40 s 为自拟）" % ("[OK]  " if pkg_t == want_t else "[FAIL]", pkg_t))
 
     # ---- 守卫：本文件里的计划必须与 sim/tb_puzzle_top.py 里的**逐字一致** ----
     print("\n-- 计划一致性守卫（本文件 vs sim/tb_puzzle_top.py）")
@@ -384,16 +424,27 @@ def main():
         "tb_top_for_guard", str(ROOT / "sim" / "tb_puzzle_top.py"))
     tb = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(tb)
+    spec_f = importlib.util.spec_from_file_location(
+        "tb_fsm_for_guard", str(ROOT / "sim" / "tb_game_fsm.py"))
+    tbf = importlib.util.module_from_spec(spec_f)
+    spec_f.loader.exec_module(tbf)
     same = (list(tb.PLAN_L1) == PLAN_L1
-            and list(tb.PLAN_L2_PAT0) == PLAN_L2_PAT0
-            and list(tb.PLAN_L2_PAT2) == PLAN_L2_PAT2
-            and tb.L2_EXPECT_POS == L2_EXPECT_POS[0]
+            and list(tb.PLAN_L2_PAT3) == PLAN_L2_PAT3
+            and list(tb.PLAN_L3_PAT0) == PLAN_L3_PAT0
+            and list(tb.PLAN_L3_PAT2) == PLAN_L3_PAT2
+            and tb.PLAN_L2 == PLAN_L2_PAT3
+            and tb.L2_EXPECT_POS == L2_EXPECT_POS
+            and tb.L3_EXPECT_POS == L3_EXPECT_POS[tb.FORCE_PAT]
             and tb.pat_rows(0) == rows_of(L2_PAT[0])
-            and tb.pat_rows(2) == rows_of(L2_PAT[2]))
+            and tb.pat_rows(2) == rows_of(L2_PAT[2])
+            and tb.pat_rows(3) == rows_of(L2_PAT[3])
+            and (tbf.T_PREVIEW, tbf.T_L1, tbf.T_L2, tbf.T_L3)
+                == (pkg_t["T_PREVIEW"], pkg_t["T_LEVEL1"],
+                    pkg_t["T_LEVEL2"], pkg_t["T_LEVEL3"]))
     ok &= same
-    print("  %s 走法计划与 L2_EXPECT_POS / 图案掩码一致性：%s"
+    print("  %s 走法计划 / 落点期望 / pat_rows(0,2,3) / tb_game_fsm 的关卡限时 全部一致：%s"
           % ("[OK]  " if same else "[FAIL]",
-             "PLAN_L1/L2_PAT0/L2_PAT2 + 落点期望 + pat_rows(0)/pat_rows(2) 全部逐字一致"
+             "PLAN_L1 + PLAN_L2_PAT3 + PLAN_L3_PAT0/PAT2 + 两组落点期望 + 图案掩码 + 关卡限时"
              if same else "有不一致项，请同步两份文件"))
 
     # ---- 随机散落可达性抽样（"会不会死局"的实证，不是证明）----

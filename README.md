@@ -31,18 +31,19 @@ VHDL-93 + Quartus II 9.1，纯 RTL（无 Nios、无软核）。
 
 ---
 
-## 2. 当前状态（第 11 工作阶段，固件 2026-10-09 13:53 编译并烧录）
+## 2. 当前状态（第 12 工作阶段，固件 2026-10-09 15:29 编译并烧录）
 
 | 项 | 实测值 |
 |---|---|
-| 逻辑单元 | **1234 / 1270 LE（97%）**，余量 **36** |
+| 逻辑单元 | **1252 / 1270 LE（98.6%）**，余量 **18** |
 | Fmax | **49.02 MHz**（⚠️ 距 50 MHz 约束差 **0.398 ns**；最差路径是复位网络与渲染行，见 [`docs/05`](docs/05-资源利用与编译报告.md) §5） |
 | 引脚 / 未约束引脚 | 52 / **0** |
-| 仿真 | 12 个模块 / **139 条断言全部通过**（+ 整机模式 A/B 两轮；最新轮次见 [`docs/03`](docs/03-仿真验证方案.md) §2） |
+| 仿真 | 12 个模块 / **145 条断言全部通过**（+ 整机模式 A/B 两轮；最新轮次见 [`docs/03`](docs/03-仿真验证方案.md) §2） |
 | 显示刷新 | 点阵与数码管均 **125 Hz**（扫描走 1 kHz 节拍，肉眼不再闪） |
 | 自检闪烁 | **真正的 2 Hz**（ERR-038：原来在 500 ms 节拍上翻转，实际只有 1 Hz） |
 | 按键响应 | 消抖 **4 轮 = 40 ms**（含**上电第一个键**，ERR-036 修掉了"首键少一轮"） |
-| 第二关玩法 | 四块**异形零片**（3/2/5/6 格）+ 4 幅轮廓（田/十/S·Z/阶梯）；PAT0/1/2 **拼法唯一**（旧版四块同形有 24 种等价摆法 = 搬运） |
+| 游戏关数 | **三关**：第一关图 4-1（B4）→ 第二关**固定**「阶梯」PAT3（B10 自拟）→ **第三关图案从四幅库随机选**（提高要求 A2「增加游戏关数 + 多种图案随机选择」）；DISP0 显示 1/2/3 |
+| 零片 | 四块**异形**（3/2/5/6 格）；第二关「阶梯」有 **2 种等价铺法**、第三关图案 0/1/2 拼法唯一 |
 | B8 语义 | 确认变黄后**不可再被选中**（ERR-035，原来按【选择】会绕回黄块并把它显示成绿色） |
 | 烧录 | `quartus/output_files/puzzle.pof`，USB-Blaster，Verify 全过 0 errors / 0 warnings |
 | 缺陷记录 | **ERR-001 ~ ERR-039**，见 [`docs/06-硬件调试记录.md`](docs/06-硬件调试记录.md) |
@@ -86,13 +87,14 @@ python scripts/gen_project.py puzzle_top
 python scripts/sim.py run game_fsm            # 自动分配轮次 rNN
 python scripts/sim.py check puzzle_top --round 22   # 只重跑校验（复用已有波形）
 python scripts/sim_summary.py                 # 汇总所有模块最新轮次
-# 整机"模式 B"：把第二关图案钉成图案 3（S/Z），端到端验证"换图案照样能过"
-#   PowerShell:  $env:DLD_L2PAT=3; python scripts/sim.py run puzzle_top
+# 整机"模式 B"：把**第三关**的随机图案钉成图案 2（S/Z），端到端验证"换图案照样能过"
+#   PowerShell:  $env:DLD_L3PAT=2; python scripts/sim.py run puzzle_top
+#   （第二关的图案自 D2 起恒为 PAT3 阶梯，不再是随机量）
 
 # 5) 静态检查
 python scripts/check_geometry.py              # 图案/结算画面几何 + 逐图案可铺性穷举 + 功耗
 python scripts/check_keypad_pins.py           # 按键管脚 vs 手册
-python scripts/check_plans.py                 # 离线复核 tb 的三份走法计划（引擎规则 + 重叠）
+python scripts/check_plans.py                 # 离线复核 tb 的四份走法计划（引擎规则 + 重叠）
 ```
 
 仿真用**压缩时钟**（`sim/tb_puzzle_top.py` 的 `RTL_PATCHES`：50 MHz → 80 kHz，随机源钉 0），

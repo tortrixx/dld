@@ -29,11 +29,11 @@
     **反推**显示内容，而不是只看端口 —— 这既满足"波形里要有中间信号"，
     也让"数码管为什么是这个数"在波形上可解释。
 
-【时间线】（单位 ns，`DURATION` = 2800，每段 100 ns，采样点 = 段中点）
+【时间线】（单位 ns，`DURATION` = 3100，每段 100 ns，采样点 = 段中点）
     0~100      S_SELF_TEST  blink=0
     100~200    S_SELF_TEST  blink=1
-    200~300    S_IDLE       level=1
-    300~400    S_IDLE       level=2
+    200~300    S_IDLE       level=1（第一关）
+    300~400    S_IDLE       level=2（第二关）
     400~500    S_PREVIEW    t=4  level=1
     500~600    S_PREVIEW    t=5  level=2
     600~700    S_PLAYING    t=27 level=1
@@ -43,12 +43,15 @@
     2500~2600  S_FAIL
     2600~2700  S="110"（未定义态）
     2700~2800  S="111"（未定义态）
+    2800~2900  S_IDLE       level=3（lvl3=1）—— D2 第三关
+    2900~3000  S_PREVIEW    t=4  level=3（lvl3=1）
+    3000~3100  S_PLAYING    t=27 level=3（lvl3=1）
 """
 
 import pathlib
 import re
 
-DURATION = 2800.0
+DURATION = 3100.0
 GRID_PERIOD = 10.0
 WIN = 100.0
 
@@ -73,28 +76,33 @@ S = _pkg_states()
 # 倒计时进位边界：0/9/10/19/20/29/30/39/40/49/50/59/60/63 + 两个常规值
 LUT_T = [0, 1, 9, 10, 11, 19, 20, 29, 30, 39, 40, 49, 50, 59, 60, 63]
 
-# 时间线：(状态, 关卡(0/1), 倒计时, blink, 时长)
+# 时间线：(状态, 关卡(0/1), 第三关标志 lvl3(0/1), 倒计时, blink, 时长)
 STIM = [
-    (S["S_SELF_TEST"], 0, 30, 0, WIN),
-    (S["S_SELF_TEST"], 0, 30, 1, WIN),
-    (S["S_IDLE"],      0, 30, 0, WIN),
-    (S["S_IDLE"],      1, 30, 0, WIN),
-    (S["S_PREVIEW"],   0, 4,  0, WIN),
-    (S["S_PREVIEW"],   1, 5,  0, WIN),
-    (S["S_PLAYING"],   0, 27, 0, WIN),
-    (S["S_PLAYING"],   1, 27, 0, WIN),
-] + [(S["S_PLAYING"], 0, t, 0, WIN) for t in LUT_T] + [
-    (S["S_WIN"],       0, 30, 0, WIN),      # 4 = S_WIN
-    (S["S_FAIL"],      0, 30, 0, WIN),      # 5 = S_FAIL
-    (6,                0, 30, 0, WIN),      # 未定义状态码
-    (7,                0, 30, 0, WIN),
+    (S["S_SELF_TEST"], 0, 0, 30, 0, WIN),
+    (S["S_SELF_TEST"], 0, 0, 30, 1, WIN),
+    (S["S_IDLE"],      0, 0, 30, 0, WIN),   # IDLE1：待机 · 第一关
+    (S["S_IDLE"],      1, 0, 30, 0, WIN),   # IDLE2：待机 · 第二关
+    (S["S_PREVIEW"],   0, 0, 4,  0, WIN),   # PREV4：预览 · 第一关（DISP7 倒数到 4）
+    (S["S_PREVIEW"],   1, 0, 5,  0, WIN),   # PREV5：预览 · 第二关
+    (S["S_PLAYING"],   0, 0, 27, 0, WIN),   # PLAY27a：第一关对局 → DISP2 必须灭
+    (S["S_PLAYING"],   1, 0, 27, 0, WIN),   # PLAY27b：第二关对局 → DISP2='2'（B9）
+] + [(S["S_PLAYING"], 0, 0, t, 0, WIN) for t in LUT_T] + [
+    (S["S_WIN"],       0, 0, 30, 0, WIN),   # 4 = S_WIN
+    (S["S_FAIL"],      0, 0, 30, 0, WIN),   # 5 = S_FAIL
+    (6,                0, 0, 30, 0, WIN),   # 未定义状态码
+    (7,                0, 0, 30, 0, WIN),
+    # ---- D2（2026-10-09 第 12 工作阶段）：**第三关**（A2"增加游戏关数"）--------
+    (S["S_IDLE"],      1, 1, 30, 0, WIN),   # IDLE3：待机 · 第三关 → DISP0='3'
+    (S["S_PREVIEW"],   1, 1, 4,  0, WIN),   # PREV3：预览 · 第三关（DISP7 倒数到 4）
+    (S["S_PLAYING"],   1, 1, 27, 0, WIN),   # PLAY27c：第三关对局 → DISP0='3'、DISP2 **灭**
 ]
 
 # 每个窗口的中点（采样时刻）与窗口索引
 T_OF = [WIN * (i + 0.5) for i in range(len(STIM))]
 IDX = {name: i for i, name in enumerate(
     ["SELF0", "SELF1", "IDLE1", "IDLE2", "PREV4", "PREV5", "PLAY27a", "PLAY27b"]
-    + ["LUT%d" % t for t in LUT_T] + ["WIN", "FAIL", "UNDEF6", "UNDEF7"])}
+    + ["LUT%d" % t for t in LUT_T] + ["WIN", "FAIL", "UNDEF6", "UNDEF7",
+                                      "IDLE3", "PREV3", "PLAY27c"])}
 
 # ============================================================
 # 节点声明
@@ -114,7 +122,7 @@ ONES_BITS = ["ones~0", "ones~1", "ones~2", "ones~3"]
 DATA_TENS_BIT = "LessThan2~2"      # == o_data[18] (DISP4 的 bit2)
 DATA_ONES_BIT = "r~9"              # == o_data[13] (DISP3 的 bit1)
 
-OBSERVE = (["i_state", "i_level", "i_time", "i_blink", "o_data", "o_blank"]
+OBSERVE = (["i_state", "i_level", "i_lvl3", "i_time", "i_blink", "o_data", "o_blank"]
            + TENS_BITS + ONES_BITS + [DATA_TENS_BIT, DATA_ONES_BIT])
 
 
@@ -127,6 +135,7 @@ def _buried(b, name):
 def build(b):
     b.input_bus("i_state", 3)
     b.input_bit("i_level")
+    b.input_bit("i_lvl3")
     b.input_bus("i_time", 6)
     b.input_bit("i_blink")
     b.output_bus("o_data", 32)
@@ -135,10 +144,11 @@ def build(b):
         b.output_bit(n)
         _buried(b, n)
 
-    b.bus_segments("i_state", [(d, s) for (s, _l, _t, _k, d) in STIM])
-    b.segments("i_level", [(d, l) for (_s, l, _t, _k, d) in STIM])
-    b.bus_segments("i_time", [(d, t) for (_s, _l, t, _k, d) in STIM])
-    b.segments("i_blink", [(d, k) for (_s, _l, _t, k, d) in STIM])
+    b.bus_segments("i_state", [(d, s) for (s, _l, _l3, _t, _k, d) in STIM])
+    b.segments("i_level", [(d, l) for (_s, l, _l3, _t, _k, d) in STIM])
+    b.segments("i_lvl3", [(d, l3) for (_s, _l, l3, _t, _k, d) in STIM])
+    b.bus_segments("i_time", [(d, t) for (_s, _l, _l3, t, _k, d) in STIM])
+    b.segments("i_blink", [(d, k) for (_s, _l, _l3, _t, k, d) in STIM])
 
 
 # ============================================================
@@ -194,11 +204,11 @@ def check(vf):
     ))
 
     # ---- ③ B2 待机：DISP7='5'、DISP0=关卡号、其余全灭 ----
+    #      D2 之后有三个待机画面：第一关（DISP0=1）、第二关（2）、第三关（3）
     rows = []
     bad = []
-    for key, lvl in (("IDLE1", 0), ("IDLE2", 1)):
+    for key, want_lv in (("IDLE1", 1), ("IDLE2", 2), ("IDLE3", 3)):
         d, bl = _render(vf, T_OF[IDX[key]])
-        want_lv = 1 if lvl == 0 else 2
         ok = (disp(d, 7) == 5 and bl is not None and (bl >> 7) & 1 == 0
               and disp(d, 0) == want_lv and bl & 1 == 0
               and (bl & 0x7E) == 0x7E)
@@ -207,7 +217,7 @@ def check(vf):
         if not ok:
             bad.append(key)
     res.append((
-        "③ B2/B3 待机态 → DISP7='5'、DISP0=关卡号(第一关 1 / 第二关 2)，DISP1~6 全灭（o_blank=0x7E）",
+        "③ B2/B3 待机态 → DISP7='5'、DISP0=关卡号(1 / 2 / 3)，DISP1~6 全灭（o_blank=0x7E）",
         not bad,
         "\n".join(rows),
     ))
@@ -215,9 +225,8 @@ def check(vf):
     # ---- ④ B4 预览：DISP7 = 预览倒数，DISP0 = 关卡号 ----
     rows = []
     bad = []
-    for key, lvl, want in (("PREV4", 0, 4), ("PREV5", 1, 5)):
+    for key, want_lv, want in (("PREV4", 1, 4), ("PREV5", 2, 5), ("PREV3", 3, 4)):
         d, bl = _render(vf, T_OF[IDX[key]])
-        want_lv = 1 if lvl == 0 else 2
         ok = (disp(d, 7) == want and (bl >> 7) & 1 == 0
               and disp(d, 0) == want_lv and bl & 1 == 0 and (bl & 0x7E) == 0x7E)
         rows.append("%s: DISP7=%s（期望 %d） DISP0=%s o_blank=%s"
@@ -225,7 +234,7 @@ def check(vf):
         if not ok:
             bad.append(key)
     res.append((
-        "④ B4 预览态 → DISP7 = 倒计时秒数(单数字)，DISP0 = 关卡号，其余灭",
+        "④ B4 预览态 → DISP7 = 倒计时秒数(单数字)，DISP0 = 关卡号(1/2/3)，其余灭",
         not bad,
         "\n".join(rows),
     ))
@@ -250,6 +259,19 @@ def check(vf):
         "⑥ B9 游戏中(第二关, t=27) → DISP2 额外显示 '2' 并点亮，DISP0=关卡号 2（o_blank=0xE2）",
         ok,
         "o_data=%s o_blank=%s（DISP2=%s 应为 2）" % (_hex(d, 8), _hex(bl, 2), disp(d, 2)),
+    ))
+
+    # ---- ⑥b D2 第三关游戏中：DISP0='3'，而 DISP2 **熄灭**（B9 只规定了第二关）----
+    #     ⚠️ 这一条正是"用户上板问 DISP2 为什么亮 2"那个问题的边界钉：亮 2 的**只有**
+    #        第二关。口径是否要扩到"第三关也亮（显示 3）"待老师裁决，见 docs/06 §12。
+    d, bl = _render(vf, T_OF[IDX["PLAY27c"]])
+    ok = (disp(d, 4) == 2 and disp(d, 3) == 7 and disp(d, 0) == 3 and bl == 0xE6)
+    res.append((
+        "⑥b D2 游戏中(第三关, t=27) → DISP4:DISP3=27、DISP0=关卡号 3、**DISP2 熄灭**"
+        "（o_blank=0xE6，与第一关同形；B9 的 '2' 只属于第二关，第三关题目没规定 → 自拟为灭）",
+        ok,
+        "o_data=%s o_blank=%s（DISP2=%s，bit2 掩码=%d 应为 1=灭）"
+        % (_hex(d, 8), _hex(bl, 2), disp(d, 2), (bl >> 2) & 1),
     ))
 
     # ---- ⑦ 倒计时 64 项查表的进位边界逐项验收（独立算 t//10、t%10）----
@@ -308,9 +330,9 @@ def check(vf):
     ALLOWED = [frozenset(("IDLE2", "PREV5")), frozenset(("UNDEF6", "UNDEF7"))]
     dup = {k: v for k, v in seen.items() if len(v) > 1 and frozenset(v) not in ALLOWED}
     res.append((
-        "⑩ 28 个窗口的画面 (o_data,o_blank) 互不相同 —— 仅允许两处有语义的重合："
+        "⑩ %d 个窗口的画面 (o_data,o_blank) 互不相同 —— 仅允许两处有语义的重合："
         "待机(第二关) vs 预览 5 秒（B2 的 '5' 与 B4 的起始值本来就是同一个画面）、"
-        "两个未定义状态码同为全灭",
+        "两个未定义状态码同为全灭" % len(IDX),
         not dup,
         "意料之外的重复画面：%s" % dup if dup else
         "%d 个窗口 → %d 种不同画面；重合的两组：%s"
@@ -357,11 +379,12 @@ def check(vf):
             bits.append(lv)
         pats.add(tuple(bits))
     res.append((
-        "⑫ 中间信号 tens~1:0 / ones~3:0（case 表的译码中间项）在 28 个采样点上取值"
-        "全部为确定 0/1，且组合随 i_state/i_time 变化（不是常量、不是 X）",
+        "⑫ 中间信号 tens~1:0 / ones~3:0（case 表的译码中间项）在 %d 个采样点上取值"
+        "全部为确定 0/1，且组合随 i_state/i_time 变化（不是常量、不是 X）" % len(IDX),
         not bad and len(pats) >= 2,
         ("出现非 0/1 的采样点：%s" % bad[:4]) if bad else
-        "28 个窗口共出现 %d 种不同组合（≥2 即说明确实随输入变化）" % len(pats),
+        "%d 个窗口共出现 %d 种不同组合（≥2 即说明确实随输入变化）"
+        % (len(IDX), len(pats)),
     ))
 
     return res

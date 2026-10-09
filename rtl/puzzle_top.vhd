@@ -111,6 +111,7 @@ architecture rtl of puzzle_top is
             o_left      : out std_logic;
             o_right     : out std_logic;
             o_level     : out std_logic;
+            o_lvl3      : out std_logic;
             o_state     : out std_logic_vector(2 downto 0);
             o_time      : out std_logic_vector(5 downto 0);
             o_blink     : out std_logic;
@@ -208,6 +209,7 @@ architecture rtl of puzzle_top is
         port (
             i_state : in  std_logic_vector(2 downto 0);
             i_level : in  std_logic;
+            i_lvl3  : in  std_logic;
             i_time  : in  std_logic_vector(5 downto 0);
             i_blink : in  std_logic;
             o_data  : out std_logic_vector(31 downto 0);
@@ -261,6 +263,7 @@ architecture rtl of puzzle_top is
     signal sel, move, conf, go : std_logic;
     signal mv_up, mv_dn, mv_lf, mv_rt : std_logic;
     signal level    : std_logic;
+    signal lvl3     : std_logic;                     -- 第三关（A2 增加关数）
     signal state    : std_logic_vector(2 downto 0);
     signal gtime    : std_logic_vector(5 downto 0);
     signal gblink   : std_logic;
@@ -283,8 +286,8 @@ architecture rtl of puzzle_top is
     signal piece_n  : std_logic_vector(2 downto 0);
     signal tgt_mask : std_logic_vector(63 downto 0);
 
-    -- A2 / S1 : 第二关图案库的选择结果（开局预览起点锁存，见下面的锁存进程）
-    signal pat_sel  : std_logic_vector(1 downto 0) := (others => '0');
+    -- 图案库的选择结果（进入预览时锁存：第二关**恒**为固定 PAT3、第三关随机；见下面进程）
+    signal pat_sel  : std_logic_vector(1 downto 0) := L2_FIXED_PAT;
     signal state_q  : std_logic_vector(2 downto 0) := S_SELF_TEST;  -- 上一拍的状态
 
     -- engine output: a complete 64-bit frame per colour plane
@@ -339,31 +342,45 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- A2 / S1 : 第二关**图案库的选择点**（2026-10-09，提高要求 A2）
+    -- 图案的选择点（B10 第二关固定 / A2 第三关随机；2026-10-09 第 12 工作阶段改版）
     --
-    -- 时机：每次**进入 S_PREVIEW 的那一拍**（按【开始】开局，或过关后进入下一关），
-    --       把 rng_lfsr 当时的低 2 位锁存成 pat_sel。
-    -- 为什么在这里：预览（B4/B10）要把整幅图案显示 5 秒，图案必须在**预览开始前**
-    --       就定下来；而散落用的随机数由 puzzle_ctrl 在进入对局后继续推进**同一个**
-    --       LFSR —— pat_sel 只在预览起点采样一次，所以两者互不干扰。
-    -- 为什么每局会变：上一局的散落已经把 LFSR 推进了若干步（步数还随拒绝采样变化），
-    --       所以下一局预览起点的采样值不同 → 重开一局第二关图案会变。
-    -- 第一关：i_level='0' 时 pattern_rom 恒输出图 4-1（B4 指定），pat_sel 被忽略。
+    -- 时机：每次**进入 S_PREVIEW 的那一拍**（按【开始】开局，或过关后进入下一关）
+    --       锁存一次，图案必须在**预览开始前**定下来。
+    -- 选什么：
+    --   · **第三关**（lvl3='1'，A2 新增关）→ 锁 `rnd_val` 低 2 位 → 四幅库随机选
+    --     （这就是提高要求 2 的"多种拼图图案随机选择"）。散落用的随机数由
+    --     puzzle_ctrl 在进入对局后继续推进**同一个** LFSR，而这里只在预览起点采样
+    --     一次，所以两者互不干扰；上一局的散落已把 LFSR 推进了若干步（步数还随拒绝
+    --     采样变化），故**重开一局第三关图案会变**。
+    --   · **第二关**（lvl3='0'）→ 恒锁 `L2_FIXED_PAT`（PAT3 阶梯，**固定**）。
+    --     B10 只说"完整拼图图案自拟"（= 设计者自定，不是题目指定），没说每局要变；
+    --     "随机选择"是**提高要求 2** 的内容，所以放在第三关（详见 puzzle_pkg 的
+    --     L2_FIXED_PAT 说明）。
+    --   · **第一关**：i_level='0' 时 pattern_rom 恒输出图 4-1（B4 指定），pat_sel 被忽略。
     --
     -- ⚠️ pat_sel 要比 state 晚一拍才更新（state 是寄存器），这一个时钟里预览会显示
     --    上一幅图案的一行 —— 肉眼不可见（行扫描 1 ms），而且 puzzle_ctrl 的"整帧判据"
     --    同时快照了 pat（pat_frm），图案切换的那一帧会被判为"不干净"而不发布判据。
+    --    ⚠️ 第二关→第三关时 `i_level` 与（若第三关恰好抽到 PAT3）`i_pat` 都可能不变，
+    --       所以 puzzle_ctrl 的整帧快照**分辨不出换关**；这不影响判决：换关一定伴随
+    --       一次新的散落（pos 变、locked 清零），而判决还要求 `shuf_seen='1'`
+    --       （本局必须看见过散落忙态）且 `i_shuf_busy='0'` —— 见 puzzle_ctrl 的
+    --       ERR-024/033 说明与 sim/tb_puzzle_top 的三关连过场景。
     ----------------------------------------------------------------------------
     process (clk)
     begin
         if rising_edge(clk) then
             if (rst = '1') then
                 state_q <= S_SELF_TEST;
-                pat_sel <= (others => '0');
+                pat_sel <= L2_FIXED_PAT;
             else
                 state_q <= state;
                 if (state = S_PREVIEW) and (state_q /= S_PREVIEW) then
-                    pat_sel <= rnd_val(1 downto 0);
+                    if (lvl3 = '1') then
+                        pat_sel <= rnd_val(1 downto 0);   -- 第三关：四幅库随机（A2）
+                    else
+                        pat_sel <= L2_FIXED_PAT;          -- 第二关：固定 PAT3（B10）
+                    end if;
                 end if;
             end if;
         end if;
@@ -424,7 +441,8 @@ begin
             i_solved    => solved,
             i_all_lock  => all_lock,
             i_shuf_busy => shuf_busy,
-            o_sound     => sound
+            o_sound     => sound,
+            o_lvl3      => lvl3
         );
 
     -- S5 : shape database and complete picture
@@ -516,6 +534,7 @@ begin
         port map (
             i_state => state,
             i_level => level,
+            i_lvl3  => lvl3,
             i_time  => gtime,
             i_blink => gblink,
             o_data  => disp_data,
