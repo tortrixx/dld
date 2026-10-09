@@ -146,6 +146,12 @@ DB_SHIFT = 16 - DB_ROUNDS          # = 12
 #     下=键号2(KEY15) 左=键号5(KEY10) 右=键号7(KEY12) 上=键号10(KEY7) 确认=键号6(KEY11)
 #     （键号 0 = KEY13 永远不用：扫描器用 0 表示"无键"）
 #     窗口取 22 轮（消抖要 4 轮，留足余量），相邻按键间隔 25 轮。
+# A4 旋转：三次 KEY8。放在第一场景"确认"之后、SW7 拨下去之前的空档里
+#   （轮号 1250/1294/1338 + DB_SHIFT，同键间隔 44 轮 = GAP_SAME）。
+ROT_R0 = 1250 + DB_SHIFT
+ROT_KEYS = [(ROT_R0 + 44 * i, ROT_R0 + 44 * i + 21, 2, 3, "旋转%d KEY8" % (i + 1))
+            for i in range(3)]
+
 KEY_PLAN = [
     (196 + DB_SHIFT, 228 + DB_SHIFT, 0, 1, "开始 KEY14"),
     (950 + DB_SHIFT, 985 + DB_SHIFT, 0, 3, "选择 KEY16"),
@@ -154,7 +160,7 @@ KEY_PLAN = [
     (1142 + DB_SHIFT, 1162 + DB_SHIFT, 1, 3, "右 KEY12"),
     (1167 + DB_SHIFT, 1187 + DB_SHIFT, 2, 2, "上 KEY7"),
     (1192 + DB_SHIFT, 1212 + DB_SHIFT, 1, 2, "确认 KEY11"),
-]
+] + ROT_KEYS
 RAW_START, RAW_SELECT = 1, 3
 
 # ============================================================================
@@ -172,7 +178,10 @@ RAW_START, RAW_SELECT = 1, 3
 
 # 控制键在 4x4 矩阵上的位置 (行, 列)：键号 = 4*行+列，与 game_fsm.key_of() 一致
 CTRL_KEY = {"start": (0, 1), "select": (0, 3), "confirm": (1, 2),
-            "up": (2, 2), "down": (0, 2), "left": (1, 1), "right": (1, 3)}
+            "up": (2, 2), "down": (0, 2), "left": (1, 1), "right": (1, 3),
+            # ⚠️ 2026-10-09 第 13 工作阶段（提高要求 A4）：新增【旋转】键 = KEY8，
+            #    原始键号 4*行+列 = 4*2+3 = 11，由 game_fsm.key_of() 译为 K_ROT。
+            "rot": (2, 3)}
 
 # 一关：三块从回退锚点搬到目标锚点 (0,0)->(2,2)、(0,4)->(3,2)、(4,0)->(4,3)
 PLAN_L1 = (["select"] + ["down"] * 3 + ["left"] * 2 +
@@ -262,8 +271,12 @@ T_PREVIEW = (4_500_000.0, 10_800_000.0)
 T_PLAY = (11_900_000.0, 15_000_000.0)      # 散落完成后的对局（sel = 0）
 T_PLAY_SEL = (15_800_000.0, 17_300_000.0)  # 按过"选择"之后
 T_DIR = (17_600_000.0, 19_900_000.0)       # ★ 按方向键的时段（ERR-020 的回归窗口）
-T_SW_OFF = 21_200_000.0                    # SW7 拨下去（B1）
-T_OFF = (21_800_000.0, 22_600_000.0)       # SW7=0 之后
+T_SW_OFF = 23_000_000.0                    # SW7 拨下去（B1）
+                                           # ⚠️ 2026-10-09：原来 21.2 ms —— A4 的三个
+                                           # 旋转键（同键间隔 GAP_SAME=44 轮）放不进去，
+                                           # 所以把"拨下去"推到 23.0 ms；关灯时段
+                                           # （23.0~27.0 ms）仍然远大于断言 ⑥ 需要的窗口。
+T_OFF = (23_400_000.0, 24_200_000.0)       # SW7=0 之后
 T_SW_ON2 = 27_000_000.0                    # SW7 再拨上去（自检 2 s -> 待机）
 T_L1_CONF = S0 + (KEYS_L1[-1][0] + 24) * ROUND       # 第一关最后一次确认之后
 T_L1_PREVIEW = T_L1_CONF + 1_000_000.0               # 应已进入**第二关预览**（预览 8 ms）
@@ -318,7 +331,8 @@ OBSERVE = ["clk", "sw7", "btn", "kp_row", "kp_col",
            "u_fsm|up_r", "u_fsm|down_r", "u_fsm|left_r", "u_fsm|right_r",
            "u_fsm|move_r", "u_fsm|conf_r", "u_fsm|sel_r",
            "u_puzzle|pos", "u_puzzle|locked", "u_puzzle|mv_dir",
-           "u_puzzle|mv_pend", "u_puzzle|chk_pos"]
+           "u_puzzle|mv_pend", "u_puzzle|chk_pos",
+           "u_puzzle|ori", "u_puzzle|sel"]      # A4：朝向 + 选中槽
 
 # 段码 -> 数字（与 rtl/seg_scan.vhd 的共阴译码表一致；blank = 0x00）
 DIGITS = {0x3F: "0", 0x06: "1", 0x5B: "2", 0x4F: "3", 0x66: "4",
@@ -388,7 +402,8 @@ def build(b):
                  ("u_fsm|move_r", 1), ("u_fsm|conf_r", 1), ("u_fsm|sel_r", 1),
                  ("u_puzzle|pos", 32), ("u_puzzle|locked", 4),
                  ("u_puzzle|mv_dir", 4), ("u_puzzle|mv_pend", 1),
-                 ("u_puzzle|chk_pos", 8)):
+                 ("u_puzzle|chk_pos", 8),
+                 ("u_puzzle|ori", 8), ("u_puzzle|sel", 2)):
         if w == 1:
             b.output_bit(n)
         else:
@@ -841,6 +856,51 @@ def check(vf):
             % (t_fail1, [hex(x) for x in rr_f], [hex(x) for x in rg_f],
                [hex(x) for x in FAIL_ROWS], [got_f.get(k) for k in (7, 6, 5, 4)], word_f),
         ))
+
+    # ⑰ ★【A4 旋转 · 整机】在真实矩阵键盘上按 KEY8 三次（原始键号 11 = 行2/列3）
+    #     A4 要求"零片不仅能上下左右移动，还可以 90° 旋转"。整机这一条要同时证明：
+    #       ① 旋转键真的被扫描器识别、经 game_fsm 的 o_rot 送到引擎（i_rot）；
+    #       ② 旋转**只改朝向、不改位置** —— 锚点 o_pos 整字一个字节都不许变；
+    #       ③ 每按一次朝向要么不变（越界 / 会重叠 → 被拒），要么**恰好 +1（mod 4）**；
+    #       ④ 点阵上被点亮的格子数**守恒**（旋转不改零片面积，且拒绝时画面不动）。
+    #     ⚠️ 不假设"一定被接受"：散落是随机的，贴边的零片转过去可能越界 —— 那正是
+    #        stage 2b 的边界判据在起作用，所以判据写成"不变 或 +1"。
+    rot_ok, rot_notes = True, []
+    t_first = S0 + ROT_KEYS[0][0] * ROUND
+    # 取多位数用本文件的 vf.bus_value_at（_bus 是 tb_puzzle_ctrl 的辅助，这里没有）
+    def _rd(nm, tt):
+        return vf.bus_value_at(nm, tt)
+
+    pos_ref = _rd("u_puzzle|pos", t_first - 2000.0)
+    ori_ref = _rd("u_puzzle|ori", t_first - 2000.0)
+    cells_ref = None
+    for i, (k0, k1, _r, _c, _n) in enumerate(ROT_KEYS):
+        t_a = S0 + (k1 + 8) * ROUND                  # 按键被接受 + 旋转检查（≤16 拍）之后
+        pos_a = _rd("u_puzzle|pos", t_a)
+        ori_a = _rd("u_puzzle|ori", t_a)
+        sel_a = _rd("u_puzzle|sel", t_a)
+        if None in (pos_a, ori_a, sel_a):
+            rot_ok = False
+            rot_notes.append("第%d次: 观测点缺失" % (i + 1))
+            continue
+        kb = (ori_ref >> (2 * sel_a)) & 3
+        ka = (ori_a >> (2 * sel_a)) & 3
+        good = (ka == kb) or (ka == (kb + 1) % 4)
+        rrr, ggg, _s, _d = scan_panel(vf, t_a - 60_000.0, t_a + 60_000.0, step=1000.0)
+        n_cells = cells(rrr, ggg)
+        if cells_ref is None:
+            cells_ref = n_cells
+        rot_ok = rot_ok and good and (pos_a == pos_ref) and (n_cells == cells_ref)
+        rot_notes.append("第%d次 sel=%d ori %d->%d(%s) pos%s 格数%d"
+                         % (i + 1, sel_a, kb, ka, "OK" if good else "非法",
+                            "不变" if pos_a == pos_ref else "**变了**", n_cells))
+        ori_ref = ori_a
+    res.append((
+        "⑰ ★【A4 旋转 · 整机】按 KEY8 三次：朝向每次要么不变、要么恰好 +1（mod 4）；"
+        "锚点 o_pos 全程不变；点亮格数守恒",
+        rot_ok,
+        "；".join(rot_notes) + "（参考格数 %s）" % cells_ref,
+    ))
 
     return res
 

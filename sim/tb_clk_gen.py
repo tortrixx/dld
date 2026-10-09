@@ -26,8 +26,8 @@
        19 或 21 个样本都会挂）；松开后 ≤1 个样本即释放（非对称消抖，
        RTL 头部写明判定条件就是"20 位全 HIGH"）；8 个样本的短毛刺必须完全不产生 o_rst。
     ⑤ 内部信号：c1 每拍 +1、数到顶回绕（计数周期 = 1ms 的拍数）；
-       d_press 是 20 位、按住期间逐刻度 +1 个 '1'，满 20 位才认按键。
-
+       bcnt 是 5 位**饱和计数器**（第 13 工作阶段替换掉原来的 20 位移位寄存器
+       d_press）：按住期间逐刻度 +1、到 20 就停住不回绕，任一低样本立刻清零。
 【CLK_HZ 缩放（RTL_PATCHES，只作用于 .tmp/sim_clk_gen 的隔离副本）】
     仓库里 CLK_HZ = 50_000_000，1ms 要 50000 拍，跑 1s 时基需 5e7 拍 —— 跑不动。
     因此把 puzzle_pkg 的 `50_000_000` 改成 `10_000`（隔离工程内），于是
@@ -79,7 +79,8 @@ BURIED = {
     "t1": 1, "t2": 1, "t3": 1, "t6": 1, "t7": 1,   # 各级 tick 寄存器
     "c1": 16,                               # 第 1 级分频计数器（50MHz 档要 16 位）
     "por_cnt": 4,                           # 上电复位饱和计数器
-    "d_press": 20,                          # 按键消抖移位寄存器
+    "bcnt": 5,                              # 按键消抖**饱和计数器**（第 13 工作阶段
+                                            # 由 20 位移位寄存器 d_press 改成 5 位计数器）
     # ⚠️ s_por / s_btn 是纯组合信号，综合后被合并进 o_rst 的逻辑锥里，
     #    网表中不存在（实测：quartus_sim 报 Can't find corresponding node name）
     #    → 不能进 OBSERVE；它们的语义由上面对 por_cnt / d_press 的断言覆盖。
@@ -381,22 +382,25 @@ def check(vf):
     ))
 
     # ---------------------------------------------------------
-    # ⑩ 内部信号：d_press 是 20 位消抖移位寄存器，按住期间每刻度 +1 个 '1'
+    # ⑩ 内部信号：bcnt 是 5 位**饱和计数器**（第 13 工作阶段把 20 位移位寄存器换掉了），
+    #    按住期间每刻度 +1、到 BTN_MS 就停住（不回绕）；松开立刻清零。
     # ---------------------------------------------------------
-    t_shift = [t + CLK_PERIOD for t in t1_r]      # t1 抬起后的下一个 clk 沿才移位
+    t_shift = [t + CLK_PERIOD for t in t1_r]      # t1 抬起后的下一个 clk 沿才 +1
     win = [t for t in t_shift if T_PRESS < t <= T_RELEASE]
-    pops = []
+    cnts = []
     for t in win:
-        v = _busv(vf, "d_press", t)
-        pops.append(None if v is None else bin(v).count("1"))
-    maxpop = max([x for x in pops if x is not None] or [None])
-    rising = all(pops[i + 1] == pops[i] + 1 for i in range(min(len(pops), int(BTN_MS)) - 1)
-                 if pops[i] is not None and pops[i + 1] is not None)
+        v = _busv(vf, "bcnt", t)
+        cnts.append(v)
+    known = [x for x in cnts if x is not None]
+    rising = all(known[i + 1] == min(known[i] + 1, int(BTN_MS))
+                 for i in range(len(known) - 1))
     res.append((
-        "⑩ 中间信号 d_press：按住期间每刻度多一个 '1'，满 %d 位才认按键" % int(BTN_MS),
-        maxpop == int(BTN_MS) and len(win) > BTN_MS and rising,
-        "按住窗口内 popcount 前 22 个 = %s；最大值 = %s（期望 %d）"
-        % (pops[:22], maxpop, int(BTN_MS)),
+        "⑩ 中间信号 bcnt：按住期间每刻度 +1，满 %d 就饱和（不回绕）；松开立刻归零" % int(BTN_MS),
+        len(known) > BTN_MS and known[0] == 1 and max(known) == int(BTN_MS)
+        and rising and vf.value_at("o_rst", T_GLITCH_OFF + CLK_PERIOD * 4) == "0",
+        "按住窗口内 bcnt 前 24 个 = %s；最大值 = %s（期望 %d）；松开后 o_rst = %s"
+        % (cnts[:24], max(known) if known else None, int(BTN_MS),
+           vf.value_at("o_rst", T_GLITCH_OFF + CLK_PERIOD * 4)),
     ))
 
     return res

@@ -93,10 +93,13 @@ entity puzzle_ctrl is
         i_select  : in  std_logic;
         i_move    : in  std_logic;
         i_confirm : in  std_logic;
+        i_rot     : in  std_logic;                      -- 【旋转】键（A4）：1 拍脉冲，
+                                                        -- 把选中零片顺时针转 90°
         i_up      : in  std_logic;
         i_down    : in  std_logic;
         i_left    : in  std_logic;
         i_right   : in  std_logic;
+        o_ori     : out std_logic_vector(7 downto 0);   -- 四块各 2 位的朝向（A4，仿真用）
         o_solved  : out std_logic;
         o_all_lock: out std_logic;
         o_busy    : out std_logic;
@@ -127,21 +130,24 @@ architecture rtl of puzzle_ctrl is
     -- All indices are guaranteed in range by the caller's guards, because a
     -- subprogram is elaborated at compile time.
     ----------------------------------------------------------------------------
+    -- ⚠️ 2026-10-09 第 13 工作阶段（提高要求 A4）：多了一个**朝向**参数 `ori`。
+    --    朝向的置换在**这一级**做（只动 3 位），而不是把 24 位形状整个转一遍 ——
+    --    见 puzzle_pkg.rot_row 的说明。朝向 "00" 时与旧实现逐位等价。
+    -- 唯一一处把"3x3 盒里旋转"的偏移补回紧包围盒锚点的地方（见 puzzle_pkg 的
+    -- 【锚点语义】）。sr/ac 都是**紧包围盒**坐标系：sr = 面板行 - 锚点行，
+    -- ac = 锚点列。
     function row_mask(shp : std_logic_vector(63 downto 0);
-                      sr  : integer;
-                      ac  : integer) return std_logic_vector is
-        variable base : std_logic_vector(7 downto 0) := (others => '0');
+                      h   : std_logic_vector(2 downto 0);
+                      w   : std_logic_vector(2 downto 0);
+                      ori : std_logic_vector(1 downto 0);
+                      sr  : integer range 0 to 2;
+                      ac  : integer range 0 to 7) return std_logic_vector is
+        variable dr : integer range 0 to 2;
+        variable dc : integer range 0 to 2;
     begin
-        if (sr = 0) then
-            base := shp(7 downto 0);
-        elsif (sr = 1) then
-            base := shp(15 downto 8);
-        elsif (sr = 2) then
-            base := shp(23 downto 16);
-        else
-            base := (others => '0');
-        end if;
-        return srl8(base, ac);
+        dr := to_integer(unsigned(rot_off_r(h, w, ori)));
+        dc := to_integer(unsigned(rot_off_c(h, w, ori)));
+        return srl8(rot_row(shp, ori, sr + dr), ac - dc);
     end function;
 
     ----------------------------------------------------------------------------
@@ -175,25 +181,47 @@ architecture rtl of puzzle_ctrl is
     signal pos    : std_logic_vector(31 downto 0) := (others => '0');
     signal locked : std_logic_vector(3 downto 0)  := (others => '0');
     signal sel    : unsigned(1 downto 0) := (others => '0');
+    -- ⚠️ A4：四块零片各 2 位的朝向（块 k 用 ori(2k+1 downto 2k)）。
+    --    散落（i_go）时整体清零 -> 每局都从"原始朝向"开始，与旧行为一致。
+    signal ori    : std_logic_vector(7 downto 0) := (others => '0');
+    signal mv_rot : std_logic := '0';        -- 本次移动请求其实是"旋转"
+    signal chk_rot: std_logic := '0';        -- 正在检查的候选是旋转后的形状
+    signal chk_ori: std_logic_vector(1 downto 0) := (others => '0');  -- 候选朝向
+    signal chk_h0 : std_logic_vector(2 downto 0) := "001";  -- 候选**原始**高（旋转前）
+    signal chk_w0 : std_logic_vector(2 downto 0) := "001";  -- 候选**原始**宽（旋转前）
     signal sel_p  : std_logic_vector(7 downto 0);
 
     type sh_t is (SH_IDLE, SH_TRY, SH_CHK, SH_NEXT, SH_DONE);
     type chk_t is (CH_IDLE, CH_RUN, CH_DONE);
     signal chk      : chk_t := CH_IDLE;
     signal chk_kind : std_logic := '0';
-    signal chk_row  : unsigned(3 downto 0) := (others => '0');
     signal chk_hit  : std_logic := '0';
     signal chk_pos  : std_logic_vector(7 downto 0) := (others => '0');
     signal chk_shp  : std_logic_vector(63 downto 0) := (others => '0');
-    signal chk_h    : std_logic_vector(2 downto 0) := (others => '0');
-    signal chk_w    : std_logic_vector(2 downto 0) := (others => '0');
-    signal chk_orow : unsigned(3 downto 0) := (others => '0');  -- pipelined row index
-    -- Panel row that chk_orow was derived from.  chk_orow is registered, so the
-    -- candidate's own row arrives one cycle late; the other pieces MUST be
-    -- compared at that same (older) panel row, otherwise the exact overlap test
-    -- compares the candidate's row r against the neighbours' row r+1 and both
-    -- misses real overlaps and rejects legal moves (see ERR-016).
-    signal chk_prow : unsigned(3 downto 0) := (others => '0');
+    -- ⚠️ 2026-10-09 第 13 工作阶段（面积优化）：重叠判定引擎**串行化 + 资源共享**。
+    --    旧实现一拍里同时算 5 个 row_mask（候选 1 + 邻块 4），四个邻块比较各自
+    --    一份 8 位桶形移位器；实测这一块约占整机 123 LE，而它们**都在算同一件事**
+    --    （`rw and 邻块本行`，结果一起或进 chk_hit）—— 正是讲义"提取相同的逻辑模块、
+    --    在时间上复用"的典型对象。现在改成**每拍只算一个邻块**：
+    --       对候选的每一行 sr（0..hh-1）：1 拍算候选本行 -> 存 chk_crow；
+    --                                       接着 npc 拍逐个邻块比较。
+    --    第 2 级里四个邻块一共只留**一份** row_mask。判定结果逐条相同
+    --    （原来是把 8 个面板行 × 4 个邻块的与项或起来，现在按"候选自己的行"枚举，
+    --      非零项集合完全一样；被跳过的是 rw=0 的空拍）。
+    --    代价：一次检查 9 拍 -> 5~16 拍（Q0 1 行 -> 5 拍，Q3 3 行 -> 16 拍）。
+    --    ⚠️ 这里的"拍"是 **i_clk**（本进程不受 i_tick 门控；只有渲染器受）——
+    --    所以一次检查是 9 -> 5~16 个**时钟**（180 ns -> 100~320 ns），
+    --    **不是毫秒**。判决的真正延迟来自"整帧渲染"（8 行 x (npc+2) 拍 x i_tick），
+    --    与检查引擎无关。
+    --    顺带把 ERR-016 那套"chk_orow/chk_prow 必须对齐"的流水陷阱整个去掉了。
+    signal chk_me   : unsigned(1 downto 0) := (others => '0');  -- 候选是哪一块
+    signal chk_sr   : unsigned(1 downto 0) := (others => '0');  -- 候选自己的行号
+    signal chk_srmax: unsigned(1 downto 0) := (others => '0');  -- 候选行数-1
+    signal chk_slot : unsigned(1 downto 0) := (others => '0');  -- 正在比对的邻块
+    signal chk_ld   : std_logic := '0';                         -- 下一拍先算候选本行
+    signal chk_prowr: unsigned(3 downto 0) := (others => '0');  -- 候选本行所在的面板行
+                                                                -- （循环不变量，载入时算一次）
+    signal chk_crow : std_logic_vector(7 downto 0) := (others => '0');
     -- pending move proposal (pipelined so the clamp + bounds test is not
     -- chained after the anchor select in the same clock)
     signal mv_pend  : std_logic := '0';
@@ -219,6 +247,28 @@ architecture rtl of puzzle_ctrl is
     signal frow    : unsigned(2 downto 0) := (others => '0');  -- row being built
     signal frame_r : std_logic_vector(63 downto 0) := (others => '0');
     signal frame_g : std_logic_vector(63 downto 0) := (others => '0');
+    -- ⚠️ A4 + 面积：渲染器**串行化**（讲义"串行化 / 资源共享"）。
+    --    原来一拍里四块零片各算一次 row_mask（4 份 8 位桶形移位器并行）。
+    --    实测：把其中 3 份拿掉能省 131 LE —— 但 A4 旋转又吃回 +62 LE，装不下。
+    --    现在改成**一拍只算一块**（ph = 0..npc-1），把数据累加到 cov_a/kc_a/sl_a，
+    --    最后一块算完才发布这一行（ERR-033 的第一拍）。取到的效果：
+    --      · 只剩**一份** row_mask，而且它还能被 AUTO_RESOURCE_SHARING 与重叠引擎共用；
+    --      · 一帧 8 行 × npc 拍（第一关 24 拍、第二/三关 32 拍）；i_tick = 1 kHz
+    --        → 24~32 ms 一帧（**31~42 Hz**，比原来 200 Hz/8 = 25 Hz 还快）；
+    --      · 判定语义**逐位不变**：cov/kc/selrow 仍是"四块零片的并集/锁定集/选中集"。
+    signal ph      : unsigned(2 downto 0) := (others => '0');   -- 相位：
+                                                --   0        = 准备第 0 块的行掩码
+                                                --   1..npc   = 累加第 ph-1 块（并准备第 ph 块）
+                                                --   npc+1    = 发布本行
+    -- 2026-10-09 第 13 工作阶段（补流水）：把"算掩码"和"并进累加器"拆到相邻两拍，
+    -- 见文件头与本段说明。bp/sp/op 就是被拆出来的中间寄存器。
+    signal bp      : std_logic_vector(7 downto 0) := (others => '0');  -- 备好的行掩码
+    signal sp      : unsigned(3 downto 0) := (others => '0');          -- 备好的列移位 + 2
+    signal op      : std_logic := '0';                                 -- 该行在零片内
+    signal cov_a   : std_logic_vector(7 downto 0) := (others => '0');  -- 本行已被覆盖
+    signal kc_a    : std_logic_vector(7 downto 0) := (others => '0');  -- 本行已锁定的
+    signal sl_a    : std_logic_vector(7 downto 0) := (others => '0');  -- 本行选中的
+    signal row_new : std_logic := '0';       -- 上一拍发布了一整行（供第二拍消费）
 
     -- ERR-033（2026-10-09 第 11 工作阶段）：行渲染的**两拍流水**中间寄存器。
     -- 第一拍（下面的渲染进程）只算"这一行"（red_a/grn_a/bad_a + 行号 row_a），
@@ -251,7 +301,13 @@ architecture rtl of puzzle_ctrl is
     signal frm_bad   : std_logic := '0';      -- 当前帧出现过行不匹配
     signal frm_ok    : std_logic := '0';      -- 上一整帧（且未被扰动）并集 == 目标
     signal frm_valid : std_logic := '0';      -- 上一整帧是"干净"的一帧（判据可用）
-    signal pos_frm   : std_logic_vector(31 downto 0) := (others => '0');
+    -- ⚠️ 2026-10-09 第 13 工作阶段（面积）：这里原来是 `pos_frm : 32 位`，
+    --    只为回答"这一帧里 pos 变过没有"。32 个触发器 + 32 位比较器换一个"变过没有"
+    --    太贵了 —— 现在改成**每次提交 pos 时 +1 的 4 位计数器** + 帧头快照。
+    --    别名（计数器回绕到同值）需要**一帧里提交 ≥16 次**；而每次提交都要跑完一次
+    --    重叠检查（≥5 拍，且由 chk 引擎串行化），40 拍的一帧最多 8 次 → **不可能**。
+    signal pos_cnt   : unsigned(3 downto 0) := (others => '0');
+    signal p_frm     : unsigned(3 downto 0) := (others => '0');
     signal lvl_frm   : std_logic := '0';
     -- ⚠️ 2026-10-09（A2/S1）：i_target 现在由 (i_level, i_pat) 一起决定，所以"本帧干净"
     --    的快照必须**同时**跟踪 pat —— 只跟踪 level 的话，图案库切换（开局那一拍）
@@ -266,6 +322,7 @@ architecture rtl of puzzle_ctrl is
 begin
 
     o_lock    <= locked;
+    o_ori     <= ori;
     o_sel_idx <= std_logic_vector(sel);
     o_pos     <= pos;
     o_scanrow <= std_logic_vector(scanrow);
@@ -356,11 +413,12 @@ begin
         variable r      : integer;
         variable prow   : integer;
         variable srow   : integer;
+
         variable shp    : std_logic_vector(63 downto 0);
         variable pk     : std_logic_vector(7 downto 0);
         variable hh     : integer;
         variable npc    : integer;
-        variable rw     : std_logic_vector(7 downto 0);
+        variable rw     : std_logic_vector(7 downto 0);   -- unused (kept for diff size)
         variable cov    : std_logic_vector(7 downto 0);
         variable kc     : std_logic_vector(7 downto 0);
         variable tgtrow : std_logic_vector(7 downto 0);
@@ -369,6 +427,11 @@ begin
         variable grnrow : std_logic_vector(7 downto 0);
         variable islck0 : boolean;
         variable bad    : std_logic;      -- ERR-021: 本行 cov 是否 != 目标图案本行
+        variable orik   : std_logic_vector(1 downto 0);   -- 本拍这块零片的朝向
+        variable kk     : integer range 0 to 3;           -- 正在累加哪一块
+        variable hraw   : std_logic_vector(2 downto 0);   -- 本拍这块零片的原始高/宽
+        variable wraw   : std_logic_vector(2 downto 0);   -- （旋转在**紧包围盒**里做，
+                                                          --   所以 rot_row 需要它们）
     begin
         if rising_edge(i_clk) then
             if (i_rst = '1') then
@@ -378,117 +441,128 @@ begin
                 red_a   <= (others => '0');
                 grn_a   <= (others => '0');
                 bad_a   <= '0';
+                ph      <= (others => '0');
+                cov_a   <= (others => '0');
+                kc_a    <= (others => '0');
+                sl_a    <= (others => '0');
+                row_new <= '0';
+                bp      <= (others => '0');
+                sp      <= (others => '0');
+                op      <= '0';
             elsif (i_tick = '1') then
-                r   := to_integer(frow);
-                cov    := (others => '0');
-                kc     := (others => '0');
-                selrow := (others => '0');
-
+                r := to_integer(frow);
                 if (i_level = '0') then npc := 3; else npc := 4; end if;
 
-                -- ---- piece 0 -------------------------------------------------
-                pk := pos(31 downto 24); shp := i_sh0;
-                hh := to_integer(unsigned(i_h0));
-                srow := r - to_integer(unsigned(pk(7 downto 4)));
-                if (srow >= 0) and (srow < hh) then
-                    rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
-                    cov := cov or rw;
-                    if (locked(0) = '1') then kc := kc or rw; end if;
-                    if (sel = "00") and (locked(0) = '0') then selrow := selrow or rw; end if;
-                end if;
+                if (to_integer(ph) = npc + 1) then
+                    ------------------------------------------------------------
+                    -- 发布相位：输入全是寄存器（cov_a/kc_a/sl_a），
+                    -- 所以"整帧判据 + 配色"这条链不挂在 row_mask 后面（ERR-033 第一拍）。
+                    ------------------------------------------------------------
+                    case r is
+                        when 0      => tgtrow := i_target(7 downto 0);
+                        when 1      => tgtrow := i_target(15 downto 8);
+                        when 2      => tgtrow := i_target(23 downto 16);
+                        when 3      => tgtrow := i_target(31 downto 24);
+                        when 4      => tgtrow := i_target(39 downto 32);
+                        when 5      => tgtrow := i_target(47 downto 40);
+                        when 6      => tgtrow := i_target(55 downto 48);
+                        when others => tgtrow := i_target(63 downto 56);
+                    end case;
 
-                -- ---- piece 1 -------------------------------------------------
-                if (npc > 1) then
-                    pk := pos(23 downto 16); shp := i_sh1;
-                    hh := to_integer(unsigned(i_h1));
-                    srow := r - to_integer(unsigned(pk(7 downto 4)));
-                    if (srow >= 0) and (srow < hh) then
-                        rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
-                        cov := cov or rw;
-                        if (locked(1) = '1') then kc := kc or rw; end if;
-                    if (sel = "01") and (locked(1) = '0') then selrow := selrow or rw; end if;
+                    -- ERR-021: 整帧画面判据。cov = 本行被零片覆盖的格子并集，
+                    -- tgtrow = 目标图案本行的格子；8 行的 cov 全等 tgtrow
+                    -- <=> 零片并集 == 目标图案（与"哪一块在哪"无关，等价摆法必须算成功）。
+                    if (cov_a = tgtrow) then bad := '0'; else bad := '1'; end if;
+
+                    -- green = 选中块 or 已锁定块；red = 覆盖格 - 选中块。
+                    -- ⚠️ ERR-023：这里**不画**目标虚影（对局态本就不该有虚影）。
+                    redrow := cov_a and (not sl_a);
+                    grnrow := kc_a or sl_a;
+
+                    row_a   <= frow;
+                    red_a   <= redrow;
+                    grn_a   <= grnrow;
+                    bad_a   <= bad;
+                    row_new <= '1';
+                    ph      <= (others => '0');
+                    cov_a   <= (others => '0');
+                    kc_a    <= (others => '0');
+                    sl_a    <= (others => '0');
+
+                    -- the scanned row follows the row being built
+                    if (frow = 7) then
+                        frow <= (others => '0');
+                    else
+                        frow <= frow + 1;
                     end if;
-                end if;
-
-                -- ---- piece 2 -------------------------------------------------
-                if (npc > 2) then
-                    pk := pos(15 downto 8); shp := i_sh2;
-                    hh := to_integer(unsigned(i_h2));
-                    srow := r - to_integer(unsigned(pk(7 downto 4)));
-                    if (srow >= 0) and (srow < hh) then
-                        rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
-                        cov := cov or rw;
-                        if (locked(2) = '1') then kc := kc or rw; end if;
-                    if (sel = "10") and (locked(2) = '0') then selrow := selrow or rw; end if;
-                    end if;
-                end if;
-
-                -- ---- piece 3 (level 2 only) ----------------------------------
-                if (npc > 3) then
-                    pk := pos(7 downto 0); shp := i_sh3;
-                    hh := to_integer(unsigned(i_h3));
-                    srow := r - to_integer(unsigned(pk(7 downto 4)));
-                    if (srow >= 0) and (srow < hh) then
-                        rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
-                        cov := cov or rw;
-                        if (locked(3) = '1') then kc := kc or rw; end if;
-                    if (sel = "11") and (locked(3) = '0') then selrow := selrow or rw; end if;
-                    end if;
-                end if;
-
-                -- ---- target row for the ghost --------------------------------
-                case r is
-                    when 0      => tgtrow := i_target(7 downto 0);
-                    when 1      => tgtrow := i_target(15 downto 8);
-                    when 2      => tgtrow := i_target(23 downto 16);
-                    when 3      => tgtrow := i_target(31 downto 24);
-                    when 4      => tgtrow := i_target(39 downto 32);
-                    when 5      => tgtrow := i_target(47 downto 40);
-                    when 6      => tgtrow := i_target(55 downto 48);
-                    when others => tgtrow := i_target(63 downto 56);
-                end case;
-
-                -- ---- ERR-021: 整帧画面判据 -----------------------------------
-                -- cov = 本行被零片覆盖的格子并集，tgtrow = 目标图案本行的格子。
-                -- 8 行的 cov 全等 tgtrow  <=>  零片并集 == 目标图案。
-                -- 这就是 B9"位置和形状与初始拼图一致"的可执行定义：与"哪一块在哪"
-                -- 无关，只与玩家看到的画面有关（等价摆法必须算成功）。
-                if (cov = tgtrow) then bad := '0'; else bad := '1'; end if;
-
-                -- Colour of this row.
-                --   green = selected piece OR locked piece
-                --   red   = every piece cell that is not the selected one
-                -- Excluding exactly the selected cells from red is what makes the
-                -- selected piece pure GREEN; without it green was a subset of red
-                -- and the piece showed up as yellow, the same as a locked one.
-                --
-                -- ⚠️ ERR-023 : the target "ghost" is NOT drawn any more.  The engine
-                -- frame is only ever displayed while S_PLAYING (puzzle_top's state
-                -- mux shows the pattern / win / fail pictures in every other state),
-                -- and during play a red ghost outline must not sit under the pieces
-                -- (ERR-013).  That was previously achieved by blanking i_target at
-                -- the top level -- which also killed the ERR-021 success test,
-                -- because the test compares the assembled picture with i_target.
-                -- Now i_target always carries the real picture (the test needs it)
-                -- and the ghost is simply not drawn here.
-                redrow := cov and (not selrow);
-                grnrow := kc or selrow;
-
-                -- ---- 第一拍的结果进流水寄存器（ERR-033）-----------------------
-                -- 并入 frame 与整帧判据协议都在**下一拍**做（见紧跟着的进程），
-                -- 这样"锚点 → 形状移位 → 帧寄存器"这条最长路径被切成两半。
-                row_a <= frow;
-                red_a <= redrow;
-                grn_a <= grnrow;
-                bad_a <= bad;
-
-                -- the scanned row follows the row being built, one tick behind
-                if (frow = 7) then
-                    frow <= (others => '0');
+                    scanrow <= frow;
                 else
-                    frow <= frow + 1;
+                    row_new <= '0';      -- 本拍不是"发布整行"那一拍
+
+                    ------------------------------------------------------------
+                    -- (a) 累加相位：消费**上一拍**备好的 bp/sp/op。
+                    --     这一段只有 srl8 + 或门，很浅。
+                    ------------------------------------------------------------
+                    if (to_integer(ph) >= 1) then
+                        kk := to_integer(ph) - 1;
+                        if (op = '1') then
+                            rw := srl8(bp, to_integer(sp) - 2);
+                            cov := cov_a or rw;
+                            if (locked(kk) = '1') then
+                                kc := kc_a or rw;
+                            else
+                                kc := kc_a;
+                            end if;
+                            if (to_integer(sel) = kk) and (locked(kk) = '0') then
+                                selrow := sl_a or rw;
+                            else
+                                selrow := sl_a;
+                            end if;
+                        else
+                            cov    := cov_a;
+                            kc     := kc_a;
+                            selrow := sl_a;
+                        end if;
+                        cov_a <= cov;
+                        kc_a  <= kc;
+                        sl_a  <= selrow;
+                    end if;
+
+                    ------------------------------------------------------------
+                    -- (b) 准备相位：为**下一拍**算好行掩码（旋转 + 锚点补偿，较深）。
+                    --     ph = 0 备第 0 块；ph = 1..npc-1 备第 ph 块；ph = npc 不备。
+                    ------------------------------------------------------------
+                    if (to_integer(ph) <= npc - 1) then
+                        case to_integer(ph) is
+                            when 0 =>
+                                pk := pos(31 downto 24); shp := i_sh0; orik := ori(1 downto 0);
+                                hraw := i_h0; wraw := i_w0;
+                            when 1 =>
+                                pk := pos(23 downto 16); shp := i_sh1; orik := ori(3 downto 2);
+                                hraw := i_h1; wraw := i_w1;
+                            when 2 =>
+                                pk := pos(15 downto 8); shp := i_sh2; orik := ori(5 downto 4);
+                                hraw := i_h2; wraw := i_w2;
+                            when others =>
+                                pk := pos(7 downto 0); shp := i_sh3; orik := ori(7 downto 6);
+                                hraw := i_h3; wraw := i_w3;
+                        end case;
+
+                        srow := r - to_integer(unsigned(pk(7 downto 4)));
+                        hh := to_integer(unsigned(oh(hraw, wraw, orik)));
+                        if (srow >= 0) and (srow < hh) then
+                            op <= '1';
+                            bp <= rot_row(shp, orik,
+                                          srow + to_integer(unsigned(rot_off_r(hraw, wraw, orik))));
+                            sp <= to_unsigned(to_integer(unsigned(pk(3 downto 0)))
+                                              - to_integer(unsigned(rot_off_c(hraw, wraw, orik))) + 2, 4);
+                        else
+                            op <= '0';
+                        end if;
+                    end if;
+
+                    ph <= ph + 1;
                 end if;
-                scanrow <= frow;
             end if;
         end if;
     end process;
@@ -515,17 +589,20 @@ begin
                 frm_bad   <= '0';
                 frm_ok    <= '0';
                 frm_valid <= '0';
-                pos_frm   <= (others => '0');
+                p_frm     <= (others => '0');
                 lvl_frm   <= '0';
                 pat_frm   <= (others => '0');
             elsif (i_tick = '1') then
+              -- 串行化后一行要 npc 拍才算完，第二拍只在**刚发布一行**时动作
+              -- （row_new 由第一拍进程独占驱动，这里只读）
+              if (row_new = '1') then
                 rb := to_integer(row_a);
 
                 if (rb = 0) then
                     -- 帧头：重启本帧的失配累加器，并把本帧各行结果所依赖的东西
                     -- （零片锚点、关卡、图案下标）拍个快照
                     frm_bad <= bad_a;
-                    pos_frm <= pos;
+                    p_frm   <= pos_cnt;
                     lvl_frm <= i_level;
                     pat_frm <= i_pat;
                 elsif (rb = 7) then
@@ -534,7 +611,31 @@ begin
                     -- 跟踪 level **和 pat** 就够：i_target 与 i_sh* 都由 puzzle_top 的
                     -- pattern_rom / piece_rom 直接按 (level, pat) 选择，两者没变
                     -- ⇒ 目标图案与零片形状都没变（这条接线约定必须保持）。
-                    if (pos_frm = pos) and (lvl_frm = i_level) and (pat_frm = i_pat) then
+                    -- ⚠️ ERR-041（**已记录、未修**；2026-10-09 第 13 工作阶段由 tb_puzzle_ctrl 的
+                    --    扫描不变量抓出）：快照在**帧头**（把第 0 行并进帧那一拍）拍，
+                    --    而渲染器改成"准备/累加"流水后，第 0 行的掩码在这之前 `npc+1` 拍
+                    --    就算完了 —— 那一小段里发生的 pos/图案变化**拍不到**，这一帧的
+                    --    8 行可能取自两种配置却仍被判"干净"。
+                    --
+                    --    **为什么本设计不受影响（可达性论证，不是"概率小"）**：
+                    --      · 窗口内只有 `pos` 变化才会混掉两种配置：`locked`/选中变化
+                    --        **不改 `cov`**（成功判据看的就是 cov）；`level`/`pat` 变化必带
+                    --        新的一次散落。
+                    --      · `pos` **只能在 CH_DONE 提交**：移动被接受（前提是该块**未锁定**）、
+                    --        散落被接受、散落回退（后两者都会清 `locked`）。
+                    --      · FSM 的胜负分支要么要 `i_all_lock`（= 全锁 + 干净帧），要么要
+                    --        `i_solved`（= frm_ok + 全锁）—— **都要求全锁**，而全锁时不可能
+                    --        发生 `pos` 提交 ⇒ 不可能出现混帧 ⇒ **判据不可达**。
+                    --
+                    --    **为什么不修（两种写法都真编译量过）**：把快照挪到帧尾（窗口变成
+                    --    "上一帧尾到本帧尾"，连第 0 行的计算窗口一起覆盖）实测
+                    --    **1266 LE / Fmax 48.83 MHz** —— 把刚达标的 50 MHz 又还回去了，
+                    --    而且 **其他 fitter seed 全部装不进**（seed 2/3/5 都报
+                    --    "requires 129 LABs, device contains 127"）；另一种写法（把快照
+                    --    挪到第一拍的 ph=0 且 frow=0）**连 LAB 都不够**。
+                    --    ⇒ 用一个硬性能指标换一个本设计到不了的窗口不划算，记录在案，
+                    --      下一轮若腾出面积再收（见 HANDOFF §4、docs/06 §14）。
+                    if (p_frm = pos_cnt) and (lvl_frm = i_level) and (pat_frm = i_pat) then
                         frm_valid <= '1';
                         if (frm_bad = '0') and (bad_a = '0') then
                             frm_ok <= '1';
@@ -569,6 +670,7 @@ begin
                     when others => frame_r(7 downto 0) <= red_a;
                                    frame_g(7 downto 0) <= grn_a;
                 end case;
+              end if;
             end if;
         end if;
     end process;
@@ -594,17 +696,22 @@ begin
         variable pk     : std_logic_vector(7 downto 0);
         variable prow   : integer;
         variable srow   : integer;
-        variable rw     : std_logic_vector(7 downto 0);
+        variable acv    : integer range 0 to 7;   -- anchor column of the slot being checked
+        variable ov     : std_logic_vector(1 downto 0);  -- A4: 邻块的朝向
+        variable ohv, owv : std_logic_vector(2 downto 0);  -- A4: 邻块原始高宽
+        variable rw     : std_logic_vector(7 downto 0);   -- unused (kept for diff size)
         variable lvl2   : boolean;   -- "不是第一关"：四块零片 / 四槽可选
                                      -- （D2 起覆盖第二关与第三关，名字沿用历史；语义 == i_level='1'）
-        variable me     : std_logic_vector(1 downto 0);   -- piece being validated
         variable xr, xc : integer;                        -- ERR-032: bounded candidates
+        variable hraw, wraw : integer range 0 to 7;       -- A4：原始高宽（旋转前）
+        variable cand_o : std_logic_vector(1 downto 0);   -- A4：候选朝向
     begin
         if rising_edge(i_clk) then
             if (i_rst = '1') then
                 pos <= (others => '0');
                 locked <= (others => '0');
                 sel <= (others => '0');
+                pos_cnt <= (others => '0');
                 sh <= SH_IDLE;
                 sh_k <= (others => '0');
                 sh_att <= (others => '0');
@@ -614,8 +721,16 @@ begin
                 mv_clamp <= (others => '0');
                 mv_sel <= (others => '0');
                 chk <= CH_IDLE;
-                chk_orow <= (others => '1');
-                chk_prow <= (others => '1');
+                chk_sr <= (others => '0');
+                chk_slot <= (others => '0');
+                chk_srmax <= (others => '0');
+                chk_ld <= '0';
+                chk_crow <= (others => '0');
+                chk_prowr <= (others => '0');
+                chk_rot <= '0';
+                chk_ori <= (others => '0');
+                ori     <= (others => '0');
+                mv_rot  <= '0';
                 rnd_step <= '0';
             else
                 rnd_step <= '0';
@@ -631,6 +746,7 @@ begin
                         sh_att <= (others => '0');
                         sel    <= (others => '0');
                         locked <= (others => '0');
+                        ori    <= (others => '0');   -- A4：新一局全部回到原始朝向
                     elsif (i_confirm = '1') then
                         case to_integer(sel) is
                             when 0      => locked(0) <= '1';
@@ -643,6 +759,12 @@ begin
                     elsif (i_select = '1') then
                         -- ERR-035：【选择】跳过已锁定的零片（B8 不可再选择）
                         sel <= next_unlocked(sel, locked, lvl2);
+                    elsif (i_rot = '1') then
+                        -- A4：【旋转】键 —— 走**同一套**流水（夹紧/边界/重叠检查），
+                        -- 只是方向位全 0（不移动）且候选形状用"朝向 +1"。
+                        mv     <= '1';
+                        mv_rot <= '1';
+                        mv_dir <= "0000";
                     elsif (i_move = '1') then
                         mv <= '1';
                         -- ⚠️ ERR-020: 方向必须与移动请求**同一拍**锁存。
@@ -698,29 +820,43 @@ begin
                     cr := to_integer(unsigned(mv_clamp(7 downto 4)));
                     cc := to_integer(unsigned(mv_clamp(3 downto 0)));
                     case to_integer(mv_sel) is
-                        when 0      => hh := to_integer(unsigned(i_h0)); ww := to_integer(unsigned(i_w0)); shp := i_sh0;
-                        when 1      => hh := to_integer(unsigned(i_h1)); ww := to_integer(unsigned(i_w1)); shp := i_sh1;
-                        when 2      => hh := to_integer(unsigned(i_h2)); ww := to_integer(unsigned(i_w2)); shp := i_sh2;
-                        when others => hh := to_integer(unsigned(i_h3)); ww := to_integer(unsigned(i_w3)); shp := i_sh3;
+                        when 0      => hraw := to_integer(unsigned(i_h0)); wraw := to_integer(unsigned(i_w0));
+                                       shp := i_sh0; cand_o := ori(1 downto 0);
+                        when 1      => hraw := to_integer(unsigned(i_h1)); wraw := to_integer(unsigned(i_w1));
+                                       shp := i_sh1; cand_o := ori(3 downto 2);
+                        when 2      => hraw := to_integer(unsigned(i_h2)); wraw := to_integer(unsigned(i_w2));
+                                       shp := i_sh2; cand_o := ori(5 downto 4);
+                        when others => hraw := to_integer(unsigned(i_h3)); wraw := to_integer(unsigned(i_w3));
+                                       shp := i_sh3; cand_o := ori(7 downto 6);
                     end case;
+                    -- A4：旋转请求 = 同一个锚点 + 朝向 +1（90°/270° 时高宽互换）
+                    if (mv_rot = '1') then
+                        cand_o := ori_next(cand_o);
+                        mv_rot <= '0';
+                    end if;
+                    if (cand_o(0) = '1') then hh := wraw; ww := hraw;
+                    else                      hh := hraw; ww := wraw; end if;
 
                     -- bounds: analytic, verified against geometry in
                     -- .ref/model_ctrl.py (0 mismatches for every shape/position)
+                    -- A4：这里用的是**旋转之后**的高宽 —— 转到一半转出点阵的请求
+                    -- 直接不启动检查（等效于"拒绝"），B7"不能移出 8x8"对旋转同样成立。
                     if (cr + hh <= 8) and (cc + ww <= 8)
                        and (locked(to_integer(mv_sel)) = '0') then
                         chk_pos  <= mv_clamp;
                         chk_shp  <= shp;
-                        chk_h    <= std_logic_vector(to_unsigned(hh, 3));
-                        chk_w    <= std_logic_vector(to_unsigned(ww, 3));
-                        chk_kind <= '0';                 -- '0' = move
+                        chk_ori  <= cand_o;
+                        chk_h0   <= std_logic_vector(to_unsigned(hraw, 3));
+                        chk_w0   <= std_logic_vector(to_unsigned(wraw, 3));
+                        chk_rot  <= mv_rot;
+                        chk_srmax<= to_unsigned(hh - 1, 2);
+                        chk_me   <= mv_sel;
+                        chk_kind <= '0';                 -- '0' = move（含旋转）
                         chk      <= CH_RUN;
-                        chk_row  <= (others => '0');
+                        chk_sr   <= (others => '0');
+                        chk_slot <= (others => '0');
+                        chk_ld   <= '1';                 -- first tick: candidate row
                         chk_hit  <= '0';
-                        -- first comparison cycle must evaluate NOTHING: force the
-                        -- pipelined row index out of range so row_mask returns 0
-                        -- and the neighbour compare is skipped (see ERR-016)
-                        chk_orow <= (others => '1');
-                        chk_prow <= (others => '1');
                     end if;
                 end if;
 
@@ -732,11 +868,17 @@ begin
                 if (sh = SH_TRY) and (chk = CH_IDLE) then
                     rnd_step <= '1';
 
+                    -- A4：散落前 ori 已被 i_go 清零，但这里仍按**当前朝向**取高宽，
+                    --    使"散落候选锚点范围"与渲染/检查用的是同一个包围盒。
                     case to_integer(sh_k) is
-                        when 0      => hh := to_integer(unsigned(i_h0)); ww := to_integer(unsigned(i_w0));
-                        when 1      => hh := to_integer(unsigned(i_h1)); ww := to_integer(unsigned(i_w1));
-                        when 2      => hh := to_integer(unsigned(i_h2)); ww := to_integer(unsigned(i_w2));
-                        when others => hh := to_integer(unsigned(i_h3)); ww := to_integer(unsigned(i_w3));
+                        when 0      => hh := to_integer(unsigned(oh(i_h0, i_w0, ori(1 downto 0))));
+                                       ww := to_integer(unsigned(ow(i_h0, i_w0, ori(1 downto 0))));
+                        when 1      => hh := to_integer(unsigned(oh(i_h1, i_w1, ori(3 downto 2))));
+                                       ww := to_integer(unsigned(ow(i_h1, i_w1, ori(3 downto 2))));
+                        when 2      => hh := to_integer(unsigned(oh(i_h2, i_w2, ori(5 downto 4))));
+                                       ww := to_integer(unsigned(ow(i_h2, i_w2, ori(5 downto 4))));
+                        when others => hh := to_integer(unsigned(oh(i_h3, i_w3, ori(7 downto 6))));
+                                       ww := to_integer(unsigned(ow(i_h3, i_w3, ori(7 downto 6))));
                     end case;
 
                     -- ⚠️ ERR-037（2026-10-09 第 11 工作阶段，全项目审计发现）：这里原来写
@@ -794,108 +936,97 @@ begin
 
                     chk_pos <= sc_cand;
                     chk_shp <= shp;
-                    chk_h   <= sc_hh;
-                    chk_w   <= sc_ww;
+                    chk_ori <= ori(2 * to_integer(sh_k) + 1 downto 2 * to_integer(sh_k));
+                    case to_integer(sh_k) is
+                        when 0      => chk_h0 <= i_h0; chk_w0 <= i_w0;
+                        when 1      => chk_h0 <= i_h1; chk_w0 <= i_w1;
+                        when 2      => chk_h0 <= i_h2; chk_w0 <= i_w2;
+                        when others => chk_h0 <= i_h3; chk_w0 <= i_w3;
+                    end case;
+                    chk_rot <= '0';
+                    chk_srmax <= resize(unsigned(sc_hh) - 1, 2);
+                    chk_me  <= sh_k;
                     chk_kind <= '1';                     -- '1' = scatter
                     chk     <= CH_RUN;
-                    chk_row <= (others => '0');
+                    chk_sr  <= (others => '0');
+                    chk_slot<= (others => '0');
+                    chk_ld  <= '1';
                     chk_hit <= '0';
-                    chk_orow <= (others => '1');         -- see ERR-016
-                    chk_prow <= (others => '1');
                 end if;
 
                 ----------------------------------------------------------------
-                -- (4) Overlap engine: one panel row per tick
+                ----------------------------------------------------------------
+                -- (4) Overlap engine -- **串行化**（2026-10-09 第 13 工作阶段）
+                --
+                -- 一拍只算一个 row_mask：先按候选自己的行号 sr 算出候选本行（存
+                -- chk_crow），随后 npc 拍逐个与邻块比较。与旧实现（一拍 5 个
+                -- row_mask）的判定结果**逐条相同**，只是把并行的 4 份移位器换成了
+                -- 时间上复用的 1 份。见文件头与信号声明处的说明。
                 ----------------------------------------------------------------
                 case chk is
                     when CH_IDLE =>
                         null;
 
                     when CH_RUN =>
-                        chk_row <= chk_row + 1;
-                        -- Pipeline: the zero-based row for the candidate is
-                        -- registered here and consumed by the comparison below on
-                        -- the FOLLOWING cycle.  Computing it combinationally and
-                        -- feeding it straight into srl8 put a 26 ns path through
-                        -- the row subtract, the range test and the shift.
-                        --
-                        -- ⚠️ ERR-016a: chk_orow is REGISTERED, so the candidate row
-                        -- consumed below belongs to the PREVIOUS panel row.  The
-                        -- neighbour comparison must therefore use that same panel
-                        -- row (chk_prow), not the current chk_row -- otherwise the
-                        -- candidate's row r is compared against the neighbours'
-                        -- row r+1.  The measured symptom was a legal scatter being
-                        -- rejected (producing a fallback anchor) AND an illegal
-                        -- overlapping scatter being accepted.
-                        chk_orow <= resize(chk_row -
-                                           unsigned(chk_pos(7 downto 4)), 4);
-                        chk_prow <= chk_row;
-                        -- Nine cycles are needed, not eight: the first one only
-                        -- primes the pipeline (chk_orow/chk_prow = "1111"), so the
-                        -- evaluated panel rows are -1, 0, ... 7.
-                        if (chk_row = 9) then
-                            chk <= CH_DONE;
+                        if (chk_ld = '1') then
+                            -- 候选自己第 chk_sr 行，搬到它的锚点列上后的 8 位掩码
+                            chk_crow <= row_mask(chk_shp, chk_h0, chk_w0, chk_ori,
+                                                 to_integer(chk_sr),
+                                                 to_integer(unsigned(chk_pos(3 downto 0))));
+                            -- 循环不变量：候选本行落在面板第几行。原来在每个邻块比较里
+                            -- 重算 `chk_pos(7 downto 4) + chk_sr`，那条链就是最后的
+                            -- 违例路径（chk_slot -> chk_hit，slack −0.205 ns）。
+                            chk_prowr <= resize(unsigned(chk_pos(7 downto 4))
+                                                + chk_sr, 4);
+                            chk_ld   <= '0';
+                            chk_slot <= (others => '0');
                         else
-                            -- candidate's mask for this panel row (index pipelined)
-                            rw := row_mask(chk_shp, to_integer(chk_orow),
-                                           to_integer(unsigned(chk_pos(3 downto 0))));
-                            if (rw /= x"00") then
-                                -- ⚠️ ERR-017: which piece is being validated is
-                                -- 'sel' for a MOVE but 'sh_k' for a SCATTER.  The
-                                -- original masks used 'sel' for both; during a
-                                -- scatter sel is always 0, so the candidate was
-                                -- never compared against piece 0 (two pieces could
-                                -- land on the same cells) and was wrongly compared
-                                -- against its own pre-scatter anchor.
-                                if (chk_kind = '0') then
-                                    me := std_logic_vector(sel);
+                            -- 一个邻块一拍（chk_slot = 0 .. npc-1）
+                            if (chk_crow /= x"00") and (chk_slot /= chk_me)
+                               and ((chk_slot < 3) or lvl2) then
+                                case to_integer(chk_slot) is
+                                    when 0 =>
+                                        prow := to_integer(unsigned(pos(31 downto 28)));
+                                        acv  := to_integer(unsigned(pos(27 downto 24)));
+                                        shp  := i_sh0; ohv := i_h0; owv := i_w0;
+                                        ov   := ori(1 downto 0);
+                                    when 1 =>
+                                        prow := to_integer(unsigned(pos(23 downto 20)));
+                                        acv  := to_integer(unsigned(pos(19 downto 16)));
+                                        shp  := i_sh1; ohv := i_h1; owv := i_w1;
+                                        ov   := ori(3 downto 2);
+                                    when 2 =>
+                                        prow := to_integer(unsigned(pos(15 downto 12)));
+                                        acv  := to_integer(unsigned(pos(11 downto 8)));
+                                        shp  := i_sh2; ohv := i_h2; owv := i_w2;
+                                        ov   := ori(5 downto 4);
+                                    when others =>
+                                        prow := to_integer(unsigned(pos(7 downto 4)));
+                                        acv  := to_integer(unsigned(pos(3 downto 0)));
+                                        shp  := i_sh3; ohv := i_h3; owv := i_w3;
+                                        ov   := ori(7 downto 6);
+                                end case;
+                                -- 邻块自己的行号：候选本行落在面板第
+                                -- (chk_pos 的行 + chk_sr) 行上
+                                srow := to_integer(chk_prowr) - prow;
+                                if (srow >= 0) and (srow <= 2) then
+                                    if (chk_crow and row_mask(shp, ohv, owv, ov, srow, acv)) /= x"00" then
+                                        chk_hit <= '1';
+                                    end if;
+                                end if;
+                            end if;
+
+                            -- 推进扫描：邻块走完 -> 候选下一行；候选行走完 -> 判定
+                            if (chk_slot = 3) or ((not lvl2) and (chk_slot = 2)) then
+                                chk_slot <= (others => '0');
+                                if (chk_sr = chk_srmax) then
+                                    chk <= CH_DONE;
                                 else
-                                    me := std_logic_vector(sh_k);
+                                    chk_sr <= chk_sr + 1;
+                                    chk_ld <= '1';
                                 end if;
-                                -- compare against every other live piece, one at
-                                -- a time using the same shared row_mask
-                                prow := to_integer(unsigned(pos(31 downto 28)));
-                                srow := to_integer(chk_prow) - prow;
-                                if (me /= "00") then
-                                    if (srow >= 0) and (srow <= 2) then
-                                        if (rw and row_mask(i_sh0, srow,
-                                                to_integer(unsigned(pos(27 downto 24))))) /= x"00" then
-                                            chk_hit <= '1';
-                                        end if;
-                                    end if;
-                                end if;
-                                prow := to_integer(unsigned(pos(23 downto 20)));
-                                srow := to_integer(chk_prow) - prow;
-                                if (me /= "01") then
-                                    if (srow >= 0) and (srow <= 2) then
-                                        if (rw and row_mask(i_sh1, srow,
-                                                to_integer(unsigned(pos(19 downto 16))))) /= x"00" then
-                                            chk_hit <= '1';
-                                        end if;
-                                    end if;
-                                end if;
-                                prow := to_integer(unsigned(pos(15 downto 12)));
-                                srow := to_integer(chk_prow) - prow;
-                                if (me /= "10") then
-                                    if (srow >= 0) and (srow <= 2) then
-                                        if (rw and row_mask(i_sh2, srow,
-                                                to_integer(unsigned(pos(11 downto 8))))) /= x"00" then
-                                            chk_hit <= '1';
-                                        end if;
-                                    end if;
-                                end if;
-                                if (lvl2) then
-                                    prow := to_integer(unsigned(pos(7 downto 4)));
-                                    srow := to_integer(chk_prow) - prow;
-                                    if (me /= "11") then
-                                        if (srow >= 0) and (srow <= 2) then
-                                            if (rw and row_mask(i_sh3, srow,
-                                                    to_integer(unsigned(pos(3 downto 0))))) /= x"00" then
-                                                chk_hit <= '1';
-                                            end if;
-                                        end if;
-                                    end if;
-                                end if;
+                            else
+                                chk_slot <= chk_slot + 1;
                             end if;
                         end if;
 
@@ -904,12 +1035,23 @@ begin
                         if (chk_hit = '0') then
                             -- accept: commit the anchor
                             if (chk_kind = '0') then
+                                if (chk_rot = '1') then
+                                    -- A4：检查通过 -> 提交**朝向**（锚点不动）
+                                    case to_integer(chk_me) is
+                                        when 0      => ori(1 downto 0) <= ori_next(ori(1 downto 0));
+                                        when 1      => ori(3 downto 2) <= ori_next(ori(3 downto 2));
+                                        when 2      => ori(5 downto 4) <= ori_next(ori(5 downto 4));
+                                        when others => ori(7 downto 6) <= ori_next(ori(7 downto 6));
+                                    end case;
+                                else
                                 case to_integer(sel) is
                                     when 0      => pos(31 downto 24) <= chk_pos;
                                     when 1      => pos(23 downto 16) <= chk_pos;
                                     when 2      => pos(15 downto 8)  <= chk_pos;
                                     when others => pos(7 downto 0)   <= chk_pos;
                                 end case;
+                                end if;
+                                pos_cnt <= pos_cnt + 1;
                             else
                                 case to_integer(sh_k) is
                                     when 0      => pos(31 downto 24) <= chk_pos;
@@ -917,6 +1059,7 @@ begin
                                     when 2      => pos(15 downto 8)  <= chk_pos;
                                     when others => pos(7 downto 0)   <= chk_pos;
                                 end case;
+                                pos_cnt <= pos_cnt + 1;
                                 sh_att <= (others => '0');
                                 sh     <= SH_NEXT;
                             end if;
@@ -932,6 +1075,7 @@ begin
                                     when 2      => pos(15 downto 8)  <= "0100" & "0000";
                                     when others => pos(7 downto 0)   <= "0100" & "0100";
                                 end case;
+                                pos_cnt <= pos_cnt + 1;
                                 sh <= SH_NEXT;
                             else
                                 -- ⚠️ ERR-018a: a retry MUST go back to SH_TRY.

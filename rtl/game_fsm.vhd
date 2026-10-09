@@ -67,6 +67,7 @@ entity game_fsm is
         o_down     : out std_logic;
         o_left     : out std_logic;
         o_right    : out std_logic;
+        o_rot      : out std_logic;                      -- A4: 90° 旋转请求（1 拍）
         o_level    : out std_logic;                      -- '0' = level 1, '1' = level 2/3
         o_lvl3     : out std_logic;                      -- '1' = third level (A2: 增加关数)
         o_state    : out std_logic_vector(2 downto 0);   -- state_t
@@ -97,6 +98,18 @@ architecture rtl of game_fsm is
     --   ROW2     KEY5   KEY6   KEY7   KEY8        index  8..11
     --   ROW1     KEY9   KEY10  KEY11  KEY12       index  4.. 7
     --   ROW0     KEY13  KEY14  KEY15  KEY16       index  0.. 3   <- bottom
+    --
+    -- ⚠️ 2026-10-09 第 13 工作阶段（提高要求 A4「零片 90° 旋转」）：新增【旋转】键
+    --    KEY8（= 索引 11）。它就在【上】键右边，右手的食指/中指够得到，且不影响
+    --    原来的 3x3 控制键区布局：
+    --
+    --            COL0    COL1    COL2      COL3
+    --   ROW2     KEY5    KEY6    KEY7      KEY8
+    --                            [UP]      [ROTATE]
+    --   ROW1     KEY9    KEY10   KEY11     KEY12
+    --            ...     [LEFT]  [CONFIRM] [RIGHT]
+    --   ROW0     KEY13   KEY14   KEY15     KEY16
+    --            (无)    [START] [DOWN]    [SELECT]
     --
     -- CONFIRMED ON THE BENCH (2026-10-08): KEY14 (= index 1) starts the game,
     -- KEY16 (= index 3) selects a piece.  Both are kept where the player already
@@ -133,6 +146,7 @@ architecture rtl of game_fsm is
             when "0101" => return K_LEFT;     -- KEY10  left arm of the plus
             when "0111" => return K_RIGHT;    -- KEY12  right arm of the plus
             when "0110" => return K_CONFIRM;  -- KEY11  centre of the plus
+            when "1011" => return K_ROT;      -- KEY8   right of the plus (A4, bench-check)
             when others => return K_NONE;     -- incl. "0000" = no key (KEY13)
         end case;
     end function;
@@ -151,6 +165,7 @@ architecture rtl of game_fsm is
     signal move_r  : std_logic := '0';
 
     signal up_r, down_r, left_r, right_r : std_logic := '0';
+    signal rot_r : std_logic := '0';                    -- A4: 旋转请求（1 拍）
     signal sel_r, conf_r : std_logic := '0';
     signal sound_r : std_logic_vector(2 downto 0) := "000";
     signal sound_p : std_logic_vector(2 downto 0) := "000";
@@ -314,6 +329,7 @@ begin
                 conf_r  <= '0';
                 up_r    <= '0'; down_r  <= '0';
                 left_r  <= '0'; right_r <= '0';
+                rot_r   <= '0';
                 move_r  <= '0';
                 req_go  <= '0';
                 shuf_seen <= '0';
@@ -322,6 +338,7 @@ begin
                 sel_r  <= '0';
                 conf_r <= '0';
                 move_r <= '0';
+                rot_r  <= '0';
                 up_r   <= '0'; down_r  <= '0';
                 left_r <= '0'; right_r <= '0';
 
@@ -333,6 +350,7 @@ begin
                         when K_DOWN    => down_r <= '1'; move_r <= '1';
                         when K_LEFT    => left_r <= '1'; move_r <= '1';
                         when K_RIGHT   => right_r <= '1'; move_r <= '1';
+                        when K_ROT     => rot_r   <= '1';   -- A4（引擎同一条校验流水）
                         when others    => null;
                     end case;
                 end if;
@@ -446,6 +464,7 @@ begin
     o_down     <= down_r;
     o_left     <= left_r;
     o_right    <= right_r;
+    o_rot      <= rot_r;
     o_sound    <= sound_p;
 
 end architecture rtl;

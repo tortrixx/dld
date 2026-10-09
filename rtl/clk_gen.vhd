@@ -67,21 +67,36 @@ architecture rtl of clk_gen is
     -- stage 3 : 200 Hz -> 100 Hz
     signal c3      : std_logic := '0';
     signal t3      : std_logic := '0';
-    -- stage 4 : 100 Hz -> 2 Hz
-    signal c4      : unsigned(5 downto 0)  := (others => '0');  -- 50 -> needs 6 bit
-    signal t4      : std_logic := '0';
-    -- stage 5 : 100 Hz -> 1 Hz
-    signal c5      : unsigned(6 downto 0)  := (others => '0');  -- 100 -> needs 7 bit
-    signal t5      : std_logic := '0';
-    -- stage 6 : 100 Hz -> 4 Hz  (divide by 25)  -> 2 Hz 方波的翻转节拍（ERR-038）
-    signal c7      : unsigned(4 downto 0)  := (others => '0');  -- 25 -> needs 5 bit
-    signal t7      : std_logic := '0';
+    -- ⚠️ 2026-10-09 第 13 工作阶段（面积优化，讲义"串行化/资源共享"）：
+    --    stage 4/5/6 **合并成一条链**。原实现是三个各自独立的计数器
+    --    （c4 数 50 出 2 Hz、c5 数 100 出 1 Hz、c7 数 25 出 4 Hz），一共 18 个触发器；
+    --    但三个节拍本来就是同一个 100 Hz 的 1/50、1/100、1/25，
+    --    各自数一遍是**重复的**。现在只留一个 25 分频计数器 c25 + 2 位"第几个 4 Hz"，
+    --    再由它派生出 t7(4 Hz) / t4(2 Hz) / t5(1 Hz)：14 个触发器 → 7 个。
+    --    三个节拍的**周期比完全不变**（1 s / 500 ms / 250 ms，见 tb_clk_gen 断言②③），
+    --    只是它们相对复位时刻的**相位**最多早一个 4 Hz 周期 —— 对"闪烁/音效节奏"无影响。
+    signal c25     : unsigned(4 downto 0)  := (others => '0');  -- 0..24 -> 4 Hz
+    signal c4x     : unsigned(1 downto 0)  := (others => '0');  -- 第几个 4 Hz 脉冲
+    signal t7      : std_logic := '0';                          -- 4 Hz
+    signal t4      : std_logic := '0';                          -- 2 Hz（t7 二分频）
+    signal t5      : std_logic := '0';                          -- 1 Hz（t7 四分频）
     -- stage 7 : 200 Hz -> 40 Hz  (divide by 5), for the board self-test scan
     signal c6      : unsigned(2 downto 0)  := (others => '0');
     signal t6      : std_logic := '0';
 
     -- reset path
-    signal d_press : std_logic_vector(CNT_BTN downto 0) := (others => '1');
+    -- ⚠️ 2026-10-09 第 13 工作阶段：20 位消抖**移位寄存器**换成 5 位饱和计数器。
+    --    移位寄存器要 20 个触发器 + 一个 20 输入与门，而且它就是全设计**最差路径的源头**
+    --    （`clk_gen|d_press[4] → puzzle_ctrl|frame_g[7]`，因为它组合地产生 o_rst，
+    --      再扇出到每一个寄存器的同步复位端）。计数器版本只需 5 个触发器 + 一个 5 位比较。
+    --    语义逐条对齐（tb_clk_gen 断言⑥⑦⑧）：
+    --      · i_btn 每保持 1 ms → +1，到 T_BTN_MS 就**饱和**（不回绕）；
+    --      · 任一拍 i_btn='0' → 立刻清零（**非对称**消抖，松开立刻生效）；
+    --      · 判据 = 计满 T_BTN_MS，即"连满 20 个 1 ms 样本"才置位 → 与旧版一致；
+    --      · 8 个样本的短毛刺只到 8，远不到 20 → 不产生复位。
+    --    ⚠️ T_BTN_MS 必须 ≤ 31（5 位）；与 por_cnt 同样的"位宽悄悄截断"陷阱，
+    --       改 T_BTN_MS 时请同步改 bcnt 的宽度。
+    signal bcnt    : unsigned(4 downto 0) := (others => '0');
     signal s_por   : std_logic := '1';
     signal s_btn   : std_logic := '0';
 
@@ -131,39 +146,31 @@ begin
                 t3 <= '0';
             end if;
 
-            -- stage 4 : 100 Hz -> 2 Hz
+            -- stage 4/5/6 : 100 Hz -> 4 Hz (divide by 25) -> 2 Hz -> 1 Hz.
+            -- ERR-038：t7 是 game_fsm 翻转出 **2 Hz 方波**的节拍（B1 的"2 Hz 闪烁"）。
+            -- ⚠️ 2026-10-09 第 13 工作阶段：三个节拍由**同一条链**派生（旧的 c4/c5/c7
+            --    三套计数器已合并，省 11 个触发器；周期比不变，见文件头的说明）。
             if (t3 = '1') then
-                if (c4 = CNT_2HZ) then
-                    c4 <= (others => '0'); t4 <= '1';
+                if (c25 = CNT_4HZ) then
+                    c25 <= (others => '0');
+                    t7  <= '1';
+                    c4x <= c4x + 1;
+                    t4  <= not c4x(0);          -- 每隔一个 4 Hz 脉冲 -> 2 Hz
+                    if (c4x = "11") then        -- 每四个 -> 1 Hz
+                        t5 <= '1';
+                    else
+                        t5 <= '0';
+                    end if;
                 else
-                    c4 <= c4 + 1;          t4 <= '0';
-                end if;
-            else
-                t4 <= '0';
-            end if;
-
-            -- stage 5 : 100 Hz -> 1 Hz
-            if (t3 = '1') then
-                if (c5 = CNT_1HZ) then
-                    c5 <= (others => '0'); t5 <= '1';
-                else
-                    c5 <= c5 + 1;          t5 <= '0';
-                end if;
-            else
-                t5 <= '0';
-            end if;
-
-            -- stage 6 : 100 Hz -> 4 Hz (divide by 25) = 250 ms.  ERR-038：game_fsm
-            -- 在它上面翻转 → **2 Hz 方波**（B1 要求的"2 Hz 闪烁"）。tick_2hz 那一路
-            -- 直接当闪烁用只能得到 1 Hz，全项目审计时才发现。
-            if (t3 = '1') then
-                if (c7 = CNT_4HZ) then
-                    c7 <= (others => '0'); t7 <= '1';
-                else
-                    c7 <= c7 + 1;          t7 <= '0';
+                    c25 <= c25 + 1;
+                    t7  <= '0';
+                    t4  <= '0';
+                    t5  <= '0';
                 end if;
             else
                 t7 <= '0';
+                t4 <= '0';
+                t5 <= '0';
             end if;
 
             -- stage 7 : 200 Hz -> 40 Hz (divide by 5).  **只有 board_test_top
@@ -189,24 +196,29 @@ begin
     o_tick_40  <= t6;
 
     ----------------------------------------------------------------------------
-    -- Push-button filter.
+    -- Push-button filter (2026-10-09 第 13 工作阶段：移位寄存器 -> 饱和计数器)
     -- The board states: "keys output LOW when idle and HIGH while pressed, and
     -- a debounce circuit must be designed by the user".  So a press is a HIGH.
-    -- A shift register of 20 bits, all HIGH, means "pressed and stable for
-    -- 20 ms".  Because the register starts all-HIGH at power-up, no reset is
-    -- needed for it and no phantom press can be generated (the shift register
-    -- only fills with '1' if the key really is held down).
+    -- bcnt counts consecutive milliseconds of HIGH and SATURATES at T_BTN_MS,
+    -- so "bcnt reached T_BTN_MS" is exactly "pressed and stable for 20 ms" --
+    -- the same predicate as the old 20-bit all-ones shift register, but with 5
+    -- flip-flops instead of 20 plus a 20-input AND.  Because it starts at 0 and
+    -- only counts real HIGH samples, no phantom press can be generated.
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
         if rising_edge(i_clk) then
             if (t1 = '1') then                                  -- 1 ms steps
-                d_press <= d_press(d_press'high - 1 downto 0) & i_btn;
+                if (i_btn = '0') then
+                    bcnt <= (others => '0');                    -- any low sample clears
+                elsif (bcnt /= to_unsigned(T_BTN_MS, bcnt'length)) then
+                    bcnt <= bcnt + 1;                           -- saturating
+                end if;
             end if;
         end if;
     end process;
 
-    s_btn <= '1' when (d_press = (d_press'range => '1')) else '0';
+    s_btn <= '1' when (bcnt = to_unsigned(T_BTN_MS, bcnt'length)) else '0';
 
     ----------------------------------------------------------------------------
     -- Power-on reset : hold the system in reset for T_POR_MS milliseconds

@@ -264,5 +264,105 @@ chk(len({r for r, _ in W}) >= 6 and len({c for _, c in W}) >= 6,
 chk(all(((7 - r, c) in F) == ((r, c) in F) for r in range(8) for c in range(8)),
     "失败十字上下对称")
 
+# --- A4 旋转（2026-10-09 第 13 工作阶段）：**朝向几何**的离线证明 -------------------
+# A4 原文："零片不仅能上下左右移动，还可以 90° 旋转"。RTL 的实现做法是：
+#   · 在**固定的 3x3 盒**里转（每个调用点只有 3 个 4:1 mux，便宜）；
+#   · 但 3x3 盒里转出来的**紧包围盒不在 (0,0)**（1x3 横条转 90° 会落到盒子第 2 列），
+#     所以在"算行掩码"的唯一一处把偏移补回来：
+#        盒内行号 = 紧包围盒行号 + dr,   列移位 = 锚点列 - dc
+#        dr/dc: "00" (0,0)  "01" (0,3-h)  "10" (3-h,3-w)  "11" (3-w,0)
+# 这里用一个**独立定义**（在紧包围盒里直接转）当参考模型，逐个零片、逐个朝向、
+# 逐行比对上面那套"盒内转 + 偏移补偿"，确保两条路给出**同一幅画面**。
+# 同时断言旋转的几条硬前提：
+#   ① 每个零片的原始紧包围盒本来就锚在 (0,0)（否则偏移公式不成立）；
+#   ② 任意朝向的紧包围盒仍锚在 (0,0)，高宽 = (w,h)（奇朝向）或 (h,w)（偶朝向）；
+#   ③ 任意朝向都仍塞得进 3x3（引擎只取 3 行、srl8 只处理 8 位，这条是硬前提）；
+#   ④ 转 4 次回到原样（朝向是 4 循环群）。
+print("\n-- A4 旋转：朝向几何（盒内转 + 锚点偏移  ==  紧包围盒里转）")
+PIECES = [("L1_P0", C["L1_P0"]), ("L1_P1", C["L1_P1"]), ("L1_P2", C["L1_P2"]),
+          ("L2_P0", C["L2_P0"]), ("L2_P1", C["L2_P1"]), ("L2_P2", C["L2_P2"]),
+          ("L2_P3", C["L2_P3"])]
+ORIS = ["00", "01", "10", "11"]
+
+
+def bbox(cs):
+    return (max(r for r, _ in cs) + 1, max(c for _, c in cs) + 1)
+
+
+def rot_ref(cs, ori):
+    """参考模型：在零片**自己的紧包围盒 h x w** 里转，结果仍锚在 (0,0)。
+    "01" 顺时针 90° -> new(r',c') = old(h-1-c', r')，尺寸 w x h
+    "10" 180°       -> new(r',c') = old(h-1-r', w-1-c')
+    "11" 顺时针 270°-> new(r',c') = old(c', w-1-r')
+    """
+    h, w = bbox(cs)
+    if ori == "00":
+        return frozenset(cs)
+    if ori == "01":
+        return frozenset((c, h - 1 - r) for (r, c) in cs)
+    if ori == "10":
+        return frozenset((h - 1 - r, w - 1 - c) for (r, c) in cs)
+    return frozenset((w - 1 - c, r) for (r, c) in cs)
+
+
+def box_cell(cs3, ori, r, c):
+    """RTL 的 rot_row：在固定 3x3 盒里取朝向 ori、行 r、列 c 的格子。"""
+    if ori == "00":
+        rr, cc = r, c
+    elif ori == "01":
+        rr, cc = 2 - c, r
+    elif ori == "10":
+        rr, cc = 2 - r, 2 - c
+    else:
+        rr, cc = c, 2 - r
+    return (rr, cc) in cs3
+
+
+def rot_off(h, w, ori):
+    """RTL 的 rot_off_r / rot_off_c。"""
+    dr = (3 - h) if ori == "10" else ((3 - w) if ori == "11" else 0)
+    dc = (3 - h) if ori == "01" else ((3 - w) if ori == "10" else 0)
+    return dr, dc
+
+
+rot_bad = []
+for name, cs in PIECES:
+    h, w = bbox(cs)
+    if (min(r for r, _ in cs), min(c for _, c in cs)) != (0, 0):
+        rot_bad.append(f"{name} 原始紧包围盒不锚在 (0,0) —— 偏移公式不成立")
+    for ori in ORIS:
+        ref = rot_ref(cs, ori)
+        rh, rw = bbox(ref)
+        if (min(r for r, _ in ref), min(c for _, c in ref)) != (0, 0):
+            rot_bad.append(f"{name} ori={ori} 紧包围盒不锚在 (0,0)")
+        exp = (w, h) if ori in ("01", "11") else (h, w)
+        if (rh, rw) != exp:
+            rot_bad.append(f"{name} ori={ori} 高宽 {rh}x{rw} != 期望 {exp[0]}x{exp[1]}")
+        if rh > 3 or rw > 3:
+            rot_bad.append(f"{name} ori={ori} 超出 3x3（{rh}x{rw}）")
+        # 3x3 盒 + 偏移补偿 必须与参考模型逐格一致
+        dr, dc = rot_off(h, w, ori)
+        got = {(r, c) for r in range(rh) for c in range(rw)
+               if box_cell(cs, ori, r + dr, c + dc)}
+        if got != set(ref):
+            rot_bad.append(f"{name} ori={ori} 盒内转+偏移 != 紧包围盒参考模型")
+        if ori == "00" and ref != frozenset(cs):
+            rot_bad.append(f"{name} ori=00 不是恒等")
+
+chk(not rot_bad, "7 块零片 x 4 朝向：盒内转 + 锚点偏移 == 紧包围盒参考模型，"
+                 "且每块都锚在 (0,0)、高宽按 90°/270° 互换、全部塞得进 3x3"
+                 + ("" if not rot_bad else "；失败：" + "; ".join(rot_bad[:4])))
+
+# 转 4 次回原样（4 循环群）
+cyc_bad = [n for n, cs in PIECES
+           if rot_ref(rot_ref(rot_ref(rot_ref(cs, "01"), "01"), "01"), "01") != frozenset(cs)]
+chk(not cyc_bad, "每个零片连转 4 次 90° 回到原样（朝向是 4 循环群）"
+                 + ("" if not cyc_bad else "；失败：" + str(cyc_bad)))
+
+# 面积守恒（旋转不改格数）
+area_bad = [n for n, cs in PIECES if any(len(rot_ref(cs, o)) != len(cs) for o in ORIS)]
+chk(not area_bad, "旋转不改零片面积（4 个朝向格数都相同）"
+                 + ("" if not area_bad else "；失败：" + str(area_bad)))
+
 print("\n" + ("ALL CHECKS PASSED" if ok else "*** SOME CHECKS FAILED ***"))
 raise SystemExit(0 if ok else 1)

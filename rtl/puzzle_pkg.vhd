@@ -66,7 +66,8 @@ package puzzle_pkg is
     -- Kept separate (and only 8 bits wide) because a variable-distance shift of
     -- a 64-bit word is a 64x6 crossbar: using it inside the engine cost 4690
     -- logic cells on a 1270-cell device.  Shifting 8-bit rows instead is cheap.
-    function srl8(r : std_logic_vector(7 downto 0); dc : integer)
+    -- dc 允许 -2（A4 旋转补偿列移位可能为负）；限定范围让综合器按 3 位算。
+    function srl8(r : std_logic_vector(7 downto 0); dc : integer range -2 to 7)
         return std_logic_vector;
 
     -- row24 : 8-bit row mask of a piece at anchor column 'ac'.
@@ -79,6 +80,64 @@ package puzzle_pkg is
     function row24(shp24 : std_logic_vector(23 downto 0);
                    sr    : integer;
                    ac    : integer) return std_logic_vector;
+
+    ----------------------------------------------------------------------------
+    -- 2b. ROTATION (提高要求 A4：零片不仅可以上下左右移动，还可以 90° 旋转)
+    --
+    -- 朝向编码（2 位）：
+    --     "00" = 原始朝向（ROM 里的写法）
+    --     "01" = 顺时针 90°
+    --     "10" = 180°
+    --     "11" = 顺时针 270°（= 逆时针 90°）
+    --
+    -- 【为什么不去 ROM 里存 4 套形状】四块零片的包围盒都 ≤ 3x3（PIECE_MAX_DIM），
+    --   旋转只是把一个 3x3 的格子矩阵转置/翻转。渲染器本来就**一拍只算一行**，
+    --   所以只需要"第 sr 行（3 个格子）"这 3 位，而不是把 24 位形状整个转一遍 ——
+    --   后者要 24 位 × 4 选 1 的置换网络（实测约 +190 LE），前者每个调用点只有
+    --   3 个 4:1 mux（约 +6 LE），差别在"在哪一级做置换"。
+    --   这也正是讲义"器件资源的优化"里说的：把贵的东西放在**已经被复用**的那一级上。
+    --
+    -- 【锚点语义】旋转在**固定 3x3 盒**里做（每个调用点只有 3 个 4:1 mux，便宜）。
+    --   但这样一来旋转后的**紧包围盒不再锚在 (0,0)**：1x3 横条转 90° 会落到盒子的
+    --   第 2 列。若不管它，零片一旋转就凭空横移两格、而且再也够不到点阵左边界
+    --   （第一版就是这个 bug，被"旋转后仍以紧包围盒左上角为锚点"这条不变量抓出来）。
+    --   修法不是把旋转改成在紧包围盒里做（那要在每个下标上算 h-1-c / w-1-c 并加范围
+    --   保护，实测 **+229 LE，直接装不下**），而是**在唯一一处算行掩码的地方把偏移补回来**：
+    --       盒内行号 = (紧包围盒行号 sr) + dr
+    --       列移位   = (锚点列 ac)        - dc        （可能为负 -> srl8 增加两档）
+    --   盒内坐标 (r,c)，r=0 在**上**、c=0 在**左**（与掩码位序一致）：
+    --     "00" : out(sr,c') = in(sr, c')
+    --     "01" : out(sr,c') = in(2-c', sr)          （顺时针 90°）
+    --     "10" : out(sr,c') = in(2-sr, 2-c')        （180°）
+    --     "11" : out(sr,c') = in(c', 2-sr)          （顺时针 270°）
+    -- 返回的是一个 8 位列掩码（只用到低 3 位），与 row_mask/srl8 的输入同格式，
+    -- 所以调用方**不需要**知道旋转是怎么做的：拿到行掩码后照旧按锚点列移位。
+    ----------------------------------------------------------------------------
+    function rot_row(shp : std_logic_vector(63 downto 0);
+                     ori : std_logic_vector(1 downto 0);
+                     sr  : integer) return std_logic_vector;
+
+    -- 旋转后的**紧包围盒**在 3x3 盒里的偏移（0..2）。见下面函数体的说明：
+    -- 旋转本身在固定 3x3 盒里做（便宜），偏移在这里补回来（正确）。
+    function rot_off_r(h : std_logic_vector(2 downto 0);
+                       w : std_logic_vector(2 downto 0);
+                       ori : std_logic_vector(1 downto 0))
+        return std_logic_vector;
+    function rot_off_c(h : std_logic_vector(2 downto 0);
+                       w : std_logic_vector(2 downto 0);
+                       ori : std_logic_vector(1 downto 0))
+        return std_logic_vector;
+
+    -- 旋转 90°/270° 时包围盒的高与宽互换（0°/180° 不变）
+    function oh(h : std_logic_vector(2 downto 0);
+                w : std_logic_vector(2 downto 0);
+                ori : std_logic_vector(1 downto 0)) return std_logic_vector;
+    function ow(h : std_logic_vector(2 downto 0);
+                w : std_logic_vector(2 downto 0);
+                ori : std_logic_vector(1 downto 0)) return std_logic_vector;
+
+    -- 下一个朝向（每次按【旋转】键转 90°，4 次回到原样）
+    function ori_next(ori : std_logic_vector(1 downto 0)) return std_logic_vector;
 
     ----------------------------------------------------------------------------
     -- 3. Pattern geometry -- DECODED FROM THE COURSE PDF FIGURES (pixel exact)
@@ -394,6 +453,10 @@ package puzzle_pkg is
     constant K_DOWN    : std_logic_vector(3 downto 0) := "0101";  -- "down"
     constant K_LEFT    : std_logic_vector(3 downto 0) := "0110";  -- "left"
     constant K_RIGHT   : std_logic_vector(3 downto 0) := "0111";  -- "right"
+    -- ⚠️ 提高要求 A4（2026-10-09 第 13 工作阶段）：新增【旋转】键。
+    --    物理键位 = KEY8（矩阵 ROW2 / COL3 → 索引 4*2+3 = 11），就在【上】键的右边。
+    --    键码 "1000"（原来空着）。
+    constant K_ROT     : std_logic_vector(3 downto 0) := "1000";  -- "rotate" 90° CW
 
     ----------------------------------------------------------------------------
     -- 9. DISP 字位码：disp_format 往 i_data 里放的 4 位码 == seg_scan 的译码输入
@@ -499,7 +562,7 @@ package body puzzle_pkg is
     --    Written as a 7-way mux tree over dc, NOT as a per-bit indexed loop:
     --    the indexed form made Quartus build an adder-compare-select network per
     --    bit, which was the critical path (41.5 MHz instead of 50+).
-    function srl8(r : std_logic_vector(7 downto 0); dc : integer)
+    function srl8(r : std_logic_vector(7 downto 0); dc : integer range -2 to 7)
         return std_logic_vector is
         variable rb, sb, v : std_logic_vector(7 downto 0);
     begin
@@ -514,6 +577,12 @@ package body puzzle_pkg is
         --   原方向右移 dc： v(j) = r(j - dc)。实测回到 967 LE。
         rb := r(0) & r(1) & r(2) & r(3) & r(4) & r(5) & r(6) & r(7);
         case dc is
+            -- ⚠️ A4（2026-10-09 第 13 工作阶段）：允许**负移位**。
+            --    旋转后在 3x3 盒里补锚点偏移时，列移位可能变成 -1/-2
+            --    （例如 180° 旋转的 2 格宽零片贴住左边界）。语义与正值一致：
+            --    v(j) = r(j - dc)，越界补 0。
+            when -1     => sb := rb(6 downto 0) & '0';
+            when -2     => sb := rb(5 downto 0) & "00";
             when 0      => sb := rb;
             when 1      => sb := '0'         & rb(7 downto 1);
             when 2      => sb := "00"        & rb(7 downto 2);
@@ -547,6 +616,87 @@ package body puzzle_pkg is
             base := (others => '0');
         end if;
         return srl8(base, ac);
+    end function;
+
+    ----------------------------------------------------------------------------
+    -- 2b. ROTATION primitives (A4)
+    --
+    -- 只在 3x3 盒内做坐标置换，返回"第 sr 行"的 3 位（放在 8 位列掩码的低 3 位）。
+    -- 循环体里的 c 是**编译期常量**（0/1/2），所以每个输出位只在 4 个固定的
+    -- shp 位之间做选择 —— 综合出来是 3 个 4 选 1 mux，而不是动态索引访问整条 64 位。
+    ----------------------------------------------------------------------------
+    function rot_row(shp : std_logic_vector(63 downto 0);
+                     ori : std_logic_vector(1 downto 0);
+                     sr  : integer) return std_logic_vector is
+        variable v  : std_logic_vector(7 downto 0) := (others => '0');
+        variable r0 : integer range 0 to 2 := 0;
+        variable c0 : integer range 0 to 2 := 0;
+    begin
+        if (sr >= 0) and (sr <= 2) then
+            for c in 0 to 2 loop
+                case ori is
+                    when "00"   => r0 := sr;     c0 := c;        -- 原样
+                    when "01"   => r0 := 2 - c;  c0 := sr;       -- 顺时针 90°
+                    when "10"   => r0 := 2 - sr; c0 := 2 - c;    -- 180°
+                    when others => r0 := c;      c0 := 2 - sr;   -- 顺时针 270°
+                end case;
+                v(c) := shp(8 * r0 + c0);
+            end loop;
+        end if;
+        return v;
+    end function;
+
+    ----------------------------------------------------------------------------
+    -- 旋转后紧包围盒在 3x3 盒里的偏移（见上面的【锚点语义】）。
+    --     dr:  "00"/"01" -> 0      "10" -> 3-h          "11" -> 3-w
+    --     dc:  "00"      -> 0      "01" -> 3-h          "10" -> 3-w   "11" -> 0
+    ----------------------------------------------------------------------------
+    -- 返回 2 位（0..2）。刻意**不返回 integer**：VHDL 的 integer 是 32 位，
+    -- 早期版本用 integer 返回 + 无范围参数，综合器会先按 32 位算一遍再优化，
+    -- 实测比 2 位向量版本贵得多。
+    function rot_off_r(h : std_logic_vector(2 downto 0);
+                       w : std_logic_vector(2 downto 0);
+                       ori : std_logic_vector(1 downto 0))
+        return std_logic_vector is
+    begin
+        case ori is
+            when "10"   => return std_logic_vector(to_unsigned(3, 3) - unsigned(h));
+            when "11"   => return std_logic_vector(to_unsigned(3, 3) - unsigned(w));
+            when others => return "000";
+        end case;
+    end function;
+
+    function rot_off_c(h : std_logic_vector(2 downto 0);
+                       w : std_logic_vector(2 downto 0);
+                       ori : std_logic_vector(1 downto 0))
+        return std_logic_vector is
+    begin
+        case ori is
+            when "01"   => return std_logic_vector(to_unsigned(3, 3) - unsigned(h));
+            when "10"   => return std_logic_vector(to_unsigned(3, 3) - unsigned(w));
+            when others => return "000";
+        end case;
+    end function;
+
+    function oh(h : std_logic_vector(2 downto 0);
+                w : std_logic_vector(2 downto 0);
+                ori : std_logic_vector(1 downto 0)) return std_logic_vector is
+    begin
+        if (ori(0) = '1') then return w; else return h; end if;
+    end function;
+
+    function ow(h : std_logic_vector(2 downto 0);
+                w : std_logic_vector(2 downto 0);
+                ori : std_logic_vector(1 downto 0)) return std_logic_vector is
+    begin
+        if (ori(0) = '1') then return h; else return w; end if;
+    end function;
+
+    function ori_next(ori : std_logic_vector(1 downto 0)) return std_logic_vector is
+        variable n : unsigned(1 downto 0);
+    begin
+        n := unsigned(ori) + 1;                  -- 4 次一循环（2 位自然回绕）
+        return std_logic_vector(n);
     end function;
 
 end package body puzzle_pkg;

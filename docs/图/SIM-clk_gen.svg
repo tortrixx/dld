@@ -25,7 +25,7 @@
 <path d='M150.0 182 H155.6 V182 H155.6 V182 H161.1 V182 H161.1 V182 H166.7 V182 H166.7 V182 H172.2 V182 H172.2 V182 H177.8 V182 H177.8 V182 H183.3 V182 H183.3 V182 H188.8 V182 H188.9 V182 H194.4 V182 H194.4 V182 H199.9 V182 H199.9 V182 H205.5 V182 H205.5 V182 H211.0 V182 H211.0 V182 H216.6 V182 H216.6 V182 H222.1 V182 H222.1 V182 H227.6 V182 H227.7 V182 H233.2 V182 H233.2 V182 H238.7 V182 H238.8 V182 H244.3 V182 H244.3 V182 H249.8 V182 H249.8 V182 H255.4 V182 H255.4 V182 H260.9 V182 H260.9 V182 H266.4 V182 H266.5 V182 H272.0 V182 H272.0 V182 H277.5 V182 H277.6 V182 H283.1 V182 H283.1 V182 H288.6 V182 H288.6 V182 H294.2 V182 H294.2 V182 H299.7 V182 H299.7 V182 H305.3 V182 H305.3 V182 H310.8 V182 H310.8 V182 H316.3 V182 H316.4 V182 H321.9 V182 H321.9 V182 H327.4 V182 H327.4 V182 H333.0 V182 H333.0 V182 H338.5 V182 H338.5 V182 H344.1 V182 H344.1 V182 H349.6 V182 H349.6 V182 H355.1 V182 H355.2 V182 H360.7 V182 H360.7 V182 H366.2 V182 H366.3 V182 H371.8 V182 H371.8 V182 H377.3 V182 H377.3 V182 H382.9 V182 H382.9 V182 H388.4 V182 H388.4 V182 H393.9 V182 H394.0 V182 H399.5 V182 H399.5 V182 H405.0 V182 H405.1 V182 H410.6 V182 H410.6 V182 H416.1 V182 H416.1 V182 H421.7 V182 H421.7 V182 H427.2 V182 H427.2 V182 H432.8 V182 H432.8 V182 H438.3 V182 H438.3 V182 H443.8 V182 H443.9 V182 H449.4 V182 H449.4 V182 H454.9 V182 H454.9 V182 H460.5 V182 H460.5 V182 H466.0 V182 H466.0 V182 H471.6 V182 H471.6 V182 H477.1 V182 H477.1 V182 H482.6 V182 H482.7 V182 H488.2 V182 H488.2 V182 H493.7 V182 H493.8 V182 H499.3 V182 H499.3 V182 H504.8 V182 H504.8 V182 H510.4 V182 H510.4 V182 H515.9 V182 H515.9 V182 H521.4 V182 H521.5 V182 H527.0 V182 H527.0 V182 H532.5 V182 H532.6 V182 H538.1 V182 H538.1 V182 H543.6 V182 H543.6 V182 H549.2 V182 H549.2 V182 H554.7 V182 H554.7 V182 H560.3 V182 H560.3 V182 H565.8 V182 H565.8 V182 H571.3 V182 H571.4 V182 H576.9 V182 H576.9 V182 H582.4 V182 H582.4 V182 H588.0 V182 H588.0 V182 H593.5 V182 H593.5 V182 H599.1 V182 H599.1 V182 H604.6 V182 H604.6 V182 H610.1 V182 H610.2 V182 H615.7 V182 H615.7 V182 H621.2 V182 H621.3 V182 H626.8 V182 H626.8 V182 H632.3 V182 H632.3 V182 H637.9 V182 H637.9 V182 H643.4 V182 H643.4 V182 H648.9 V182 H649.0 V182 H654.5 V182 H654.5 V182 H660.0' fill='none' stroke='#85B7EB' stroke-width='1.2'/>
 <text x='8' y='199' font-size='12' fill='#B5D4F4' dominant-baseline='middle'>o_tick_2hz</text>
 <line x1='150' y1='206' x2='660' y2='206' stroke='#5F5E5A' stroke-width='0.5'/>
-<path d='M150.0 204 H260.9 V204 H260.9 V204 H371.8 V204 H371.8 V204 H482.7 V204 H482.7 V204 H593.5 V204 H593.6 V204 H660.0' fill='none' stroke='#85B7EB' stroke-width='1.2'/>
+<path d='M150.0 204 H205.5 V204 H205.5 V204 H316.4 V204 H316.4 V204 H427.2 V204 H427.3 V204 H538.1 V204 H538.1 V204 H649.0 V204 H649.0 V204 H660.0' fill='none' stroke='#85B7EB' stroke-width='1.2'/>
 <text x='8' y='221' font-size='12' fill='#B5D4F4' dominant-baseline='middle'>o_tick_4hz</text>
 <line x1='150' y1='228' x2='660' y2='228' stroke='#5F5E5A' stroke-width='0.5'/>
 <path d='M150.0 226 H205.5 V226 H205.5 V226 H260.9 V226 H260.9 V226 H316.4 V226 H316.4 V226 H371.8 V226 H371.8 V226 H427.2 V226 H427.3 V226 H482.7 V226 H482.7 V226 H538.1 V226 H538.1 V226 H593.5 V226 H593.6 V226 H649.0 V226 H649.0 V226 H660.0' fill='none' stroke='#85B7EB' stroke-width='1.2'/>
@@ -461,30 +461,10 @@
 <line x1='151.6' y1='388' x2='151.6' y2='404' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='151.8' y1='388' x2='151.8' y2='404' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='152.0' y1='388' x2='152.0' y2='404' stroke='#5F5E5A' stroke-width='0.5'/>
-<text x='8' y='419' font-size='12' fill='#B5D4F4' dominant-baseline='middle'>d_press</text>
+<text x='8' y='419' font-size='12' fill='#B5D4F4' dominant-baseline='middle'>bcnt</text>
 <line x1='150' y1='426' x2='660' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <path d='M150 414 H660' fill='none' stroke='#85B7EB' stroke-width='1.2'/>
 <line x1='150.0' y1='410' x2='150.0' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='150.2' y1='410' x2='150.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='150.5' y1='410' x2='150.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='150.7' y1='410' x2='150.7' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='150.9' y1='410' x2='150.9' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='151.1' y1='410' x2='151.1' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='151.3' y1='410' x2='151.3' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='151.6' y1='410' x2='151.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='151.8' y1='410' x2='151.8' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='152.0' y1='410' x2='152.0' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='152.2' y1='410' x2='152.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='152.5' y1='410' x2='152.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='152.7' y1='410' x2='152.7' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='152.9' y1='410' x2='152.9' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='153.1' y1='410' x2='153.1' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='153.3' y1='410' x2='153.3' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='153.6' y1='410' x2='153.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='153.8' y1='410' x2='153.8' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='154.0' y1='410' x2='154.0' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='154.2' y1='410' x2='154.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='154.4' y1='410' x2='154.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='172.2' y1='410' x2='172.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='172.4' y1='410' x2='172.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='172.6' y1='410' x2='172.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
@@ -506,25 +486,6 @@
 <line x1='176.2' y1='410' x2='176.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='176.4' y1='410' x2='176.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='216.5' y1='410' x2='216.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='216.8' y1='410' x2='216.8' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='217.0' y1='410' x2='217.0' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='217.2' y1='410' x2='217.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='217.4' y1='410' x2='217.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='217.6' y1='410' x2='217.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='217.9' y1='410' x2='217.9' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='218.1' y1='410' x2='218.1' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='218.3' y1='410' x2='218.3' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='218.5' y1='410' x2='218.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='218.8' y1='410' x2='218.8' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='219.0' y1='410' x2='219.0' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='219.2' y1='410' x2='219.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='219.4' y1='410' x2='219.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='219.6' y1='410' x2='219.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='219.9' y1='410' x2='219.9' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='220.1' y1='410' x2='220.1' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='220.3' y1='410' x2='220.3' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='220.5' y1='410' x2='220.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='220.7' y1='410' x2='220.7' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='283.1' y1='410' x2='283.1' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='283.3' y1='410' x2='283.3' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='283.5' y1='410' x2='283.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
@@ -534,23 +495,4 @@
 <line x1='284.4' y1='410' x2='284.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='284.6' y1='410' x2='284.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 <line x1='284.8' y1='410' x2='284.8' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='285.1' y1='410' x2='285.1' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='285.3' y1='410' x2='285.3' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='285.5' y1='410' x2='285.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='285.7' y1='410' x2='285.7' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='285.9' y1='410' x2='285.9' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='286.2' y1='410' x2='286.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='286.4' y1='410' x2='286.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='286.6' y1='410' x2='286.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='286.8' y1='410' x2='286.8' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='287.0' y1='410' x2='287.0' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='287.3' y1='410' x2='287.3' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='287.5' y1='410' x2='287.5' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='287.7' y1='410' x2='287.7' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='287.9' y1='410' x2='287.9' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='288.2' y1='410' x2='288.2' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='288.4' y1='410' x2='288.4' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='288.6' y1='410' x2='288.6' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='288.8' y1='410' x2='288.8' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
-<line x1='289.0' y1='410' x2='289.0' y2='426' stroke='#5F5E5A' stroke-width='0.5'/>
 </svg>

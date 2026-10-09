@@ -110,6 +110,7 @@ architecture rtl of puzzle_top is
             o_down      : out std_logic;
             o_left      : out std_logic;
             o_right     : out std_logic;
+            o_rot       : out std_logic;
             o_level     : out std_logic;
             o_lvl3      : out std_logic;
             o_state     : out std_logic_vector(2 downto 0);
@@ -175,10 +176,12 @@ architecture rtl of puzzle_top is
             i_select  : in  std_logic;
             i_move    : in  std_logic;
             i_confirm : in  std_logic;
+            i_rot     : in  std_logic;
             i_up      : in  std_logic;
             i_down    : in  std_logic;
             i_left    : in  std_logic;
             i_right   : in  std_logic;
+            o_ori     : out std_logic_vector(7 downto 0);
             o_solved  : out std_logic;
             o_all_lock: out std_logic;
             o_busy    : out std_logic;
@@ -238,7 +241,7 @@ architecture rtl of puzzle_top is
             i_rst  : in  std_logic;
             i_en   : in  std_logic;
             i_sel  : in  std_logic_vector(2 downto 0);
-            i_t2   : in  std_logic;
+            i_t4   : in  std_logic;
             o_buzz : out std_logic
         );
     end component;
@@ -262,6 +265,7 @@ architecture rtl of puzzle_top is
 
     signal sel, move, conf, go : std_logic;
     signal mv_up, mv_dn, mv_lf, mv_rt : std_logic;
+    signal mv_rot   : std_logic;                     -- A4：旋转键（game_fsm -> 引擎）
     signal level    : std_logic;
     signal lvl3     : std_logic;                     -- 第三关（A2 增加关数）
     signal state    : std_logic_vector(2 downto 0);
@@ -434,6 +438,7 @@ begin
             o_down      => mv_dn,
             o_left      => mv_lf,
             o_right     => mv_rt,
+            o_rot       => mv_rot,
             o_level     => level,
             o_state     => state,
             o_time      => gtime,
@@ -488,11 +493,12 @@ begin
         port map (
             i_clk     => clk,
             i_rst     => rst,
-            i_tick    => t_200,         -- 引擎行渲染仍 200 Hz（8 行 = 40 ms 内容更新）。
-                                        -- ⚠️ 实测：把它也提到 1 kHz 会让整机从 1188 涨到
-                                        -- 1264/1270 LE（100%，只剩 6 个）—— 闪烁与"内容
-                                        -- 更新率"无关（见 mrow 的注释），只与**扫描率**
-                                        -- 有关，所以这里保持 200 Hz，别为了美观把面积吃光。
+            i_tick    => t_1k,          -- 引擎行渲染节拍 = **1 kHz**（8 行 = 8 ms → 内容 125 Hz）
+                                        -- ⚠️ 2026-10-09 第 13 工作阶段实测：把它从 200 Hz 提到
+                                        -- 1 kHz 在本版是 **±0 LE**（早先那一版曾测到 +76 LE，
+                                        -- 那是当时的结构），而 Fmax 反而 52.57 → 56.23 MHz。
+                                        -- 现在它与点阵扫描（mrow，也走 t_1k）**同源同速**，
+                                        -- 画面不会再"渲染比扫描慢一拍"。见 docs/05 §1.2。
             rnd_step  => rnd_step,
             rnd_val   => rnd_val,
             i_level   => level,
@@ -514,10 +520,12 @@ begin
             i_select  => sel,
             i_move    => move,
             i_confirm => conf,
+            i_rot     => mv_rot,
             i_up      => mv_up,
             i_down    => mv_dn,
             i_left    => mv_lf,
             i_right   => mv_rt,
+            o_ori     => open,          -- A4：仅供模块级仿真观察（顶层不引出引脚）
             o_solved  => solved,
             o_all_lock=> all_lock,
             o_busy    => shuf_busy,
@@ -724,7 +732,7 @@ begin
             i_rst  => rst,
             i_en   => sw7,
             i_sel  => sound,
-            i_t2   => t_2hz,
+            i_t4   => t_4hz,
             o_buzz => buzz
         );
 

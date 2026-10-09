@@ -24,6 +24,22 @@
       ⑬ SW7=0 → 立刻回到自检并清空（B1）；
       ⑭ o_blink 是 **2 Hz 方波（电平持续半个周期）**，不是单时钟脉冲（ERR-011）。
 
+【A4（2026-10-09 第 13 工作阶段）：新增【旋转】键 → 新输出端口 o_rot】
+    `game_fsm` 新增单比特输出 `o_rot`（1 拍脉冲，语义与 o_sel/o_conf/o_move 同族）；
+    物理键位 = KEY8 = 扫描器原始键号 **11**（= 4*row+col，row0 在最下），
+    在【上】键（原始键号 10）的右边。本轮补的判据：
+      ⑲ 对局中按原始键号 11 → **恰好一个、1 个时钟宽**的 o_rot；且同一次按键
+         不产生 o_sel/o_conf/o_move/o_up/o_down/o_left/o_right；
+      ⑳ 自检/待机/预览/失败/胜利五个状态下按同一个键 → o_rot 全局无脉冲；
+      ㉑ 原始键号译码：11→K_ROT；9、12→K_NONE（对局中按下去**什么动作都没有**）；
+         10→仍是 K_UP（o_up + o_move 各一次）—— 新键没有把邻居挤掉；
+      ㉒ 复位期间 o_rot 恒 0。
+    ⚠️ 新增按键**不削弱任何既有判据**：④ 的窗口 [K1, 74000] 里新增的只有 11/9/12，
+       其中 9/12 译码为 K_NONE、11 只产生 o_rot，都不落在 ④ 统计的
+       o_sel/o_up/o_conf/o_down/o_left/o_right/o_move 上；⑤ 只是把 o_rot 也纳入
+       "对局前不得有动作脉冲"的清单（更强）。唯一被改动的是 ⑲ 新增的原始键号 10
+       按键放在**另一个对局**（197500，第五~六局之间），所以 ④ 的计数不受影响。
+
 【D2（2026-10-09 第 12 工作阶段）：第三关的时间轴】
     场景 2 现在要连过三关（二关拼对不再直接胜利），所以 104000 之后的**全部**事件、
     判据窗口与采样时刻统一后移 `D3_SHIFT`（= 20000 ns）；第三关自己新增了一对窗口
@@ -70,24 +86,38 @@ T_L3 = 40                                  # A2 第三关（题目没规定 → 
 #    教训：改了 key_of() 必须重跑 game_fsm；汇总"全部通过"时要看每条的**时间戳**。
 RAW_START, RAW_SELECT, RAW_CONFIRM = 1, 3, 6
 RAW_UP, RAW_DOWN, RAW_LEFT, RAW_RIGHT = 10, 2, 5, 7
+# ⚠️ A4（2026-10-09 第 13 工作阶段）：【旋转】键 = KEY8 = 原始键号 11（ROW2/COL3），
+#    就在【上】（原始键号 10）的右边。key_of("1011") 现在给出 K_ROT（"1000"）。
+RAW_ROT = 11
+RAW_N9, RAW_N12 = 9, 12          # 旋转键的两个邻居：key_of 仍给 K_NONE
 
 # 按键事件：(时刻, 原始键号, 备注)
 PRESSES = [
+    (2400,   RAW_ROT,     "自检时按【旋转】—— 不应产生 o_rot 脉冲（⑳）"),
     (4600,   RAW_UP,      "待机时按上 —— 不应产生动作"),
+    (4800,   RAW_ROT,     "待机时按【旋转】—— 不应产生 o_rot 脉冲（⑳）"),
     (5000,   RAW_START,   "待机 -> 预览"),
     (7000,   RAW_CONFIRM, "预览时按确认 —— 不应产生动作"),
+    (8000,   RAW_ROT,     "预览时按【旋转】—— 不应产生 o_rot 脉冲（⑳）"),
     (17000,  RAW_SELECT,  "一关对局：选择"),
     (19000,  RAW_UP,      "一关对局：上"),
     (21000,  RAW_CONFIRM, "一关对局：确认"),
     (23000,  RAW_DOWN,    "一关对局：下"),
     (25000,  RAW_LEFT,    "一关对局：左"),
     (27000,  RAW_RIGHT,   "一关对局：右"),
+    (29000,  RAW_ROT,     "一关对局：**旋转** —— 恰好一个 1 拍 o_rot（⑲）"),
+    (30000,  RAW_N9,      "对局中按原始键号 9 —— 译码 K_NONE，不得有任何动作（㉑）"),
+    (32000,  RAW_N12,     "对局中按原始键号 12 —— 译码 K_NONE，不得有任何动作（㉑）"),
+    (75000,  RAW_ROT,     "失败状态按【旋转】—— 不应产生 o_rot 脉冲（⑳）"),
     (76000,  RAW_START,   "超时失败后重开"),
     (104000 + D3_SHIFT, RAW_START, "**胜利**后重开（D2 之后胜利发生在第三关，见 ⑪c）"),
+    (118000, RAW_ROT,     "胜利状态按【旋转】—— 不应产生 o_rot 脉冲（⑳）"),
     (128000 + D3_SHIFT, RAW_START, "第三场景：SW7 再拨上后开始（自检 2 s 已过）"),
     (142000 + D3_SHIFT, RAW_START, "第四场景：残留判负后重开"),
     (166000 + D3_SHIFT, RAW_START, "第五场景：SW7 再拨一次后开始（B11 的'游戏结束后重开'已测过，"
                           "这里专测**对局中**重开）"),
+    (197500, RAW_UP,      "原始键号 10 仍译码为【上】（o_up + o_move）"
+                          "—— 旋转键没有挤掉邻居（㉑）"),
     (180000 + D3_SHIFT, RAW_START, "第五场景：**对局中**按开始 —— B11 要求可以随时开新一轮"),
 ]
 
@@ -129,7 +159,7 @@ SW_SPANS = [(0.0, T_SW_OFF2, 1), (T_SW_OFF2, T_SW_ON2, 0), (T_SW_ON2, T_SW_OFF3,
 OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz", "i_tick_4hz",
            "i_solved", "i_all_lock", "i_shuf_busy",
            "o_state", "o_level", "o_lvl3", "o_time", "o_blink", "o_go",
-           "o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right",
+           "o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right", "o_rot",
            "st", "cnt", "level", "lvl3", "req_go", "go_done", "blink_r"]
 
 
@@ -194,6 +224,7 @@ def build(b):
     b.output_bit("o_down")
     b.output_bit("o_left")
     b.output_bit("o_right")
+    b.output_bit("o_rot")
     for n, w in (("st", 3), ("cnt", 6), ("level", 1), ("lvl3", 1), ("req_go", 1),
                  ("go_done", 1), ("blink_r", 1)):
         if w == 1:
@@ -250,6 +281,20 @@ def _rises(vf, name):
         if v == "1" and prev is not None and prev != "1":
             out.append(t)
         prev = v
+    return out
+
+
+def _high_spans(vf, name):
+    """name 为 '1' 的连续区间 [(起, 止), ...]（用来量"恰好 1 个时钟宽"）。"""
+    out, start = [], None
+    for (t, v) in vf.trace(name):
+        if v == "1" and start is None:
+            start = t
+        elif v != "1" and start is not None:
+            out.append((start, t))
+            start = None
+    if start is not None:
+        out.append((start, DURATION))
     return out
 
 
@@ -325,11 +370,14 @@ def check(vf):
     ))
 
     # ⑤ 待机/预览时按键不得产生动作脉冲（动作只在 S_PLAYING 生效）
+    #    ⚠️ A4：清单里**加上 o_rot**（自检 2400 / 待机 4800 / 预览 8000 各按了一次
+    #       旋转键）—— 这是把判据变强，不是变弱。
     early = []
-    for nm in ("o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right"):
+    for nm in ("o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right", "o_rot"):
         early += [t for t in _rises(vf, nm) if t < K1]
     res.append((
-        "⑤ 待机(4600ns 按上)与预览(7000ns 按确认)期间**不产生**任何动作脉冲",
+        "⑤ 对局开始前（自检 2400 按旋转、待机 4600 按上 / 4800 按旋转、"
+        "预览 7000 按确认 / 8000 按旋转）**不产生**任何动作脉冲（含 o_rot）",
         not early,
         "对局前出现的动作脉冲：%s" % (early or "无"),
     ))
@@ -544,6 +592,95 @@ def check(vf):
         "（距进预览 %.0f ns，期望约 %d）"
         % ("%.0f" % prev_after[0] if prev_after else "无", d_prev, 2 * T1,
            "%.0f" % go_after[0] if go_after else "无", d_go, T_PREVIEW * T1),
+    ))
+
+    # ================================================================
+    # ⑲~㉒ A4（第 13 工作阶段）：新增【旋转】键 / 新输出端口 o_rot
+    #     物理键位 = KEY8 = 扫描器原始键号 11（4*row+col，row0 在最下），
+    #     在【上】（原始键号 10）的右边；key_of("1011") → K_ROT（pkg = "1000"）。
+    #     o_rot 是 S_PLAYING 里的 1 拍命令脉冲，与 o_sel/o_conf/o_move 完全同族。
+    # ================================================================
+    T_ROT = 29000.0                     # 一关对局中按【旋转】的时刻（i_press 脉冲起点）
+    # 其它状态下按同一个键（时刻, 当时应有的状态, 状态名）
+    ROT_OTHER = [(2400.0, S_SELF, "自检"), (4800.0, S_IDLE, "待机"),
+                 (8000.0, S_PREV, "预览"), (75000.0, S_FAIL, "失败"),
+                 (118000.0, S_WIN, "胜利")]
+    ROT_STROBES = ("o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right")
+
+    all_rot_r = _rises(vf, "o_rot")
+    rot_spans = _high_spans(vf, "o_rot")
+
+    def _strobe_rises(lo, hi, names=None):
+        out = []
+        for nm in (names or (ROT_STROBES + ("o_rot",))):
+            out += ["%s@%.0f" % (nm, t) for t in _rises(vf, nm) if lo <= t <= hi]
+        return out
+
+    # ⑲ 对局中按【旋转】→ 恰好一个 1 拍 o_rot，且同一次按键不产生任何别的动作
+    rot_play = [t for t in all_rot_r if K1 <= t <= K1_END]
+    stray = _strobe_rises(T_ROT - 200.0, T_ROT + 200.0, ROT_STROBES)
+    span_here = [s for s in rot_spans if abs(s[0] - T_ROT) < 200.0]
+    width = (span_here[0][1] - span_here[0][0]) if len(span_here) == 1 else -1.0
+    res.append((
+        "⑲ ★A4 对局中按【旋转】（原始键号 11）→ **恰好一个 1 个时钟宽**的 o_rot "
+        "脉冲（与 o_sel/o_conf/o_move 同为 1 拍命令）；同一次按键不产生 "
+        "o_sel/o_conf/o_move/o_up/o_down/o_left/o_right 中任何一个",
+        len(rot_play) == 1 and abs(rot_play[0] - (T_ROT + CLK)) <= CLK + 1.0
+        and not stray and len(span_here) == 1 and abs(width - CLK) <= 1.0,
+        "o_rot 上升沿（对局窗口内）=%s（期望 1 个，约 %.0f ns）；脉冲宽度=%.0f ns"
+        "（期望 1 拍 = %.0f ns）；同窗口内其它动作脉冲=%s"
+        % (["%.0f" % t for t in rot_play], T_ROT + CLK, width, CLK, stray or "无"),
+    ))
+
+    # ⑳ 其它状态（自检/待机/预览/失败/胜利）按【旋转】→ 不产生 o_rot
+    bad20, detail20 = [], []
+    for (t, want_st, nm) in ROT_OTHER:
+        st_here = _bus_at(vf, "o_state", t + CLK)
+        around = [x for x in all_rot_r if t - 200.0 <= x <= t + 200.0]
+        lv = _bit_at(vf, "o_rot", t + CLK)
+        detail20.append("%s：t=%.0f 时 o_state=%s（期望 %d），o_rot 电平=%s，"
+                        "±200 ns 内脉冲=%s"
+                        % (nm, t, st_here, want_st, lv, ["%.0f" % x for x in around] or "无"))
+        if st_here != want_st or around or lv != "0":
+            bad20.append("%s（t=%.0f）：o_state=%s、o_rot 电平=%s、脉冲=%s"
+                         % (nm, t, st_here, lv, around or "无"))
+    same = (all_rot_r == rot_play)          # 全时间线只应有 ⑲ 的那一个脉冲
+    res.append((
+        "⑳ ★A4 【旋转】键在**每一个其它状态**（自检/待机/预览/失败/胜利）按下都"
+        "**不产生** o_rot 脉冲，整个仿真里 o_rot 只出现过 ⑲ 的那一个（命令只在 S_PLAYING 生效）",
+        not bad20 and same,
+        ("；".join(bad20) + " | " if bad20 else "")
+        + "全时间线 o_rot 上升沿=%s（共 %d 个）| %s"
+        % (["%.0f" % t for t in all_rot_r], len(all_rot_r), "；".join(detail20)),
+    ))
+
+    # ㉑ 原始键号译码：11→K_ROT、9/12→K_NONE、10→仍是 K_UP
+    n9 = _strobe_rises(30000.0 - 100.0, 30000.0 + 300.0)
+    n12 = _strobe_rises(32000.0 - 100.0, 32000.0 + 300.0)
+    up_up = [t for t in _rises(vf, "o_up") if 197500.0 - 100.0 <= t <= 197500.0 + 300.0]
+    up_mv = [t for t in _rises(vf, "o_move") if 197500.0 - 100.0 <= t <= 197500.0 + 300.0]
+    up_rot = [t for t in all_rot_r if 197500.0 - 100.0 <= t <= 197500.0 + 300.0]
+    res.append((
+        "㉑ ★A4 原始键号译码没有被新键搅乱：11 → K_ROT（⑲ 已证）；"
+        "**9 与 12 → K_NONE**（对局中按下去没有任何动作脉冲）；"
+        "**10 → 仍是 K_UP**（o_up 与 o_move 各一次）",
+        not n9 and not n12 and len(up_up) == 1 and len(up_mv) == 1 and not up_rot
+        and abs(up_up[0] - 197510.0) <= CLK + 1.0
+        and abs(up_mv[0] - 197510.0) <= CLK + 1.0,
+        "键号 9（t=30000）动作脉冲=%s；键号 12（t=32000）动作脉冲=%s；"
+        "键号 10（t=197500）o_up=%s、o_move=%s、o_rot=%s（都期望各 1 / 1 / 0）"
+        % (n9 or "无", n12 or "无", ["%.0f" % t for t in up_up],
+           ["%.0f" % t for t in up_mv], ["%.0f" % t for t in up_rot] or "无"),
+    ))
+
+    # ㉒ 复位期间 o_rot 恒 0
+    res.append((
+        "㉒ ★A4 复位（i_rst=1，本 tb 为 [0,100] ns）期间 o_rot 恒 '0'",
+        vf.value_at("o_rot", 40.0) == "0" and vf.value_at("o_rot", 90.0) == "0"
+        and not [t for t in all_rot_r if t < 100.0],
+        "t=40 ns 电平=%s、t=90 ns 电平=%s；100 ns 之前的 o_rot 上升沿=%s"
+        % (vf.value_at("o_rot", 40.0), vf.value_at("o_rot", 90.0),
+           [t for t in all_rot_r if t < 100.0] or "无"),
     ))
 
     return res
