@@ -61,6 +61,11 @@ entity puzzle_ctrl is
         rnd_step  : out std_logic;
         rnd_val   : in  std_logic_vector(7 downto 0);
         i_level   : in  std_logic;                      -- '0' level 1, '1' level 2
+        i_pat     : in  std_logic_vector(1 downto 0);   -- 图案库下标（A2/S1）：
+                                                        -- 与 i_level 一起决定 i_target
+                                                        -- （顶层 pattern_rom 按 (level,pat)
+                                                        --  选图案）；只用于"整帧判据是否
+                                                        -- 干净"的快照比较，见下方注释
         i_sh0     : in  std_logic_vector(63 downto 0);
         i_sh1     : in  std_logic_vector(63 downto 0);
         i_sh2     : in  std_logic_vector(63 downto 0);
@@ -198,6 +203,10 @@ architecture rtl of puzzle_ctrl is
     signal frm_valid : std_logic := '0';      -- 上一整帧是"干净"的一帧（判据可用）
     signal pos_frm   : std_logic_vector(31 downto 0) := (others => '0');
     signal lvl_frm   : std_logic := '0';
+    -- ⚠️ 2026-10-09（A2/S1）：i_target 现在由 (i_level, i_pat) 一起决定，所以"本帧干净"
+    --    的快照必须**同时**跟踪 pat —— 只跟踪 level 的话，图案库切换（开局那一拍）
+    --    可能让一帧里混着两幅图案的行，判据就不可信了。成本只有 2 个寄存器 + 比较。
+    signal pat_frm   : std_logic_vector(1 downto 0) := (others => '0');
 
 begin
 
@@ -314,6 +323,7 @@ begin
                 frm_valid <= '0';
                 pos_frm   <= (others => '0');
                 lvl_frm   <= '0';
+                pat_frm   <= (others => '0');
             elsif (i_tick = '1') then
                 r   := to_integer(frow);
                 cov    := (others => '0');
@@ -393,17 +403,18 @@ begin
 
                 if (r = 0) then
                     -- 帧头：重启本帧的失配累加器，并把本帧各行结果所依赖的东西
-                    -- （零片锚点、关卡）拍个快照
+                    -- （零片锚点、关卡、图案下标）拍个快照
                     frm_bad <= bad;
                     pos_frm <= pos;
                     lvl_frm <= i_level;
+                    pat_frm <= i_pat;
                 elsif (r = 7) then
-                    -- 帧尾：发布判据。"干净"= 这一帧里 pos 与 level 都没变过，
-                    -- 否则 8 行可能取自两种不同摆法，错的会被看成对的。
-                    -- 跟踪 level 就够：i_target 与 i_sh* 都由 puzzle_top 的
-                    -- pattern_rom / piece_rom 直接按 level 选择，level 没变
+                    -- 帧尾：发布判据。"干净"= 这一帧里 pos、level 与图案下标都没变过，
+                    -- 否则 8 行可能取自两种不同摆法/两幅不同图案，错的会被看成对的。
+                    -- 跟踪 level **和 pat** 就够：i_target 与 i_sh* 都由 puzzle_top 的
+                    -- pattern_rom / piece_rom 直接按 (level, pat) 选择，两者没变
                     -- ⇒ 目标图案与零片形状都没变（这条接线约定必须保持）。
-                    if (pos_frm = pos) and (lvl_frm = i_level) then
+                    if (pos_frm = pos) and (lvl_frm = i_level) and (pat_frm = i_pat) then
                         frm_valid <= '1';
                         if (frm_bad = '0') and (bad = '0') then
                             frm_ok <= '1';

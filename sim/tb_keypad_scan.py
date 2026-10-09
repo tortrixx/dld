@@ -11,7 +11,7 @@
       ② **按住**一个键：o_key 在消抖轮数内变为 4*行+列，o_press **恰好一次**、
          宽度 = 1 个时钟周期（"按住只动作一次"，ERR-003 的防线）；
       ③ **松开**：o_key 归 0，并且 o_release 恰好一次（与 o_press 成对）；
-      ④ **短按**（只按 3 轮 < 消抖 16 轮）：**不得**产生 o_press（消抖有效）；
+      ④ **短按**（只按 3 轮 < 消抖 4 轮）：**不得**产生 o_press（消抖有效）；
       ⑤ 换一个 (行,列) 的键仍能得到正确的 4*行+列（证明不是"只对某一列有效"）；
       ⑥ 列驱动的两相扫描自洽：出现"四列全拉低"相，且有效相恰好一位为低。
 
@@ -28,8 +28,10 @@
 【时间刻度】
     TICK = 8000 ns（= 400 个 20 ns 时钟）。一轮扫描 = 2 个 tick = 16 us。
     第 k 轮：SETTLE 的触发 tick 在 (2k+2)T；SETTLE 锁存 row_all 在 +1280 ns；
-    第 c 相采样在 +1300+1280*(c+1) ns。消抖每次 tick 采一个样，16 个相同样
-    才接受 —— 这就是 DEBOUNCE_MAX=15 的含义（模块常数，未改）。
+    第 c 相采样在 +1300+1280*(c+1) ns。消抖**每轮采一个样**（不是每个 tick），
+    DEBOUNCE_MAX+1 个相同样才接受 —— 现在 DEBOUNCE_MAX=3 → **4 轮**。
+    ⚠️ ERR-031：一轮 = **2 个 tick**（SC_ALL_HIGH 与 SC_ALL_LOW 各等一个 tick），
+       所以板上 4 轮 = **40 ms**；旧文档写"16 轮 = 80 ms"把 2 倍算漏了（真实 160 ms）。
 """
 
 T = 8000.0                 # tick 周期 (ns)
@@ -48,7 +50,7 @@ KEY1, KEY2, KEY3 = 6, 12, 11
 HIGH = 0xF                 # i_row 空闲时四行全高（低有效）
 
 OBSERVE = ["i_clk", "i_row", "o_col", "o_raw", "o_key", "o_press", "o_release",
-           "phase", "col_low", "row_all", "stable", "key_r"]
+           "phase", "settle", "cnt", "col_low", "row_all", "stable", "key_r"]
 
 
 # ---------------------------------------------------------------- 激励
@@ -103,6 +105,10 @@ def build(b):
                  ("stable", 4), ("key_r", 4)):
         b.output_bus(n, w)
         _buried(b, n, w)
+    # settle/cnt 是宽计数器（消抖采样位置的真值来源）：分开声明
+    for n, w in (("settle", 8), ("cnt", 8)):
+        b.output_bus(n, w)
+        _buried(b, n, w)
 
     b.clock("i_clk", CLK)
     # ⚠️ 综合后网表寄存器初值是 X —— 必须显式复位
@@ -146,7 +152,9 @@ def check(vf):
 
     # 关键采样时刻（按上面推导的轮次表；留 100 ns 余量避开时钟边沿）
     t_after_k1 = (2 * 17 + 1) * T + 100.0      # 第 1 个键已接受
-    t_hold_k1 = (2 * 40 + 1) * T + 100.0       # 仍按住 KEY1 期间
+    # ⚠️ ERR-031：消抖从 16 轮缩到 4 轮后，KEY1 的**松开**也在第 29 轮就被接受
+    #    （旧值 41 轮），所以"仍按住"的检查点必须提前到第 20 轮（按住段是 0~25 轮）。
+    t_hold_k1 = (2 * 20 + 1) * T + 100.0       # 仍按住 KEY1 期间
     t_rel_k1 = (2 * 50 + 1) * T + 100.0        # KEY1 已松开
     t_after_k2 = (2 * 63 + 1) * T + 100.0      # 第 2 个键已接受
     t_rel_k2 = (2 * 88 + 1) * T + 100.0        # KEY2 已松开
@@ -200,12 +208,36 @@ def check(vf):
         "实测 o_key = %s（期望 %d）" % (_key_at(vf, t_after_k2), KEY2),
     ))
 
-    # ⑦ 短按 3 轮（< 消抖 16 轮）必须被丢弃
+    # ⑦ 短按 3 轮（< 消抖 4 轮）必须被丢弃
     res.append((
-        "⑦ 短按 3 轮（< 消抖 16 轮）不产生 o_press，o_key 保持 0（消抖有效）",
+        "⑦ 短按 3 轮（< 消抖 4 轮）不产生 o_press，o_key 保持 0（消抖有效）",
         _key_at(vf, t_short) == 0 and len(press) == 2,
         "短按后 o_key=%s；全程 press 脉冲总数仍为 %d"
         % (_key_at(vf, t_short), len(press)),
+    ))
+
+    # ⑨ ★ 消抖时长本身（ERR-031：一轮 = 2 个 tick = 10 ms 板上，所以 4 轮 = 40 ms）
+    #    实测（读 .vwf 的 cnt 跳变，消抖采样拍 = 奇数个 T）：KEY1 的 cnt 序列
+    #        1T→1, 3T→2, 5T→3, **7T→0（= 第 4 个相同样，改 stable）**；释放侧
+    #        55T→1, 57T→2, 59T→3, **61T→0**。
+    #    o_press/o_release 比"改 stable"再晚**一个采样拍**（RTL 里脉冲判定读的是
+    #    同拍旧值 stable），所以实测脉冲落在 9T / 63T；KEY2 同构：103T / 143T。
+    #    换算板上（× 625）：按下 → o_press ≈ 45 ms（原来是 33T = 165 ms）。
+    #    这条断言把"消抖到底几毫秒"钉死：改 DEBOUNCE_MAX 而忘了改这里，立即挂。
+    exp_p = [9 * T, 103 * T]          # KEY1 / KEY2 的 o_press 上升沿
+    exp_r = [63 * T, 143 * T]         # KEY1 / KEY2 的 o_release 上升沿
+    lat_ok = (len(press) == 2 and len(release) == 2
+              and all(abs(press[i][0] - exp_p[i]) <= 30.0 for i in range(2))
+              and all(abs(release[i][0] - exp_r[i]) <= 30.0 for i in range(2)))
+    res.append((
+        "⑨ ★ 消抖时长 = **4 个连续相同样 = 40 ms 板上**（DEBOUNCE_MAX=3；ERR-031："
+        "一轮扫描 = 2 个 tick_200 = 10 ms，旧文档的「16 轮 = 80 ms」把 2 倍算漏了，"
+        "真实曾是 **160 ms**）。实测 o_press 在 9T、o_release 在 63T（改 stable 后"
+        "再晚一个采样拍出脉冲；换算板上按下→o_press ≈ **45 ms**，原来 33T = 165 ms）",
+        lat_ok,
+        "实测 press=%s（期望 %s）、release=%s（期望 %s）；T = 8 us 仿真 = 5 ms 板上"
+        % (["%.0f" % a for (a, _b) in press], ["%.0f" % x for x in exp_p],
+           ["%.0f" % a for (a, _b) in release], ["%.0f" % x for x in exp_r]),
     ))
 
     # ⑧ 列驱动两相扫描自洽

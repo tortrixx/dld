@@ -132,6 +132,7 @@ architecture rtl of puzzle_top is
     component pattern_rom
         port (
             i_level : in  std_logic;
+            i_pat   : in  std_logic_vector(1 downto 0);
             o_mask  : out std_logic_vector(63 downto 0)
         );
     end component;
@@ -153,6 +154,7 @@ architecture rtl of puzzle_top is
             rnd_step  : out std_logic;
             rnd_val   : in  std_logic_vector(7 downto 0);
             i_level   : in  std_logic;
+            i_pat     : in  std_logic_vector(1 downto 0);
             i_sh0     : in  std_logic_vector(63 downto 0);
             i_sh1     : in  std_logic_vector(63 downto 0);
             i_sh2     : in  std_logic_vector(63 downto 0);
@@ -278,6 +280,10 @@ architecture rtl of puzzle_top is
     signal piece_n  : std_logic_vector(2 downto 0);
     signal tgt_mask : std_logic_vector(63 downto 0);
 
+    -- A2 / S1 : 第二关图案库的选择结果（开局预览起点锁存，见下面的锁存进程）
+    signal pat_sel  : std_logic_vector(1 downto 0) := (others => '0');
+    signal state_q  : std_logic_vector(2 downto 0) := S_SELF_TEST;  -- 上一拍的状态
+
     -- engine output: a complete 64-bit frame per colour plane
     signal eng_fr   : std_logic_vector(63 downto 0);
     signal eng_fg   : std_logic_vector(63 downto 0);
@@ -325,6 +331,37 @@ begin
                 mrow <= (others => '0');
             elsif (t_1k = '1') then
                 mrow <= mrow + 1;
+            end if;
+        end if;
+    end process;
+
+    ----------------------------------------------------------------------------
+    -- A2 / S1 : 第二关**图案库的选择点**（2026-10-09，提高要求 A2）
+    --
+    -- 时机：每次**进入 S_PREVIEW 的那一拍**（按【开始】开局，或过关后进入下一关），
+    --       把 rng_lfsr 当时的低 2 位锁存成 pat_sel。
+    -- 为什么在这里：预览（B4/B10）要把整幅图案显示 5 秒，图案必须在**预览开始前**
+    --       就定下来；而散落用的随机数由 puzzle_ctrl 在进入对局后继续推进**同一个**
+    --       LFSR —— pat_sel 只在预览起点采样一次，所以两者互不干扰。
+    -- 为什么每局会变：上一局的散落已经把 LFSR 推进了若干步（步数还随拒绝采样变化），
+    --       所以下一局预览起点的采样值不同 → 重开一局第二关图案会变。
+    -- 第一关：i_level='0' 时 pattern_rom 恒输出图 4-1（B4 指定），pat_sel 被忽略。
+    --
+    -- ⚠️ pat_sel 要比 state 晚一拍才更新（state 是寄存器），这一个时钟里预览会显示
+    --    上一幅图案的一行 —— 肉眼不可见（行扫描 1 ms），而且 puzzle_ctrl 的"整帧判据"
+    --    同时快照了 pat（pat_frm），图案切换的那一帧会被判为"不干净"而不发布判据。
+    ----------------------------------------------------------------------------
+    process (clk)
+    begin
+        if rising_edge(clk) then
+            if (rst = '1') then
+                state_q <= S_SELF_TEST;
+                pat_sel <= (others => '0');
+            else
+                state_q <= state;
+                if (state = S_PREVIEW) and (state_q /= S_PREVIEW) then
+                    pat_sel <= rnd_val(1 downto 0);
+                end if;
             end if;
         end if;
     end process;
@@ -398,6 +435,7 @@ begin
     u_pattern : pattern_rom
         port map (
             i_level => level,
+            i_pat   => pat_sel,
             o_mask  => tgt_mask
         );
 
@@ -435,6 +473,7 @@ begin
             rnd_step  => rnd_step,
             rnd_val   => rnd_val,
             i_level   => level,
+            i_pat     => pat_sel,
             i_sh0     => shapes(0),
             i_sh1     => shapes(1),
             i_sh2     => shapes(2),
@@ -560,8 +599,8 @@ begin
     ----------------------------------------------------------------------------
     -- Matrix content per state.
     --   SELF_TEST : whole panel yellow, flashing at 2 Hz   (requirement B1)
-    --   WIN       : the victory picture (a BOLD tick), first flashing then steady
-    --   FAIL      : the failure picture (a cross), first flashing then steady
+    --   WIN       : the victory picture (a BOLD **green** tick), first flashing then steady
+    --   FAIL      : the failure picture (a **red** cross), first flashing then steady
     --   otherwise : whatever the engine rendered (preview / playing)
     --
     -- ⚠️ 结算画面的演进（都来自上板反馈）：
@@ -570,7 +609,9 @@ begin
     --                 这是自拟改进项 S5 的原意）；自检（B1）仍无条件 2 Hz 闪。
     --   2026-10-09 ③ 上板再看，笑脸仍"不够直观" → 换回**粗红对勾**（24 格、笔画 3 格宽）：
     --                 ✓/✗ 是通用"对/错"符号，红色对勾正是中国阅卷的"答对"记号。
-    --                 胜利与失败同为红色，靠**形状**区分（对勾 vs 叉）。
+    --              ④ 用户再拍板：**只点绿列** → **绿色粗对勾 / 红色叉**的交通灯配色。
+    --                 绿=通过、红=不通过，颜色本身就是第一判读线索（不再只靠形状区分）；
+    --                 实现即 S_WIN 分支里"mat_g ← win_row、mat_r ← 全 0"一行改动。
     ----------------------------------------------------------------------------
     process (state, gblink, endflash_on, mrow, eng_fr, eng_fg, win_row, fail_row, prev_row)
         variable lv  : std_logic;
@@ -610,15 +651,15 @@ begin
             mat_r <= prev_row;
             mat_g <= (others => '0');
         elsif (state = S_WIN) then
-            -- 胜利：**粗红对勾**（红阅卷勾 = "答对"，比笑脸更直观）。
-            --   2026-10-09 用户上板反馈"笑脸不够直观"，从黄笑脸换回对勾（加粗版）。
-            --   ⚠️ 与失败的红叉**同为红色**，靠形状区分（对勾 vs 叉）。
-            --      若想改成"绿对勾 / 红叉"的交通灯配色，把下面两行的 mat_g 改成
-            --      win_row and (ev & ...)（即红绿同亮=黄，或红列置 0 只点绿）即可。
-            mat_r <= win_row and (ev & ev & ev & ev & ev & ev & ev & ev);
-            mat_g <= (others => '0');
+            -- 胜利：**绿色粗对勾**（2026-10-09 用户拍板：改成"绿对勾 / 红叉"的
+            --   交通灯配色）。绿 = 通过、红 = 不通过，颜色本身就是第一判读线索，
+            --   比"同色靠形状区分"更直观，也不会和失败画面混淆。
+            --   实现 = 只点绿列（红列全 0）：下面两行的 mat_g 用 win_row，mat_r 清零。
+            --   历史：细红对勾 → 黄笑脸 → 粗红对勾 → **粗绿对勾**。
+            mat_r <= (others => '0');
+            mat_g <= win_row and (ev & ev & ev & ev & ev & ev & ev & ev);
         elsif (state = S_FAIL) then
-            -- 失败：**红色**十字（只点红，和黄色的胜利笑脸一眼可辨）
+            -- 失败：**红色**粗叉（只点红列，与绿色的胜利对勾互为反色）
             mat_r <= fail_row and (ev & ev & ev & ev & ev & ev & ev & ev);
             mat_g <= (others => '0');
         else

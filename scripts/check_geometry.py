@@ -18,9 +18,14 @@ src = PKG.read_text(encoding="utf-8")
 def const_bits(name):
     m = re.search(r"constant\s+" + name + r"\s*:\s*std_logic_vector\(63 downto 0\)\s*:=\s*\"([01]{64})\"",
                   src, re.S)
-    if not m:
-        raise SystemExit(f"constant {name} not found")
-    return m.group(1)
+    if m:
+        return m.group(1)
+    # 别名常量（L2_TARGET_MASK := L2_PAT0）：递归解析，否则"抄一份字面量"就成了自证
+    a = re.search(r"constant\s+" + name + r"\s*:\s*std_logic_vector\(63 downto 0\)\s*:=\s*([A-Za-z_][A-Za-z_0-9]*)\s*;",
+                  src, re.S)
+    if a:
+        return const_bits(a.group(1))
+    raise SystemExit(f"constant {name} not found")
 
 def cells_xy(bits):
     """bits is the VHDL literal: leftmost char = bit63. Return {(row,col)} with bit0 = top-left."""
@@ -41,6 +46,7 @@ FIG42 = {(0,4),(0,5),(0,6),(2,4),(2,5),(2,6),(3,4),(3,5),(4,4),(4,1),(5,0),(5,1)
 FIG43 = {(2,4),(2,5),(2,6),(3,4),(3,5),(4,4)}
 
 names = ["L1_TARGET_MASK","L1_P0","L1_P1","L1_P2","L2_TARGET_MASK",
+         "L2_PAT0","L2_PAT1","L2_PAT2","L2_PAT3",
          "L2_P0","L2_P1","L2_P2","L2_P3","WIN_MASK","FAIL_MASK"]
 C = {n: cells_xy(const_bits(n)) for n in names}
 for n in names:
@@ -136,6 +142,31 @@ for name, (pieces, anchors, target) in TGT.items():
     for pc, (ar, ac) in zip(pieces, anchors):
         u |= {(r + ar, c + ac) for (r, c) in norm(pc)}
     chk(u == target, f"{name}: target picture == union of pieces at target anchors")
+
+# --- 第二关**图案库**（提高要求 A2 / 自拟 S1「多种拼图图案随机选择」，2026-10-09）---
+# 硬约束：**每幅候选图案都必须能被现成的四块 2x2 零片恰好铺满** —— 铺不满就是死局。
+# 这里不信任"块网格"构造，而是**独立穷举**：49 个 2x2 摆位里选 4 个的所有组合，
+# 看有没有哪一组恰好覆盖该图案（同一组 4 个摆位对应 4! = 24 种置换，与 tb_puzzle_ctrl
+# 里"第二关 24 种等价摆法"的说法一致）。
+print("\n-- 第二关图案库（A2/S1）：逐图案穷举可铺性")
+PAT_N = 4
+PATS = [C[f"L2_PAT{i}"] for i in range(PAT_N)]
+chk(C["L2_TARGET_MASK"] == C["L2_PAT0"],
+    "L2_TARGET_MASK 仍等于 L2_PAT0（图案 0 = 原第二关图案，一字未改 → 旧证据继续有效）")
+for i, p in enumerate(PATS):
+    chk(len(p) == 16, f"L2_PAT{i}: 面积 = {len(p)} 格（必须 16 = 四块 2x2）")
+    chk(len(p) == 16 and min(r for r, _ in p) >= 0 and max(r for r, _ in p) <= 7
+        and min(c for _, c in p) >= 0 and max(c for _, c in p) <= 7,
+        f"L2_PAT{i}: 全部格子落在 8x8 点阵内")
+    n = count_tilings(p, [C["L2_P0"], C["L2_P1"], C["L2_P2"], C["L2_P3"]])
+    # n 是"按零片编号的有序铺法数"：同一组 4 个摆位有 4! = 24 种置换
+    chk(n > 0 and n % 24 == 0,
+        f"L2_PAT{i}: 四块 2x2 零片能**恰好铺满**（有序铺法 {n} 种 = {n // 24} 组摆位 x 24 种置换）")
+chk(len(set(frozenset(p) for p in PATS)) == PAT_N,
+    f"{PAT_N} 幅图案互不相同（去重后 {len(set(frozenset(p) for p in PATS))} 幅）")
+for i, p in enumerate(PATS):
+    print(f"   L2_PAT{i}:")
+    print("\n".join("     " + l for l in fig(p).split("\n")))
 
 # --- 结算画面（2026-10-09：胜利 = 粗红对勾，失败 = 红叉）------------------------
 # 检查目的：

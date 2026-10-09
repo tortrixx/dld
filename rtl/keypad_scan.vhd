@@ -32,7 +32,10 @@
 --  even then the key is still detected".
 --
 --  Debounce : a reading must be identical for DEBOUNCE_MAX+1 scan rounds
---             (16 x 5 ms = 80 ms) before it is accepted.
+--             (now 4 rounds = 40 ms -- see the ERR-031 note in puzzle_pkg.vhd:
+--              one round is TWO tick_200 periods = 10 ms, because SC_ALL_HIGH and
+--              SC_ALL_LOW each wait for a tick; the old "16 x 5 ms = 80 ms" text
+--              under-counted by 2x and the real value was 160 ms).
 --  Outputs  : o_key holds the accepted index; o_press is a ONE-CLOCK pulse when a
 --             newly accepted key appears, so a hold produces exactly one action.
 -- ============================================================================

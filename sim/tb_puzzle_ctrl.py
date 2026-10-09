@@ -187,9 +187,15 @@ WRONG_PLAN = [
 CMDS_L2B, T_AFTER_L2B = _cmds(T_CMD_L2B, WRONG_PLAN)
 T_L2B_SETTLE = T_AFTER_L2B + 4000.0
 
+# A2/S1：故意在第 ⑰ 条断言处翻一次图案库下标（i_pat 0 → 1）。
+# 本 tb 是**直接驱动 i_target** 的单元测试，所以 i_pat 只影响 puzzle_ctrl 里
+# "整帧判据是否干净"的快照（pat_frm）：图案切换时，在途的那一帧必须作废
+# （frm_valid → 0，o_all_lock/o_solved 复位），等下一整帧干净渲染完再重新发布。
+T_PAT_CHG = T_L2_SETTLE + 4000.0
+
 DURATION = T_L2B_SETTLE + 5000.0
 
-OBSERVE = ["i_clk", "i_rst", "i_tick", "i_level", "i_go", "i_select", "i_move",
+OBSERVE = ["i_clk", "i_rst", "i_tick", "i_level", "i_pat", "i_go", "i_select", "i_move",
            "i_confirm", "i_up", "i_down", "i_left", "i_right", "rnd_val",
            "o_busy", "o_sel_idx", "o_pos", "o_lock", "o_scanrow",
            "o_solved", "o_all_lock", "o_rowr", "o_rowg",
@@ -332,6 +338,7 @@ def build(b):
     b.input_bit("i_left")
     b.input_bit("i_right")
     b.input_bus("rnd_val", 8)
+    b.input_bus("i_pat", 2)                     # A2/S1：图案库下标（见 T_PAT_CHG）
     for n in ("i_sh0", "i_sh1", "i_sh2", "i_sh3", "i_target"):
         b.input_bus(n, 64)
     for n in ("i_h0", "i_h1", "i_h2", "i_h3", "i_w0", "i_w1", "i_w2", "i_w3"):
@@ -366,6 +373,9 @@ def build(b):
                                         for t in _ticks(DURATION, TICK)], 0))
     # 一关（3 块 1x3+3x3+2x2）→ 到 T_L2 切二关（4 块 2x2）
     b.segments("i_level", [(T_L2, 0), (DURATION - T_L2, 1)])
+
+    # A2/S1 图案库下标：0 → 1 翻一次（见 T_PAT_CHG 的说明与断言 ⑰）
+    b.bus_segments("i_pat", [(T_PAT_CHG, 0), (DURATION - T_PAT_CHG, 1)])
 
     # 形状 / 目标：两关各一段，T_L2 处整组切换（与 puzzle_top 里 piece_rom/pattern_rom
     # 受同一个 level 选择的行为一致）
@@ -687,6 +697,38 @@ def check(vf):
         "o_all_lock = %s"
         % (posW[:NP2], len(uW), len(tQ), "相同" if uW == tQ else "不同",
            format(lockW, "04b"), solW, allW),
+    ))
+
+    # ⑰ ★ A2/S1：图案库下标（i_pat）一动，**在途的那一帧判据必须作废**。
+    #    puzzle_ctrl 的"干净帧"条件是 pos、level **和 pat** 三者在整帧内都没变
+    #    （只跟踪 level 是不够的：i_target 现在由 (level, pat) 一起决定，
+    #     图案切换那一拍可能让一帧里混着两幅图案的行）。
+    #    时窗按帧长取：一帧 = 8 个 i_tick = 1600 ns，所以翻转后 0~3200 ns 内
+    #    一定命中"作废"窗口，再往后一整帧渲染完又会重新发布判据。
+    inval, fv0 = [], 0
+    t = T_PAT_CHG
+    while t < T_PAT_CHG + 3400.0:
+        if _v(vf, "o_all_lock", t) == "0" or _v(vf, "o_solved", t) == "0":
+            inval.append(t)
+        if HAS_FRAME_VERDICT and _v(vf, "frm_valid", t) == "0":
+            fv0 += 1
+        t += CLK
+    t_rec = T_PAT_CHG + 4200.0
+    rec_ok = (_v(vf, "o_all_lock", t_rec) == "1" and _v(vf, "o_solved", t_rec) == "1")
+    ok_pat = bool(inval) and rec_ok
+    detail_pat = ("i_pat 翻转后 3.4 us 内 o_all_lock/o_solved 归 0 的采样数 = %d"
+                  "（必须 > 0）；再遍历一整帧（t=%.0f ns）后 o_all_lock=%s、o_solved=%s"
+                  % (len(inval), t_rec, _v(vf, "o_all_lock", t_rec),
+                     _v(vf, "o_solved", t_rec)))
+    if HAS_FRAME_VERDICT:
+        detail_pat += "；同期 frm_valid = 0 的采样数 = %d（必须 > 0）" % fv0
+        ok_pat = ok_pat and fv0 > 0
+    res.append((
+        "⑰ ★【A2/S1】图案库下标 i_pat 变化 → 在途整帧判据立即作废"
+        "（o_all_lock/o_solved 归 0），再渲染一整帧干净画面后重新发布 —— "
+        "「干净帧」必须同时跟踪 pos / level / **pat**，否则图案切换时可能拿混了"
+        "两幅图案的帧发布判据",
+        ok_pat, detail_pat,
     ))
 
     return res
