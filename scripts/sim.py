@@ -206,8 +206,14 @@ def render_svg(vf, names, title, max_sig=24, max_trans=400):
     return "\n".join(out)
 
 
-def do_check(module, round_no=None, quiet=False):
-    """解析 + 比对 + 出图 + 写轮次记录。返回 (是否全过, results)。"""
+def do_check(module, round_no=None, quiet=False, record=False):
+    """解析 + 比对。返回 (是否全过, results)。
+
+    ⚠️ 2026-10-10 收尾审查（ERR-052）：**默认只读** —— 只有 `record=True`
+    （即 `sim.py run`，或 `sim.py check --record`）才写轮次记录与波形图。
+    旧版 `check` 无条件调 `_write_round()`，于是 `check <mod> --round N`
+    会**静默覆盖**第 N 轮的证据（README 原来就警告过这个坑）。
+    """
     tb = load_tb(module)
     p = vwf_path(module)
     if not p.exists():
@@ -238,13 +244,16 @@ def do_check(module, round_no=None, quiet=False):
         print("  合计：%d / %d 通过" % (n_pass, len(results)))
         print("=" * 66)
 
-    FIG_DIR.mkdir(parents=True, exist_ok=True)
-    fig = FIG_DIR / ("SIM-%s.svg" % module)
-    fig.write_text(render_svg(vf, getattr(tb, "OBSERVE", []), module), encoding="utf-8")
-    if not quiet:
-        print("  ✓ 波形图已存 %s" % fig.relative_to(ROOT))
+    if record:
+        FIG_DIR.mkdir(parents=True, exist_ok=True)
+        fig = FIG_DIR / ("SIM-%s.svg" % module)
+        fig.write_text(render_svg(vf, getattr(tb, "OBSERVE", []), module), encoding="utf-8")
+        if not quiet:
+            print("  ✓ 波形图已存 %s" % fig.relative_to(ROOT))
 
-    _write_round(module, round_no, results)
+        _write_round(module, round_no, results)
+    elif not quiet:
+        print("  （只读复核：未写轮次记录、未重画波形图；要落盘请加 --record）")
     return n_pass == len(results), results
 
 
@@ -485,7 +494,7 @@ def cmd_run(module, round_no=None):
 
     print()
     print("== 步骤 3：解析结果 + 参考模型比对 + 写轮次记录 ==")
-    ok, _ = do_check(module, round_no)
+    ok, _ = do_check(module, round_no, record=True)
     return 0 if ok else 1
 
 
@@ -504,7 +513,7 @@ def main():
     if cmd == "gen" and len(argv) > 1:
         return cmd_gen(argv[1])
     if cmd == "check" and len(argv) > 1:
-        ok, _ = do_check(argv[1], round_no)
+        ok, _ = do_check(argv[1], round_no, record=("--record" in argv))
         return 0 if ok else 1
     if cmd == "run" and len(argv) > 1:
         return cmd_run(argv[1], round_no)

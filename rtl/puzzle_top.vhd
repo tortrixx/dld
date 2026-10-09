@@ -252,7 +252,6 @@ architecture rtl of puzzle_top is
     signal t_1k     : std_logic;
     signal t_200    : std_logic;
     signal t_100    : std_logic;
-    signal t_2hz    : std_logic;
     signal t_4hz    : std_logic;
     signal t_1hz    : std_logic;
     signal t_40     : std_logic;
@@ -398,7 +397,7 @@ begin
             o_tick_1k  => t_1k,
             o_tick_200 => t_200,
             o_tick_100 => t_100,
-            o_tick_2hz => t_2hz,
+            o_tick_2hz => open,          -- 第 16 工作阶段：game_fsm 已删 i_tick_2hz，无人读
             o_tick_4hz => t_4hz,
             o_tick_1hz => t_1hz,
             o_tick_40  => t_40
