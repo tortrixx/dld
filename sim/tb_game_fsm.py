@@ -147,6 +147,10 @@ SHUF_BUSY_WINS = [(14060.0, 15000.0), (86060.0, 87000.0), (98060.0, 99000.0),
                   (138060.0 + D3_SHIFT, 140060.0 + D3_SHIFT),
                   (152060.0 + D3_SHIFT, 154060.0 + D3_SHIFT),
                   (176060.0 + D3_SHIFT, 177000.0 + D3_SHIFT)]
+# ⚠️ 第 14 工作阶段（A1 v2）：这里原来定义过一个 `NAK_WINS`（i_nak 的单拍脉冲窗口）
+#    用来验证 SND_NAK"被拒绝"音效。该功能实测整机 +5 LE 且装不进器件（见
+#    rtl/game_fsm.vhd 音效进程的说明与 docs/05 §1 的负结果），已随 RTL 一起撤销。
+
 T_SW_OFF2 = 120000.0 + D3_SHIFT           # SW7 拨下去（⑭）
 T_SW_ON2 = 122000.0 + D3_SHIFT             # SW7 再拨上去（自检 2 s -> 待机）
 T_SW_OFF3 = 158000.0 + D3_SHIFT            # 第二次拨下去
@@ -160,7 +164,8 @@ OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz", "i_t
            "i_solved", "i_all_lock", "i_shuf_busy",
            "o_state", "o_level", "o_lvl3", "o_time", "o_blink", "o_go",
            "o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right", "o_rot",
-           "st", "cnt", "level", "lvl3", "req_go", "go_done", "blink_r"]
+           "o_sound",
+           "st", "cnt", "level", "lvl3", "req_go", "go_done", "blink_r", "snd_hold"]
 
 
 # ---------------------------------------------------------------- 激励
@@ -225,8 +230,9 @@ def build(b):
     b.output_bit("o_left")
     b.output_bit("o_right")
     b.output_bit("o_rot")
+    b.output_bus("o_sound", 4)
     for n, w in (("st", 3), ("cnt", 6), ("level", 1), ("lvl3", 1), ("req_go", 1),
-                 ("go_done", 1), ("blink_r", 1)):
+                 ("go_done", 1), ("blink_r", 1), ("snd_hold", 2)):
         if w == 1:
             b.output_bit(n)
         else:
@@ -681,6 +687,83 @@ def check(vf):
         "t=40 ns 电平=%s、t=90 ns 电平=%s；100 ns 之前的 o_rot 上升沿=%s"
         % (vf.value_at("o_rot", 40.0), vf.value_at("o_rot", 90.0),
            [t for t in all_rot_r if t < 100.0] or "无"),
+    ))
+
+    # ========================================================================
+    # A1 v2（第 14 工作阶段，用户上板反馈"游戏过程中没有任何音效"）
+    #   码表见 rtl/puzzle_pkg.vhd 的 SND_*；buzzer_ctrl 按 4 位码选乐句。
+    # ========================================================================
+    SND = {"none": 0, "self": 1, "preview": 2, "clear": 3, "wrong": 4, "key": 5,
+           "win": 6, "fail": 7, "bgm": 8, "rot": 9, "conf": 10, "sel": 11,
+           "move": 12, "nak": 13, "time": 14, "lvl": 15}
+    # ⚠️ "nak"（1101）的码表项保留：puzzle_pkg / buzzer_ctrl 仍定义这个码，
+    #    但本轮 RTL 已撤销"被拒绝"音效的生成（+5 LE 装不下）—— 见 docs/05 §1。
+
+    def _snd_at(t):
+        return _bus_at(vf, "o_sound", t)
+
+    # ㉓ 六个**状态常驻**场景的音效码
+    snd_cases = [(1000.0, "self", "自检/上电号角"),
+                 (4500.0, "none", "待机静音"),
+                 (6000.0, "preview", "预览提示音"),
+                 (16000.0, "bgm", "★ 一关对局中**背景音乐**（本轮修复的核心）"),
+                 (117900.0, "win", "通关长号角"),
+                 (75500.0, "fail", "失败下行")]
+    bad23, det23 = [], []
+    for (t, key, nm) in snd_cases:
+        got = _snd_at(t)
+        det23.append("%s：t=%.0f 码=%s（期望 %d）" % (nm, t, got, SND[key]))
+        if got != SND[key]:
+            bad23.append("%s（t=%.0f）：实测 %s，期望 %d" % (nm, t, got, SND[key]))
+    res.append((
+        "㉓ ★A1v2 六个常驻场景的音效码：自检=0001、待机=0000、预览=0010、"
+        "**对局=1000（背景音乐）**、胜利=0110、失败=0111（与 puzzle_pkg.SND_* 逐条一致）"
+        "；⚠️ 采样点刻意避开「过关/失败」事件码的 2 步保持窗口（这正是 ㉔ 要证明的行为）",
+        not bad23,
+        ("；".join(bad23) + " | " if bad23 else "") + "；".join(det23),
+    ))
+
+    # ㉔ 瞬时事件的**保持**：单拍脉冲必须被保持 ≥1 个旋律步才听得见
+    ev = _snd_at(19000.0 + 200.0)          # 19000 按【上】→ o_move
+    back = _snd_at(20500.0)                # 2 个 tick_4hz 之后回到背景音乐
+    hold_seen = _bus_at(vf, "snd_hold", 19000.0 + 200.0)
+    res.append((
+        "㉔ ★A1v2 【瞬时事件保持】：对局中按【上】（t=19000）后，音效码变成 "
+        "1100（移动）并**保持 ≥1 个旋律步（250 ms）**，随后自动回到 1000（背景音乐）"
+        "—— 旧实现只有 1 个时钟的脉冲（~20 ns），蜂鸣器来不及发声",
+        ev == SND["move"] and back == SND["bgm"] and hold_seen not in (None, 0),
+        "t=19200 码=%s（期望 12）；snd_hold=%s（期望非 0）；t=20500 码=%s（期望 8，背景音乐）"
+        % (ev, hold_seen, back),
+    ))
+
+    # ㉕ 三种按键给三种**不同**的码（A1"不同情况不同音效"）
+    sel_c = _snd_at(17000.0 + 200.0)
+    conf_c = _snd_at(21000.0 + 200.0)
+    rot_c = _snd_at(29000.0 + 200.0)
+    res.append((
+        "㉕ ★A1v2 对局中【选择】/【确认】/【旋转】三键给出三个**互不相同**的码："
+        "1011 / 1010 / 1001（不是「所有键一个声音」）",
+        sel_c == SND["sel"] and conf_c == SND["conf"] and rot_c == SND["rot"]
+        and len({sel_c, conf_c, rot_c}) == 3,
+        "t=17200 选择=%s（期望 11）；t=21200 确认=%s（期望 10）；t=29200 旋转=%s（期望 9）"
+        % (sel_c, conf_c, rot_c),
+    ))
+
+    # ㉖ ★对局全程**永不静音**（背景音乐兜底）—— 直接对应「游戏过程中没有任何音效」
+    silent = []
+    t = 15200.0
+    n_samp = 0
+    while t <= 68000.0:
+        v = _snd_at(t)
+        n_samp += 1
+        if v == SND["none"] or v is None:
+            silent.append("%.0f:%s" % (t, v))
+        t += 500.0
+    res.append((
+        "㉖ ★A1v2 一关对局全程（t=15200~68000，每 500 ns 采一次）音效码**从不为 0000**"
+        "（背景音乐兜底 + 事件码覆盖）—— 上板「全程没声音」这条不可能再出现",
+        not silent,
+        "采样 %d 次，静音采样点=%s" % (n_samp, silent or "无"),
     ))
 
     return res

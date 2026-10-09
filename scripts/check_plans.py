@@ -11,16 +11,26 @@
   先用本脚本复核走法计划 ——**零次被拒、并集与图案逐格一致**——再去跑整机仿真。
 
 【复刻的引擎规则（与 RTL 一一对应）】
-  · `i_go`         → `locked=0`、`sel=0`，随后散落；`rnd_val` 钉 0 时落到**确定性回退锚点**
+  · `i_go`         → `locked=0`、`sel=0`、**`ori = PIECE_ORI_INIT`**，随后散落；
+                     `rnd_val` 钉 0 时落到**确定性回退锚点**
                      （一关 (0,0)/(0,4)/(4,0)；二关再补 (4,4)）
-  · `i_select`     → `sel` 前进（一关 0..2 循环、二关 0..3 循环）
+  · `i_select`     → `sel` 前进到下一个**未锁定**的零片（一关 0..2 循环、二关 0..3 循环）
   · `i_confirm`    → `locked(sel)=1`，随后 `sel` 前进（**确认只锁定，不判对错**）
-  · `i_move`       → 对 `sel` 指向的零片：up=行-1 / down=行+1 / left=列-1 / right=列+1；
-                     越界（`cr+hh<=8 and cc+ww<=8`）或与其它零片**精确逐格重叠** → **整个移动被拒**
+  · `i_move`       → 锚点先按方向**逐分量夹紧**到 0..7（RTL 的 mv_clamp），
+                     再判 `cr+hh<=8 and cc+ww<=8`；越界或与其它零片**精确逐格重叠**
+                     → **整个移动被拒**（贴边时夹紧后原地不动 = 被接受但无位移）
+  · `i_rot`（A4）  → **原地**顺时针 90°（锚点不变）：候选 = 同一锚点 + `ori_next`，
+                     用**旋转后的**高宽做越界判定、用**旋转后的**形状做重叠判定；
+                     越界 / 重叠 / 已锁定 → 不提交（朝向与画面都不变）
   · `puzzle_pkg` 的位序：bit = 8*行 + 列，bit0 = 左上角
+  · 朝向编码：块 k 占 `ori(2k+1 downto 2k)`；"01"=顺时针 90°、"10"=180°、"11"=270°；
+     `PIECE_ORI_INIT = "10"&"10"&"01"&"01"` → 块 0..3 分别从 1/1/2/2 开始
 
   ⚠️ 第 11 工作阶段起第二关零片是**四种异形**（3/2/5/6 格），不只是大小变了：
      `play()` 里每一块用的是**各自**的掩码，重叠判定必须逐格算（包围盒判定会误判）。
+  ⚠️ 第 14 工作阶段（A4 旋转必需性）起零片**不再从朝向 0 开始**，所以四份走法计划
+     里**必须出现【旋转】键** —— 保持初始朝向只许平移时，第一关的矩形与四幅图案
+     **都恰好覆盖不了**（scripts/check_geometry.py 的"旋转必需性"一节是独立证明）。
 
 【怎么用】
     python scripts/check_plans.py          # 全过 → 退出码 0
@@ -52,53 +62,84 @@ def const_anchor(name, src):
     return int(m.group(1), 2), int(m.group(2), 2)
 
 
+def const_ori_init(src):
+    """PIECE_ORI_INIT -> 块 0..3 的初始朝向（VHDL 里 MSB 在左，块 3 先写）。"""
+    m = re.search(r"constant\s+PIECE_ORI_INIT\s*:\s*std_logic_vector\(7 downto 0\)\s*:=\s*"
+                  r"\"([01]{2})\"\s*&\s*\"([01]{2})\"\s*&\s*\"([01]{2})\"\s*&\s*\"([01]{2})\"",
+                  src, re.S)
+    if not m:
+        raise SystemExit("✗ puzzle_pkg.vhd 里找不到 PIECE_ORI_INIT")
+    s = "".join(m.groups())          # 块3 块2 块1 块0
+    return tuple(int(s[6 - 2 * k:8 - 2 * k], 2) for k in range(4))
+
+
 SRC = PKG.read_text(encoding="utf-8")
 L1_SHAPES = [const_bits("L1_P%d" % i, SRC) for i in range(3)]
 L2_SHAPES = [const_bits("L2_P%d" % i, SRC) for i in range(4)]
 L2_PAT = {k: const_bits("L2_PAT%d" % k, SRC) for k in range(4)}
+L1_TARGET_MASK = const_bits("L1_TARGET_MASK", SRC)
+PIECE_ORI_INIT = const_ori_init(SRC)
 
-L1_TARGET = [(2, 2), (3, 2), (4, 3)]        # 图 4-1 的解（一类等价铺法，见 check_geometry）
 L2_WITNESS = [const_anchor("L2_TGT%d" % i, SRC) for i in range(4)]
 
 L1_START = [(0, 0), (0, 4), (4, 0)]
 L2_START = [(0, 0), (0, 4), (4, 0), (4, 4)]     # rnd_val 恒 0 -> 确定性回退锚点
 
-PLAN_L1 = (["select"] + ["down"] * 3 + ["left"] * 2 +
-           ["select"] + ["down"] * 2 + ["right"] * 3 + ["up"] * 2 +
-           ["select"] + ["down"] * 2 + ["right"] * 2 + ["confirm"] * 3)
+# ============================================================================
+#  四份走法计划（**必须同时**与 sim/tb_puzzle_top.py 里的逐字一致 —— 见文件末尾守卫）
+#
+#  ⚠️ 第 14 工作阶段（A4 旋转必需性）起这些计划由"带旋转的 A*"重新解出：
+#     状态 = (四块锚点, 四块朝向, sel)，动作 = 移动 / **旋转** / 换零片，
+#     代价 = **按键次数**（换零片要按 (k'-k) mod n 次【选择】），
+#     终点 = 某个**精确铺法**（锚点 + 朝向）且并集逐格等于图案，
+#     取"所有精确铺法里最短的那条"。解算器与最优性证据在 `.tmp/opt/rot_astar2.py`：
+#       一关   16 条命令（LB=16 ⇒ **可证最优**）
+#       二关   30 条命令（PAT3 铺法 #0 的下界是 29，用"代价上界 29 的有界搜索"
+#                          穷尽证明它**无解** ⇒ 30 是最优）
+#       三关 0 20 条命令 / 三关 2 26 条命令（下界 ≥ 已找到代价的铺法全部跳过，
+#                                            所以这两个也是最优）
+# ============================================================================
+PLAN_L1 = (["rot"] + ["right"] + ["down"] + ["right"] + ["down"] + ["select"] +
+           ["down"] + ["rot"] + ["down"] + ["left"] + ["down"] + ["left"] +
+           ["select"] + ["up"] + ["right"] * 2 + ["confirm"] * 3)
 
 # 第二关走法（**固定 PAT3 = 阶梯**，D2：2026-10-09 起第二关图案不再随机）
-#   解算器/最小化目标 = "按键次数"（每次换零片要按 (k'-k) mod 4 次【选择】），
-#   见 .tmp/opt/solve_l2plan.py；PAT3 有 **2 种**等价铺法，计划走第 0 种
-#   （槽 0..3 → (2,2) (2,1) (3,3) (3,2)）→ 33 条命令。
-PLAN_L2_PAT3 = (["down"] + ["select"] + ["left"] + ["select"] + ["up"] + ["right"] +
-                ["up"] + ["select"] + ["down"] + ["left"] * 2 + ["up"] +
-                ["select"] * 3 + ["right"] * 2 + ["down"] + ["select"] + ["up"] +
-                ["select"] + ["down"] + ["right"] * 2 + ["select"] + ["left"] * 2 +
-                ["down"] * 2 + ["confirm"] * 4)
+#   终点 = PAT3 的**第 21 种**精确铺法（含旋转）：槽 0..3 → (5,3) (2,1) (2,2) (2,3)，
+#   四块朝向都回到 2（== 初始朝向，所以每块被转过的次数是 4 的倍数）
+PLAN_L2_PAT3 = (["down"] + ["select"] + ["left"] * 3 + ["rot"] + ["down"] * 2 +
+                ["select"] + ["right"] * 2 + ["select"] + ["up"] * 2 + ["left"] +
+                ["select"] + ["down"] * 3 + ["right"] + ["down"] + ["select"] * 2 +
+                ["up"] * 2 + ["select"] * 2 + ["rot"] + ["right"] * 2 +
+                ["confirm"] * 4)
 
 # 第三关走法（A2"增加游戏关数 + 多种拼图图案随机选择"）：图案由 rng 决定，
 #   整机 tb 用 DLD_L3PAT 把随机值钉住，于是这里给出两种模式各一份计划：
-#     模式 A（图案 0 田）：唯一铺法（槽 0..3 → (5,3) (4,2) (2,3) (2,2)），42 条命令
-#     模式 B（图案 2 S/Z）：唯一铺法（槽 0..3 → (5,1) (4,4) (2,1) (2,4)），36 条命令
-#   两份计划与 sim/tb_puzzle_top.py 里的必须**逐字一致** —— 本脚本就是它们的守卫。
-PLAN_L3_PAT0 = (["select"] + ["left"] + ["down"] * 4 + ["select"] + ["up"] * 3 +
-                ["right"] * 3 + ["down"] + ["select"] * 2 + ["down"] * 6 + ["select"] +
-                ["left"] * 2 + ["select"] * 2 + ["left"] * 2 + ["up"] * 2 + ["select"] +
-                ["right"] * 2 + ["up"] + ["right"] + ["select"] + ["right"] +
+#     模式 A（图案 0 田）：20 条命令；终点 = 槽 0..3 → (2,2) (2,5) (3,2) (3,3)，朝向全 2
+#     模式 B（图案 2 S/Z）：26 条命令；终点 = 槽 0..3 → (2,1) (4,4) (3,1) (2,4)，
+#                            朝向 (2,2,1,0)
+PLAN_L3_PAT0 = (["rot"] + ["right"] + ["down"] + ["right"] + ["down"] + ["select"] +
+                ["rot"] + ["right"] + ["down"] * 2 + ["select"] + ["right"] * 2 +
+                ["select"] + ["left"] + ["up"] + ["select"] * 3 + ["up"] +
                 ["confirm"] * 4)
-PLAN_L3_PAT2 = (["right"] + ["down"] * 3 + ["right"] * 2 + ["select"] + ["down"] +
-                ["select"] + ["up"] * 4 + ["right"] + ["select"] + ["right"] +
-                ["select"] + ["left"] * 2 + ["down"] * 2 + ["select"] + ["down"] * 3 +
-                ["select"] + ["down"] * 2 + ["select"] + ["up"] * 2 + ["left"] +
-                ["confirm"] * 4)
+PLAN_L3_PAT2 = (["rot"] + ["right"] + ["down"] * 2 + ["select"] + ["down"] * 3 +
+                ["left"] + ["rot"] + ["down"] + ["select"] + ["up"] + ["rot"] * 3 +
+                ["select"] + ["up"] * 2 + ["rot"] * 2 + ["select"] * 2 + ["right"] +
+                ["select"] + ["right"] + ["confirm"] * 4)
 
-# tb 里断言 ⑪/⑪b 用的落点期望（槽 0..3 各 (行,列) 打包成 1 字节，pos(31:24) = 槽 0）
-L2_EXPECT_POS = 0x22213332                       # PAT3 第 0 种铺法
-L3_EXPECT_POS = {0: 0x53422322, 2: 0x51442124}   # 第三关：模式 A / 模式 B
+# ---- 计划终点（锚点 + 朝向）：check 里逐条核对 ----
+# 打包方式与 tb 的 o_pos 一致：槽 k 的 (行,列) 占一个字节，槽 0 在最高字节。
+L1_EXPECT_POS = 0x22323200                       # 一关只用槽 0..2，槽 3 恒 0
+L2_EXPECT_POS = 0x53212223                       # PAT3 第 21 种铺法
+L3_EXPECT_POS = {0: 0x22253233, 2: 0x21443124}   # 第三关：模式 A / 模式 B
+L1_EXPECT_ORI = (2, 2, 2)
+L2_EXPECT_ORI = (2, 2, 2, 2)
+L3_EXPECT_ORI = {0: (2, 2, 2, 2), 2: (2, 2, 1, 0)}
+
+DIRS = {"up": (-1, 0), "down": (1, 0), "left": (0, -1), "right": (0, 1)}
 
 
-def cells(mask, r0, c0):
+# ---------------------------------------------------------------- 几何
+def cells(mask, r0=0, c0=0):
     return {(r0 + r, c0 + c) for r in range(8) for c in range(8)
             if (mask >> (8 * r + c)) & 1}
 
@@ -108,187 +149,297 @@ def rows_of(mask):
     return [(mask >> (8 * r)) & 0xFF for r in range(8)]
 
 
-def play(plan, shapes, start, lvl2):
-    """按引擎语义走一遍计划，返回 (落点, 锁定, 被拒动作列表)。"""
-    n = len(shapes)
-    pos, locked, sel, bad = list(start), [False] * n, 0, []
-    top = 3 if not lvl2 else 4
-    for step, cmd in enumerate(plan, 1):
-        if cmd == "select":
-            sel = (sel + 1) % top
-        elif cmd == "confirm":
-            locked[sel] = True
-            sel = (sel + 1) % top
-        elif cmd in ("up", "down", "left", "right"):
-            r, c = pos[sel]
-            nr, nc = r, c
-            if cmd == "up":
-                nr -= 1
-            elif cmd == "down":
-                nr += 1
-            elif cmd == "left":
-                nc -= 1
-            else:
-                nc += 1
-            mine = cells(shapes[sel], nr, nc)
-            ok = (not locked[sel]) and len(mine) > 0 \
-                and min(r_ for r_, _ in mine) >= 0 \
-                and min(c_ for _, c_ in mine) >= 0 \
-                and max(r_ for r_, _ in mine) <= 7 and max(c_ for _, c_ in mine) <= 7
-            if ok:
-                for k in range(n):
-                    if k != sel and (mine & cells(shapes[k], *pos[k])):
-                        ok = False
-            if ok:
-                pos[sel] = (nr, nc)
-            else:
-                bad.append("第 %d 步 %s 被拒（P%d @ %s）" % (step, cmd, sel, (r, c)))
-        else:
-            bad.append("未知命令 %s" % cmd)
-    return pos, locked, bad
-
-
-def union_of(shapes, pos):
-    u = set()
-    for k, m in enumerate(shapes):
-        u |= cells(m, *pos[k])
-    return u
-
-
-def tilings_no_rotation(target_mask, shapes):
-    """所有**只许平移**的恰好铺法（返回槽序锚点元组列表）。"""
-    T = {c for c in cells(target_mask, 0, 0)}
-    shapes_c = []
-    for m in shapes:
-        rel = [(r, c) for r in range(8) for c in range(8) if (m >> (8 * r + c)) & 1]
-        mr, mc = min(r for r, _ in rel), min(c for _, c in rel)
-        shapes_c.append(sorted((r - mr, c - mc) for r, c in rel))
-    out = []
-
-    def rec(i, used, acc):
-        if i == len(shapes_c):
-            if used == T:
-                out.append(tuple(acc))
-            return
-        h = max(r for r, _ in shapes_c[i]) + 1
-        w = max(c for _, c in shapes_c[i]) + 1
-        for r0 in range(0, 9 - h):
-            for c0 in range(0, 9 - w):
-                p = {(r + r0, c + c0) for r, c in shapes_c[i]}
-                if p <= T and not (p & used):
-                    acc.append((r0, c0))
-                    rec(i + 1, used | p, acc)
-                    acc.pop()
-
-    rec(0, set(), [])
-    return out
-
-
 def bbox_of(mask):
     cs = [(r, c) for r in range(8) for c in range(8) if (mask >> (8 * r + c)) & 1]
     return max(r for r, _ in cs) + 1, max(c for _, c in cs) + 1
 
 
-# ---- 可达性抽样用的**快速**几何（整数位掩码，避免 Python 集合开销）------------
-_MSK = [m & ((1 << 64) - 1) for m in L2_SHAPES]
+def bbox(cs):
+    return max(r for r, _ in cs) + 1, max(c for _, c in cs) + 1
 
 
-def _pmask(k, anchor):
-    """零片 k 放在 anchor=(r,c) 时覆盖的 64 位掩码（shape << (8r+c)，行距恰为 8）。"""
-    return _MSK[k] << (8 * anchor[0] + anchor[1])
+def rot_cells(cs, ori):
+    """**教科书式**旋转：绕零片自身紧包围盒顺时针转 ori 次再对齐左上角。
+
+    与 RTL 的 `rot_row` + `rot_off_r/rot_off_c`（在固定 3x3 盒里转 + 补锚点偏移）
+    逐格等价 —— 这条等价性由 scripts/check_geometry.py 用**独立参考模型**证明过。
+    """
+    h, w = bbox(cs)
+    if ori == 0:
+        return frozenset(cs)
+    if ori == 1:
+        return frozenset((c, h - 1 - r) for r, c in cs)      # 顺时针 90°
+    if ori == 2:
+        return frozenset((h - 1 - r, w - 1 - c) for r, c in cs)
+    return frozenset((w - 1 - c, r) for r, c in cs)
 
 
-def _others(st, k):
+def shaped_cells(mask, ori):
+    return rot_cells(cells(mask), ori)
+
+
+def placed(mask, anchor, ori):
+    ar, ac = anchor
+    return {(ar + r, ac + c) for (r, c) in shaped_cells(mask, ori)}
+
+
+def mask_of(cs):
     m = 0
-    for j in range(4):
-        if j != k:
-            m |= _pmask(j, st[j])
+    for (r, c) in cs:
+        m |= (1 << (8 * r + c)) & ((1 << 64) - 1)
     return m
 
 
-def _ok(k, anchor, st, dims):
-    h, w = dims[k]
+# ------------------------------------------------------------------- 引擎模型
+def play(plan, shapes, start, lvl2, ori0=None):
+    """按引擎语义走一遍计划，返回 (落点, 朝向, 锁定, 被拒动作列表)。
+
+    `shapes` = 本关各块的掩码（一关 3 块 / 二关 4 块）。
+    """
+    n = len(shapes)
+    ori = list(ori0 if ori0 is not None else PIECE_ORI_INIT[:n])
+    pos, locked, sel, bad = list(start), [False] * n, 0, []
+    for step, cmd in enumerate(plan, 1):
+
+        def clash(cand, k, o):
+            mine = placed(shapes[k], cand, o)
+            for j in range(n):
+                if j != k and (mine & placed(shapes[j], pos[j], ori[j])):
+                    return sorted(mine & placed(shapes[j], pos[j], ori[j]))
+            return None
+
+        def oob(cand, k, o):
+            h, w = bbox(shaped_cells(shapes[k], o))
+            return not (cand[0] + h <= 8 and cand[1] + w <= 8)
+
+        if cmd == "select":
+            for _i in range(n):
+                sel = (sel + 1) % n
+                if not locked[sel]:
+                    break
+        elif cmd == "confirm":
+            locked[sel] = True
+            for _i in range(n):
+                sel = (sel + 1) % n
+                if not locked[sel]:
+                    break
+        elif cmd == "rot":
+            if locked[sel]:
+                bad.append("第 %d 步 rot 作用在已锁定的槽 %d 上（RTL 静默无效）"
+                           % (step, sel))
+                continue
+            o2 = (ori[sel] + 1) % 4
+            if oob(pos[sel], sel, o2):
+                bad.append("第 %d 步 rot 被拒（越界）：槽 %d @ %s 朝向 %d->%d"
+                           % (step, sel, pos[sel], ori[sel], o2))
+            elif clash(pos[sel], sel, o2):
+                bad.append("第 %d 步 rot 被拒（重叠 %s）：槽 %d @ %s"
+                           % (step, clash(pos[sel], sel, o2), sel, pos[sel]))
+            else:
+                ori[sel] = o2
+        elif cmd in DIRS:
+            if locked[sel]:
+                bad.append("第 %d 步 %s 作用在已锁定的槽 %d 上（RTL 静默无效）"
+                           % (step, cmd, sel))
+                continue
+            r, c = pos[sel]
+            dr, dc = DIRS[cmd]
+            nr = r - 1 if (dr < 0 and r > 0) else (r + 1 if (dr > 0 and r < 7) else r)
+            nc = c - 1 if (dc < 0 and c > 0) else (c + 1 if (dc > 0 and c < 7) else c)
+            cand = (nr, nc)
+            if oob(cand, sel, ori[sel]):
+                bad.append("第 %d 步 %s 被拒（越界）：槽 %d @ %s"
+                           % (step, cmd, sel, pos[sel]))
+            elif clash(cand, sel, ori[sel]):
+                bad.append("第 %d 步 %s 被拒（重叠 %s）：槽 %d @ %s"
+                           % (step, cmd, clash(cand, sel, ori[sel]), sel, pos[sel]))
+            else:
+                pos[sel] = cand
+        else:
+            bad.append("未知命令 %s" % cmd)
+    return pos, ori, locked, bad
+
+
+def union_of(shapes, pos, ori):
+    u = set()
+    for k, m in enumerate(shapes):
+        u |= placed(m, pos[k], ori[k])
+    return u
+
+
+# ------------------------------------------------------------------- 铺法枚举
+def _tilings(target_mask, shapes, allow_rot):
+    """恰好铺法（返回 [(锚点, 朝向)] 序列的列表）。allow_rot=False = 只许平移。"""
+    T = frozenset(cells(target_mask))
+    opts = []
+    for m in shapes:
+        per = []
+        for o in (range(4) if allow_rot else (0,)):
+            sh = shaped_cells(m, o)
+            h, w = bbox(sh)
+            for r0 in range(0, 9 - h):
+                for c0 in range(0, 9 - w):
+                    p = {(r0 + r, c0 + c) for r, c in sh}
+                    if p <= T:
+                        per.append(((r0, c0), o))
+        opts.append(per)
+    out = []
+
+    def rec(i, used, acc):
+        if i == len(shapes):
+            if used == T:
+                out.append(tuple(acc))
+            return
+        for (a, o) in opts[i]:
+            p = placed(shapes[i], a, o)
+            if not (p & used):
+                acc.append((a, o))
+                rec(i + 1, used | p, acc)
+                acc.pop()
+
+    rec(0, set(), [])
+    return out
+
+
+def tilings_no_rotation(target_mask, shapes):
+    """所有**只许平移**的恰好铺法（返回槽序锚点元组列表）。"""
+    return [tuple(a for (a, _o) in t)
+            for t in _tilings(target_mask, shapes, False)]
+
+
+# ---- 可达性抽样用的**快速**几何（整数位掩码，避免 Python 集合开销）------------
+_OMS = [[mask_of(shaped_cells(L2_SHAPES[k], o)) for o in range(4)] for k in range(4)]
+_ODIM = [[bbox(shaped_cells(L2_SHAPES[k], o)) for o in range(4)] for k in range(4)]
+
+
+def _pmask(k, o, anchor):
+    """零片 k 以朝向 o 放在 anchor=(r,c) 时覆盖的 64 位掩码（行距恰为 8）。"""
+    return _OMS[k][o] << (8 * anchor[0] + anchor[1])
+
+
+def _others(st, so, k):
+    m = 0
+    for j in range(4):
+        if j != k:
+            m |= _pmask(j, so[j], st[j])
+    return m
+
+
+def _ok(k, anchor, o, st, so):
+    h, w = _ODIM[k][o]
     r, c = anchor
     if r < 0 or c < 0 or r + h > 8 or c + w > 8:
         return False
-    return (_pmask(k, anchor) & _others(st, k)) == 0
+    return (_pmask(k, o, anchor) & _others(st, so, k)) == 0
 
 
-def _piece_home(k, st, goal_a, dims):
-    """BFS（零片 k 单独走）：把零片 k 从 st[k] 走到 goal_a，其余零片不动。"""
-    if st[k] == goal_a:
+def _piece_home(k, st, so, goal_a, goal_o):
+    """BFS（零片 k 单独走，可平移 + 可旋转）：走到 goal_a/goal_o，其余零片不动。"""
+    s0 = (st[k], so[k])
+    if s0 == (goal_a, goal_o):
         return True
-    seen, q = {st[k]}, [st[k]]
+    seen, q = {s0}, [s0]
     while q:
-        cur = q.pop(0)
+        a, o = q.pop(0)
+        nxt = []
         for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
-            na = (cur[0] + dr, cur[1] + dc)
-            if na in seen or not _ok(k, na, st, dims):
+            na = (a[0] + dr, a[1] + dc)
+            if na != a:
+                nxt.append((na, o))
+        nxt.append((a, (o + 1) % 4))
+        for ns in nxt:
+            if ns in seen or not _ok(k, ns[0], ns[1], st, so):
                 continue
-            if na == goal_a:
+            if ns == (goal_a, goal_o):
                 return True
-            seen.add(na)
-            q.append(na)
+            seen.add(ns)
+            q.append(ns)
     return False
 
 
-def _plan_sequential(start, goal, dims):
+def _plan_sequential(start, sori, gpos, gori):
     """把四块**一块一块**搬回家（24 种顺序都试）。比全状态 A* 快几个数量级。"""
     import itertools
     for perm in itertools.permutations(range(4)):
-        st = list(start)
-        ok = True
+        st, so, ok = list(start), list(sori), True
         for k in perm:
-            if not _piece_home(k, st, goal[k], dims):
+            if not _piece_home(k, st, so, gpos[k], gori[k]):
                 ok = False
                 break
-            st[k] = goal[k]
+            st[k], so[k] = gpos[k], gori[k]
         if ok:
             return True
     return None
 
 
-def reachable(start, goals, dims, cap=200000):
-    """从 start 能不能走到某个恰好铺法。先试顺序搬运（快），再退回全状态 A*。"""
-    goals = [tuple(g) for g in goals]
-    start = tuple(start)
-    if start in goals:
-        return True
-    if any(_plan_sequential(start, g, dims) for g in goals):
-        return True
+def reachable(start, sori, goals, cap=60000):
+    """从 (start, sori) 能不能走到某个恰好铺法（**允许旋转**）。
 
+    先试顺序搬运（快，覆盖绝大多数样本），再退回全状态 A*（启发式 = 每块零片到
+    "任一铺法里它可能待的 (锚点, 朝向)" 的最短距离之和，可采纳且每次只需 O(4)）。
+    返回 True/False/None（None = 上限内未判定，**不是**证否）。
+    """
     import heapq
+    start = tuple(start)
+    sori = tuple(sori)
+    goalset = {(tuple(gp), tuple(go)) for (gp, go) in goals}
+    if (start, sori) in goalset:
+        return True
+    for (gp, go) in goals:
+        if _plan_sequential(start, sori, gp, go):
+            return True
 
-    def h(st):
-        return min(sum(abs(a[0] - b[0]) + abs(a[1] - b[1]) for a, b in zip(st, g))
-                   for g in goals)
+    htab = []
+    for k in range(4):
+        places = {(tuple(gp[k]), go[k]) for (gp, go) in goals}
+        tab = {}
+        for r in range(8):
+            for c in range(8):
+                for o in range(4):
+                    tab[(r, c, o)] = min(
+                        abs(r - a[0]) + abs(c - a[1]) + min((o - oo) % 4, (oo - o) % 4)
+                        for (a, oo) in places)
+        htab.append(tab)
 
-    openq = [(h(start), 0, start)]
-    seen = {start}
+    def h(st, so):
+        return sum(htab[k][(st[k][0], st[k][1], so[k])] for k in range(4))
+
+    openq = [(h(start, sori), 0, start, sori)]
+    seen = {(start, sori)}
     n = 0
     while openq:
         n += 1
         if n > cap:
             return None                      # 未判定（不是"证否"，如实记录）
-        _, g, st = heapq.heappop(openq)
+        _, g, st, so = heapq.heappop(openq)
         for k in range(4):
+            cands = []
             for dr, dc in ((-1, 0), (1, 0), (0, -1), (0, 1)):
                 na = (st[k][0] + dr, st[k][1] + dc)
-                if not _ok(k, na, st, dims):
+                if na != st[k]:
+                    cands.append((na, so[k]))
+            cands.append((st[k], (so[k] + 1) % 4))
+            for (na, no) in cands:
+                if not _ok(k, na, no, st, so):
                     continue
                 ns = st[:k] + (na,) + st[k + 1:]
-                if ns in seen:
+                nso = so[:k] + (no,) + so[k + 1:]
+                if (ns, nso) in seen:
                     continue
-                if ns in goals:
+                if (ns, nso) in goalset:
                     return True
-                seen.add(ns)
-                heapq.heappush(openq, (g + 1 + h(ns), g + 1, ns))
+                seen.add((ns, nso))
+                heapq.heappush(openq, (g + 1 + h(ns, nso), g + 1, ns, nso))
     return False
 
 
 def sample_scatter(rng, dims):
     """按引擎的散落规则抽一个初始布局：逐块随机候选（最多 16 次，拒绝重叠），
-    全失败才用硬编码回退锚点 (0,0)/(0,4)/(4,0)/(4,4)（ERR-018b 的已知残余）。"""
+    全失败才用硬编码回退锚点 (0,0)/(0,4)/(4,0)/(4,4)（ERR-018b 的已知残余）。
+
+    ⚠️ 候选范围用**当前朝向**（散落时 = PIECE_ORI_INIT）下的高宽 —— RTL 就是这么算的
+    （`oh/ow(h, w, ori)`），所以 `dims` 必须传"初始朝向下的包围盒"。
+    """
     pos = []
     used = 0
     for k in range(4):
@@ -297,7 +448,7 @@ def sample_scatter(rng, dims):
         for _ in range(16):
             ar = rng.randrange(0, 9 - h)
             ac = rng.randrange(0, 9 - w)
-            m = _pmask(k, (ar, ac))
+            m = _pmask(k, PIECE_ORI_INIT[k], (ar, ac))
             if not (m & used):
                 pos.append((ar, ac))
                 used |= m
@@ -306,67 +457,109 @@ def sample_scatter(rng, dims):
         if not placed:
             ar, ac = [(0, 0), (0, 4), (4, 0), (4, 4)][k]
             pos.append((ar, ac))
-            used |= _pmask(k, (ar, ac))
+            used |= _pmask(k, PIECE_ORI_INIT[k], (ar, ac))
     return tuple(pos)
 
 
-def check(label, plan, shapes, start, lvl2, pattern_mask, expect_pos=None):
-    pos, locked, bad = play(plan, shapes, start, lvl2)
-    u = union_of(shapes, pos)
-    tgt = cells(pattern_mask, 0, 0)
+def pack_pos(pos):
+    """锚点元组 -> **完整 32 位 o_pos**：槽 k 占字节 (3-k)（与 RTL 的 o_pos 一致）。
+
+    ⚠️ 一关只有 3 块零片，但槽号仍然是 0..2（槽 3 恒 0），所以**不能**左对齐打包：
+    槽 k 永远在 `8*(3-k)` 位上（第一关的期望值因此是 0x22323200）。
+    """
+    out = 0
+    for k in range(len(pos)):
+        out |= ((pos[k][0] << 4) | pos[k][1]) << (8 * (3 - k))
+    return out
+
+
+def check(label, plan, shapes, start, lvl2, pattern_mask, expect_pos=None,
+          expect_ori=None, require_rot=True):
+    pos, ori, locked, bad = play(plan, shapes, start, lvl2)
+    u = union_of(shapes, pos, ori)
+    tgt = cells(pattern_mask)
     ok = (not bad) and all(locked) and u == tgt
-    packed = None
+    packed = pack_pos(pos)
     if expect_pos is not None:
-        packed = 0
-        for k in range(len(shapes)):
-            packed |= ((pos[k][0] << 4) | pos[k][1]) << (8 * (len(shapes) - 1 - k))
         ok = ok and (packed == expect_pos)
+    if expect_ori is not None:
+        ok = ok and (tuple(ori) == tuple(expect_ori))
     print("\n  %s %s" % ("[OK]  " if ok else "[FAIL]", label))
-    print("    落点 = %s" % (pos,))
+    print("    落点 = %s；朝向 = %s" % (pos, ori))
     print("    并集 == 图案 = %s（%d / %d 格）" % (u == tgt, len(u), len(tgt)))
-    if packed is not None:
+    if expect_pos is not None:
         print("    落点打包 = 0x%08X（期望 0x%08X：%s）"
               % (packed, expect_pos, "一致" if packed == expect_pos else "不一致"))
+    if expect_ori is not None:
+        print("    朝向 = %s（期望 %s：%s）"
+              % (tuple(ori), tuple(expect_ori),
+                 "一致" if tuple(ori) == tuple(expect_ori) else "不一致"))
     print("    locked = %s；被拒动作 %d 个%s"
           % (locked, len(bad), ("：" + "；".join(bad)) if bad else ""))
+
+    # ---- A4 旋转必需性回归守卫（第 14 工作阶段）----------------------------
+    if require_rot:
+        n_rot = plan.count("rot")
+        has = n_rot > 0
+        # 把计划里的【旋转】全部删掉 -> 必须**走不通**（被拒 或 并集 != 图案）
+        nr_plan = [c for c in plan if c != "rot"]
+        p2, o2, l2, bad2 = play(nr_plan, shapes, start, lvl2)
+        u2 = union_of(shapes, p2, o2)
+        fails = bool(bad2) or (u2 != tgt) or (not all(l2))
+        ok = ok and has and fails
+        print("    A4 旋转必需性：计划里【旋转】%d 次；删掉全部旋转后 被拒 %d 个、"
+              "并集==图案 = %s、全锁定 = %s ⇒ 仍然解得出来 = %s（必须 False）"
+              % (n_rot, len(bad2), u2 == tgt, all(l2), not fails))
+        if bad2:
+            print("      （删掉旋转后第一个被拒：%s）" % bad2[0])
     return ok
 
 
 def main():
-    print("-- 走法计划离线复核（引擎规则：越界 + 精确逐格重叠；按键语义 select/confirm/move）")
+    print("-- 走法计划离线复核（引擎规则：夹紧 + 越界 + **旋转后的**精确逐格重叠；"
+          "按键语义 select/confirm/move/**rot**）")
     ok = True
 
-    # ① 先核对 tb 用的零片掩码与 pkg 一致（计划是照 pkg 的形状算出来的）
     print("\n-- 零片掩码与 puzzle_pkg.vhd 一致")
-    print("   一关 3 块：%s" % [len([1 for r in range(8) for c in range(8)
-                                    if (m >> (8 * r + c)) & 1]) for m in L1_SHAPES])
-    print("   二关 4 块格数：%s" % [len([1 for r in range(8) for c in range(8)
-                                        if (m >> (8 * r + c)) & 1]) for m in L2_SHAPES])
+    print("   PIECE_ORI_INIT（块 0..3 的初始朝向）= %s（编码："
+          "0=原样 1=顺 90° 2=180° 3=顺 270°）" % (PIECE_ORI_INIT,))
+    print("   一关 3 块格数：%s" % [len(cells(m)) for m in L1_SHAPES])
+    print("   二关 4 块格数：%s" % [len(cells(m)) for m in L2_SHAPES])
 
-    print("\n-- 图案库可铺性（只许平移；与 scripts/check_geometry.py 互为独立复核）")
-    # ⚠️ 2026-10-09 第 13 工作阶段（A4 旋转落地）后，这里的前提要说清楚：
-    #   提高要求 A4（零片 90° 旋转）**已经实现**，所以板上的解空间比"只许平移"更大。
-    #   本函数证明的是**只许平移**下的恰好铺法 —— 它是可解性的**充分条件**：
-    #   旋转只会增加可选摆法，不会让一个"平移可解"的图案变得不可解。
-    #   因此这些结论在 A4 之后**依然成立**，而两份走法计划（tb/本文件共用）本来就
-    #   只用平移（引擎的 ori 全程为 0）—— 见文件末尾的"计划里不得出现旋转"守卫。
+    # ---- 参考事实：**只许平移**的可铺性（第 14 工作阶段之后只是历史事实）----
+    print("\n-- 参考：图案库**只许平移**的恰好铺法（历史事实；第 14 工作阶段起"
+          "零片不再从朝向 0 开始，这些铺法已经**用不上**了 —— 见每份计划下面的"
+          "『A4 旋转必需性』守卫）")
     for k in range(4):
         ts = tilings_no_rotation(L2_PAT[k], L2_SHAPES)
         good = len(ts) > 0
         ok &= good
-        print("  %s 图案 %d（L2_PAT%d）：恰好铺法 %d 种%s"
+        print("  %s 图案 %d（L2_PAT%d）：只许平移的恰好铺法 %d 种%s"
               % ("[OK]  " if good else "[FAIL]", k, k, len(ts),
                  ("，见证 = %s" % (ts[0],)) if ts else ""))
     ts0 = tilings_no_rotation(L2_PAT[0], L2_SHAPES)
     good = len(ts0) == 1 and ts0[0] == tuple(L2_WITNESS)
     ok &= good
-    print("  %s 图案 0（田）的解唯一，且 == pkg.L2_TGT0..3 = %s"
+    print("  %s 图案 0（田）的平移解唯一，且 == pkg.L2_TGT0..3 = %s"
           % ("[OK]  " if good else "[FAIL]", L2_WITNESS))
+
+    # ---- A4 守卫：**允许旋转**时四幅图案仍然全都有恰好铺法（不是死局）--------
+    print("\n-- A4 守卫：允许旋转时，第一关与四幅图案**都仍然可铺**（旋转是必需的一步，"
+          "但不是死局）")
+    n_l1 = len(_tilings(L1_TARGET_MASK, L1_SHAPES, True))
+    ok &= n_l1 > 0
+    print("  %s 第一关 4x3 矩形：含旋转的恰好铺法 %d 种"
+          % ("[OK]  " if n_l1 > 0 else "[FAIL]", n_l1))
+    for k in range(4):
+        n = len(_tilings(L2_PAT[k], L2_SHAPES, True))
+        ok &= n > 0
+        print("  %s 图案 %d：含旋转的恰好铺法 %d 种"
+              % ("[OK]  " if n > 0 else "[FAIL]", k, n))
 
     # ---- ERR-037 守卫：散落的候选锚点必须覆盖**完整合法域** 0..(8-零片尺寸) ----
     # 原实现写 `ch := 8 - hh`，候选只到 7-hh ⇒ **最后一行/最后一列永远抽不到**，
     # 而且 0..7 mod 7 让锚点 0 的概率翻倍。这里直接读 RTL 的公式并与合法域对账。
-    print("\n-- ERR-037 守卫：散落候选范围（合法域 = 0..8-尺寸）")
+    print("\n-- ERR-037 守卫：散落候选范围（合法域 = 0..8-尺寸；尺寸取**初始朝向**）")
     ctrl = (ROOT / "rtl" / "puzzle_ctrl.vhd").read_text(encoding="utf-8")
     formula_ok = ("ch := 9 - hh;" in ctrl) and ("cw := 9 - ww;" in ctrl)
     ok &= formula_ok
@@ -374,7 +567,7 @@ def main():
           % ("[OK]  " if formula_ok else "[FAIL]"))
     bad_pc = []
     for k, m in enumerate(L2_SHAPES):
-        h, w = bbox_of(m)
+        h, w = bbox(shaped_cells(m, PIECE_ORI_INIT[k]))
         for dim, n in ((h, "行"), (w, "列")):
             ch = 9 - dim
             cand = sorted({x if x < ch else x - ch for x in range(8)})
@@ -385,21 +578,21 @@ def main():
     print("  %s 四块零片 × (行/列)：候选集合 == 合法域（含最后一行/列）%s"
           % ("[OK]  " if not bad_pc else "[FAIL]", "" if not bad_pc else "：" + "；".join(bad_pc)))
 
-    print("\n-- 三份走法计划（第二关固定 PAT3 + 第三关两种模式）")
-    ok &= check("一关（3 块异形：1x3 横条 + 6 格阶梯 + L 三格）→ 拼回图 4-1",
+    print("\n-- 四份走法计划（第二关固定 PAT3 + 第三关两种模式）"
+          "：每份都必须**用旋转**才解得出来")
+    ok &= check("一关（3 块异形：1x3 横条 + 6 格阶梯 + L 三格）→ 拼回图 4-1 的 4x3 矩形",
                 PLAN_L1, L1_SHAPES, L1_START, False,
-                const_bits("L1_TARGET_MASK", SRC))
-    ok &= check("二关 · **固定** 图案 3（阶梯，D2；有 2 种铺法，走第 0 种）"
+                L1_TARGET_MASK, expect_pos=L1_EXPECT_POS, expect_ori=L1_EXPECT_ORI)
+    ok &= check("二关 · **固定** 图案 3（阶梯，D2；含旋转时有 24 种等价铺法，走最短的那一种）"
                 "→ 画面逐格 == 图案（判据只看画面，不看锚点常量）",
                 PLAN_L2_PAT3, L2_SHAPES, L2_START, True, L2_PAT[3],
-                expect_pos=L2_EXPECT_POS)
-    ok &= check("三关 · 图案 0（田，模式 A；第三关图案由 rng 决定，tb 钉在 0）"
-                "→ 拼成唯一铺法",
+                expect_pos=L2_EXPECT_POS, expect_ori=L2_EXPECT_ORI)
+    ok &= check("三关 · 图案 0（田，模式 A；第三关图案由 rng 决定，tb 钉在 0）→ 铺满",
                 PLAN_L3_PAT0, L2_SHAPES, L2_START, True, L2_PAT[0],
-                expect_pos=L3_EXPECT_POS[0])
-    ok &= check("三关 · 图案 2（S/Z 锯齿，模式 B）→ 拼成唯一铺法（端到端出绿对勾）",
+                expect_pos=L3_EXPECT_POS[0], expect_ori=L3_EXPECT_ORI[0])
+    ok &= check("三关 · 图案 2（S/Z 锯齿，模式 B）→ 铺满（端到端出绿对勾）",
                 PLAN_L3_PAT2, L2_SHAPES, L2_START, True, L2_PAT[2],
-                expect_pos=L3_EXPECT_POS[2])
+                expect_pos=L3_EXPECT_POS[2], expect_ori=L3_EXPECT_ORI[2])
 
     # ---- 守卫：RTL 里的"第二关固定图案"必须就是第二关计划解的那一幅 --------------
     print("\n-- D2 守卫：RTL 的 L2_FIXED_PAT ↔ 第二关计划 ↔ 图案库")
@@ -441,6 +634,7 @@ def main():
             and tb.PLAN_L2 == PLAN_L2_PAT3
             and tb.L2_EXPECT_POS == L2_EXPECT_POS
             and tb.L3_EXPECT_POS == L3_EXPECT_POS[tb.FORCE_PAT]
+            and tb.L1_EXPECT_POS == L1_EXPECT_POS
             and tb.pat_rows(0) == rows_of(L2_PAT[0])
             and tb.pat_rows(2) == rows_of(L2_PAT[2])
             and tb.pat_rows(3) == rows_of(L2_PAT[3])
@@ -450,33 +644,35 @@ def main():
     ok &= same
     print("  %s 走法计划 / 落点期望 / pat_rows(0,2,3) / tb_game_fsm 的关卡限时 全部一致：%s"
           % ("[OK]  " if same else "[FAIL]",
-             "PLAN_L1 + PLAN_L2_PAT3 + PLAN_L3_PAT0/PAT2 + 两组落点期望 + 图案掩码 + 关卡限时"
+             "PLAN_L1 + PLAN_L2_PAT3 + PLAN_L3_PAT0/PAT2 + 三组落点期望 + 图案掩码 + 关卡限时"
              if same else "有不一致项，请同步两份文件"))
 
-    # ---- A4 守卫：**解谜用的走法计划里不得出现旋转** --------------------------
-    # 三份计划都是按"只许平移"解出来的，隐含假设 ori 全程为 0（旋转会改变零片形状、
-    # 让这些锚点走法失效）。旋转的整机覆盖在 tb_puzzle_top 的**第一场景**里单独做
-    # （KEY_PLAN 末尾的 ROT_KEYS 三次 KEY8），与这三份计划互不干扰。
-    no_rot = all("rot" not in getattr(tb, nm)
-                 for nm in ("PLAN_L1", "PLAN_L2_PAT3", "PLAN_L3_PAT0", "PLAN_L3_PAT2"))
-    ok &= no_rot
-    print("  %s A4 守卫：三份解谜计划不含【旋转】命令（它们假设零片朝向全程为 0，"
-          "旋转的整机覆盖在 tb_puzzle_top 第一场景单独做）"
-          % ("[OK]  " if no_rot else "[FAIL]"))
+    # ---- A4 守卫（**第 14 工作阶段起与旧版相反**）：四份解谜计划**都必须**含旋转 ----
+    # 零片从 PIECE_ORI_INIT（1/1/2/2）开始散落，而"保持初始朝向只许平移"时第一关的
+    # 矩形与四幅图案**都恰好覆盖不了**（scripts/check_geometry.py 独立证明）。所以
+    # "计划里一次都不转"在现在这个 RTL 上**根本走不通** —— 计划里必须出现【旋转】。
+    has_rot = all("rot" in getattr(tb, nm)
+                  for nm in ("PLAN_L1", "PLAN_L2_PAT3", "PLAN_L3_PAT0", "PLAN_L3_PAT2"))
+    ok &= has_rot
+    print("  %s A4 守卫：四份解谜计划**都含【旋转】命令**（旧版这条守卫是反过来的："
+          "那时零片从朝向 0 开始、计划只许平移）"
+          % ("[OK]  " if has_rot else "[FAIL]"))
 
     # ---- 随机散落可达性抽样（"会不会死局"的实证，不是证明）----
-    print("\n-- 随机散落可达性抽样（按引擎散落规则抽 60 个布局/幅，逐个找一条合法走法）")
+    print("\n-- 随机散落可达性抽样（按引擎散落规则抽 60 个布局/幅，逐个找一条合法走法；"
+          "零片带**初始朝向**，走法可以平移也可以旋转）")
     import random
-    dims = [bbox_of(m) for m in L2_SHAPES]
+    dims = [bbox(shaped_cells(L2_SHAPES[k], PIECE_ORI_INIT[k])) for k in range(4)]
     rng = random.Random(20261009)
     for k in range(4):
-        tl = tilings_no_rotation(L2_PAT[k], L2_SHAPES)
+        tl = _tilings(L2_PAT[k], L2_SHAPES, True)
+        goals = [(tuple(a for (a, _o) in t), tuple(o for (_a, o) in t)) for t in tl]
         sol, stuck, unc = 0, 0, 0
         for _ in range(60):
             st = sample_scatter(rng, dims)
-            r = reachable(st, tl, dims)
+            r = reachable(st, PIECE_ORI_INIT, goals)
             if r is None:                       # 探索上限内没找到 → 加大上限再试一次
-                r = reachable(st, tl, dims, cap=900000)
+                r = reachable(st, PIECE_ORI_INIT, goals, cap=200000)
             if r is True:
                 sol += 1
             elif r is False:
@@ -487,7 +683,7 @@ def main():
         ok &= good
         print("  %s 图案 %d：可解 %d/60，**证明死局 %d**，上限内未判定 %d%s"
               % ("[OK]  " if good else "[FAIL]", k, sol, stuck, unc,
-                 "" if unc == 0 else "（未判定 ≠ 死局：只是搜素上限内没找到路，"
+                 "" if unc == 0 else "（未判定 ≠ 死局：只是搜索上限内没找到路，"
                                      "记为本验证器的已知残余）"))
 
     print("\n%s" % ("ALL PLAN CHECKS PASSED" if ok else "*** SOME CHECKS FAILED ***"))

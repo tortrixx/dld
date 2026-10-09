@@ -72,6 +72,25 @@ if FORCE_PAT not in (0, 2):
 CLK = 20.0
 GRID_PERIOD = 10.0
 
+# ============================================================================
+# ⚠️ 2026-10-09 第 14 工作阶段：**零片初始朝向不再全 0**（提高要求 A4 变成通关必需）
+#
+#   用户上板反馈："旋转 90 度效果倒是有，但是旋转好像对游戏并没有什么影响，
+#   不旋转也能成功通关。" → `rtl/puzzle_pkg.vhd` 新增 PIECE_ORI_INIT，
+#   `puzzle_ctrl` 在散落时把四块零片设成这个朝向（块 0..3 = 1/1/2/2）；
+#   `scripts/check_geometry.py` 穷举证明"保持初始朝向、只许平移"时**任何一幅图案
+#   都铺不满**。
+#
+#   ⚠️ 下面的四份走法计划**不是**"老计划前面加一段朝向归零前缀"，而是用**带旋转的
+#      A\***按新初态重新解出来的（解算器 `.tmp/opt/rot_astar2.py`）：
+#        状态 = (锚点, 朝向, sel)，动作 = 移动 / **旋转** / 换零片，
+#        代价 = **按键次数**（换零片要按 (k'-k) mod n 次【选择】），
+#        终点 = 某个**精确铺法**（锚点 + 朝向）且并集逐格等于图案，取所有铺法里最短的。
+#      前缀法能得到一条"走得通"的路，但**不是最少按键**（一关 35 vs 19、二关 51 vs 34），
+#      而"最少按键"正是这些计划的历史解算目标（见 .tmp/opt/solve_l2plan.py）。
+#      四份计划连同终点锚点都必须与 scripts/check_plans.py 里的**逐字一致**（守卫在那里）。
+# ============================================================================
+
 RTL_PATCHES = [("puzzle_pkg.vhd", "50_000_000", "80_000"),
                # 第三场景要按"哪一块会落到哪里"写出按键计划，所以把随机源钉成 0
                # （只作用于 .tmp 隔离工程）：rnd_val 恒 0 → 每块候选恒为 (0,0)
@@ -183,41 +202,48 @@ CTRL_KEY = {"start": (0, 1), "select": (0, 3), "confirm": (1, 2),
             #    原始键号 4*行+列 = 4*2+3 = 11，由 game_fsm.key_of() 译为 K_ROT。
             "rot": (2, 3)}
 
-# 一关：三块从回退锚点搬到目标锚点 (0,0)->(2,2)、(0,4)->(3,2)、(4,0)->(4,3)
-PLAN_L1 = (["select"] + ["down"] * 3 + ["left"] * 2 +
-           ["select"] + ["down"] * 2 + ["right"] * 3 + ["up"] * 2 +
-           ["select"] + ["down"] * 2 + ["right"] * 2 +
+# 一关：三块从回退锚点 (0,0)/(0,4)/(4,0)、**初始朝向 (1,1,2)** 走到
+#   L1_EXPECT_POS（等价铺法 (2,2)(3,2)(3,2)、朝向 (2,2,2)：零片 1 与零片 2 共用锚点、
+#   形状互补，并集仍逐格等于图 4-1 的 4x3 矩形）→ 16 条命令 + 3 次确认。
+#   ⚠️ 第 1 条命令就是【旋转】—— 零片从非零朝向开始，不转就拼不出来。
+PLAN_L1 = (["rot"] + ["right"] + ["down"] + ["right"] + ["down"] + ["select"] +
+           ["down"] + ["rot"] + ["down"] + ["left"] + ["down"] + ["left"] +
+           ["select"] + ["up"] + ["right"] * 2 +
            ["confirm"] * 3)
-# 第二关（**固定** PAT3 = 阶梯，D2 之后不再随机）：四块异形零片从回退锚点走到
-#       PAT3 的第 0 种铺法（槽 0..3 → (2,2) (2,1) (3,3) (3,2)）→ 33 条命令。
-#       ⚠️ PAT3 有 **2 种**等价铺法（四幅里唯一的多解图案）→ 拼成哪一种都必须判成功，
-#          这正是 ERR-021"看画面判成败"的回归用例；本 tb 走第 0 种。
-PLAN_L2_PAT3 = (["down"] + ["select"] + ["left"] + ["select"] + ["up"] + ["right"] +
-                ["up"] + ["select"] + ["down"] + ["left"] * 2 + ["up"] +
-                ["select"] * 3 + ["right"] * 2 + ["down"] + ["select"] + ["up"] +
-                ["select"] + ["down"] + ["right"] * 2 + ["select"] + ["left"] * 2 +
-                ["down"] * 2 + ["confirm"] * 4)
+# 第二关（**固定** PAT3 = 阶梯，D2 之后不再随机）：四块异形零片从回退锚点、初始朝向
+#   (1,1,2,2) 走到 PAT3 的一种等价铺法（槽 0..3 → (5,3)(2,1)(2,2)(2,3)，朝向全 2）
+#   → 30 条命令 + 4 次确认。
+#   ⚠️ PAT3 含旋转有 **24 种**等价铺法（只许平移只有 2 种）→ 拼成哪一种都必须判成功，
+#      这正是 ERR-021"看画面判成败"的回归用例；本 tb 走其中最短的那一种，
+#      sim/tb_puzzle_ctrl.py 走的是**另一组锚点**（(2,2)(2,1)(3,3)(3,2)）。
+PLAN_L2_PAT3 = (["down"] + ["select"] + ["left"] * 3 + ["rot"] + ["down"] * 2 +
+                ["select"] + ["right"] * 2 + ["select"] + ["up"] * 2 + ["left"] +
+                ["select"] + ["down"] * 3 + ["right"] + ["down"] + ["select"] * 2 +
+                ["up"] * 2 + ["select"] * 2 + ["rot"] + ["right"] * 2 +
+                ["confirm"] * 4)
 PLAN_L2 = PLAN_L2_PAT3
-# 第二关拼完后的锚点元组（断言 ⑪ 用）；槽 0..3 各自 (行,列) 打包成 1 字节
-#   （与 scripts/check_plans.py 的 L2_EXPECT_POS 必须一致）
-L2_EXPECT_POS = 0x22213332
+# 各关拼完后的**完整 32 位 o_pos**（断言 ⑩/⑪/⑪b 用）：槽 k 占字节 (3-k)
+#   （一关只用槽 0..2，槽 3 恒为 0）；与 scripts/check_plans.py 的
+#   L1/L2/L3_EXPECT_POS 必须一致。
+L1_EXPECT_POS = 0x22323200
+L2_EXPECT_POS = 0x53212223
 
 # 第三关（A2：图案从库里**随机选**；本 tb 用 DLD_L3PAT 把随机值钉住以便写走法）
-#   模式 A（FORCE_PAT=0，田/4x4 方块）：唯一铺法（槽 0..3 → (5,3) (4,2) (2,3) (2,2)），42 条命令
-PLAN_L3_PAT0 = (["select"] + ["left"] + ["down"] * 4 + ["select"] + ["up"] * 3 +
-                ["right"] * 3 + ["down"] + ["select"] * 2 + ["down"] * 6 + ["select"] +
-                ["left"] * 2 + ["select"] * 2 + ["left"] * 2 + ["up"] * 2 + ["select"] +
-                ["right"] * 2 + ["up"] + ["right"] + ["select"] + ["right"] +
+#   模式 A（FORCE_PAT=0，田/4x4 方块）：20 条命令 + 4 次确认；
+#           终点槽 0..3 → (2,2)(2,5)(3,2)(3,3)，朝向全 2
+PLAN_L3_PAT0 = (["rot"] + ["right"] + ["down"] + ["right"] + ["down"] + ["select"] +
+                ["rot"] + ["right"] + ["down"] * 2 + ["select"] + ["right"] * 2 +
+                ["select"] + ["left"] + ["up"] + ["select"] * 3 + ["up"] +
                 ["confirm"] * 4)
-#   模式 B（FORCE_PAT=2，S/Z 锯齿）：唯一铺法（槽 0..3 → (5,1) (4,4) (2,1) (2,4)），36 条命令
-PLAN_L3_PAT2 = (["right"] + ["down"] * 3 + ["right"] * 2 + ["select"] + ["down"] +
-                ["select"] + ["up"] * 4 + ["right"] + ["select"] + ["right"] +
-                ["select"] + ["left"] * 2 + ["down"] * 2 + ["select"] + ["down"] * 3 +
-                ["select"] + ["down"] * 2 + ["select"] + ["up"] * 2 + ["left"] +
-                ["confirm"] * 4)
+#   模式 B（FORCE_PAT=2，S/Z 锯齿）：26 条命令 + 4 次确认；
+#           终点槽 0..3 → (2,1)(4,4)(3,1)(2,4)，朝向 (2,2,1,0)
+PLAN_L3_PAT2 = (["rot"] + ["right"] + ["down"] * 2 + ["select"] + ["down"] * 3 +
+                ["left"] + ["rot"] + ["down"] + ["select"] + ["up"] + ["rot"] * 3 +
+                ["select"] + ["up"] * 2 + ["rot"] * 2 + ["select"] * 2 + ["right"] +
+                ["select"] + ["right"] + ["confirm"] * 4)
 PLAN_L3 = PLAN_L3_PAT2 if FORCE_PAT == 2 else PLAN_L3_PAT0
 # 第三关拼完后的锚点元组（断言 ⑪b 用）；与 scripts/check_plans.py 的 L3_EXPECT_POS 一致
-L3_EXPECT_POS = {0: 0x53422322, 2: 0x51442124}[FORCE_PAT]
+L3_EXPECT_POS = {0: 0x22253233, 2: 0x21443124}[FORCE_PAT]
 
 HOLD = 22          # 按住多少轮（消抖要 4 轮，留 18 轮余量）
 GAP_NEW = 25       # 换一个键：间隔轮数（松开 3 轮即可，因为换了键号）
@@ -666,14 +692,16 @@ def check(vf):
     lv_l1 = vf.value_at("u_fsm|level", T_L1_PREVIEW)
     l3_l1 = vf.value_at("u_fsm|lvl3", T_L1_PREVIEW)
     res.append((
-        "⑩ ★【整机·第一关】用真实矩阵按键把三块摆回目标锚点并逐块确认后，"
-        "状态机必须进入**第二关预览**（o_level=1、o_lvl3=0）—— 修复前这里是判负出叉"
-        "（ERR-023：对局态喂给引擎的目标图案被置零，成功判据永远不可能成立）",
-        pos1 == 0x22324300 and lock1 is not None and (lock1 & 0x7) == 0x7
+        "⑩ ★【整机·第一关】用真实矩阵按键把三块拼成图 4-1 的 4x3 矩形（并集逐格一致；"
+        "终点锚点 (2,2)(3,2)(3,2) 是**等价铺法**，不是 pkg 里写的那组见证锚点）"
+        "并逐块确认后，状态机必须进入**第二关预览**（o_level=1、o_lvl3=0）—— "
+        "修复前这里是判负出叉（ERR-023：对局态喂给引擎的目标图案被置零，"
+        "成功判据永远不可能成立）",
+        pos1 == L1_EXPECT_POS and lock1 is not None and (lock1 & 0x7) == 0x7
         and st_l1 == 2 and lv_l1 == "1" and l3_l1 == "0",
-        "确认后锚点=0x%s（期望 0x22324300）、locked=%s；1 ms 后 o_state=%s（2=预览）、"
+        "确认后锚点=0x%s（期望 0x%08X）、locked=%s；1 ms 后 o_state=%s（2=预览）、"
         "o_level=%s o_lvl3=%s"
-        % ("--------" if pos1 is None else format(pos1, "08X"),
+        % ("--------" if pos1 is None else format(pos1, "08X"), L1_EXPECT_POS,
            "----" if lock1 is None else format(lock1, "04b"), st_l1, lv_l1, l3_l1),
     ))
 

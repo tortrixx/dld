@@ -119,7 +119,7 @@ architecture rtl of puzzle_top is
             i_solved    : in  std_logic;
             i_all_lock  : in  std_logic;
             i_shuf_busy : in  std_logic;
-            o_sound     : out std_logic_vector(2 downto 0)
+            o_sound     : out std_logic_vector(3 downto 0)
         );
     end component;
 
@@ -240,7 +240,7 @@ architecture rtl of puzzle_top is
             i_clk  : in  std_logic;
             i_rst  : in  std_logic;
             i_en   : in  std_logic;
-            i_sel  : in  std_logic_vector(2 downto 0);
+            i_sel  : in  std_logic_vector(3 downto 0);   -- A1 v2：4 位码（16 个场景）
             i_t4   : in  std_logic;
             o_buzz : out std_logic
         );
@@ -271,7 +271,7 @@ architecture rtl of puzzle_top is
     signal state    : std_logic_vector(2 downto 0);
     signal gtime    : std_logic_vector(5 downto 0);
     signal gblink   : std_logic;
-    signal sound    : std_logic_vector(2 downto 0);
+    signal sound    : std_logic_vector(3 downto 0);
 
     signal solved   : std_logic;
     signal all_lock : std_logic;

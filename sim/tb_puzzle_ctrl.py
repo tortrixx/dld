@@ -17,6 +17,16 @@
     格子）逐条验算，而不是"看着波形像对的"。
 
 【本工作阶段 RTL 变了什么（本 tb 必须跟着改的地方）】
+    ⓪ ⚠️ **初始朝向**（第 14 工作阶段）：`puzzle_pkg.PIECE_ORI_INIT` 让四块零片从
+       朝向 1/1/2/2 开始散落（i_go 与 i_reset 都写这条常量），于是
+         · 散落结束的 o_ori 恒为 `ORI_INIT_WORD = "10100101"`（**不是 0**），
+           断言 ② ③ ⑬ 与"4 次旋转回到原样"的那几条都按它重新对齐；
+         · 六份走法计划（SOLVE_PLAN / EDGE_PLAN / ROT1_PLAN / ROT2_PLAN / L2_PLAN /
+           WRONG_PLAN）全部按新初态**重新解过**（带旋转的 A*，.tmp/opt/rot_astar2.py），
+           相应的时间常量（T_R1_* 的下标）也跟着重算；
+         · 新增断言 ⑱：不按【旋转】就拼不出目标（本 tb 独立几何模型离线验证）。
+       本 tb **不再**用 RTL_PATCHES 把初始朝向钉回 0 —— 那会把"散落结束时的朝向"
+       这个真实初态从覆盖里删掉，属于 ERR-022/034 那类"陈旧绿"。
     ① 端口：新增 `i_rot`（1 拍旋转请求）、`o_ori`（8 位 = 4 块各 2 位朝向）。
     ② 旋转（A4）：候选 = 同一锚点 + 朝向 +1，走**同一套**校验流水；被接受时
        **只提交 ori**（o_pos 不变）；越界/重叠/已锁定一律不提交。
@@ -117,9 +127,35 @@ for _p in L2:
 L2_TARGET = _pkg_mask("L2_PAT3")             # 图案 3 = 阶梯（恰有两种铺法）
 L2_FALLBACK = [(0, 0), (0, 4), (4, 0), (4, 4)]
 NP2 = 4
-# 图案 3（阶梯）的两种铺法（槽 0..3），由 scripts/check_plans.py 穷举得到
-L2_TILING_A = [(2, 2), (2, 1), (3, 3), (3, 2)]
-L2_TILING_B = [(5, 3), (3, 5), (2, 2), (2, 1)]    # ← 本 tb 实际摆成这一种
+# ---- 初始朝向（A4 / 第 14 工作阶段）：从 pkg 里解析，**不手抄** ----------------
+# 块 k 占 ori(2k+1 downto 2k)；pkg 里 MSB 在左（块 3 先写）。
+_m_ini = re.search(r"constant\s+PIECE_ORI_INIT\s*:\s*std_logic_vector\(7 downto 0\)\s*:=\s*"
+                   r"\"([01]{2})\"\s*&\s*\"([01]{2})\"\s*&\s*\"([01]{2})\"\s*&\s*\"([01]{2})\"",
+                   _PKG_SRC, re.S)
+if not _m_ini:
+    raise RuntimeError("puzzle_pkg.vhd 里找不到 PIECE_ORI_INIT")
+_ini_bits = "".join(_m_ini.groups())            # 块3 块2 块1 块0
+ORI_INIT = tuple(int(_ini_bits[6 - 2 * k:8 - 2 * k], 2) for k in range(4))
+# RTL 在 i_go 时把**整条 8 位** ori 都写成 PIECE_ORI_INIT（一关也写 4 块），
+# 所以 o_ori 在散落结束时恒等于下面这个字：
+ORI_INIT_WORD = (ORI_INIT[0] | (ORI_INIT[1] << 2) | (ORI_INIT[2] << 4) | (ORI_INIT[3] << 6))
+
+# 一关：最优计划的终点（槽 0..2）。它不是 pkg 里写的那组见证锚点
+# （L1[i]["tgt"] = (2,2)(3,2)(4,3)）而是一组**等价铺法**：(2,2)(3,2)(3,2) ——
+# 零片 1 与零片 2 共用锚点 (3,2) 但形状互补，并集仍然逐格等于图 4-1 的 4x3 矩形。
+# 这正是 B9"看拼出来的画面"（而不是"看每块的锚点编号"）在第一关的体现。
+L1_GOAL = [(2, 2), (3, 2), (3, 2)]
+L1_GOAL_ORI = [2, 2, 2]
+
+# 图案 3（阶梯）的等价铺法（槽 0..3，含朝向），由带旋转的 A* 穷举 + 最小化得到
+#   （scripts/check_plans.py 里同一份枚举；A* 解算器在 .tmp/opt/rot_astar2.py）
+#   ⚠️ ERR-021 的回归判据就是"两种不同铺法都必须判成功"：
+#        L2_TILING_TB  = 本 tb 摆的那一种（= pkg.L2_PAT3_TGT0..3 的锚点）
+#        L2_TILING_TOP = sim/tb_puzzle_top.py 摆的那一种（锚点元组完全不同）
+L2_TILING_TB = [(2, 2), (2, 1), (3, 3), (3, 2)]        # ← 本 tb 实际摆成这一种
+L2_TILING_TB_ORI = [2, 2, 0, 0]
+L2_TILING_TOP = [(5, 3), (2, 1), (2, 2), (2, 3)]       # tb_puzzle_top 的等价铺法
+L2_TILING_A = L2_TILING_TB                             # 历史名字（旧断言/注释沿用）
 
 # ------------------------------------------------------------------ 帧长（渲染器串行化 + 两相流水之后）
 # 一拍备一块零片的行掩码、一拍把它并进累加器，ph = npc+1 那一拍发布本行；
@@ -162,21 +198,26 @@ def _ts(cmds, i, off=0.0):
     return cmds[i][0] + off
 
 
-# 一关：把三块零片从 (0,0)/(0,4)/(4,0) 搬到各自目标锚点，再逐块确认。
+# 一关（3 块）：从确定性回退锚点 (0,0)/(0,4)/(4,0)、初始朝向 (1,1,2) 走到
+#   L1_GOAL = (2,2)(3,2)(3,2)（并集 == 图 4-1 的 4x3 矩形），再逐块确认。
+#   ⚠️ 第 14 工作阶段：这份计划由**带旋转的 A***重新解出，代价 = 按键次数
+#      （.tmp/opt/rot_astar2.py；16 条命令 + 3 次确认，**下界 = 16 ⇒ 可证最优**）。
+#      零片从非零朝向开始，所以第 1 条命令就是【旋转】——这就是 A4 的意义。
 SOLVE_PLAN = [
+    ("rot", None, "P0 旋转（初始 90°：3x1 竖条 -> 1x3 横条）"),
+    ("move", "R", "P0 右移"), ("move", "D", "P0 下移"),
+    ("move", "R", "P0 右移"), ("move", "D", "P0 -> (2,2) 终点"),
     ("sel", None, "选中 P1(楼梯形)"),
-    ("move", "D", "P1 下移"), ("move", "D", "P1 下移"), ("move", "D", "P1 下移"),
-    ("move", "L", "P1 左移"), ("move", "L", "P1 左移到目标"),
+    ("move", "D", "P1 下移"),
+    ("rot", None, "P1 旋转（初始 90° -> 180°）"),
+    ("move", "D", "P1 下移"), ("move", "L", "P1 左移"),
+    ("move", "D", "P1 下移"), ("move", "L", "P1 -> (3,2) 终点"),
     ("sel", None, "选中 P2(L 形)"),
-    ("move", "D", "P2 下移"), ("move", "D", "P2 下移"),
-    ("move", "R", "P2 右移"), ("move", "R", "P2 右移"), ("move", "R", "P2 右移"),
-    ("move", "U", "P2 上移"), ("move", "U", "P2 上移到目标"),
-    ("sel", None, "选中 P0(横条)"),
-    ("move", "D", "P0 下移"), ("move", "D", "P0 下移"),
-    ("move", "R", "P0 右移"), ("move", "R", "P0 右移到目标"),
+    ("move", "U", "P2 上移"), ("move", "R", "P2 右移"),
+    ("move", "R", "P2 -> (3,2) 终点（与 P1 共用锚点，形状互补）"),
+    ("confirm", None, "锁定 P2"),
     ("confirm", None, "锁定 P0"),
-    ("confirm", None, "锁定 P1"),
-    ("confirm", None, "锁定 P2 -> 全部锁定且都在目标"),
+    ("confirm", None, "锁定 P1 -> 全锁且并集 == 图 4-1 的 4x3 矩形"),
 ]
 
 # 一关：边界 / 重叠 / 锁定 / 选择跳过锁定（与旧版同一份计划，语义未变）
@@ -196,60 +237,82 @@ EDGE_PLAN = [
     ("sel", None, "再选一次（仍必须跳过 P0），供着色采样"),
 ]
 
-# 一关：旋转覆盖。起点 = 又一次 rnd_val=0 的散落（三块落在 (0,0)/(0,4)/(4,0)）。
+# 一关：旋转覆盖。起点 = 又一次 rnd_val=0 的散落（三块落在 (0,0)/(0,4)/(4,0)，
+#   初始朝向 P0=1（3x1 竖条）/ P1=1（楼梯形转 90°）/ P2=2（L 形转 180°））。
+#   ⚠️ 第 14 工作阶段：起点朝向变了，所以**每个"被拒/被接受"的落点都要重排**
+#      —— 原来是"横条 P0 在第 7 行转竖会出界"，现在 P0 一开始就是竖的，得先把它
+#      转成横的再去贴底。这里按新几何重新排过，并用本 tb 的独立模型逐格验算。
+#   索引（供下面 _ts/_after 用）：
+#     1..4 = 旋转①②；14 = 旋转④（重叠被拒）；25 = 旋转⑤（出界被拒）；
+#     29/30 = 旋转⑦（横条归一化到自身紧包围盒）；35 = 旋转⑥（已锁定 -> 无效）
 ROT1_PLAN = [
     ("sel", None, "选中 P1(楼梯形 3x3)"),
-    ("rot", None, "旋转①/⑥ 旋转一次 -> ori=1（A4 基本行为）"),
+    ("rot", None, "旋转① 旋转一次 -> P1 ori 1->2（A4 基本行为）"),
     ("rot", None, "旋转② 第 2 次"), ("rot", None, "旋转② 第 3 次"),
-    ("rot", None, "旋转② 第 4 次 -> ori 回到 0"),
+    ("rot", None, "旋转② 第 4 次 -> ori 回到 1"),
     ("sel", None, "选中 P2(L 形)"),
     ("move", "R", "P2 右移"), ("move", "R", "P2 右移"), ("move", "R", "P2 右移"),
-    ("move", "R", "P2 右移"), ("move", "R", "P2 -> (4,5)"),
-    ("move", "U", "P2 上移"), ("move", "U", "P2 上移"), ("move", "U", "P2 -> (1,5)"),
+    ("move", "R", "P2 -> (4,4)"),
+    ("move", "U", "P2 上移"), ("move", "U", "P2 -> (2,4)（占住 (2,4)(2,5)(3,4)）"),
     ("sel", None, "选中 P0"), ("sel", None, "选中 P1"),
-    ("rot", None, "旋转④ P1 的旋转会压到 P2 -> 必须被拒"),
+    ("rot", None, "旋转④ P1 转 90° 后的格子会压到 P2 -> 必须被拒"),
     ("sel", None, "选中 P2"), ("sel", None, "选中 P0"),
+    ("rot", None, "P0 初始是 3x1 竖条，先转成 1x3 横条（ori 1->2）"),
     ("move", "D", "P0 下移"), ("move", "D", "P0 下移"), ("move", "D", "P0 下移"),
     ("move", "D", "P0 下移"), ("move", "D", "P0 下移"), ("move", "D", "P0 下移"),
     ("move", "D", "P0 -> (7,0)（贴底）"),
     ("rot", None, "旋转⑤ 第 7 行上把 1x3 横条转竖 -> 会出界，必须被拒"),
     ("move", "U", "P0 上移"), ("move", "U", "P0 上移"), ("move", "U", "P0 -> (4,0)"),
-    ("rot", None, "旋转⑦ 横条转 90°：必须画成同一列的竖条（旧实现会右移 2 列）"),
-    ("rot", None, "旋转⑦ 再转 90°：必须回到原横条（旧实现会把 3 个格子全漏画）"),
-    ("rot", None, "第 3 次"), ("rot", None, "第 4 次 -> 回到 ori=0"),
+    ("rot", None, "旋转⑦ 横条在 (4,0) 转 90°：必须画成**同一列**的竖条 "
+                  "(4,0)(5,0)(6,0)（旧实现会右移 2 列）"),
+    ("rot", None, "旋转⑦ 再转 90°：必须回到原横条 (4,0)(4,1)(4,2)"),
     ("sel", None, "选中 P1"),
     ("confirm", None, "锁定 P1"), ("confirm", None, "锁定 P2"),
     ("confirm", None, "锁定 P0 -> 全锁；sel 停在**已锁定**的 P0 上"),
     ("rot", None, "旋转⑥ 旋转已锁定零片 -> 必须无任何变化"),
 ]
 
-# 第二关：散落后先做一次旋转覆盖（此时四块都在确定性回退锚点上），
-# 转 4 次回到 ori=0/原位，所以**后面的 ⑭ 拼图计划一字不改仍然有效**。
+# 第二关：散落后先做一次旋转覆盖（此时四块都在确定性回退锚点上、朝向 = INIT），
+# 转 4 次回到**初始朝向**（Q2 从 2 出发 -> 3 -> 0 -> 1 -> 2）/原位，
+# 所以**后面的 ⑭ 拼图计划仍然从同一个初态出发**（计划本身就是按这个初态解的）。
 ROT2_PLAN = [
     ("sel", None, "选中 Q1(竖条)"), ("sel", None, "选中 Q2(J 形 3x3)"),
-    ("rot", None, "旋转③ 第二关旋转一次（i_level=1，4 块）"),
-    ("rot", None, "第 2 次"), ("rot", None, "第 3 次"), ("rot", None, "第 4 次 -> ori=0"),
+    ("rot", None, "旋转③ 第二关旋转一次（i_level=1，4 块）：Q2 ori 2->3"),
+    ("rot", None, "第 2 次"), ("rot", None, "第 3 次"), ("rot", None, "第 4 次 -> 回到 ori=2"),
     ("sel", None, "选中 Q3"), ("sel", None, "选中 Q0 -> sel 回到 0，供 ⑭ 使用"),
 ]
 
-# 第二关：把四块**异形**零片从确定性回退锚点 (0,0)(0,4)(4,0)(4,4) 摆成**图案 3
-# （阶梯）的第二种铺法** L2_TILING_B（第一种是 L2_TILING_A）。走法由 A* 解出
-# （.tmp/opt/solve_ctrl_l2.py），每一步都满足引擎规则；本 tb 又用独立模型复核过
-# （.tmp/plan_ctrl_rot.py）。
-# ⚠️ 故意摆**第二种**铺法：画面与图案逐格一致、但锚点元组与第一种不同 ——
-#    这正是 ERR-021 要证明的"判据看画面、不看编号"。
+# 第二关：把四块**异形**零片从确定性回退锚点 (0,0)(0,4)(4,0)(4,4)、初始朝向
+#   (1,1,2,2) 摆成**图案 3（阶梯）的一种等价铺法** L2_TILING_TB（锚点 (2,2)(2,1)(3,3)(3,2)，
+#   终点朝向 (2,2,0,0)）。走法由**带旋转的 A\***解出（.tmp/opt/rot_astar2.py）：
+#   31 条命令 + 4 次确认；本 tb 又用独立几何模型逐格复核过（零次被拒、并集 == 图案）。
+# ⚠️ 故意**不是** pkg.L2_PAT3_TGT 的那一组锚点？—— 恰恰相反：本 tb 摆的**就是**
+#    pkg 里写的那一组（历史名字 L2_TILING_A），而 tb_puzzle_top 摆的是**另一组**
+#    L2_TILING_TOP = (5,3)(2,1)(2,2)(2,3)。两份计划终点**锚点元组完全不同、
+#    画面却逐格相同** —— 这正是 ERR-021 要证明的"判据看画面、不看编号"。
 L2_PLAN = [
-    ("move", "R", "P0 R"), ("move", "D", "P0 D"), ("move", "D", "P0 D"),
-    ("move", "R", "P0 R"), ("move", "R", "P0 R"), ("move", "D", "P0 D"),
-    ("sel", None, "选中下一块"), ("move", "R", "P1 R"), ("move", "D", "P1 D"),
-    ("sel", None, "选中下一块"), ("move", "U", "P2 U"), ("move", "U", "P2 U"),
-    ("move", "U", "P2 U"), ("sel", None, "选中下一块"), ("move", "L", "P3 L"),
-    ("move", "L", "P3 L"), ("move", "L", "P3 L"), ("move", "U", "P3 U"),
-    ("move", "L", "P3 L"), ("sel", None, "选中下一块"), ("move", "D", "P0 D"),
-    ("move", "D", "P0 D"), ("sel", None, "选中下一块"), ("move", "D", "P1 D"),
-    ("move", "D", "P1 D"), ("sel", None, "选中下一块"), ("move", "R", "P2 R"),
-    ("move", "R", "P2 R"), ("move", "D", "P2 D"), ("sel", None, "选中下一块"),
-    ("move", "U", "P3 U"), ("move", "R", "P3 R"),
+    ("rot", None, "P0 旋转（初始 90°：3x1 -> 1x3）"),
+    ("move", "R", "P0 R"), ("move", "D", "P0 D"),
+    ("move", "R", "P0 R"), ("move", "D", "P0 -> (2,2)"),
+    ("sel", None, "选中 Q1"),
+    ("move", "L", "Q1 L"), ("move", "L", "Q1 L"), ("move", "L", "Q1 -> (0,1)"),
+    ("rot", None, "Q1 旋转（初始 90°）"),
+    ("move", "D", "Q1 D"),
+    ("sel", None, "选中 Q2"),
+    ("move", "U", "Q2 U"),
+    ("rot", None, "Q2 旋转（初始 180° -> 270°）"),
+    ("move", "R", "Q2 R"), ("move", "R", "Q2 R"), ("move", "R", "Q2 -> (3,3)"),
+    ("sel", None, "选中 Q3"),
+    ("rot", None, "Q3 旋转（初始 180° -> 270°）"),
+    ("rot", None, "Q3 旋转（-> 原样）"),
+    ("move", "D", "Q3 D"),
+    ("sel", None, "选中 Q0"), ("sel", None, "选中 Q1"),
+    ("move", "D", "Q1 -> (2,1)"),
+    ("sel", None, "选中 Q2"),
+    ("rot", None, "Q2 旋转（回到原样）"),
+    ("sel", None, "选中 Q3"),
+    ("move", "L", "Q3 L"), ("move", "L", "Q3 L"),
+    ("move", "U", "Q3 U"), ("move", "U", "Q3 -> (3,2)"),
     ("confirm", None, "锁定第 1 块"), ("confirm", None, "锁定第 2 块"),
     ("confirm", None, "锁定第 3 块"), ("confirm", None, "锁定第 4 块 -> 全锁且并集 == 图案 3"),
 ]
@@ -321,21 +384,39 @@ def _after(cmds, i, lead=3000.0, tail=None):
 
 
 # ------------------------------------------------------------------ 旋转/边界的采样点
+# ⚠️ 第 14 工作阶段：ROT1_PLAN 的**长度与顺序都变了**（36 条，旧版 39 条），
+#    这些下标必须跟着重算 —— 否则断言会去采样另一个时刻的画面（ERR-022/034 那类
+#    "陈旧常量造成的假绿/假红"）。
 T_R1_PRE = _ts(CMDS_R1, 1, -4000.0)               # 第 1 次旋转之前（已选中 P1）
-T_R1_ONE = _after(CMDS_R1, 1)                     # 第 1 次旋转之后
-T_R1_FOUR = _after(CMDS_R1, 4)                    # 4 次旋转之后
-T_R1_OVL_PRE = _ts(CMDS_R1, 16, -4000.0)          # 重叠拒绝之前
-T_R1_OVL = _after(CMDS_R1, 16)                    # 重叠拒绝之后
-T_R1_OOB_PRE = _ts(CMDS_R1, 26, -4000.0)          # 出界拒绝之前
-T_R1_OOB = _after(CMDS_R1, 26)                    # 出界拒绝之后
-T_R1_BAR1 = _ts(CMDS_R1, 30, SET_L1)              # 横条 ori=1（右移 2 列）
-T_R1_BAR2 = _ts(CMDS_R1, 31, SET_L1)              # 横条 ori=2（整块消失）
-T_R1_LK_PRE = _ts(CMDS_R1, 38, -5000.0)           # 旋转已锁定零片之前
-T_R1_LK = _after(CMDS_R1, 38)                     # 旋转已锁定零片之后
+T_R1_ONE = _after(CMDS_R1, 1)                     # 第 1 次旋转之后（P1 ori 1->2）
+T_R1_FOUR = _after(CMDS_R1, 4)                    # 4 次旋转之后（回到初始朝向 1）
+T_R1_OVL_PRE = _ts(CMDS_R1, 14, -4000.0)          # 旋转④（重叠拒绝）之前
+T_R1_OVL = _after(CMDS_R1, 14)                    # 旋转④ 之后
+T_R1_OOB_PRE = _ts(CMDS_R1, 25, -4000.0)          # 旋转⑤（出界拒绝）之前
+T_R1_OOB = _after(CMDS_R1, 25)                    # 旋转⑤ 之后
+T_R1_BAR1 = _ts(CMDS_R1, 29, SET_L1)              # 横条 ori=3（3x1 竖条，与原列对齐）
+T_R1_BAR2 = _ts(CMDS_R1, 30, SET_L1)              # 横条 ori=0（1x3 横条回到原样）
+T_R1_LK_PRE = _ts(CMDS_R1, 35, -5000.0)           # 旋转已锁定零片之前
+T_R1_LK = _after(CMDS_R1, 35)                     # 旋转已锁定零片之后
 
 T_R2_PRE = _ts(CMDS_R2, 2, -4000.0)               # 二关旋转之前（已选中 Q2）
 T_R2_ONE = _after(CMDS_R2, 2)                     # 二关旋转一次之后
 T_R2_FOUR = _after(CMDS_R2, 5)                    # 二关 4 次旋转之后
+
+# ============================================================================
+# ⚠️ 2026-10-09 第 14 工作阶段（A4 从"可选"变成"通关必需"）：**本 tb 不再给 RTL 打
+#    任何补丁** —— 它必须跑在**仓库里真正的** rtl/ 上（pi = PIECE_ORI_INIT =
+#    "10"&"10"&"01"&"01"，块 0..3 从朝向 1/1/2/2 开始散落）。
+#
+#   上一版的替代做法是"把 PIECE_ORI_INIT 补丁回 0、让老计划继续成立"。那**不可取**：
+#     · 散落结束时 o_ori 是多少、开局形状长什么样，是**被测对象的一部分**（B5 的
+#       "随机落位"在 A4 之后包含"随机/指定朝向"），把它补丁掉等于把一个真实存在的
+#       初态从覆盖里删掉；
+#     · 补丁一旦与 pkg 里的字面量漂移（比如有人改了 pkg 的拼接顺序），tb 会**静默**
+#       继续测老前提 —— 正是 ERR-022/034 那一类"陈旧绿"。
+#   所以本文件的做法是**按新初态重新解计划**（见下面各计划的说明），并用独立几何模型
+#   离线复核"删掉旋转就拼不出来"（断言 ⑱）。
+# ============================================================================
 
 OBSERVE = ["i_clk", "i_rst", "i_tick", "i_level", "i_pat", "i_go", "i_select", "i_move",
            "i_confirm", "i_rot", "i_up", "i_down", "i_left", "i_right", "rnd_val",
@@ -512,6 +593,58 @@ def union_cells_multi(pos, shapes, oris=None):
 
 def shapes_at(t):
     return L1 if t < T_L2 else L2
+
+
+# ---------------------------------------------------------------- A4 离线走计划
+# ⚠️ 第 14 工作阶段：断言 ⑱ 要回答"不按【旋转】到底拼不拼得出来"，而这个问题
+#    **不需要仿真** —— 用本 tb 自己的独立几何模型把计划走一遍即可（引擎规则：
+#    夹紧 + 越界 + 逐格重叠；rot 只改朝向、锚点不动）。这样"旋转必需"这条性质
+#    在引擎级 tb 里也有直接证据，而不是只靠 check_geometry / check_plans。
+def _l1_ok(pos, ori, k, cand, o):
+    """零片 k 以朝向 o 放在 cand 上是否合法（在 8x8 内且与其它两块不重叠）。"""
+    if cand[0] + hh_of(L1[k], o) > 8 or cand[1] + ww_of(L1[k], o) > 8:
+        return False
+    mine = drawn_cells(L1[k], cand, o)
+    for j in range(NP):
+        if j != k and (mine & drawn_cells(L1[j], pos[j], ori[j])):
+            return False
+    return True
+
+
+def simulate_l1(plan, drop_rot=False):
+    """用独立几何模型走一遍一关计划，返回 (pos, ori, 被拒次数, 并集)。
+
+    `drop_rot=True` = 把计划里的【旋转】键全部删掉（模拟"玩家一次都不转"）。
+    """
+    pos = [tuple(a) for a in L1_FALLBACK]
+    ori = list(ORI_INIT[:NP])
+    locked = [False] * NP
+    sel, rej = 0, 0
+    for (kind, arg, _lab) in plan:
+        if kind == "sel":
+            sel = (sel + 1) % NP
+        elif kind == "confirm":
+            locked[sel] = True
+        elif kind == "rot":
+            if drop_rot or locked[sel]:
+                continue
+            o2 = (ori[sel] + 1) % 4
+            if _l1_ok(pos, ori, sel, pos[sel], o2):
+                ori[sel] = o2
+            else:
+                rej += 1
+        elif kind == "move":
+            if locked[sel]:
+                continue
+            dr, dc = {"U": (-1, 0), "D": (1, 0), "L": (0, -1), "R": (0, 1)}[arg]
+            r, c = pos[sel]
+            nr = r - 1 if (dr < 0 and r > 0) else (r + 1 if (dr > 0 and r < 7) else r)
+            nc = c - 1 if (dc < 0 and c > 0) else (c + 1 if (dc > 0 and c < 7) else c)
+            if _l1_ok(pos, ori, sel, (nr, nc), ori[sel]):
+                pos[sel] = (nr, nc)
+            else:
+                rej += 1
+    return pos, ori, rej, union_cells_multi(pos, L1, ori)
 
 
 # ================================================================ 激励
@@ -856,20 +989,25 @@ def check(vf):
     oob, bad = overlap_report(posA, L1, oriA)
     res.append((
         "② ★ 随机散落后三块零片**两两不重叠**且都在 8x8 内（B5：位置随机但不能重叠）"
-        " —— 独立几何模型逐格验算（ERR-016/017 的回归判据）",
-        (not oob) and (not bad) and oriA[:NP] == [0, 0, 0],
-        "实测锚点 P0=%s P1=%s P2=%s；ori=%s（散落必须回到 0）；%s"
-        % (posA[0], posA[1], posA[2], oriA[:NP],
+        " —— 独立几何模型逐格验算（ERR-016/017 的回归判据）；朝向必须等于 "
+        "puzzle_pkg.PIECE_ORI_INIT = %s（第 14 工作阶段：散落不再把朝向清零）"
+        % (list(ORI_INIT[:NP]),),
+        (not oob) and (not bad) and oriA[:NP] == list(ORI_INIT[:NP]),
+        "实测锚点 P0=%s P1=%s P2=%s；ori=%s（期望 %s = PIECE_ORI_INIT 前 %d 位）；%s"
+        % (posA[0], posA[1], posA[2], oriA[:NP], list(ORI_INIT[:NP]), NP,
            "；".join(bad) if bad else "无重叠、无越界"),
     ))
 
     # ③ 确定性散落（rnd_val=0）复现出三个回退锚点
     posB = split_pos(_bus(vf, "o_pos", T_S3))
+    oriB = ori_list(_bus(vf, "o_ori", T_S3))
     res.append((
-        "③ rnd_val 恒 0（候选恒为 (0,0)，必然 16 次失败）时落到三个确定性回退锚点 —— "
-        "后续边界/重叠/锁定/拼合判据的基准",
-        posB[:NP] == L1_FALLBACK,
-        "实测 P0=%s P1=%s P2=%s（期望 %s）" % (posB[0], posB[1], posB[2], L1_FALLBACK),
+        "③ rnd_val 恒 0（候选恒为 (0,0)，必然 16 次失败）时落到三个确定性回退锚点、"
+        "朝向 = PIECE_ORI_INIT —— 后续边界/重叠/锁定/拼合判据的基准"
+        "（⚠️ 回退锚点是 RTL 里写死的四角，**与朝向无关**，所以第 14 工作阶段没变）",
+        posB[:NP] == L1_FALLBACK and oriB[:NP] == list(ORI_INIT[:NP]),
+        "实测 P0=%s P1=%s P2=%s（期望 %s）；ori=%s（期望 %s）"
+        % (posB[0], posB[1], posB[2], L1_FALLBACK, oriB[:NP], list(ORI_INIT[:NP])),
     ))
 
     # ④ 越界拒绝：2 行高零片到第 6 行后不能再下移
@@ -883,10 +1021,12 @@ def check(vf):
     # ⑤ 重叠拒绝：横条右移撞上楼梯形
     posOv = split_pos(_bus(vf, "o_pos", _ts(CMDS_D, 10, 1000.0)))
     res.append((
-        "⑤ 重叠被拒：P0(1x3 横条) 从 (0,0) 右移一格到 (0,1) 合法，"
-        "再右移就压到 P1(楼梯形, (0,4)) 上而被拒（B7；几何按「列 = 位号」独立算出）",
-        posOv[0] == (0, 1),
-        "P0 最终锚点 = %s（期望 (0,1)：横条占列 0~2，锚点列 2 时占列 2~4，与楼梯形冲突）"
+        "⑤ 重叠被拒：P0（初始朝向 1 = **3x1 竖条**）从 (0,0) 右移 3 格到 (0,3) 都合法，"
+        "第 4 次右移就压到 P1(楼梯形, (0,4)) 的 (0,4) 格上而被拒"
+        "（B7；几何按「列 = 位号」独立算出。⚠️ 第 14 工作阶段零片初始朝向变了，"
+        "所以停下来的锚点是 (0,3) 而不是旧版的 (0,1)）",
+        posOv[0] == (0, 3),
+        "P0 最终锚点 = %s（期望 (0,3)：竖条占列 3 的第 0~2 行；再右移一列就与 (0,4) 冲突）"
         % (posOv[0],),
     ))
 
@@ -897,8 +1037,8 @@ def check(vf):
     res.append((
         "⑥ 确认锁定后 P0 **锚点不再变化**（B8：不可移动）；同时未锁定的 P1 仍可被移动 —— "
         "修复「跳过锁定零片」不能把普通移动一起卡死",
-        posLk[0] == (0, 1) and posLk[1] == (1, 4) and (lockv & 1) == 1,
-        "锁定并执行 1 次移动后：P0=%s（期望 (0,1) 不变）、P1=%s（期望 (1,4)：它是被选中的"
+        posLk[0] == (0, 3) and posLk[1] == (1, 4) and (lockv & 1) == 1,
+        "锁定并执行 1 次移动后：P0=%s（期望 (0,3) 不变）、P1=%s（期望 (1,4)：它是被选中的"
         "未锁定块）；o_lock = %s" % (posLk[0], posLk[1], format(lockv, "04b")),
     ))
 
@@ -940,8 +1080,9 @@ def check(vf):
     fg = _bus(vf, "o_rowg", T_SAMPLE_COLOR)
     posCol = split_pos(_bus(vf, "o_pos", T_SAMPLE_COLOR))
     lockCol = _bus(vf, "o_lock", T_SAMPLE_COLOR)
-    cov = union_cells_multi(posCol[:NP], L1)
-    selr = drawn_cells(L1[2], posCol[2], 0)
+    oriCol = ori_list(_bus(vf, "o_ori", T_SAMPLE_COLOR))
+    cov = union_cells_multi(posCol[:NP], L1, oriCol[:NP])
+    selr = drawn_cells(L1[2], posCol[2], oriCol[2])
     tgt = mask_cells(L1_TGT_MASK)
     # ⚠️ ERR-023：**不画目标鬼影** —— 未覆盖的目标格子必须不亮。
     ghost = []
@@ -959,13 +1100,21 @@ def check(vf):
 
     # ⑨ 三块全部到位并锁定 -> o_solved = 1
     posS = split_pos(_bus(vf, "o_pos", T_C_SOLVED))
-    at_tgt = all(posS[i] == L1[i]["tgt"] for i in range(NP))
+    oriS = ori_list(_bus(vf, "o_ori", T_C_SOLVED))
+    uS = union_cells_multi(posS[:NP], L1, oriS[:NP])
+    at_tgt = (all(posS[i] == L1_GOAL[i] for i in range(NP))
+              and oriS[:NP] == L1_GOAL_ORI)
     res.append((
-        "⑨ 三块零片全部回到目标锚点后逐块确认 → o_solved = 1（B9：位置和形状与初始拼图一致）",
-        at_tgt and _v(vf, "o_solved", T_C_SOLVED) == "1"
+        "⑨ 三块零片拼成图 4-1 的 4x3 矩形（**并集**逐格一致；终点锚点 = 最优计划的 "
+        "(2,2)(3,2)(3,2)、朝向 (2,2,2)）后逐块确认 → o_solved = 1"
+        "（B9：位置和形状与初始拼图一致 —— 判据看**画面**，不看零片编号；"
+        "⚠️ 这组锚点不是 pkg 里写的那组见证锚点，而是一组**等价铺法**）",
+        at_tgt and uS == mask_cells(L1_TGT_MASK) and _v(vf, "o_solved", T_C_SOLVED) == "1"
         and _bus(vf, "o_lock", T_C_SOLVED) == 0x7,
-        "锚点 P0=%s(目标%s) P1=%s(目标%s) P2=%s(目标%s)；o_solved=%s；o_lock=%s"
-        % (posS[0], L1[0]["tgt"], posS[1], L1[1]["tgt"], posS[2], L1[2]["tgt"],
+        "锚点 P0=%s P1=%s P2=%s（期望 %s）；朝向=%s（期望 %s）；并集 %d 格 == 目标 = %s；"
+        "o_solved=%s；o_lock=%s"
+        % (posS[0], posS[1], posS[2], L1_GOAL, oriS[:NP], L1_GOAL_ORI,
+           len(uS), uS == mask_cells(L1_TGT_MASK),
            _v(vf, "o_solved", T_C_SOLVED), format(_bus(vf, "o_lock", T_C_SOLVED), "04b")),
     ))
 
@@ -1051,11 +1200,14 @@ def check(vf):
     ori_one = _bus(vf, "o_ori", T_R1_ONE)
     res.append((
         "旋转①/⑥ ★【A4】一关（只有三块零片时同样有效）：选中 P1(楼梯形) 按【旋转】一次 "
-        "→ o_ori 该块变 1、**o_pos 一格都不动**、整帧逐格等于独立模型算出的「绕零片中心"
-        "顺时针转 90°」后的形状",
-        okR1 and ori_one == 0b00000100 and pos_one == pos_pre and pos_one[1] == (0, 4),
-        "%s；ori=%s（P1=1）；pos 前=%s 后=%s（必须相同）"
-        % (detR1, format(ori_one, "08b"), pos_pre[:NP], pos_one[:NP]),
+        "→ o_ori 该块 **%d -> %d**（初始朝向就是 %d，不再是 0）、**o_pos 一格都不动**、"
+        "整帧逐格等于独立模型算出的「绕零片中心顺时针转 90°」后的形状"
+        % (ORI_INIT[1], (ORI_INIT[1] + 1) % 4, ORI_INIT[1]),
+        okR1 and _ori_at(vf, T_R1_ONE, 1) == (ORI_INIT[1] + 1) % 4
+        and pos_one == pos_pre and pos_one[1] == (0, 4),
+        "%s；ori=%s（P1=%d）；pos 前=%s 后=%s（必须相同）"
+        % (detR1, format(ori_one, "08b") if ori_one is not None else "X",
+           (ORI_INIT[1] + 1) % 4, pos_pre[:NP], pos_one[:NP]),
     ))
 
     # 旋转②：转 4 次回到 0，且整帧与旋转前逐位相同
@@ -1064,12 +1216,15 @@ def check(vf):
     ori_four = _bus(vf, "o_ori", T_R1_FOUR)
     okR2b, detR2b = _model_frame_check(vf, T_R1_FOUR, L1, "旋转②(模型)", sel=1)
     res.append((
-        "旋转② ★ 连按 4 次【旋转】= 360°：o_ori 回到 0，且**整帧 o_rowr/o_rowg 与"
-        "旋转前逐位相同**（4 次都提交、没有丢步或方向累积错误）",
-        ori_four == 0 and fr_pre == fr_four and fg_pre == fg_four and okR2b
-        and None not in (fr_pre, fg_pre),
-        "ori=%s；旋转前 frame=(0x%X,0x%X) 4 次后=(0x%X,0x%X) 逐位相同=%s；%s"
+        "旋转② ★ 连按 4 次【旋转】= 360°：o_ori 回到**初始朝向 %d**，且**整帧 "
+        "o_rowr/o_rowg 与旋转前逐位相同**（4 次都提交、没有丢步或方向累积错误）"
+        % ORI_INIT[1],
+        _ori_at(vf, T_R1_FOUR, 1) == ORI_INIT[1] and fr_pre == fr_four
+        and fg_pre == fg_four and okR2b and None not in (fr_pre, fg_pre),
+        "ori=%s（P1=%s，期望 %d）；旋转前 frame=(0x%X,0x%X) 4 次后=(0x%X,0x%X) "
+        "逐位相同=%s；%s"
         % (format(ori_four, "08b") if ori_four is not None else "X",
+           _ori_at(vf, T_R1_FOUR, 1), ORI_INIT[1],
            fr_pre or 0, fg_pre or 0, fr_four or 0, fg_four or 0,
            fr_pre == fr_four and fg_pre == fg_four, detR2b),
     ))
@@ -1079,17 +1234,19 @@ def check(vf):
     ori_ov = _bus(vf, "o_ori", T_R1_OVL)
     fr_ov, fg_ov = _frame_pair(vf, T_R1_OVL)
     fr_ov0, fg_ov0 = _frame_pair(vf, T_R1_OVL_PRE)
-    p1_rot = {(0 + r, 4 + c) for (r, c) in rot_cells(rel_cells(sh_p1), 1)}
-    p2_cells = drawn_cells(L1[2], (1, 5), 0)
+    p1_rot = drawn_cells(sh_p1, (0, 4), (ORI_INIT[1] + 1) % 4)
+    p2_cells = drawn_cells(L1[2], (2, 4), ORI_INIT[2])
     clash = sorted(p1_rot & p2_cells)
     res.append((
-        "旋转④ ★ 重叠被拒：P1(楼梯形 @(0,4)) 转 90° 后的格子会压到 P2(L 形 @(1,5)) 上"
-        "（交集格子见实测），因此这次旋转必须**什么都不改** —— o_pos / o_ori / 整帧全部"
-        "与旋转请求之前逐位相同",
-        clash and ori_ov == 0 and pos_ov == split_pos(_bus(vf, "o_pos", T_R1_OVL_PRE))
+        "旋转④ ★ 重叠被拒：P1(楼梯形 @(0,4)，朝向 %d) 转 90° 后的格子会压到 "
+        "P2(L 形 @(2,4)，朝向 %d) 上（交集格子见实测），因此这次旋转必须**什么都不改** "
+        "—— o_pos / o_ori / 整帧全部与旋转请求之前逐位相同"
+        % (ORI_INIT[1], ORI_INIT[2]),
+        clash and _ori_at(vf, T_R1_OVL, 1) == ORI_INIT[1]
+        and pos_ov == split_pos(_bus(vf, "o_pos", T_R1_OVL_PRE))
         and fr_ov == fr_ov0 and fg_ov == fg_ov0,
-        "独立模型算出冲突格 = %s；ori=%s（必须仍为 0）；pos=%s；整帧不变=%s"
-        % (clash, format(ori_ov, "08b") if ori_ov is not None else "X", pos_ov[:NP],
+        "独立模型算出冲突格 = %s；P1 的 ori=%s（必须仍为 %d）；pos=%s；整帧不变=%s"
+        % (clash, _ori_at(vf, T_R1_OVL, 1), ORI_INIT[1], pos_ov[:NP],
            fr_ov == fr_ov0 and fg_ov == fg_ov0),
     ))
 
@@ -1100,13 +1257,14 @@ def check(vf):
     fr_oob, fg_oob = _frame_pair(vf, T_R1_OOB)
     fr_oob0, fg_oob0 = _frame_pair(vf, t_oob_pre)
     res.append((
-        "旋转⑤ ★ 出界被拒：1x3 横条 P0 移到**第 7 行**后再按【旋转】—— 转 90° 后包围盒"
-        "变成 3 行高，锚点行 + 3 = 10 > 8（教科书旋转同样出界，两种解释都判越界），"
-        "必须被拒：o_ori / o_pos / 整帧全部不变",
-        pos_oob[0] == (7, 0) and ori_oob == 0 and pos_oob == split_pos(_bus(vf, "o_pos", t_oob_pre))
+        "旋转⑤ ★ 出界被拒：1x3 横条 P0（当前朝向 2）移到**第 7 行**后再按【旋转】—— "
+        "转 90° 后包围盒变成 3 行高，锚点行 + 3 = 10 > 8（教科书旋转同样出界，两种解释"
+        "都判越界），必须被拒：o_ori / o_pos / 整帧全部不变",
+        pos_oob[0] == (7, 0) and _ori_at(vf, T_R1_OOB, 0) == 2
+        and pos_oob == split_pos(_bus(vf, "o_pos", t_oob_pre))
         and fr_oob == fr_oob0 and fg_oob == fg_oob0,
-        "P0 锚点 = %s（期望 (7,0) 不变）；ori=%s（必须仍为 0）；整帧不变=%s"
-        % (pos_oob[0], format(ori_oob, "08b") if ori_oob is not None else "X",
+        "P0 锚点 = %s（期望 (7,0) 不变）；P0 的 ori=%s（必须仍为 2）；整帧不变=%s"
+        % (pos_oob[0], _ori_at(vf, T_R1_OOB, 0),
            fr_oob == fr_oob0 and fg_oob == fg_oob0),
     ))
 
@@ -1121,22 +1279,23 @@ def check(vf):
     green1 = lit_cells(fg_b1) if fg_b1 is not None else set()
     green2 = lit_cells(fg_b2) if fg_b2 is not None else set()
     bar = L1[0]
-    want1 = drawn_cells(bar, (4, 0), 1)
-    want2 = drawn_cells(bar, (4, 0), 2)
-    unnorm1 = {(4 + r, 0 + c) for (r, c) in {(c, 2 - r) for (r, c) in rel_cells(bar)}}
+    want1 = drawn_cells(bar, (4, 0), 3)
+    want2 = drawn_cells(bar, (4, 0), 0)
+    # 旧实现（在固定 3x3 盒里转但不补 rot_off_c）会把竖条画到第 2 列 —— ERR-040
+    unnorm1 = {(4 + r, 2) for r in range(3)}
     ori_b1 = _ori_at(vf, T_R1_BAR1, 0)
     ori_b2 = _ori_at(vf, T_R1_BAR2, 0)
     pos_b1 = split_pos(_bus(vf, "o_pos", T_R1_BAR1))
     pos_b2 = split_pos(_bus(vf, "o_pos", T_R1_BAR2))
     res.append((
         "旋转⑦ ★ 非方形零片的旋转**归一化到自身紧包围盒**（第一版 RTL 的真实缺陷，"
-        "已被 rot_off_r/rot_off_c 修掉）：1x3 横条 P0 @(4,0) 转 90° 后必须画成**同一列**"
-        "的竖条 (4,0)(5,0)(6,0)、o_pos 不变；再转 90°（ori=2）必须回到原横条 "
-        "(4,0)(4,1)(4,2)。判据是**逐格与独立教科书模型比对**，不是「看着像」",
-        ori_b1 == 1 and pos_b1[0] == (4, 0) and green1 == want1
-        and ori_b2 == 2 and pos_b2[0] == (4, 0) and green2 == want2,
-        "ori=1：实测绿格 = %s，教科书模型 = %s（未归一化的旧实现会画在 %s）"
-        "；ori=2：实测绿格 = %s，教科书模型 = %s"
+        "已被 rot_off_r/rot_off_c 修掉）：1x3 横条 P0 @(4,0) 从朝向 2 转 90° 到朝向 3 后"
+        "必须画成**同一列**的竖条 (4,0)(5,0)(6,0)、o_pos 不变；再转 90°（朝向 0）必须回到"
+        "原横条 (4,0)(4,1)(4,2)。判据是**逐格与独立教科书模型比对**，不是「看着像」",
+        ori_b1 == 3 and pos_b1[0] == (4, 0) and green1 == want1
+        and ori_b2 == 0 and pos_b2[0] == (4, 0) and green2 == want2,
+        "ori=3：实测绿格 = %s，教科书模型 = %s（未归一化的旧实现会画在 %s）"
+        "；ori=0：实测绿格 = %s，教科书模型 = %s"
         % (sorted(green1), sorted(want1), sorted(unnorm1), sorted(green2), sorted(want2)),
     ))
 
@@ -1148,19 +1307,21 @@ def check(vf):
     sel_lk = _bus(vf, "o_sel_idx", T_R1_LK)
     fr_lk, fg_lk = _frame_pair(vf, T_R1_LK)
     fr_lk0, fg_lk0 = _frame_pair(vf, t_lk_pre)
-    did_accept = (_ori_at(vf, T_R1_BAR1, 0) == 1)     # 同一锚点、同一 ori 组合在未锁时被接受过
+    did_accept = (ori_b2 == 0 and pos_b2[0] == (4, 0))   # 同一锚点、同一朝向在未锁时被接受过
     res.append((
         "旋转⑥ ★ 旋转**已锁定**的零片什么都没发生（B8「确认后不可再选择及移动」对旋转同样成立）："
         "把 P1/P2/P0 依次确认锁定（此时 sel 停在**已锁定的 P0** 上 —— 全锁时 next_unlocked 无处可去，"
         "这是 ERR-035 的边角），再按【旋转】：o_ori / o_pos / 整帧全部不变。"
-        "同一锚点、同一 ori 组合在未锁定时是被接受的（见旋转⑦ 的 ori=1），所以这次「没变化」"
-        "只能归因于锁定",
-        ori_lk == 0 and pos_lk == split_pos(_bus(vf, "o_pos", t_lk_pre))
+        "**同一锚点**上未锁定时旋转是被接受的（旋转⑦ 的 (4,0) 朝向 2->3->0），所以这次"
+        "「没变化」只能归因于锁定",
+        ori_lk == _bus(vf, "o_ori", t_lk_pre)
+        and pos_lk == split_pos(_bus(vf, "o_pos", t_lk_pre))
         and lock_lk == (1 << NP) - 1 and sel_lk == 0 and did_accept
         and fr_lk == fr_lk0 and fg_lk == fg_lk0,
-        "o_lock=%s o_sel_idx=%d（0 = 停在已锁定的 P0 上）；ori=%s（全 0）；pos 不变=%s；"
-        "整帧不变=%s；同锚点未锁定时该旋转被接受过=%s"
+        "o_lock=%s o_sel_idx=%d（0 = 停在已锁定的 P0 上）；ori=%s（与旋转前 %s 相同）；"
+        "pos 不变=%s；整帧不变=%s；同锚点未锁定时该旋转被接受过=%s"
         % (format(lock_lk, "04b"), sel_lk, format(ori_lk, "08b"),
+           format(_bus(vf, "o_ori", t_lk_pre) or 0, "08b"),
            pos_lk[:NP] == split_pos(_bus(vf, "o_pos", t_lk_pre))[:NP],
            fr_lk == fr_lk0 and fg_lk == fg_lk0, did_accept),
     ))
@@ -1176,11 +1337,12 @@ def check(vf):
     uQ = union_cells_multi(posQ[:NP2], L2, oriQ[:NP2])
     res.append((
         "⑬ 第二关（i_level=1，4 块异形 3+2+5+6 格）散落完成：四块落在确定性回退锚点、"
-        "互不重叠（16 格）、朝向全为 0，且未锁定时 o_solved = 0",
+        "互不重叠（16 格）、朝向 = PIECE_ORI_INIT = %s，且未锁定时 o_solved = 0"
+        % (list(ORI_INIT),),
         tuple(posQ[:NP2]) == tuple(L2_FALLBACK) and len(uQ) == 16 and uQ != tQ
-        and oriQ[:NP2] == [0, 0, 0, 0] and _v(vf, "o_solved", T_S_L2SCAT) == "0",
-        "锚点 = %s（期望 %s）；并集 %d 格；并集==目标 = %s；ori=%s；o_solved = %s"
-        % (posQ[:NP2], L2_FALLBACK, len(uQ), uQ == tQ, oriQ[:NP2],
+        and oriQ[:NP2] == list(ORI_INIT) and _v(vf, "o_solved", T_S_L2SCAT) == "0",
+        "锚点 = %s（期望 %s）；并集 %d 格；并集==目标 = %s；ori=%s（期望 %s）；o_solved = %s"
+        % (posQ[:NP2], L2_FALLBACK, len(uQ), uQ == tQ, oriQ[:NP2], list(ORI_INIT),
            _v(vf, "o_solved", T_S_L2SCAT)),
     ))
 
@@ -1194,14 +1356,18 @@ def check(vf):
     ori2_four = _bus(vf, "o_ori", T_R2_FOUR)
     res.append((
         "旋转③ ★【A4 / ⑥】第二关（四块零片、i_level=1）旋转同样有效：选中 Q2(J 形) "
-        "转一次 → o_ori 该块 = 1、o_pos 不变、整帧等于独立模型；再转 3 次回到 ori=0 且整帧与"
-        "旋转前逐位相同（转完 sel 回到 0，所以后面 ⑭ 的拼图计划不受影响）",
-        okR3 and ori2_one == 0b00010000 and pos2_one == pos2_pre
-        and ori2_four == 0 and fr2_pre == fr2_four and fg2_pre == fg2_four
+        "转一次 → 该块朝向 **%d -> %d**、o_pos 不变、整帧等于独立模型；再转 3 次回到初始"
+        "朝向 %d 且整帧与旋转前逐位相同（转完 sel 回到 0，所以后面 ⑭ 的拼图计划不受影响）"
+        % (ORI_INIT[2], (ORI_INIT[2] + 1) % 4, ORI_INIT[2]),
+        okR3 and _ori_at(vf, T_R2_ONE, 2) == (ORI_INIT[2] + 1) % 4
+        and pos2_one == pos2_pre
+        and _ori_at(vf, T_R2_FOUR, 2) == ORI_INIT[2]
+        and fr2_pre == fr2_four and fg2_pre == fg2_four
         and None not in (fr2_pre, fg2_pre),
-        "%s；ori 一次后=%s（Q2=1）、四次后=%s；pos 前=%s 后=%s（必须相同）；"
+        "%s；ori 一次后=%s（Q2=%s）、四次后=%s（Q2=%s）；pos 前=%s 后=%s（必须相同）；"
         "旋转前后整帧逐位相同=%s"
-        % (detR3, format(ori2_one, "08b"), format(ori2_four, "08b"),
+        % (detR3, format(ori2_one, "08b"), _ori_at(vf, T_R2_ONE, 2),
+           format(ori2_four, "08b"), _ori_at(vf, T_R2_FOUR, 2),
            pos2_pre[:NP2], pos2_one[:NP2],
            fr2_pre == fr2_four and fg2_pre == fg2_four),
     ))
@@ -1212,11 +1378,12 @@ def check(vf):
     uP = union_cells_multi(posP[:NP2], L2, oriP[:NP2])
     lockP = _bus(vf, "o_lock", T_L2_SETTLE)
     solP = _v(vf, "o_solved", T_L2_SETTLE)
-    okP = (tuple(posP[:NP2]) == tuple(L2_TILING_B) and uP == tQ and lockP == 0xF
-           and solP == "1" and oriP[:NP2] == [0, 0, 0, 0])
-    detailP = ("锚点 = %s（= 铺法 B）；铺法 A = %s（RTL 里**不再有任何锚点常量**，"
-               "判据只看画面）；并集==目标图案 = %s（%d 格）；ori=%s；o_lock = %s；o_solved = %s"
-               % (posP[:NP2], L2_TILING_A, uP == tQ, len(uP), oriP[:NP2],
+    okP = (tuple(posP[:NP2]) == tuple(L2_TILING_TB) and uP == tQ and lockP == 0xF
+           and solP == "1" and oriP[:NP2] == list(L2_TILING_TB_ORI))
+    detailP = ("锚点 = %s、朝向 = %s（= 本 tb 摆的那一种）；**另一种等价铺法** = %s "
+               "（sim/tb_puzzle_top.py 摆的就是它 —— RTL 里**不再有任何锚点常量**，"
+               "判据只看画面）；并集==目标图案 = %s（%d 格）；o_lock = %s；o_solved = %s"
+               % (posP[:NP2], oriP[:NP2], L2_TILING_TOP, uP == tQ, len(uP),
                   format(lockP, "04b"), solP))
     if HAS_FRAME_VERDICT:
         fok = _v(vf, "frm_ok", T_L2_SETTLE)
@@ -1286,6 +1453,34 @@ def check(vf):
         "（翻转 12 次、相位互不相同，避免单次翻转正好落进「帧尾→帧头」那一行的缝里"
         "而变成概率性断言）",
         ok_pat, detail_pat,
+    ))
+
+    # ================================================================
+    # ⑱ ★ A4 端到端（用户上板反馈的直接回归判据）
+    #   "旋转 90 度效果倒是有，但是旋转好像对游戏并没有什么影响，不旋转也能成功通关。"
+    #   → 本断言把"不转就通不了"这件事**在引擎级 tb 里直接算出来**（离线、不看波形）：
+    #       ① 拼图计划里确实出现【旋转】按键；
+    #       ② 按计划走：0 次被拒、并集逐格 == 图 4-1、三块全锁；
+    #       ③ 把计划里的 rot 全部删掉再走：**出现被拒动作，且并集 != 目标**。
+    #   几何模型是**本 tb 自己**的（drawn_cells / hh_of / ww_of），与 check_plans.py
+    #   的实现互相独立 —— 同一结论由两处独立复算。
+    # ================================================================
+    posX, oriX, rejX, uX = simulate_l1(SOLVE_PLAN)
+    posY, oriY, rejY, uY = simulate_l1(SOLVE_PLAN, drop_rot=True)
+    n_rot_l1 = sum(1 for (k, _a, _l) in SOLVE_PLAN if k == "rot")
+    tgtL1 = mask_cells(L1_TGT_MASK)
+    res.append((
+        "⑱ ★【A4 端到端 / 用户上板反馈的回归】零片从 PIECE_ORI_INIT = %s 开始散落，"
+        "**一次都不按【旋转】就拼不出目标**：同一条拼图计划里【旋转】%d 次，按它走 → "
+        "0 次被拒且并集 == 图 4-1；把 rot 全部删掉再走 → 被拒 %d 次且并集 != 目标"
+        "（用本 tb 自己的独立几何模型离线算，与波形无关）"
+        % (list(ORI_INIT[:NP]), n_rot_l1, rejY),
+        n_rot_l1 > 0 and rejX == 0 and uX == tgtL1
+        and (rejY > 0 or uY != tgtL1) and oriX != list(ORI_INIT[:NP]),
+        "计划 %d 条：按计划走 被拒 %d 次、并集 %d 格 == 目标 = %s、终点朝向 %s（初始 %s）；"
+        "删掉旋转后 被拒 %d 次、并集 %d 格 == 目标 = %s、终点朝向 %s、终点锚点 %s"
+        % (len(SOLVE_PLAN), rejX, len(uX), uX == tgtL1, oriX, list(ORI_INIT[:NP]),
+           rejY, len(uY), uY == tgtL1, oriY, posY),
     ))
 
     return res

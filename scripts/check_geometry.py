@@ -9,8 +9,12 @@ Parses the VHDL, decodes each constant to a cell set, and checks:
   * L2 pieces (16 cells, 4 pieces) tile L2_TARGET exactly
   * every piece fits in PIECE_MAX_DIM
 """
-import re, pathlib
+import re, pathlib, sys
 from itertools import product
+
+# ⚠️ Windows 控制台默认 GBK：本文件里用到了 ⭐ 之类的符号，必须先切到 UTF-8
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 PKG = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_pkg.vhd")
 src = PKG.read_text(encoding="utf-8")
@@ -363,6 +367,110 @@ chk(not cyc_bad, "每个零片连转 4 次 90° 回到原样（朝向是 4 循�
 area_bad = [n for n, cs in PIECES if any(len(rot_ref(cs, o)) != len(cs) for o in ORIS)]
 chk(not area_bad, "旋转不改零片面积（4 个朝向格数都相同）"
                  + ("" if not area_bad else "；失败：" + str(area_bad)))
+
+# ============================================================================
+#  ⭐ 第 14 工作阶段（2026-10-09）：**旋转必需性**离线证明
+#
+#  用户上板反馈："旋转 90 度效果倒是有，但是旋转好像对游戏并没有什么影响，
+#  不旋转也能成功通关。" —— 根因是四块零片都从 ori="00" 开始散落，而四幅图案
+#  本来就用 `tilings_no_rotation`（只许平移）解出来的，所以**存在"一次都不转"
+#  的通关走法**。
+#
+#  修法：puzzle_pkg.PIECE_ORI_INIT 给了每块零片一个**非零初始朝向**
+#  （块 k 占 ori(2k+1 downto 2k)）。这里独立证明三件事：
+#    ① 初始朝向常量与 RTL 里写的那一串逐位一致（防止手抄错）；
+#    ② **保持初始朝向、只许平移**时，四幅图案 PAT0..PAT3 与第一关的 4x3 矩形
+#       **都没有恰好覆盖**（⇒ 不按【旋转】键不可能通关，"旋转不影响游戏"不成立）；
+#    ③ 允许旋转之后每幅都仍然可解（否则就是死局）。
+#  这三条都不信任 RTL：用的是本文件里的 rot_ref（已在上面被证明与 RTL 的
+#  rot_row + rot_off_r/c 逐格等价）。
+# ============================================================================
+print("\n-- ⭐ A4 旋转必需性（第 14 工作阶段）：初始朝向 = puzzle_pkg.PIECE_ORI_INIT")
+_ini_m = re.search(r"constant\s+PIECE_ORI_INIT\s*:\s*std_logic_vector\(7 downto 0\)\s*:=\s*"
+                   r"\"([01]{2})\"\s*&\s*\"([01]{2})\"\s*&\s*\"([01]{2})\"\s*&\s*\"([01]{2})\"", src, re.S)
+chk(_ini_m is not None, "puzzle_pkg 里有 PIECE_ORI_INIT（4 块零片各 2 位的初始朝向）")
+if _ini_m:
+    INIT_L2 = "".join(_ini_m.groups())          # 块3 块2 块1 块0（MSB 在前，与 VHDL 拼接一致）
+    INIT = [INIT_L2[6:8], INIT_L2[4:6], INIT_L2[2:4], INIT_L2[0:2]]
+    print(f"   PIECE_ORI_INIT = \"{INIT_L2}\"  ->  块 0..3 朝向 = {INIT}")
+    ORIS_L = ["00", "01", "10", "11"]
+
+    def _rot_pieces(pieces, oris):
+        return [rot_ref(p, o) for p, o in zip(pieces, oris)]
+
+    def tilings_given_orientation(target, pieces, oris):
+        """恰好覆盖：每块零片**固定在自己给定的朝向上**，只许平移。"""
+        T = frozenset(norm(target))
+        shapes = [norm(cs) for cs in _rot_pieces(pieces, oris)]
+        sizes = [bbox(s) for s in shapes]
+        out = []
+
+        def rec(i, used, acc):
+            if i == len(shapes):
+                if used == T:
+                    out.append(tuple(acc))
+                return
+            h, w = sizes[i]
+            for r0 in range(0, 9 - h):
+                for c0 in range(0, 9 - w):
+                    p = frozenset((r + r0, c + c0) for r, c in shapes[i])
+                    if p <= T and not (p & used):
+                        acc.append((r0, c0))
+                        rec(i + 1, used | p, acc)
+                        acc.pop()
+
+        rec(0, frozenset(), [])
+        return out
+
+    # ① 旋转必需性：第一关（3 块）+ 四幅图案（4 块）都不能"保持初始朝向"铺满
+    need_bad = []
+    l1_ori = INIT[:3]
+    n_l1 = tilings_given_orientation(C["L1_TARGET_MASK"], [C["L1_P0"], C["L1_P1"], C["L1_P2"]], l1_ori)
+    if n_l1:
+        need_bad.append(f"第一关：保持初始朝向 {l1_ori} 仍能铺满（{len(n_l1)} 种）→ 旋转不是必需的")
+    for i in range(PAT_N):
+        s = tilings_given_orientation(PATS[i], L2P, INIT)
+        if s:
+            need_bad.append(f"L2_PAT{i}：保持初始朝向 {INIT} 仍能铺满（{len(s)} 种）→ 旋转不是必需的")
+    chk(not need_bad,
+        "第一关 + 四幅图案：**保持 PIECE_ORI_INIT、只许平移时都恰好覆盖不了** "
+        "（⇒ 玩家必须按【旋转】，A4 真的是通关必需的一步）"
+        + ("" if not need_bad else "；失败：" + "; ".join(need_bad[:4])))
+
+    # ② 每块零片在初始朝向下形状都真的变了（不是"只转了一块"）
+    changed = [k for k in range(4)
+               if norm(rot_ref(L2P[k], INIT[k])) != norm(L2P[k])]
+    chk(len(changed) == 4, f"四块零片在初始朝向下**形状都变了**（实测变了 {len(changed)} 块：{changed}）—— "
+                           f"每块都必须被转一次")
+
+    # ③ 允许旋转后仍然可解（不是死局）：用 count_tilings 的多朝向版本
+    def solvable_any_orientation(target, pieces):
+        T = frozenset(norm(target))
+        alts = [sorted({norm(rot_ref(p, o)) for o in ORIS_L}) for p in pieces]
+
+        def rec(i, used):
+            if i == len(alts):
+                return used == T
+            for s in alts[i]:
+                h, w = bbox(s)
+                for r0 in range(0, 9 - h):
+                    for c0 in range(0, 9 - w):
+                        p = frozenset((r + r0, c + c0) for r, c in s)
+                        if p <= T and not (p & used):
+                            if rec(i + 1, used | p):
+                                return True
+            return False
+
+        return rec(0, frozenset())
+
+    dead = []
+    if not solvable_any_orientation(C["L1_TARGET_MASK"], [C["L1_P0"], C["L1_P1"], C["L1_P2"]]):
+        dead.append("第一关")
+    for i in range(PAT_N):
+        if not solvable_any_orientation(PATS[i], L2P):
+            dead.append(f"L2_PAT{i}")
+    chk(not dead, "允许旋转后第一关与四幅图案**都仍然可解**（旋转是必需的一步，但不是死局）"
+                  + ("" if not dead else "；失败：" + str(dead)))
 
 print("\n" + ("ALL CHECKS PASSED" if ok else "*** SOME CHECKS FAILED ***"))
 raise SystemExit(0 if ok else 1)

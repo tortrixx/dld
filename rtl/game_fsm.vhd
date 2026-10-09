@@ -76,7 +76,7 @@ entity game_fsm is
         i_solved   : in  std_logic;                      -- from puzzle_ctrl
         i_all_lock : in  std_logic;                      -- from puzzle_ctrl
         i_shuf_busy: in  std_logic;                      -- from puzzle_ctrl
-        o_sound    : out std_logic_vector(2 downto 0)    -- sound effect selector
+        o_sound    : out std_logic_vector(3 downto 0)    -- sound effect selector（4 位，A1 v2）
     );
 end entity game_fsm;
 
@@ -167,8 +167,12 @@ architecture rtl of game_fsm is
     signal up_r, down_r, left_r, right_r : std_logic := '0';
     signal rot_r : std_logic := '0';                    -- A4: 旋转请求（1 拍）
     signal sel_r, conf_r : std_logic := '0';
-    signal sound_r : std_logic_vector(2 downto 0) := "000";
-    signal sound_p : std_logic_vector(2 downto 0) := "000";
+    signal sound_p : std_logic_vector(3 downto 0) := SND_NONE;
+    -- ⚠️ 第 14 工作阶段（A1 v2）：瞬时音效的**保持**计数器。
+    --    见下面音效进程的说明：单拍脉冲必须被保持 ≥1 个旋律步才听得见。
+    --    ⚠️ 刻意**没有**单独的"锁存码"寄存器：保持期内直接不给 `sound_p` 赋值即可
+    --    （寄存器保持语义），省掉 4 个 FF + 一个 4 位多路器。
+    signal snd_hold : unsigned(1 downto 0) := (others => '0');
     -- 2 Hz SQUARE WAVE for the blinks.
     -- ⚠️ ERR-038（2026-10-09 第 11 工作阶段，全项目审计发现）：B1 要求"以 **2 Hz** 闪烁"。
     --    原来拿 tick_2hz（500 ms 一个脉冲）直接翻转，得到的是 **1 s 周期 = 1 Hz** 方波
@@ -387,8 +391,9 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Sound effect selection (improvement requirement A1).  Each situation gets
-    -- its own code; buzzer_ctrl turns the code into an audible pattern.
+    -- 2 Hz blink flag for B1 self-test / result screens.
+    -- ⚠️ ERR-038: flip on the 4 Hz tick -> a true 2 Hz square wave (a 500 ms
+    --    tick would only give 1 Hz).
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
@@ -401,48 +406,85 @@ begin
         end if;
     end process;
 
+    ----------------------------------------------------------------------------
+    -- Sound effect selection (improvement requirement A1).
+    --
+    -- ⚠️ 2026-10-09 第 14 工作阶段重做（用户上板反馈"游戏过程中没有任何音效"）。
+    --    v1 的三个缺口，逐条对应这里的三个改动：
+    --      ① **对局中默认码是 "000"（静音）** → 现在对局默认码 = `SND_BGM`
+    --         （背景音乐），玩家一进对局就有声音 —— A1 的原文是"提示音效**或音乐**"；
+    --      ② 按键/旋转/确认/过关/拼错在 v1 是**单拍脉冲**（~20 ns）→ 蜂鸣器来不及
+    --         发声，等于听不见；现在用 `snd_hold`（2 位）把它们**保持 2 个旋律步
+    --         （250~500 ms）**，足够把第一拍完整放出来；
+    --      ③ 场景只有 7 个（3 位码）→ 现在 **16 个**（4 位码，见 puzzle_pkg 的 SND_*），
+    --         移动 / 旋转 / 选择 / 确认 / 被拒绝 / 最后 5 秒各有各的声音。
+    --
+    --    ⚠️ 判决音效仍然只门控 `shuf_seen`（与 v1 一致，ERR-039c 已记录未修）。
+    --    ⚠️ "移动/旋转被拒绝"的专用音效（SND_NAK 1101）**本轮做了又撤了**：
+    --       它需要 puzzle_ctrl 多一个 o_nak 输出 + 这里多一级优先分支，实测整机 +5 LE
+    --       且把最差路径拖垮（1268 → 1273 LE / 128 LABs，装不进 EPM1270）。
+    --       SND_NAK 的码与乐句保留在 puzzle_pkg / buzzer_ctrl 里（16 个码的接口不变），
+    --       将来腾出面积可以直接接上（负结果见 docs/05 §1）。
+    --    ⚠️ 这里只做**寄存器**赋值（不写成组合多路器）：v1 的实测教训是
+    --       `i_solved → 音效多路器 → buzz` 曾是最差路径之一，所以码必须是寄存的。
+    ----------------------------------------------------------------------------
     process (i_clk)
+        variable evc : std_logic_vector(3 downto 0);
     begin
         if rising_edge(i_clk) then
             if (i_rst = '1') then
-                sound_p <= "000";
+                sound_p  <= SND_NONE;
+                snd_hold <= (others => '0');
             else
-                -- register the code: it feeds buzzer_ctrl, whose oscillator then
-                -- drives the buzz pin, and chaining all of that combinationally
-                -- after the state decode was the reported critical path
-                sound_p <= sound_r;
+                -- ---- (1) 本拍的"瞬时事件"码 ----
+                -- ⚠️ 面积（第 14 工作阶段实测）：**按键类事件用一次 `case kdec` 译码**，
+                --    而不是"conf? rot? sel? move? press?"四个 elsif 级联 —— 后者每一级都要
+                --    一个 4 位 2:1 mux，实测更贵；按键到什么音效本来就是一张表。
+                if (st /= S_PLAYING) then
+                    evc := SND_NONE;
+                elsif (i_solved = '1') and (shuf_seen = '1') then
+                    evc := SND_CLEAR;                    -- 过关（上行）
+                elsif (i_all_lock = '1') and (shuf_seen = '1') then
+                    evc := SND_WRONG;                    -- 锁满了但画面不对（下行）
+                elsif (i_press = '1') then
+                    case kdec is
+                        when K_CONFIRM                => evc := SND_CONF;  -- 确认 → 变黄
+                        when K_ROT                    => evc := SND_ROT;   -- 旋转 90°
+                        when K_SELECT                 => evc := SND_SEL;   -- 选择零片
+                        when K_UP | K_DOWN | K_LEFT | K_RIGHT
+                                                      => evc := SND_MOVE;  -- 移动一步
+                        when others                   => evc := SND_KEY;   -- 开始/重开
+                    end case;
+                elsif (i_tick_1hz = '1') and (cnt <= 5) then
+                    evc := SND_TIME;                     -- 最后 5 秒每秒催一下
+                else
+                    evc := SND_NONE;
+                end if;
+
+                -- ---- (2) 保持 + 输出：事件码直接**写进输出寄存器**并保持 2 个旋律步 ----
+                -- ⚠️ 面积：这里**没有**单独的 `snd_lat` 寄存器 —— 输出 `sound_p` 本身
+                --    就是寄存器，保持期内不赋值即自动保持（少 4 个 FF + 一个 4 位 2:1 mux，
+                --    实测见 docs/05 §1）。
+                if (evc /= SND_NONE) then
+                    sound_p  <= evc;
+                    snd_hold <= "10";
+                elsif (snd_hold /= 0) then
+                    if (i_tick_4hz = '1') then
+                        snd_hold <= snd_hold - 1;
+                    end if;
+                    -- sound_p 保持：这是寄存器的"不赋值即保持"语义，不是遗漏
+                else
+                    case st is
+                        when S_SELF_TEST => sound_p <= SND_SELF;     -- 上电号角
+                        when S_PREVIEW   => sound_p <= SND_PREVIEW;  -- 预览提示
+                        when S_PLAYING   => sound_p <= SND_BGM;      -- ⭐ 全程背景音乐
+                        when S_WIN       => sound_p <= SND_WIN;      -- 通关长号角
+                        when S_FAIL      => sound_p <= SND_FAIL;     -- 失败下行
+                        when others      => sound_p <= SND_NONE;     -- 待机静音
+                    end case;
+                end if;
             end if;
         end if;
-    end process;
-
-    process (st, i_press, i_key, i_solved, i_all_lock, shuf_seen)
-    begin
-        case st is
-            when S_SELF_TEST => sound_r <= "001";        -- power-on jingle
-            when S_IDLE      => sound_r <= "000";        -- silent
-            when S_PREVIEW   => sound_r <= "010";        -- preview beep
-            when S_PLAYING =>
-                -- ERR-024: 判据齐备（散落已跑过）之前的残留状态不许出声
-                -- ⚠️ 审计（2026-10-09 第 11 工作阶段）如实记录：**这里只门控了
-                --    `shuf_seen`，没有同时要求 `i_shuf_busy='0'`**（状态判决那两条分支
-                --    是两者都要求的，docs/02/03 曾写成"胜负音效同样门控"）。
-                --    残留窗口真实存在：散落忙态的那几拍里，若上一局的 solved/all_lock
-                --    仍为 1，这里会提前报一声"对/错"。板上多半听不出来（蜂鸣器相位按
-                --    500 ms 走），因此**本轮不改 RTL**、只把文档改成与实现一致；
-                --    若要彻底对齐，把下面两个条件都加上 `and (i_shuf_busy = '0')` 即可。
-                if (i_solved = '1') and (shuf_seen = '1') then
-                    sound_r <= "011";                    -- correct: rising beep
-                elsif (i_all_lock = '1') and (shuf_seen = '1') then
-                    sound_r <= "100";                    -- wrong: falling beep
-                elsif (i_press = '1') then
-                    sound_r <= "101";                    -- key click
-                else
-                    sound_r <= "000";
-                end if;
-            when S_WIN  => sound_r <= "110";             -- victory jingle
-            when S_FAIL => sound_r <= "111";             -- failure jingle
-            when others => sound_r <= "000";
-        end case;
     end process;
 
     ----------------------------------------------------------------------------

@@ -273,6 +273,28 @@ package puzzle_pkg is
     constant L2_P3 : std_logic_vector(63 downto 0) :=
         "0000000000000000000000000000000000000000000001100000011100000001";  -- Q3 六格块 6 格
 
+    -- ⚠️ 2026-10-09（第 14 工作阶段，用户上板反馈）：**初始朝向** —— A4 旋转从"可选"变成"必需"。
+    --
+    -- 【用户原话】"旋转 90 度效果倒是有，但是旋转好像对游戏并没有什么影响，不旋转也能成功通关。"
+    -- 【根因】四块零片原实现都从 ori = "00"（ROM 里的原始朝向）开始散落，而四幅图案库
+    --   本来就是"只许平移"解出来的（scripts/check_geometry.py 的 tilings_no_rotation）——
+    --   也就是说**存在一条"一次都不转"的通关走法**，旋转键自然永远不是必需的。
+    -- 【修法】把初始朝向改成下面这个常量。它不是随手挑的：
+    --   在 `.tmp/opt/rot_req2.py` 里对 4^4 = 256 种朝向组合**穷举**（用与 RTL 逐格等价的
+    --   旋转参考模型），要求同时满足
+    --     ① 四幅图案 PAT0..PAT3 **都不存在**"四块都保持初始朝向"的恰好覆盖；
+    --     ② 第一关的 4x3 矩形**也不存在**这种覆盖；
+    --     ③ 允许旋转之后每幅都仍然可解（否则就是死局）。
+    --   实测 **162 组**满足；取其中"四块零片转 90° 后形状都真的变了"的一组（字典序最小）：
+    --       (o0,o1,o2,o3) = (1,1,2,2)  ->  **每一块都必须被玩家转过至少一次**才能铺满，
+    --       而且第一关与第二/三关可以**共用同一个常量**（不必按关卡选，所以代价 0 逻辑）。
+    --   代价：**0 LE** —— 原来这里写 `(others => '0')`，现在只换成一个常量。
+    --   离线证明：scripts/check_geometry.py 的"旋转必需性"检查；
+    --   端到端证明：sim/tb_puzzle_ctrl.py / sim/tb_puzzle_top.py 的走法计划里**必须出现
+    --   【旋转】按键**才铺得满（把计划里的旋转删掉就会失败）。
+    --   编码：块 k 占 ori(2k+1 downto 2k)；"01" = 顺时针 90°，"10" = 180°，"11" = 270°。
+    constant PIECE_ORI_INIT : std_logic_vector(7 downto 0) := "10" & "10" & "01" & "01";
+
     -- Target anchors: where each piece is EXPECTED to end up.  They describe a
     -- WITNESS arrangement and are verified against the pictures by
     -- scripts/check_geometry.py (which enumerates every exact tiling).
@@ -459,7 +481,40 @@ package puzzle_pkg is
     constant K_ROT     : std_logic_vector(3 downto 0) := "1000";  -- "rotate" 90° CW
 
     ----------------------------------------------------------------------------
-    -- 9. DISP 字位码：disp_format 往 i_data 里放的 4 位码 == seg_scan 的译码输入
+    -- 9. 音效码（提高要求 A1「不同情况下播放不同的提示音效或音乐」）
+    --
+    -- ⚠️ 2026-10-09（第 14 工作阶段，用户上板反馈"游戏过程中没有任何音效"）：
+    --    v1 只有 3 位码（8 个场景），而且**只有一个音高区在 392~1047 Hz**、
+    --    **对局中默认码是 000（静音）** —— 于是"玩的时候听不到任何声音"。
+    --    v2 把码加宽到 4 位（16 个场景），音高区上移到 C6~C7（1046~2093 Hz，
+    --    小蜂鸣器的共振区），并且**对局中默认码 = 背景音乐**（游戏全程有声）。
+    --    瞬时事件（按键/旋转/确认/过关/拼错/非法移动）由 game_fsm 的 2 位保持
+    --    计数器保持 2 个旋律步（250~500 ms）—— 否则单拍脉冲只发出 ~20 ns 毛刺，
+    --    等于听不见（这正是 v1 的"三个瞬时码听不见"）。
+    --
+    --    ⚠️ 这些码是 **game_fsm 与 buzzer_ctrl 之间的接口**：两边的码表必须一一对应，
+    --       改这里必须同时改 rtl/buzzer_ctrl.vhd 的 MEL_* 表与记录它的
+    --       sim/tb_buzzer_ctrl.py（该 tb 会逐条核对音高/节奏）。
+    ----------------------------------------------------------------------------
+    constant SND_NONE   : std_logic_vector(3 downto 0) := "0000";  -- 静音（待机）
+    constant SND_SELF   : std_logic_vector(3 downto 0) := "0001";  -- 自检/上电号角
+    constant SND_PREVIEW: std_logic_vector(3 downto 0) := "0010";  -- 预览倒计时
+    constant SND_CLEAR  : std_logic_vector(3 downto 0) := "0011";  -- 过关（上行）
+    constant SND_WRONG  : std_logic_vector(3 downto 0) := "0100";  -- 拼错（下行）
+    constant SND_KEY    : std_logic_vector(3 downto 0) := "0101";  -- 按键（短促）
+    constant SND_WIN    : std_logic_vector(3 downto 0) := "0110";  -- 通关长号角
+    constant SND_FAIL   : std_logic_vector(3 downto 0) := "0111";  -- 失败下行
+    constant SND_BGM    : std_logic_vector(3 downto 0) := "1000";  -- **对局背景音乐**
+    constant SND_ROT    : std_logic_vector(3 downto 0) := "1001";  -- 旋转 90°
+    constant SND_CONF   : std_logic_vector(3 downto 0) := "1010";  -- 确认 / 变黄锁定
+    constant SND_SEL    : std_logic_vector(3 downto 0) := "1011";  -- 选择零片
+    constant SND_MOVE   : std_logic_vector(3 downto 0) := "1100";  -- 移动一步
+    constant SND_NAK    : std_logic_vector(3 downto 0) := "1101";  -- 非法移动/旋转被拒
+    constant SND_TIME   : std_logic_vector(3 downto 0) := "1110";  -- 最后 5 秒催促
+    constant SND_LVL    : std_logic_vector(3 downto 0) := "1111";  -- 备用（换关起手）
+
+    ----------------------------------------------------------------------------
+    -- 10. DISP 字位码：disp_format 往 i_data 里放的 4 位码 == seg_scan 的译码输入
     --
     --   0x0..0x9 = 数字（BCD），0xF = 灭，**0xA..0xE = 结算画面用的字母**
     --   （2026-10-08 由用户拍板：胜利显示 "PASS"、失败显示 "FAIL"；此前是随意挑的

@@ -729,7 +729,7 @@ begin
                 chk_prowr <= (others => '0');
                 chk_rot <= '0';
                 chk_ori <= (others => '0');
-                ori     <= (others => '0');
+                ori     <= PIECE_ORI_INIT;   -- ⚠️ 第 14 工作阶段：不再是 0（A4 旋转必需）
                 mv_rot  <= '0';
                 rnd_step <= '0';
             else
@@ -746,7 +746,10 @@ begin
                         sh_att <= (others => '0');
                         sel    <= (others => '0');
                         locked <= (others => '0');
-                        ori    <= (others => '0');   -- A4：新一局全部回到原始朝向
+                        ori    <= PIECE_ORI_INIT;  -- ⚠️ 第 14 工作阶段：**不再是 0** ——
+                                                   -- A4 旋转变成必需（见 puzzle_pkg 的
+                                                   -- PIECE_ORI_INIT 与 `.tmp/opt/rot_req2.py`：
+                                                   -- 保持初始朝向**铺不满任何一幅图案**）
                     elsif (i_confirm = '1') then
                         case to_integer(sel) is
                             when 0      => locked(0) <= '1';
@@ -1065,7 +1068,14 @@ begin
                             end if;
                         else
                             if (chk_kind = '0') then
-                                null;                    -- move simply rejected
+                                -- move simply rejected
+                                -- ⚠️ 第 14 工作阶段：这里原来发过"被拒绝"的 1 拍脉冲
+                                --    （o_nak → game_fsm 的 SND_NAK 低鸣），想给"贴边旋转
+                                --    没反应"一个听得见的反馈。**实测 +5 LE，且这条链把最差
+                                --    路径拖到装不下（1268 → 1273，128 LABs）**，在 99%
+                                --    占用率下不划算，故撤销（负结果记在 docs/05 §1）。
+                                --    现在的"被拒绝"反馈仍是引擎静默不改画面。
+                                null;
                             elsif (sh_att = 15) then
                                 -- deterministic fallback so a scatter always ends
                                 sh_att <= (others => '0');

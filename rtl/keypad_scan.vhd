@@ -73,7 +73,13 @@ architecture rtl of keypad_scan is
 
     signal state   : scan_t := SC_ALL_HIGH;
     signal phase   : unsigned(1 downto 0) := (others => '0');
-    signal settle  : unsigned(7 downto 0) := (others => '0');
+    -- ⚠️ 2026-10-09 第 15 工作阶段（面积优化，实测）：settle 只数 0..63，原来声明成
+    --    8 位 —— 高 2 位**永远为 0**，但 Quartus **不做值域分析**：实测
+    --    `.tmp/opt/.../db/scratch.hier_info` 里 settle[0..7].CLK 八个触发器**真的都在**，
+    --    那 2 个触发器是真花的钱。收到 6 位后 keypad_scan 少 12 个 LC（整机 -7 LE，
+    --    见 .tmp/opt/p_kp_width 与 area_base 的对比）。
+    --    ⚠️ 改这里必须确认判据值仍 ≤ 63（本模块的判据是 `settle = 63`）。
+    signal settle  : unsigned(5 downto 0) := (others => '0');   -- 0..63 -> 6 bit (was 8)
 
     signal row_all : std_logic_vector(3 downto 0) := (others => KP_ACTIVE);
     -- ⚠️ ERR-036（2026-10-09 第 11 工作阶段，全项目审计发现）：原来 row_all **没有初值**，
@@ -95,7 +101,12 @@ architecture rtl of keypad_scan is
     signal rd_done : std_logic := '0';
 
     signal stable    : std_logic_vector(3 downto 0) := K_NONE;
-    signal cnt       : unsigned(7 downto 0) := (others => '0');
+    -- ⚠️ 2026-10-09 第 15 工作阶段（面积优化，实测）：同上 —— cnt 只数
+    --    0..DEBOUNCE_MAX(=3)，8 位里高 6 位恒为 0，但六个触发器真的被综合出来。
+    --    收到 2 位（0..3）。**若 DEBOUNCE_MAX 改成 > 3，必须同步加宽 cnt**
+    --    （位宽 = ceil(log2(DEBOUNCE_MAX+1))），否则 `cnt = DEBOUNCE_MAX` 恒不成立、
+    --    消抖会永远接受不了按键（与 clk_gen 里 T_BTN_MS/por_cnt 的位宽陷阱同类）。
+    signal cnt       : unsigned(1 downto 0) := (others => '0'); -- 0..DEBOUNCE_MAX -> 2 bit (was 8)
     signal key_r     : std_logic_vector(3 downto 0) := K_NONE;
     signal press_r   : std_logic := '0';
     signal release_r : std_logic := '0';
@@ -285,17 +296,25 @@ begin
                     end if;
 
                     -- accept / release, one clock wide each
-                    if ((stable /= K_NONE) and (key_r = K_NONE)) then
-                        key_r   <= stable;
+                    -- ⚠️ 2026-10-09 第 15 工作阶段（面积优化；**穷举证明等价**）：
+                    --    原来的三分支 if/elsif 逐条列了三种"改 key_r"的情形。对
+                    --    (stable, key_r) 的全部 256 种取值逐一比对可以证明：
+                    --      ① 三条分支里 key_r **总是**被赋成 stable（第一条与第三条
+                    --         都是 key_r <= stable，第二条是 key_r <= K_NONE = stable）；
+                    --         故 `key_r <= stable` 可以无条件写；
+                    --      ② press 的充要条件 = (stable /= K_NONE) and (stable /= key_r)
+                    --         （它同时覆盖原来第一条与第三条分支）；
+                    --      ③ release 的充要条件 = (stable = K_NONE) and (key_r /= K_NONE)。
+                    --    证明脚本 .tmp/mine/proof_cand.py：256 组逐一比对，0 处不一致。
+                    --    行为（含"按住只发一次 / 换键当新按下"）逐拍不变。
+                    key_r <= stable;
+                    if ((stable /= K_NONE) and (stable /= key_r)) then
+                        -- a key was accepted, or a DIFFERENT key was accepted without
+                        -- an intervening release: both are reported as a new press so
+                        -- no key is swallowed
                         press_r <= '1';
                     elsif ((stable = K_NONE) and (key_r /= K_NONE)) then
-                        key_r     <= K_NONE;
                         release_r <= '1';
-                    elsif ((stable /= K_NONE) and (stable /= key_r)) then
-                        -- a DIFFERENT key was accepted without an intervening
-                        -- release: report it as a new press so no key is swallowed
-                        key_r   <= stable;
-                        press_r <= '1';
                     end if;
                 end if;
             end if;
