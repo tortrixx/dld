@@ -495,23 +495,49 @@ package puzzle_pkg is
     --    ⚠️ 这些码是 **game_fsm 与 buzzer_ctrl 之间的接口**：两边的码表必须一一对应，
     --       改这里必须同时改 rtl/buzzer_ctrl.vhd 的 MEL_* 表与记录它的
     --       sim/tb_buzzer_ctrl.py（该 tb 会逐条核对音高/节奏）。
+    --
+    -- ⚠️ 2026-10-09（第 15 工作阶段，用户实机确认"音乐功能正常"后的**内容升级**）：
+    --    用户要求"不同场景的音乐要适配内容"：自检用**行业标准音效**、每关不同的
+    --    **热门游戏背景曲**、胜负音效要独特且符合行业习惯。于是本版：
+    --      · 自检 = **单声 ~1 kHz 短鸣**（PC 的 POST"一短声 = 自检通过"惯例）；
+    --      · **背景音乐按关卡分三首**（码 1000/1001/**1011**）——
+    --        这个 2 位选择**直接用现有寄存器拼线**：`"10" & lvl3 & level`
+    --        （第一关 1000 / 第二关 1001 / 第三关 1011），**0 个逻辑单元**；
+    --      · 原 `SND_NAK`（被拒绝音，代码里已撤销生成）与 `SND_LVL`（从未使用）
+    --        让位给第二/第三关的背景曲，码表仍是 16 个、不增位宽。
+    --    ⚠️ 改码表必须同步 `rtl/buzzer_ctrl.vhd`、`sim/tb_buzzer_ctrl.py`、
+    --       `sim/tb_game_fsm.py` 三处（本项目 ERR-022 的教训：码表漂移 = 陈旧绿）。
     ----------------------------------------------------------------------------
     constant SND_NONE   : std_logic_vector(3 downto 0) := "0000";  -- 静音（待机）
-    constant SND_SELF   : std_logic_vector(3 downto 0) := "0001";  -- 自检/上电号角
-    constant SND_PREVIEW: std_logic_vector(3 downto 0) := "0010";  -- 预览倒计时
-    constant SND_CLEAR  : std_logic_vector(3 downto 0) := "0011";  -- 过关（上行）
-    constant SND_WRONG  : std_logic_vector(3 downto 0) := "0100";  -- 拼错（下行）
+    constant SND_SELF   : std_logic_vector(3 downto 0) := "0001";  -- 自检：POST 单声短鸣
+    constant SND_PREVIEW: std_logic_vector(3 downto 0) := "0010";  -- 预览倒计时"准备"声
+    constant SND_CLEAR  : std_logic_vector(3 downto 0) := "0011";  -- 过关（短上行号角）
+    constant SND_WRONG  : std_logic_vector(3 downto 0) := "0100";  -- 拼错（下行警示）
     constant SND_KEY    : std_logic_vector(3 downto 0) := "0101";  -- 按键（短促）
-    constant SND_WIN    : std_logic_vector(3 downto 0) := "0110";  -- 通关长号角
-    constant SND_FAIL   : std_logic_vector(3 downto 0) := "0111";  -- 失败下行
-    constant SND_BGM    : std_logic_vector(3 downto 0) := "1000";  -- **对局背景音乐**
-    constant SND_ROT    : std_logic_vector(3 downto 0) := "1001";  -- 旋转 90°
-    constant SND_CONF   : std_logic_vector(3 downto 0) := "1010";  -- 确认 / 变黄锁定
-    constant SND_SEL    : std_logic_vector(3 downto 0) := "1011";  -- 选择零片
-    constant SND_MOVE   : std_logic_vector(3 downto 0) := "1100";  -- 移动一步
-    constant SND_NAK    : std_logic_vector(3 downto 0) := "1101";  -- 非法移动/旋转被拒
-    constant SND_TIME   : std_logic_vector(3 downto 0) := "1110";  -- 最后 5 秒催促
-    constant SND_LVL    : std_logic_vector(3 downto 0) := "1111";  -- 备用（换关起手）
+    constant SND_WIN    : std_logic_vector(3 downto 0) := "0110";  -- 通关长号角（胜利）
+    constant SND_FAIL   : std_logic_vector(3 downto 0) := "0111";  -- 失败 / Game Over
+    constant SND_BGM1   : std_logic_vector(3 downto 0) := "1000";  -- 第一关背景音乐
+    constant SND_BGM2   : std_logic_vector(3 downto 0) := "1001";  -- 第二关背景音乐
+    constant SND_BGM3   : std_logic_vector(3 downto 0) := "1011";  -- 第三关背景音乐
+    constant SND_ROT    : std_logic_vector(3 downto 0) := "1010";  -- 旋转 90°
+    constant SND_CONF   : std_logic_vector(3 downto 0) := "1100";  -- 确认 / 变黄锁定
+    constant SND_SEL    : std_logic_vector(3 downto 0) := "1101";  -- 选择零片
+    constant SND_MOVE   : std_logic_vector(3 downto 0) := "1110";  -- 移动一步
+    constant SND_TIME   : std_logic_vector(3 downto 0) := "1111";  -- ⚠️ 预留：原"最后 5 秒催促"，
+                                                                   --    第 15 工作阶段为**装箱**
+                                                                   --    删掉了它的生成（见
+                                                                   --    game_fsm 音效进程注释与
+                                                                   --    docs/05 §1.4）；buzzer
+                                                                   --    现在把 1111 映射成"移动"音
+    -- ⚠️ 背景音乐的码由 game_fsm **一位一位拼**出来（0 逻辑单元）：
+    --       `sound_p <= "10" & lvl3 & level`
+    --    第一关 (level=0,lvl3=0) → 1000；第二关 (1,0) → 1001；第三关 (1,1) → 1011。
+    --    为了让这三位**正好**是 `"10" & lvl3 & level`，第三关的曲子放在 1011，
+    --    旋转音挪到 **1010**（代码里 SEL/CONF/MOVE 仍是 1101/1100/1110）。
+    --    （两者都是光标类操作，听觉上本来就接近）。
+    --    ⚠️ 试过把 1010/1011 对调（让码表更好看），结果整机装箱从 127 LAB 掉到
+    --       128 LAB **装不下** —— 99% 占用率下改常量值本身就会扰动装箱，
+    --       所以码表按"能装下"为准，负结果见 docs/05 §1.4。
 
     ----------------------------------------------------------------------------
     -- 10. DISP 字位码：disp_format 往 i_data 里放的 4 位码 == seg_scan 的译码输入

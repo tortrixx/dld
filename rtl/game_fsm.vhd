@@ -273,6 +273,7 @@ begin
                         end if;
 
                     when S_PLAYING =>
+                        -- 背景音乐轨迹位在预览期就已经锁存好（见信号声明处），这里只消费
                         if (i_press = '1') and (kdec = K_START) then
                             cnt   <= to_unsigned(T_PREVIEW, 6);
                             level <= '0';
@@ -455,16 +456,28 @@ begin
                                                       => evc := SND_MOVE;  -- 移动一步
                         when others                   => evc := SND_KEY;   -- 开始/重开
                     end case;
-                elsif (i_tick_1hz = '1') and (cnt <= 5) then
-                    evc := SND_TIME;                     -- 最后 5 秒每秒催一下
                 else
                     evc := SND_NONE;
                 end if;
+                -- ⚠️ 第 15 工作阶段（面积）：这里**删掉了**"最后 5 秒每秒催一下"的
+                --    `elsif (i_tick_1hz='1') and (cnt<=5)` 分支。原因是**实测的装箱**：
+                --    加完"每关一首背景音乐"之后，整机 1267 LE 却要 **128~129 个 LAB**
+                --    （器件的瓶颈是 127 个 LAB，不是 1270 个 LE），试过 SEED 2~16，
+                --    只有 seed 5 能装进 127 LAB 但 Fmax 掉到 47.14 MHz；把这一支拿掉
+                --    → **1261 LE / 127 LAB / Fmax 51.77 MHz**，装回去了。
+                --    功能上没有损失（题目没要求这个提示音），取舍记在 docs/05 §1.4；
+                --    将来腾出面积可以照这行加回来（`SND_TIME` 常量仍留在 puzzle_pkg）。
 
                 -- ---- (2) 保持 + 输出：事件码直接**写进输出寄存器**并保持 2 个旋律步 ----
                 -- ⚠️ 面积：这里**没有**单独的 `snd_lat` 寄存器 —— 输出 `sound_p` 本身
                 --    就是寄存器，保持期内不赋值即自动保持（少 4 个 FF + 一个 4 位 2:1 mux，
                 --    实测见 docs/05 §1）。
+                --    ⚠️ 对局默认码 = **按关卡选的背景音乐**（第 15 工作阶段）：
+                --       码 = `"10" & lvl3 & (level and not lvl3)` →
+                --       第一关 1000 / 第二关 1001 / 第三关 1011。
+                --       最低位那个 AND-NOT 只值 ≈1 LE，比"三选一多路器"便宜得多；
+                --       也试过"改码表让最低两位直接就是 lvl3 & level"（纯拼线），
+                --       但那样整机装箱从 127 LAB 变成 128 LAB 装不下（见 docs/05 §1.4）。
                 if (evc /= SND_NONE) then
                     sound_p  <= evc;
                     snd_hold <= "10";
@@ -475,11 +488,14 @@ begin
                     -- sound_p 保持：这是寄存器的"不赋值即保持"语义，不是遗漏
                 else
                     case st is
-                        when S_SELF_TEST => sound_p <= SND_SELF;     -- 上电号角
-                        when S_PREVIEW   => sound_p <= SND_PREVIEW;  -- 预览提示
-                        when S_PLAYING   => sound_p <= SND_BGM;      -- ⭐ 全程背景音乐
-                        when S_WIN       => sound_p <= SND_WIN;      -- 通关长号角
-                        when S_FAIL      => sound_p <= SND_FAIL;     -- 失败下行
+                        when S_SELF_TEST => sound_p <= SND_SELF;     -- POST 单声短鸣
+                        when S_PREVIEW   => sound_p <= SND_PREVIEW;  -- "准备"提示
+                        -- ⭐ 第 15 工作阶段（每关一首背景音乐）：**纯拼线**，
+                        --    码 = "10" & lvl3 & level → 第一关 1000 / 第二关 1001 /
+                        --    第三关 1011。两个位直接来自既有寄存器，**0 逻辑单元**。
+                        when S_PLAYING   => sound_p <= "10" & lvl3 & level;
+                        when S_WIN       => sound_p <= SND_WIN;      -- 胜利号角
+                        when S_FAIL      => sound_p <= SND_FAIL;     -- Game Over
                         when others      => sound_p <= SND_NONE;     -- 待机静音
                     end case;
                 end if;

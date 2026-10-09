@@ -103,6 +103,14 @@ def qsf(top: str) -> str:
     #     面积 1254 → **1190 LE（−64）**（配合两拍流水后 1199 → **1200 LE**、
     #     Fmax 44.97 → **51.44 MHz**）；不打开时这条设置默认 Off（见 map.rpt）。
     L.append("set_global_assignment -name AUTO_RESOURCE_SHARING ON")
+    # ⚠️ 2026-10-09 第 15 工作阶段（音效内容升级）：**必须固定 fitter SEED = 7**。
+    #   器件的真实瓶颈是 **127 个 LAB**（不是 1270 个 LE）：这一版 1263 LE 在默认
+    #   seed 下要 128 个 LAB 装不下，而 seed 3/5/7/8 都能装进 127 个 LAB；
+    #   其中 **seed 7 的 Fmax 最高（53.36 MHz）**，seed 5 = 52.1、seed 8 = 51.71、
+    #   seed 3 = 51.28，全部满足 50 MHz 约束。历史：第 13 工作阶段记录过"seed 2/3/4/5/7
+    #   都比默认差" —— 那是**上一版 RTL**的结论，本轮改了音高表/乐句/码表之后
+    #   装箱格局变了，结论随之失效（教训：**装箱结论必须跟着 RTL 一起重测**）。
+    L.append("set_global_assignment -name SEED 7")
     L.append("")
     L.append("# ---------------- pins ----------------")
 
