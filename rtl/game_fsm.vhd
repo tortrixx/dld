@@ -53,7 +53,8 @@ entity game_fsm is
         i_rst      : in  std_logic;                      -- active HIGH
         i_sw       : in  std_logic;                      -- SW7 system switch
         i_tick_1hz : in  std_logic;
-        i_tick_2hz : in  std_logic;
+        -- ⚠️ 第 16 工作阶段：**删掉了 `i_tick_2hz` 端口**（从未使用；ERR-038 改成用
+        --    i_tick_4hz 翻转得到 2 Hz 方波）。留着它只会让顶层多一根死线。
         i_tick_4hz : in  std_logic;                      -- ERR-038：翻转它 → 2 Hz 方波
         i_press    : in  std_logic;                      -- 1-clock: a key was accepted
         i_key      : in  std_logic_vector(3 downto 0);   -- accepted key code
@@ -448,13 +449,18 @@ begin
                 elsif (i_all_lock = '1') and (shuf_seen = '1') then
                     evc := SND_WRONG;                    -- 锁满了但画面不对（下行）
                 elsif (i_press = '1') then
+                    -- ⚠️ 2026-10-09 第 16 工作阶段（用户上板反馈"移动键的音效听起来很乱，
+                    --    对局只要背景音乐"）：**上下左右（K_UP/K_DOWN/K_LEFT/K_RIGHT）、
+                    --    选择（K_SELECT）和开始/重开（others）都不再发声** ——
+                    --    这些键在一个 30~40 s 的关卡里会被按几十次，叠在背景音乐上就是噪音。
+                    --    保留两个**低频、有意义**的反馈音：
+                    --      · 确认（K_CONFIRM）：棋子变黄锁定，是状态变化；
+                    --      · 旋转（K_ROT）：A4 的关键操作，需要确认"转了"。
+                    --    注意这只是"不再发出这个码"，le 句表里的乐句仍保留（0 成本）。
                     case kdec is
                         when K_CONFIRM                => evc := SND_CONF;  -- 确认 → 变黄
                         when K_ROT                    => evc := SND_ROT;   -- 旋转 90°
-                        when K_SELECT                 => evc := SND_SEL;   -- 选择零片
-                        when K_UP | K_DOWN | K_LEFT | K_RIGHT
-                                                      => evc := SND_MOVE;  -- 移动一步
-                        when others                   => evc := SND_KEY;   -- 开始/重开
+                        when others                   => evc := SND_NONE;  -- 移动/选择/开始：静音
                     end case;
                 else
                     evc := SND_NONE;

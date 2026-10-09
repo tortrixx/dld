@@ -54,7 +54,7 @@
 
 CLK = 20.0
 T1 = 2000.0          # "1 Hz"节拍周期
-T2 = 1000.0          # tick_2hz（500 ms 一个脉冲；本 tb 只把它接进端口，不再当闪烁）
+T2 = 1000.0          # （已废弃）原 tick_2hz —— 第 16 工作阶段把该端口从 game_fsm 删掉了
 T4 = 500.0           # tick_4hz（250 ms，= 2 Hz 方波的半周期）—— B1"2 Hz 闪烁"用它
 GRID_PERIOD = 10.0
 
@@ -160,7 +160,7 @@ T_PLAY3 = 138020.0 + D3_SHIFT              # 第三局对局开始（推算：�
 SW_SPANS = [(0.0, T_SW_OFF2, 1), (T_SW_OFF2, T_SW_ON2, 0), (T_SW_ON2, T_SW_OFF3, 1),
             (T_SW_OFF3, T_SW_ON3, 0), (T_SW_ON3, DURATION, 1)]
 
-OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz", "i_tick_4hz",
+OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_4hz",
            "i_solved", "i_all_lock", "i_shuf_busy",
            "o_state", "o_level", "o_lvl3", "o_time", "o_blink", "o_go",
            "o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right", "o_rot",
@@ -209,7 +209,6 @@ def build(b):
     b.input_bit("i_rst")
     b.input_bit("i_sw")
     b.input_bit("i_tick_1hz")
-    b.input_bit("i_tick_2hz")
     b.input_bit("i_tick_4hz")
     b.input_bit("i_press")
     b.input_bus("i_key", 4)
@@ -243,7 +242,6 @@ def build(b):
     b.segments("i_rst", [(100.0, 1), (DURATION - 100.0, 0)])
     b.segments("i_sw", _tl(DURATION, [(a, b_, v) for (a, b_, v) in SW_SPANS], 1))
     b.segments("i_tick_1hz", _tick(DURATION, T1))
-    b.segments("i_tick_2hz", _tick(DURATION, T2))
     b.segments("i_tick_4hz", _tick(DURATION, T4))
 
     # i_press: 一个时钟宽的脉冲；i_key: 脉冲前后各放宽 100 ns（保证建立时间）
@@ -706,7 +704,7 @@ def check(vf):
     snd_cases = [(1000.0, "self", "自检 = POST 单声短鸣（行业标准）"),
                  (4500.0, "none", "待机静音"),
                  (6000.0, "preview", "预览提示音"),
-                 (16000.0, "bgm1", "★ 第一关对局中**背景音乐 1**（俄罗斯方块主题）"),
+                 (16000.0, "bgm1", "★ 第一关对局中**背景音乐 1**（马里奥 Overworld 主题）"),
                  (117900.0, "win", "通关胜利号角"),
                  (75500.0, "fail", "失败 / Game Over")]
     bad23, det23 = [], []
@@ -723,30 +721,38 @@ def check(vf):
         ("；".join(bad23) + " | " if bad23 else "") + "；".join(det23),
     ))
 
-    # ㉔ 瞬时事件的**保持**：单拍脉冲必须被保持 ≥1 个旋律步才听得见
-    ev = _snd_at(19000.0 + 200.0)          # 19000 按【上】→ o_move
-    back = _snd_at(20500.0)                # 2 个 tick_4hz 之后回到背景音乐
-    hold_seen = _bus_at(vf, "snd_hold", 19000.0 + 200.0)
+    # ㉔ 瞬时事件的**保持**：要发声的瞬时事件必须保持 ≥1 个旋律步才听得见。
+    #    ⚠️ 第 16 工作阶段起【上/下/左/右】不再发声（用户要求"只要背景音乐"），
+    #    所以这里改用**确认键**（t=21000 按下）来验保持语义。
+    ev = _snd_at(21000.0 + 200.0)          # 21000 按【确认】→ o_conf
+    back = _snd_at(21000.0 + 1500.0)       # 2 个 tick_4hz 之后回到背景音乐
+    hold_seen = _bus_at(vf, "snd_hold", 21000.0 + 200.0)
     res.append((
-        "㉔ ★A1v2 【瞬时事件保持】：对局中按【上】（t=19000）后，音效码变成 "
-        "1110（移动）并**保持 ≥1 个旋律步（250 ms）**，随后自动回到 1000（背景音乐 1）"
+        "㉔ ★A1v2 【瞬时事件保持】：对局中按【确认】（t=21000）后，音效码变成 "
+        "1100（锁定）并**保持 ≥1 个旋律步（250 ms）**，随后自动回到 1000（背景音乐 1）"
         "—— 旧实现只有 1 个时钟的脉冲（~20 ns），蜂鸣器来不及发声",
-        ev == SND["move"] and back == SND["bgm1"] and hold_seen not in (None, 0),
-        "t=19200 码=%s（期望 12）；snd_hold=%s（期望非 0）；t=20500 码=%s（期望 8，背景音乐）"
-        % (ev, hold_seen, back),
+        ev == SND["conf"] and back == SND["bgm1"] and hold_seen not in (None, 0),
+        "t=21200 码=%s（期望 %d）；snd_hold=%s（期望非 0）；t=22500 码=%s（期望 %d）"
+        % (ev, SND["conf"], hold_seen, back, SND["bgm1"]),
     ))
 
-    # ㉕ 三种按键给三种**不同**的码（A1"不同情况不同音效"）
+    # ㉕ ★A1v3 按键音效的**取舍**（用户第 16 工作阶段的要求）：
+    #    · 【确认】【旋转】保留各自的码（两个不同的反馈音）；
+    #    · 【选择】和【上下左右】**不再发声** —— 采样点上应当仍是背景音乐码。
     sel_c = _snd_at(17000.0 + 200.0)
     conf_c = _snd_at(21000.0 + 200.0)
     rot_c = _snd_at(29000.0 + 200.0)
+    mov_c = _snd_at(19000.0 + 200.0)
     res.append((
-        "㉕ ★A1v2 对局中【选择】/【确认】/【旋转】三键给出三个**互不相同**的码："
-        "1101 / 1100 / 1010（不是「所有键一个声音」）",
-        sel_c == SND["sel"] and conf_c == SND["conf"] and rot_c == SND["rot"]
-        and len({sel_c, conf_c, rot_c}) == 3,
-        "t=17200 选择=%s（期望 11）；t=21200 确认=%s（期望 10）；t=29200 旋转=%s（期望 9）"
-        % (sel_c, conf_c, rot_c),
+        "㉕ ★A1v3 按键音效：对局中【确认】=1100、【旋转】=1010（两个互不相同的反馈音）；"
+        "而【选择】（t=17000）与【上】（t=19000）**保持背景音乐码 1000 不变**"
+        "（用户原话：「上下左右不需要额外音效，不然听起来很乱」）",
+        conf_c == SND["conf"] and rot_c == SND["rot"] and len({conf_c, rot_c}) == 2
+        and sel_c == SND["bgm1"] and mov_c == SND["bgm1"],
+        "t=17200 选择=%s（期望 %d=背景音乐）；t=19200 上=%s（期望 %d）；"
+        "t=21200 确认=%s（期望 %d）；t=29200 旋转=%s（期望 %d）"
+        % (sel_c, SND["bgm1"], mov_c, SND["bgm1"],
+           conf_c, SND["conf"], rot_c, SND["rot"]),
     ))
 
     # ㉗ ★第 15 工作阶段：**每一关的背景音乐不同**（用户要求"不同关卡有不同背景曲"）

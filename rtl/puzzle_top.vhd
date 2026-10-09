@@ -98,7 +98,6 @@ architecture rtl of puzzle_top is
             i_rst       : in  std_logic;
             i_sw        : in  std_logic;
             i_tick_1hz  : in  std_logic;
-            i_tick_2hz  : in  std_logic;
             i_tick_4hz  : in  std_logic;
             i_press     : in  std_logic;
             i_key       : in  std_logic_vector(3 downto 0);
@@ -426,7 +425,6 @@ begin
             i_rst       => rst,
             i_sw        => sw7,
             i_tick_1hz  => t_1hz,
-            i_tick_2hz  => t_2hz,
             i_tick_4hz  => t_4hz,
             i_press     => press,
             i_key       => key,
