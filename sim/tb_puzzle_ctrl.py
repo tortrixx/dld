@@ -47,6 +47,7 @@
 """
 
 import pathlib
+import re
 
 CLK = 20.0
 TICK = 200.0
@@ -68,25 +69,45 @@ L1 = [
 NP = 3
 FALLBACK = [(0, 0), (0, 4), (4, 0), (4, 4)]      # RTL 里写死的回退锚点
 
-# ------------------------------------------------------------------ 第二关（4 块 2x2）
-# 【本阶段要回答什么】"第二关拼对了却出叉"（ERR-021）。
+# ------------------------------------------------------------------ 第二关（四块自拟异形零片）
+# 【本阶段要回答什么】"第二关拼对了却出叉"（ERR-021）+ 第 11 工作阶段的玩法升级。
 #
-# 第二关的四块零片**形状完全相同**（都是 2x2 方块），而玩家在屏幕上只看得到
-# 「四块零片的并集」：把 4 个方块填满 4x4 方块的 24 种摆法，**画面完全一样**。
-# 修复前的成功判据却是"每一块的锚点分别等于写死的 L2_TGT0..3"，于是 24 种等价
-# 摆法里有 23 种被判失败（`.tmp/analyze_win.py` 枚举出来的；一关的 2 种等价铺法
-# 同理，命中率只有 1/2 —— 只是"能不能过一关"更像运气，没被察觉）。
+# 判据必须是「拼出来的画面」而不是「每块的锚点编号」：
+#   · 旧实现四块是**完全相同**的 2x2 方块：填满 4x4 有 4! = 24 种等价摆法、画面逐格
+#     相同，而锚点判据只认 1 种 → 玩家拼对了也出叉（ERR-021，上板实测）；
+#   · 现在四块是**四种异形**（3/2/5/6 格，形状互不相同），而图案 3（阶梯）恰好有
+#     **2 种**铺法（scripts/check_geometry.py / check_plans.py 穷举证明）——
+#     这是一个**天然的**等价摆法用例：本 tb 故意摆成**第二种**铺法，画面与图案逐格
+#     一致，断言要求 o_solved = 1；任何"按锚点/编号判定"的实现都会在这里判错。
 #
-# 所以本阶段故意摆成 L2_TGT 的一个**置换**（P0 与 P2 交换锚点），画面仍是目标图案：
-#     目标锚点集 {(2,2),(2,4),(4,2),(4,4)}，实测锚点 ((4,2),(2,4),(2,2),(4,4))
-# 断言 ⑭ 要求 o_solved = 1（修复前为 0）；断言 ⑮ 是反例：全锁定但画面不对时必须为 0。
-L2_P = int("0000000000000000000000000000000000000000000000000000001100000011", 2)
-L2_TARGET = int("0000000000000000001111000011110000111100001111000000000000000000", 2)
-L2_TGT = [(2, 2), (2, 4), (4, 2), (4, 4)]        # puzzle_pkg.L2_TGT0..3
+# 零片掩码 / 包围盒 / 图案掩码都**从 rtl/puzzle_pkg.vhd 解析**（唯一真值源）；
+# 这些常量的"值对不对"由 sim/tb_piece_rom.py 拿设计意图独立验证，本 tb 只验引擎行为。
+_PKG_SRC = (pathlib.Path(__file__).resolve().parent.parent
+            / "rtl" / "puzzle_pkg.vhd").read_text(encoding="utf-8")
+
+
+def _pkg_mask(name):
+    m = re.search(r"constant\s+%s\s*:\s*std_logic_vector\(63 downto 0\)\s*:=\s*\"([01]{64})\""
+                  % name, _PKG_SRC, re.S)
+    if not m:
+        raise RuntimeError("puzzle_pkg.vhd 里找不到常量 %s" % name)
+    return int(m.group(1), 2)
+
+
+def _bbox(mask):
+    cs = [(r, c) for r in range(8) for c in range(8) if (mask >> (8 * r + c)) & 1]
+    return (max(r for r, _ in cs) + 1, max(c for _, c in cs) + 1)
+
+
+L2 = [dict(name="Q%d" % i, mask=_pkg_mask("L2_P%d" % i)) for i in range(4)]
+for _p in L2:
+    _p["h"], _p["w"] = _bbox(_p["mask"])
+L2_TARGET = _pkg_mask("L2_PAT3")             # 图案 3 = 阶梯（恰有两种铺法，见上）
 L2_FALLBACK = [(0, 0), (0, 4), (4, 0), (4, 4)]   # rnd_val 恒 0 -> 确定性回退锚点
 NP2 = 4
-# 置换后的落位（P0 与 P2 交换）：并集 == L2_TARGET，锚点元组 != L2_TGT
-L2_PERM = [(4, 2), (2, 4), (2, 2), (4, 4)]
+# 图案 3（阶梯）的两种铺法（槽 0..3），由 scripts/check_plans.py 穷举得到
+L2_TILING_A = [(2, 2), (2, 1), (3, 3), (3, 2)]
+L2_TILING_B = [(5, 3), (3, 5), (2, 2), (2, 1)]    # ← 本 tb 实际摆成这一种
 
 # ------------------------------------------------------------------ 时间表
 T_GO_1 = 1000.0          # 散落①：rnd_val 恒 12 -> 复现 ERR-018b（回退锚点未查重叠）
@@ -138,10 +159,13 @@ EDGE_PLAN = [
     ("sel", None, "选回 P0(横条)"),
     ("move", "R", "P0 右移"), ("move", "R", "P0 右移"), ("move", "R", "P0 右移"),
     ("move", "R", "第 4 次右移 —— 应与楼梯形重叠而被拒"),
-    ("confirm", None, "锁定 P0"),
-    ("sel", None, "选回 P0(横条)"), ("sel", None, "选回 P0(横条)"),
-    ("move", "R", "锁定后再移动 —— 应被拒绝"),
-    ("sel", None, "选中 P1(楼梯形) 以便看着色"),
+    ("confirm", None, "锁定 P0（B8：此后不可再选择、不可移动）"),
+    # ⚠️ ERR-035：锁定后的选择语义变了 —— sel 会**跳过已锁定的 P0**（原来会绕回 0）。
+    #    这里的两次【选择】因此是 1 -> 2 -> 1（P0 被跳过），下面的断言 ⑥/⑲ 检查这条。
+    ("sel", None, "ERR-035：按【选择】必须跳过已锁定的 P0"),
+    ("sel", None, "ERR-035：再按一次，仍在未锁定零片之间"),
+    ("move", "D", "此时选中的是未锁定的 P1(楼梯形)：移动应被接受（引擎不能因为别块锁定就卡住）"),
+    ("sel", None, "再选一次（仍必须跳过 P0），供着色采样"),
 ]
 CMDS_D, T_AFTER_D = _cmds(T_CMD_D, EDGE_PLAN)
 T_EDGE_DONE = T_AFTER_D + 2000.0        # 最后一次 move 之后的稳定采样点
@@ -153,27 +177,30 @@ T_L2 = T_SAMPLE_COLOR + 6000.0          # 切到第二关：i_level / 形状 / �
 T_GO_L2 = T_L2 + 20000.0                # 第二关散落（rnd_val 恒 0 → 16 次失败 → 回退锚点）
 T_CMD_L2 = T_GO_L2 + 20000.0            # 回退散落最坏 ~16x3 次尝试 ≈ 14 us，留 20 us 余量
 
-# 把四块 2x2 摆成 L2_TGT 的**置换**（P0 与 P2 交换）：
-#   P0 (0,0) -R R-> (0,2) -D D D D-> (4,2)
-#   P1 (0,4) -------- D D --------> (2,4)
-#   P2 (4,0) -U U-> (2,0) -R R----> (2,2)
-#   P3 (4,4) 原地不动               (4,4)
-# 每一步的中间位置都用独立几何模型验过不重叠（见 overlap_report 的复用）。
-L2_PLAN = [
-    ("move", "R", "P0 右移"), ("move", "R", "P0 右移到第 2 列"),
-    ("move", "D", "P0 下移"), ("move", "D", "P0 下移"),
-    ("move", "D", "P0 下移"), ("move", "D", "P0 下移到 (4,2)"),
-    ("sel", None, "选中 P1"),
-    ("move", "D", "P1 下移"), ("move", "D", "P1 下移到 (2,4)"),
-    ("sel", None, "选中 P2"),
-    ("move", "U", "P2 上移"), ("move", "U", "P2 上移"),
-    ("move", "R", "P2 右移"), ("move", "R", "P2 右移到 (2,2)"),
-    ("sel", None, "选中 P3"),
-    ("confirm", None, "锁定 P3"),
-    ("confirm", None, "锁定 P0"),
-    ("confirm", None, "锁定 P1"),
-    ("confirm", None, "锁定 P2 -> 四块全锁、并集 == 目标图案"),
-]
+# 把四块**异形**零片从确定性回退锚点 (0,0)(0,4)(4,0)(4,4) 摆成**图案 3（阶梯）的
+# 第二种铺法** L2_TILING_B（第一种是 L2_TILING_A）：
+#   P0 (0,0) R D D R R D -> (5,3)      P1 (0,4) R D -> ...
+#   P2 (4,0) U U U -> ...              P3 (4,4) L L L U L -> ...
+# 走法由 .tmp/opt/solve_ctrl_l2.py 用 A* 解出（状态 = 四块锚点，代价 = 按键次数），
+# 每一步的中间位置都满足引擎规则（不越界、与其余零片逐格不重叠）。
+# ⚠️ 故意摆**第二种**铺法：画面与图案逐格一致、但锚点元组与第一种不同 ——
+#    这正是 ERR-021 要证明的"判据看画面、不看编号"。离线复核：scripts/check_plans.py。
+L2_PLAN = [("move", "R", "P0 R"), ("move", "D", "P0 D"), ("move", "D", "P0 D"),
+    ("move", "R", "P0 R"), ("move", "R", "P0 R"), ("move", "D", "P0 D"),
+    ("sel", None, "选中下一块"), ("move", "R", "P1 R"), ("move", "D", "P1 D"),
+    ("sel", None, "选中下一块"), ("move", "U", "P2 U"), ("move", "U", "P2 U"),
+    ("move", "U", "P2 U"), ("sel", None, "选中下一块"), ("move", "L", "P3 L"),
+    ("move", "L", "P3 L"), ("move", "L", "P3 L"), ("move", "U", "P3 U"),
+    ("move", "L", "P3 L"), ("sel", None, "选中下一块"), ("move", "D", "P0 D"),
+    ("move", "D", "P0 D"), ("sel", None, "选中下一块"), ("move", "D", "P1 D"),
+    ("move", "D", "P1 D"), ("sel", None, "选中下一块"), ("move", "R", "P2 R"),
+    ("move", "R", "P2 R"), ("move", "D", "P2 D"), ("sel", None, "选中下一块"),
+    ("move", "U", "P3 U"), ("move", "R", "P3 R"),
+    # 四块都到位后逐块确认（sel 自动前进；4 次确认覆盖全部 4 块）
+    ("confirm", None, "锁定第 1 块"),
+    ("confirm", None, "锁定第 2 块"),
+    ("confirm", None, "锁定第 3 块"),
+    ("confirm", None, "锁定第 4 块 -> 全锁且并集 == 图案 3")]
 CMDS_L2, T_AFTER_L2 = _cmds(T_CMD_L2, L2_PLAN)
 T_L2_SETTLE = T_AFTER_L2 + 4000.0       # 一次整帧渲染 8 个 tick = 1600 ns，留 4 us
 
@@ -286,6 +313,16 @@ def union_cells(pos, npc, mask, hw):
     return u
 
 
+def union_cells_multi(pos, shapes):
+    """每块**形状各不相同**时（第二关四块异形），它们覆盖的格子并集。"""
+    u = set()
+    for i, sh in enumerate(shapes):
+        ar, ac = pos[i]
+        for (r, c) in mask_cells(sh["mask"]):
+            u.add((ar + r, ac + c))
+    return u
+
+
 # ---------------------------------------------------------------- 激励
 def _buried(b, name, width):
     for n in [name] + ["%s[%d]" % (name, i) for i in range(width)]:
@@ -371,7 +408,7 @@ def build(b):
     b.segments("i_rst", [(500.0, 1), (DURATION - 500.0, 0)])
     b.segments("i_tick", _tl(DURATION, [(t, t + CLK, 1)
                                         for t in _ticks(DURATION, TICK)], 0))
-    # 一关（3 块 1x3+3x3+2x2）→ 到 T_L2 切二关（4 块 2x2）
+    # 一关（3 块 1x3+3x3+2x2）→ 到 T_L2 切二关（4 块异形：3+2+5+6 格）
     b.segments("i_level", [(T_L2, 0), (DURATION - T_L2, 1)])
 
     # A2/S1 图案库下标：0 → 1 翻一次（见 T_PAT_CHG 的说明与断言 ⑰）
@@ -380,12 +417,12 @@ def build(b):
     # 形状 / 目标：两关各一段，T_L2 处整组切换（与 puzzle_top 里 piece_rom/pattern_rom
     # 受同一个 level 选择的行为一致）
     for i, sh in enumerate(L1):
-        b.bus_segments("i_sh%d" % i, [(T_L2, sh["mask"]), (DURATION - T_L2, L2_P)])
-        b.bus_segments("i_h%d" % i, [(T_L2, sh["h"]), (DURATION - T_L2, 2)])
-        b.bus_segments("i_w%d" % i, [(T_L2, sh["w"]), (DURATION - T_L2, 2)])
-    b.bus_segments("i_sh3", [(T_L2, 0), (DURATION - T_L2, L2_P)])
-    b.bus_segments("i_h3", [(T_L2, 0), (DURATION - T_L2, 2)])
-    b.bus_segments("i_w3", [(T_L2, 0), (DURATION - T_L2, 2)])
+        b.bus_segments("i_sh%d" % i, [(T_L2, sh["mask"]), (DURATION - T_L2, L2[i]["mask"])])
+        b.bus_segments("i_h%d" % i, [(T_L2, sh["h"]), (DURATION - T_L2, L2[i]["h"])])
+        b.bus_segments("i_w%d" % i, [(T_L2, sh["w"]), (DURATION - T_L2, L2[i]["w"])])
+    b.bus_segments("i_sh3", [(T_L2, 0), (DURATION - T_L2, L2[3]["mask"])])
+    b.bus_segments("i_h3", [(T_L2, 0), (DURATION - T_L2, L2[3]["h"])])
+    b.bus_segments("i_w3", [(T_L2, 0), (DURATION - T_L2, L2[3]["w"])])
     b.bus_segments("i_target", [(T_L2, L1_TGT_MASK), (DURATION - T_L2, L2_TARGET)])
 
     # rnd_val：① 恒 12（复现 ERR-018b）② 每 100 ns 换一个值（真随机）③ 恒 0（可复现）
@@ -490,14 +527,16 @@ def check(vf):
         % (posOv[0],),
     ))
 
-    # ⑥ 锁定后不可再移动
-    t_lk = T_CMD_D + 15 * CMD_STEP           # 锁定后那次右移（索引 14）之后
+    # ⑥ 锁定后不可再移动（B8）+ 移动**仍然作用于未锁定的零片**（修复不能过头）
+    t_lk = T_CMD_D + 15 * CMD_STEP           # 索引 14 的 move D 与索引 15 的 sel 之后
     posLk = split_pos(_bus(vf, "o_pos", t_lk))
     lockv = _bus(vf, "o_lock", t_lk)
     res.append((
-        "⑥ 确认锁定后该零片不能再移动（B8：确认后不可再选择及移动）",
-        posLk[0] == (0, 1) and (lockv & 1) == 1,
-        "锁定后再按右移：P0 仍为 %s；o_lock = %s" % (posLk[0], format(lockv, "04b")),
+        "⑥ 确认锁定后 P0 **锚点不再变化**（B8：不可移动）；同时未锁定的 P1 仍可被移动 —— "
+        "修复「跳过锁定零片」不能把普通移动一起卡死",
+        posLk[0] == (0, 1) and posLk[1] == (1, 4) and (lockv & 1) == 1,
+        "锁定并执行 1 次移动后：P0=%s（期望 (0,1) 不变）、P1=%s（期望 (1,4)：它是被选中的未锁定块）；"
+        "o_lock = %s" % (posLk[0], posLk[1], format(lockv, "04b")),
     ))
 
     # ⑦ 一关只有 3 块 -> 选择索引不出现 3
@@ -512,6 +551,27 @@ def check(vf):
         "⑦ 一关只有 3 块零片：选择索引只在 0..2 之间循环（不出现 3）",
         sel_vals == {0, 1, 2},
         "出现过的选择索引 = %s" % sorted(sel_vals),
+    ))
+
+    # ⑲ ★【ERR-035 回归判据】B8："确认后不可再选择" —— 锁定 P0 之后，
+    #    窗口内 o_sel_idx 必须**永不等于 0**，而且选择键仍能在未锁定零片之间循环。
+    t_a = T_CMD_D + 12 * CMD_STEP            # confirm 之后（sel 已自动前进）
+    t_b = T_SAMPLE_COLOR
+    seen, hit_locked, tt = set(), [], t_a
+    while tt < t_b:
+        v = _bus(vf, "o_sel_idx", tt)
+        if v is not None:
+            seen.add(v)
+            if v == 0:
+                hit_locked.append(tt)
+        tt += 50.0
+    res.append((
+        "⑲ ★【ERR-035 / B8 回归】P0 确认锁定后，【选择】键**永远不再选中它**"
+        "（o_sel_idx 全程 != 0），但仍能在未锁定的 P1/P2 之间循环 —— "
+        "修复前 sel 会绕回 0、把黄块显示成绿色（B8 明文「不可再选择及移动」）",
+        (not hit_locked) and seen == {1, 2},
+        "锁定后窗口内出现过的选择索引 = %s；命中锁定块 0 的采样数 = %d"
+        % (sorted(seen), len(hit_locked)),
     ))
 
     # ⑧ 着色：逐格与模型比对
@@ -529,7 +589,8 @@ def check(vf):
             cov |= cs
             if (lockCol >> i) & 1:
                 kc |= cs
-            if selCol == i:
+            # ERR-035：渲染器也把"已锁定"排除在"选中"之外（锁定 = 黄，永远不因选中变绿）
+            if selCol == i and not ((lockCol >> i) & 1):
                 selr |= cs
         tgt = mask_cells(L1_TGT_MASK)
         badc = []
@@ -646,45 +707,46 @@ def check(vf):
     # ================================================================
     tQ = mask_cells(L2_TARGET)
 
-    # ⑬ 二关散落：4 块 2x2 落在确定性回退锚点，未锁定时不许判成功
+    # ⑬ 二关散落：4 块异形落在确定性回退锚点，未锁定时不许判成功
     tQ0 = T_GO_L2 + 18000.0
     posQ = split_pos(_bus(vf, "o_pos", tQ0))
-    uQ = union_cells(posQ, NP2, L2_P, (2, 2))
+    uQ = union_cells_multi(posQ, L2)
     res.append((
-        "⑬ 第二关（i_level=1，4 块 2x2）散落完成：四块落在确定性回退锚点、互不重叠"
-        "（16 格），且未锁定时 o_solved = 0",
+        "⑬ 第二关（i_level=1，4 块异形 3+2+5+6 格）散落完成：四块落在确定性回退锚点、"
+        "互不重叠（16 格），且未锁定时 o_solved = 0",
         tuple(posQ[:NP2]) == tuple(L2_FALLBACK) and len(uQ) == 16 and uQ != tQ
         and _v(vf, "o_solved", tQ0) == "0",
         "锚点 = %s（期望 %s）；并集 %d 格；并集==目标 = %s；o_solved = %s"
         % (posQ[:NP2], L2_FALLBACK, len(uQ), uQ == tQ, _v(vf, "o_solved", tQ0)),
     ))
 
-    # ⑭ ★ ERR-021 的回归判据
+    # ⑭ ★ ERR-021 的回归判据（等价摆法：故意摆成图案 3 的第二种铺法）
     posP = split_pos(_bus(vf, "o_pos", T_L2_SETTLE))
-    uP = union_cells(posP, NP2, L2_P, (2, 2))
+    uP = union_cells_multi(posP, L2)
     lockP = _bus(vf, "o_lock", T_L2_SETTLE)
     solP = _v(vf, "o_solved", T_L2_SETTLE)
-    okP = (tuple(posP[:NP2]) == tuple(L2_PERM) and uP == tQ and lockP == 0xF
+    okP = (tuple(posP[:NP2]) == tuple(L2_TILING_B) and uP == tQ and lockP == 0xF
            and solP == "1")
-    detailP = ("锚点 = %s；写死的 L2_TGT = %s（本阶段故意摆成它的置换 %s）；"
-               "并集==目标图案 = %s（%d 格）；o_lock = %s；o_solved = %s"
-               % (posP[:NP2], L2_TGT, L2_PERM, uP == tQ, len(uP), format(lockP, "04b"), solP))
+    detailP = ("锚点 = %s（= 铺法 B）；铺法 A = %s（RTL 里**不再有任何锚点常量**，"
+               "判据只看画面）；并集==目标图案 = %s（%d 格）；o_lock = %s；o_solved = %s"
+               % (posP[:NP2], L2_TILING_A, uP == tQ, len(uP),
+                  format(lockP, "04b"), solP))
     if HAS_FRAME_VERDICT:
         fok = _v(vf, "frm_ok", T_L2_SETTLE)
         fva = _v(vf, "frm_valid", T_L2_SETTLE)
         okP = okP and fok == "1" and fva == "1"
         detailP += "；frm_ok = %s、frm_valid = %s（整帧画面判据）" % (fok, fva)
     res.append((
-        "⑭ ★【ERR-021 回归判据】第二关把四块摆成目标锚点集的**一个置换**"
+        "⑭ ★【ERR-021 回归判据】第二关把四块摆成图案 3（阶梯）的**第二种**铺法"
         "（画面与目标图案逐格一致、四块全锁）→ o_solved = 1。"
-        "修复前判据是「第 k 块的锚点 == 写死的 L2_TGT[k]」，四块形状完全相同、"
-        "24 种等价摆法里只认 1 种 → 玩家拼对了也出叉",
+        "任何「第 k 块的锚点 == 写死的第 k 个位置」的判据都会在这里判错 "
+        "（旧实现四块同形 2x2 时 24 种等价摆法只认 1 种）",
         okP, detailP,
     ))
 
     # ⑮ 反例：别把判据放宽成"永远成功"
     posW = split_pos(_bus(vf, "o_pos", T_L2B_SETTLE))
-    uW = union_cells(posW, NP2, L2_P, (2, 2))
+    uW = union_cells_multi(posW, L2)
     lockW = _bus(vf, "o_lock", T_L2B_SETTLE)
     solW = _v(vf, "o_solved", T_L2B_SETTLE)
     allW = _v(vf, "o_all_lock", T_L2B_SETTLE)

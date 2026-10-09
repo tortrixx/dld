@@ -80,6 +80,7 @@ architecture rtl of board_test_top is
             o_tick_200 : out std_logic;
             o_tick_100 : out std_logic;
             o_tick_2hz : out std_logic;
+        o_tick_4hz : out std_logic;
             o_tick_1hz : out std_logic;
             o_tick_40  : out std_logic
         );
@@ -214,6 +215,7 @@ begin
             o_tick_200 => t_200,
             o_tick_100 => t_100,
             o_tick_2hz => t_2hz,
+            o_tick_4hz => open,
             o_tick_1hz => t_1hz,
             o_tick_40  => t_40
         );
@@ -483,6 +485,15 @@ begin
     -- The driver takes one row at a time, so the 64-bit picture built above is
     -- sliced here.  Row 0 is the TOP logic row; dot_matrix_scan applies the
     -- measured physical row order.
+    --
+    -- ⚠️ ERR-039（2026-10-09 第 11 工作阶段，全项目审计发现）：这里原来把
+    --    row_idx=0 切到 px(63..56)。本文件的画图约定是 "bit = 8*row+col、
+    --    **bit0 = 左上角**"（同文件 :390 的注释就是这么写的），所以 px(63..56)
+    --    是**第 7 行（最下一行）** —— 自检画面被**上下镜像**显示了，而 puzzle_top
+    --    的同一段切片是 px(7..0)（正确）。已在下面改成 px(7..0)。
+    --    ⚠️ 上板复核：test 2 的红色标记（画面左上角那一点）现在应出现在
+    --    **左上角**；若仍出现在左下角，说明 dot_matrix_scan 的行序还要反过来
+    --    （那会连带影响整机画面方向）—— 这条要人工上板确认，见 HANDOFF §7⓪。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -496,24 +507,24 @@ begin
     end process;
 
     with to_integer(row_idx) select
-        row_r <= px_red(63 downto 56) when 0,
-                 px_red(55 downto 48) when 1,
-                 px_red(47 downto 40) when 2,
-                 px_red(39 downto 32) when 3,
-                 px_red(31 downto 24) when 4,
-                 px_red(23 downto 16) when 5,
-                 px_red(15 downto  8) when 6,
-                 px_red( 7 downto  0) when others;
+        row_r <= px_red( 7 downto  0) when 0,
+                 px_red(15 downto  8) when 1,
+                 px_red(23 downto 16) when 2,
+                 px_red(31 downto 24) when 3,
+                 px_red(39 downto 32) when 4,
+                 px_red(47 downto 40) when 5,
+                 px_red(55 downto 48) when 6,
+                 px_red(63 downto 56) when others;
 
     with to_integer(row_idx) select
-        row_g <= px_grn(63 downto 56) when 0,
-                 px_grn(55 downto 48) when 1,
-                 px_grn(47 downto 40) when 2,
-                 px_grn(39 downto 32) when 3,
-                 px_grn(31 downto 24) when 4,
-                 px_grn(23 downto 16) when 5,
-                 px_grn(15 downto  8) when 6,
-                 px_grn( 7 downto  0) when others;
+        row_g <= px_grn( 7 downto  0) when 0,
+                 px_grn(15 downto  8) when 1,
+                 px_grn(23 downto 16) when 2,
+                 px_grn(31 downto 24) when 3,
+                 px_grn(39 downto 32) when 4,
+                 px_grn(47 downto 40) when 5,
+                 px_grn(55 downto 48) when 6,
+                 px_grn(63 downto 56) when others;
 
     ----------------------------------------------------------------------------
     -- Dot-matrix driver

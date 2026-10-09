@@ -31,7 +31,8 @@
 
 CLK = 20.0
 T1 = 2000.0          # "1 Hz"节拍周期
-T2 = 1000.0          # "2 Hz"节拍周期
+T2 = 1000.0          # tick_2hz（500 ms 一个脉冲；本 tb 只把它接进端口，不再当闪烁）
+T4 = 500.0           # tick_4hz（250 ms，= 2 Hz 方波的半周期）—— B1"2 Hz 闪烁"用它
 GRID_PERIOD = 10.0
 DURATION = 192000.0
 
@@ -93,7 +94,7 @@ T_PLAY3 = 138020.0                        # 第三局对局开始（推算：见
 SW_SPANS = [(0.0, 120000.0, 1), (120000.0, T_SW_ON2, 0), (T_SW_ON2, 158000.0, 1),
             (158000.0, 160000.0, 0), (160000.0, DURATION, 1)]
 
-OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz",
+OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_2hz", "i_tick_4hz",
            "i_solved", "i_all_lock", "i_shuf_busy",
            "o_state", "o_level", "o_time", "o_blink", "o_go",
            "o_sel", "o_conf", "o_move", "o_up", "o_down", "o_left", "o_right",
@@ -142,6 +143,7 @@ def build(b):
     b.input_bit("i_sw")
     b.input_bit("i_tick_1hz")
     b.input_bit("i_tick_2hz")
+    b.input_bit("i_tick_4hz")
     b.input_bit("i_press")
     b.input_bus("i_key", 4)
     b.input_bit("i_solved")
@@ -172,6 +174,7 @@ def build(b):
     b.segments("i_sw", _tl(DURATION, [(a, b_, v) for (a, b_, v) in SW_SPANS], 1))
     b.segments("i_tick_1hz", _tick(DURATION, T1))
     b.segments("i_tick_2hz", _tick(DURATION, T2))
+    b.segments("i_tick_4hz", _tick(DURATION, T4))
 
     # i_press: 一个时钟宽的脉冲；i_key: 脉冲前后各放宽 100 ns（保证建立时间）
     b.segments("i_press", _tl(DURATION, [(t, t + CLK, 1) for (t, _k, _n) in PRESSES], 0))
@@ -390,7 +393,7 @@ def check(vf):
     ))
 
     # ⑮ o_blink 是 2 Hz 方波（电平），不是单时钟脉冲
-    n_t2 = int(DURATION // T2)
+    n_t4 = int(DURATION // T4)
     rises = _rises(vf, "o_blink")
     hi_w, last_rise = [], None
     for (t, v) in vf.trace("o_blink"):
@@ -401,11 +404,12 @@ def check(vf):
             last_rise = None
     med = sorted(hi_w)[len(hi_w) // 2] if hi_w else -1
     res.append((
-        "⑮ o_blink 是 2 Hz **方波**：每次节拍翻转一次、高电平持续半个周期（%.0f ns），"
-        "不是'单时钟脉冲当闪烁电平'（ERR-011）" % T2,
-        len(rises) >= 20 and hi_w and abs(med - T2) < 2 * CLK,
+        "⑮ o_blink 是**真正的 2 Hz 方波**：在 4 Hz 节拍上翻转一次，高电平持续半个 2 Hz "
+        "周期（= 250 ms = 4 Hz 节拍周期，本 tb 折算 %.0f ns），不是'单时钟脉冲当闪烁电平'"
+        "（ERR-011 / ERR-038）" % T4,
+        len(rises) >= 20 and hi_w and abs(med - T4) < 2 * CLK,
         "上升沿 %d 次（期望约 %d）；高电平宽度中位数=%.0f ns"
-        % (len(rises), n_t2 // 2, med),
+        % (len(rises), n_t4 // 2, med),
     ))
 
     # ================================================================

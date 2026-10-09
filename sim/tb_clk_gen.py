@@ -56,7 +56,8 @@ MS_1K = 1.0
 MS_200 = 5.0
 MS_100 = 10.0
 MS_40 = 25.0
-MS_2HZ = 500.0
+MS_2HZ = 500.0   # tick_2hz 周期（音效节奏；**不再当闪烁**，见 ERR-038）
+MS_4HZ = 250.0   # tick_4hz 周期（翻转它 → 真正的 2 Hz 方波）
 MS_1HZ = 1000.0
 
 # 上电复位 / 按键消抖的标称时长（课程要求：POR≈10ms，消抖 20ms）
@@ -72,10 +73,10 @@ RTL_PATCHES = [("puzzle_pkg.vhd", "50_000_000", "10_000")]
 
 # ---- 端口 + 中间信号（课件 p59 硬要求：波形里必须有中间信号）----
 PORTS = ["i_clk", "i_btn", "o_rst", "o_tick_1k", "o_tick_200", "o_tick_100",
-         "o_tick_40", "o_tick_2hz", "o_tick_1hz"]
+         "o_tick_40", "o_tick_2hz", "o_tick_4hz", "o_tick_1hz"]
 # 中间信号：名字 -> 位宽（1 = 单比特）；都是综合后网表里的寄存器节点
 BURIED = {
-    "t1": 1, "t2": 1, "t3": 1, "t6": 1,     # 各级 tick 寄存器
+    "t1": 1, "t2": 1, "t3": 1, "t6": 1, "t7": 1,   # 各级 tick 寄存器
     "c1": 16,                               # 第 1 级分频计数器（50MHz 档要 16 位）
     "por_cnt": 4,                           # 上电复位饱和计数器
     "d_press": 20,                          # 按键消抖移位寄存器
@@ -195,7 +196,7 @@ def check(vf):
     # ① 每个 tick 都是单时钟脉冲（不是电平、也不是两拍宽）
     # ---------------------------------------------------------
     ticks = ["o_tick_1k", "o_tick_200", "o_tick_100", "o_tick_40",
-             "o_tick_2hz", "o_tick_1hz"]
+             "o_tick_2hz", "o_tick_4hz", "o_tick_1hz"]
     bad, n_pulse = [], 0
     for n in ticks:
         for (lv, t0, dur) in _runs(vf, n):
@@ -207,7 +208,7 @@ def check(vf):
             if abs(dur - CLK_PERIOD) > 1e-9:
                 bad.append("%s @%.0fns 高电平 %.0fns（应 %.0fns）" % (n, t0, dur, CLK_PERIOD))
     res.append((
-        "① 6 档 tick 全是单 clk 周期脉冲（共检查 %d 个高电平段，宽度应恒为 %.0f ns）"
+        "① 7 档 tick 全是单 clk 周期脉冲（共检查 %d 个高电平段，宽度应恒为 %.0f ns）"
         % (n_pulse, CLK_PERIOD),
         (not bad) and n_pulse >= 12,
         "\n".join(bad[:5]) if bad else "全部 %d 个脉冲宽度 = %.0f ns = 1 个 clk 周期"
@@ -220,7 +221,8 @@ def check(vf):
     # ---------------------------------------------------------
     ms_clk = CLK_HZ_SIM / 1000.0
     cases = [("o_tick_1k", MS_1K), ("o_tick_200", MS_200), ("o_tick_100", MS_100),
-             ("o_tick_40", MS_40), ("o_tick_2hz", MS_2HZ), ("o_tick_1hz", MS_1HZ)]
+             ("o_tick_40", MS_40), ("o_tick_2hz", MS_2HZ), ("o_tick_4hz", MS_4HZ),
+             ("o_tick_1hz", MS_1HZ)]
     rows, ok_all = [], True
     for (n, ms) in cases:
         want = int(round(ms * ms_clk))
@@ -246,6 +248,7 @@ def check(vf):
               ("tick_100 / tick_200", p["o_tick_100"], p["o_tick_200"], 2),
               ("tick_40 / tick_200", p["o_tick_40"], p["o_tick_200"], 5),
               ("tick_2hz / tick_100", p["o_tick_2hz"], p["o_tick_100"], 50),
+        ("tick_4hz / tick_100", p["o_tick_4hz"], p["o_tick_100"], 25),
               ("tick_1hz / tick_100", p["o_tick_1hz"], p["o_tick_100"], 100)]
     bad = []
     for (name, a, b, want) in ratios:

@@ -42,10 +42,14 @@ begin
             o_w    <= ("011", "011", "010", "000");   -- 3, 3, 2, -
             o_n    <= "011";                          -- 3
         else
-            -- ---------------- level 2 : 4 pieces ------------------------------
+            -- ---------------- level 2 : 4 pieces (self-designed, 2026-10-09) -------
+            --   Q0 1x3 bar (3) / Q1 1x2 domino (2) / Q2 J-pentomino (5) /
+            --   Q3 six-cell block (6) = 16 cells, one orientation each (no rotation).
+            --   scripts/check_geometry.py enumerates every exact translation tiling
+            --   of each level-2 pattern with these four shapes.
             o_mask <= (L2_P0, L2_P1, L2_P2, L2_P3);
-            o_h    <= ("010", "010", "010", "010");   -- all 2
-            o_w    <= ("010", "010", "010", "010");   -- all 2
+            o_h    <= ("001", "010", "011", "011");   -- 1, 2, 3, 3
+            o_w    <= ("011", "001", "011", "011");   -- 3, 1, 3, 3
             o_n    <= "100";                          -- 4
         end if;
     end process;

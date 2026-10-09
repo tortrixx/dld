@@ -120,6 +120,7 @@ begin
             o_tick_200 => t_200,
             o_tick_100 => t_100,
             o_tick_2hz => t_2hz,
+            o_tick_4hz => open,
             o_tick_1hz => t_1hz,
             o_tick_40  => t_40
         );

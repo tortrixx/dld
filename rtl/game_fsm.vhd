@@ -36,12 +36,15 @@ entity game_fsm is
         i_sw       : in  std_logic;                      -- SW7 system switch
         i_tick_1hz : in  std_logic;
         i_tick_2hz : in  std_logic;
+        i_tick_4hz : in  std_logic;                      -- ERR-038：翻转它 → 2 Hz 方波
         i_press    : in  std_logic;                      -- 1-clock: a key was accepted
         i_key      : in  std_logic_vector(3 downto 0);   -- accepted key code
         o_sel      : out std_logic;                      -- 1-clock: cycle selection
         o_move     : out std_logic;                      -- 1-clock: move request
         o_conf     : out std_logic;                      -- 1-clock: lock request
-        o_go       : out std_logic;                      -- 1-clock: (re)scatter
+        o_go       : out std_logic;                      -- 散落请求：**电平**（请求/应答握手，
+                                                         -- 不是单拍脉冲；见下方注释与
+                                                         -- docs/02 §… 的 ERR-006/024 说明）
         o_up       : out std_logic;
         o_down     : out std_logic;
         o_left     : out std_logic;
@@ -130,10 +133,13 @@ architecture rtl of game_fsm is
     signal sound_r : std_logic_vector(2 downto 0) := "000";
     signal sound_p : std_logic_vector(2 downto 0) := "000";
     -- 2 Hz SQUARE WAVE for the blinks.
-    -- The tick from clk_gen is a ONE-CLOCK pulse (10 ms wide), so using
-    -- it directly as a blink LEVEL leaves the display lit for a single
-    -- clock per 500 ms -- effectively invisible.  This toggle turns it into
-    -- a 50 % duty square wave, which is what B1 ("flashing at 2 Hz") means.
+    -- ⚠️ ERR-038（2026-10-09 第 11 工作阶段，全项目审计发现）：B1 要求"以 **2 Hz** 闪烁"。
+    --    原来拿 tick_2hz（500 ms 一个脉冲）直接翻转，得到的是 **1 s 周期 = 1 Hz** 方波
+    --    —— 只有要求的一半，而注释/文档却按 2 Hz 记账（与 ERR-031 同类的 2 倍算错）。
+    --    现在改为在 **tick_4hz（250 ms）** 上翻转：高 250 ms / 低 250 ms → 整周期
+    --    500 ms = **真正的 2 Hz、50% 占空**。
+    --    为什么必须翻转而不是直接当电平用：tick 是**一个时钟宽的脉冲**（20 ns），
+    --    直接当电平只会每 250 ms 亮一个时钟，肉眼根本看不见。
     signal blink_r : std_logic := '0';
     signal kdec    : std_logic_vector(3 downto 0) := K_NONE;  -- decoded game key
     signal go_done : std_logic := '0';   -- scatter already requested this session
@@ -336,8 +342,8 @@ begin
         if rising_edge(i_clk) then
             if (i_rst = '1') then
                 blink_r <= '0';
-            elsif (i_tick_2hz = '1') then
-                blink_r <= not blink_r;      -- 2 Hz square wave, 50 % duty
+            elsif (i_tick_4hz = '1') then
+                blink_r <= not blink_r;      -- 4 Hz 节拍翻转 → 2 Hz 方波（ERR-038）
             end if;
         end if;
     end process;
@@ -364,6 +370,13 @@ begin
             when S_PREVIEW   => sound_r <= "010";        -- preview beep
             when S_PLAYING =>
                 -- ERR-024: 判据齐备（散落已跑过）之前的残留状态不许出声
+                -- ⚠️ 审计（2026-10-09 第 11 工作阶段）如实记录：**这里只门控了
+                --    `shuf_seen`，没有同时要求 `i_shuf_busy='0'`**（状态判决那两条分支
+                --    是两者都要求的，docs/02/03 曾写成"胜负音效同样门控"）。
+                --    残留窗口真实存在：散落忙态的那几拍里，若上一局的 solved/all_lock
+                --    仍为 1，这里会提前报一声"对/错"。板上多半听不出来（蜂鸣器相位按
+                --    500 ms 走），因此**本轮不改 RTL**、只把文档改成与实现一致；
+                --    若要彻底对齐，把下面两个条件都加上 `and (i_shuf_busy = '0')` 即可。
                 if (i_solved = '1') and (shuf_seen = '1') then
                     sound_r <= "011";                    -- correct: rising beep
                 elsif (i_all_lock = '1') and (shuf_seen = '1') then

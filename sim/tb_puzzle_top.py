@@ -28,35 +28,43 @@
 
 【实测时间刻度（CLK_HZ=80000，时钟 20 ns）】
     tick_1k  = 80 拍 = 1.6 us      tick_200 = 400 拍 = 8 us
-    tick_1hz = 1.6 ms（"1 秒"）    tick_2hz = 800 us（2 Hz 半周期）
+    tick_1hz = 1.6 ms（"1 秒"）    tick_2hz = 800 us（500 ms）    tick_4hz = 400 us（250 ms）
+    ⚠️ ERR-038：**2 Hz 闪烁**是用 tick_4hz（250 ms）翻转出来的（半周期 400 us）；
+       tick_2hz 只作音效节奏 —— 之前把 tick_2hz 当"2 Hz 半周期"是 2 倍记账错误。
     上电复位 ~16 us；矩阵扫描 SETTLE 拍在 32 + 16k us。
 """
 
 import os
 
 # ============================================================================
-# A2/S1 第二关图案库 —— 本 tb 的两种验证模式
+# A2/S1 第二关图案库 + 第 11 工作阶段异形零片 —— 本 tb 的两种验证模式
 #
 #   模式 A（默认，DLD_L2PAT 未设或 =0）：
 #       随机源钉 0（见 RTL_PATCHES）→ 开局锁存的 pat_sel = "00" → 第二关用**图案 0**
-#       （= 原来的 4x4 方块）。于是 ERR-021/023 的整机证据原样有效，同时验证
+#       （= 4x4 方块"田"）。于是 ERR-021/023 的整机证据原样有效，同时验证
 #       「锁存值 → pattern_rom → 预览画面 / 成功判据」整条链路。
 #
-#   模式 B（DLD_L2PAT=3）：
-#       把顶层那条锁存语句补丁成 pat_sel <= "11" → 第二关换成**图案 3（S/Z 锯齿）**，
+#   模式 B（DLD_L2PAT=2）：
+#       把顶层那条锁存语句补丁成 pat_sel <= "10" → 第二关换成**图案 2（S/Z 锯齿）**，
 #       并用一份为它写好的走法计划**端到端拼通**（照样出绿对勾 + PASS）。
 #       这是 A2 的关键证据："重开一局换了图案，游戏照样能玩通、判据照样成立"。
-#       图案 1/2 的掩码由 tb_pattern_rom（逐 (level,pat,row) 精确比对）与
-#       scripts/check_geometry.py（逐图案穷举可铺性）验证，不再重复跑整机。
+#       图案 1/3 的掩码由 tb_pattern_rom（逐 (level,pat,row) 精确比对）与
+#       scripts/check_geometry.py（逐图案只许平移的穷举可铺性）验证，不再重复跑整机。
+#
+#   零片本身也换了：第二关四块是**四种异形**（1x3 横条 3 格 / 1x2 竖条 2 格 /
+#   J 形 5 格 / 六格块 6 格，共 16 格），不再是四块 2x2 方块 —— 玩法从"随便填满方块"
+#   升级成真的要拼出轮廓（图案 0/1/2 各只有 1 种铺法，图案 3 有 2 种）。
+#   走法计划由 .tmp/opt/solve_l2plan.py 用 A*（代价 = 按键次数）解出，
+#   再由 scripts/check_plans.py 用引擎规则离线复核（零次被拒、并集 == 图案）。
 #
 #   用法：python scripts/sim.py run puzzle_top                 # 模式 A
-#         $env:DLD_L2PAT=3; python scripts/sim.py run puzzle_top # 模式 B
+#         $env:DLD_L2PAT=2; python scripts/sim.py run puzzle_top # 模式 B
 #   （两种模式的轮次记录分别落在 sim/rounds/puzzle_top/rNN.json，
 #     json 里的 rtl_patches 会如实记下模式 B 用的那处补丁。）
 # ============================================================================
 FORCE_PAT = int(os.environ.get("DLD_L2PAT", "0") or "0")
-if FORCE_PAT not in (0, 3):
-    raise SystemExit("✗ DLD_L2PAT 只支持 0（模式 A）或 3（模式 B，图案 3 = S/Z）")
+if FORCE_PAT not in (0, 2):
+    raise SystemExit("✗ DLD_L2PAT 只支持 0（模式 A，田）或 2（模式 B，S/Z 锯齿）")
 
 CLK = 20.0
 GRID_PERIOD = 10.0
@@ -72,23 +80,27 @@ if FORCE_PAT != 0:
     RTL_PATCHES.append(("puzzle_top.vhd", "pat_sel <= rnd_val(1 downto 0);",
                         'pat_sel <= "%s";' % format(FORCE_PAT, "02b")))
 
-# ---- 第二关图案库：**块坐标**（与 rtl/puzzle_pkg.vhd 一致；tb 独立按坐标生成掩码，
-#      不抄 64 位字面量，否则就是把 RTL 复述一遍）--------------------------------
-L2_BLOCKS = {
-    0: [(1, 1), (1, 2), (2, 1), (2, 2)],       # 田（= 原第二关图案）
-    1: [(1, 1), (1, 2), (1, 3), (2, 2)],       # T
-    2: [(1, 1), (2, 1), (3, 1), (3, 2)],       # L
-    3: [(0, 0), (0, 1), (1, 1), (1, 2)],       # S/Z
+# ---- 第二关图案库：tb **独立**用 8x8 ASCII 图描述期望图案（不抄 RTL 字面量，
+#      否则就是把 RTL 复述一遍，抄错了也看不出来）--------------------------------
+L2_ASCII = {
+    0: ["........", "........", "..####..", "..####..",
+        "..####..", "..####..", "........", "........"],   # 田 4x4 实心方块
+    1: ["........", "........", "..###...", ".#####..",
+        ".#####..", "..###...", "........", "........"],   # 十 胖十字
+    2: ["........", "........", ".####...", "...####.",
+        "...####.", ".####...", "........", "........"],   # S/Z 锯齿
+    3: ["........", "........", ".####...", ".#####..",
+        "..####..", "...###..", "........", "........"],   # 阶梯
 }
 
 
 def pat_rows(k):
     """图案第 k 幅的 8 行 8 位列掩码（bit = 8*行 + 列，bit0 = 左上角）。"""
     m = 0
-    for (b, c) in L2_BLOCKS[k]:
-        for dr in (0, 1):
-            for dc in (0, 1):
-                m |= 1 << (8 * (2 * b + dr) + (2 * c + dc))
+    for r, line in enumerate(L2_ASCII[k]):
+        for c, ch in enumerate(line):
+            if ch == "#":
+                m |= 1 << (8 * r + c)
     return [(m >> (8 * r)) & 0xFF for r in range(8)]
 
 T200 = 8000.0                      # tick_200 周期 (ns)
@@ -164,24 +176,26 @@ PLAN_L1 = (["select"] + ["down"] * 3 + ["left"] * 2 +
            ["select"] + ["down"] * 2 + ["right"] * 3 + ["up"] * 2 +
            ["select"] + ["down"] * 2 + ["right"] * 2 +
            ["confirm"] * 3)
-# 二关（模式 A / 图案 0）：四块 2x2 摆成目标锚点集的**一个置换**（P0 与 P2 交换）
-#       —— 画面仍是目标图案，但锚点元组 != 写死的 L2_TGT，正是 ERR-021 的回归点
-PLAN_L2_PAT0 = (["right"] * 2 + ["down"] * 4 +
-                ["select"] + ["down"] * 2 +
-                ["select"] + ["up"] * 2 + ["right"] * 2 +
-                ["select"] + ["confirm"] * 4)
-# 二关（模式 B / 图案 3 = S/Z）：回退锚点 (0,0)(0,4)(4,0)(4,4) → 目标块锚点
-#       (0,0)(0,2)(2,2)(2,4)。逐步走位（每步都核对过不越界、不重叠）：
-#         sel=0 P0 (0,0) 原地 → confirm（锁 P0，sel→1）
-#         P1 (0,4) 左x2 → (0,2) → confirm（sel→2）
-#         P2 (4,0) 上x2 → (2,0) 右x2 → (2,2) → confirm（sel→3）
-#         P3 (4,4) 上x2 → (2,4) → confirm（四块全锁、并集 == 图案 3）
-PLAN_L2_PAT3 = (["confirm"] + ["left"] * 2 + ["confirm"] +
-                ["up"] * 2 + ["right"] * 2 + ["confirm"] +
-                ["up"] * 2 + ["confirm"])
-PLAN_L2 = PLAN_L2_PAT3 if FORCE_PAT == 3 else PLAN_L2_PAT0
-# 第二关拼完后的锚点元组（断言 ⑪ 用）；P0..P3 各自 (行,列) 打包成 1 字节
-L2_EXPECT_POS = {0: 0x42242244, 3: 0x00022224}[FORCE_PAT]
+# 二关（模式 A / 图案 0 = 田）：四块**异形**零片从回退锚点走到图案 0 的唯一铺法
+#       （槽 0..3 → (5,3) (4,2) (2,3) (2,2)）。走法由 .tmp/opt/solve_l2plan.py 的
+#       A*（代价 = 按键次数）解出 → 42 条命令；scripts/check_plans.py 用引擎规则离线
+#       复核过：零次被拒、并集逐格 == 图案。
+PLAN_L2_PAT0 = (["select"] + ["left"] + ["down"] * 4 + ["select"] + ["up"] * 3 +
+                ["right"] * 3 + ["down"] + ["select"] * 2 + ["down"] * 6 + ["select"] +
+                ["left"] * 2 + ["select"] * 2 + ["left"] * 2 + ["up"] * 2 + ["select"] +
+                ["right"] * 2 + ["up"] + ["right"] + ["select"] + ["right"] +
+                ["confirm"] * 4)
+# 二关（模式 B / 图案 2 = S/Z）：同法解出 → 唯一铺法（槽 0..3 → (5,1) (4,4) (2,1) (2,4)），
+#       36 条命令，同样离线复核过零次被拒。
+PLAN_L2_PAT2 = (["right"] + ["down"] * 3 + ["right"] * 2 + ["select"] + ["down"] +
+                ["select"] + ["up"] * 4 + ["right"] + ["select"] + ["right"] +
+                ["select"] + ["left"] * 2 + ["down"] * 2 + ["select"] + ["down"] * 3 +
+                ["select"] + ["down"] * 2 + ["select"] + ["up"] * 2 + ["left"] +
+                ["confirm"] * 4)
+PLAN_L2 = PLAN_L2_PAT2 if FORCE_PAT == 2 else PLAN_L2_PAT0
+# 第二关拼完后的锚点元组（断言 ⑪ 用）；槽 0..3 各自 (行,列) 打包成 1 字节
+#   （与 scripts/check_plans.py 的 L2_EXPECT_POS 必须一致）
+L2_EXPECT_POS = {0: 0x53422322, 2: 0x51442124}[FORCE_PAT]
 
 HOLD = 22          # 按住多少轮（消抖要 4 轮，留 18 轮余量）
 GAP_NEW = 25       # 换一个键：间隔轮数（松开 3 轮即可，因为换了键号）
@@ -239,7 +253,7 @@ T_L1_CONF = S0 + (KEYS_L1[-1][0] + 24) * ROUND       # 第一关最后一次确�
 T_L1_PREVIEW = T_L1_CONF + 1_000_000.0               # 应已进入第二关预览（预览 8 ms）
 T_L2_CONF = S0 + (KEYS_L2[-1][0] + 24) * ROUND       # 第二关最后一次确认之后
 T_WIN = T_L2_CONF + 1_000_000.0                      # 应已进入胜利状态
-# 结算画面"先闪 2 个 2 Hz 周期（4×800 us = 3.2 ms）再常亮"，所以要留出观察常亮的窗口
+# 结算画面"先闪 2 个 2 Hz 周期（4×400 us = 1.6 ms）再常亮"，所以要留出观察常亮的窗口
 DURATION = T_WIN + 6_000_000.0
 
 # 胜利结算画面（设计值；tb 里独立抄一份当参考模型）：**粗绿对勾**（只点绿列），逐行掩码
@@ -260,8 +274,15 @@ FAIL_ROWS = [0x00, 0xC3, 0x66, 0x3C, 0x3C, 0x66, 0xC3, 0x00]
 # 目的：B9/B10 的**失败图案**是基本要求，而第三场景永远以胜利收场 —— 改版前
 #       顶层的失败分支没有任何仿真断言覆盖。这里补上：散落后（rnd 钉 0 → 回退锚点）
 #       直接确认三次 → 全部锁定但画面不对 → 失败图案（红色叉）。
-K3_START = 4950 + DB_SHIFT                           # 胜利画面上按【开始】（必须晚于
-                                                    # 结算画面的观察窗，见 ⑬⑭：需 >3.2 ms）
+# ⚠️ ERR-034（2026-10-09 第 11 工作阶段）：起点**必须从走法计划末尾推导**，不能写死。
+#   原来写的是 `4950 + DB_SHIFT`（按"第二关 27 条命令"标定的）。第 11 工作阶段第二关
+#   走法变成 **42 条命令**（异形零片要走的路更长），计划末尾比原来晚约 300 轮 —— 于是
+#   第四场景的【开始】会在**第三场景还没拼完**时按下去，状态序列变成
+#   "…→ 预览 → 对局 → 预览 → 对局 → **失败**"（r25 第一次跑就是这个假失败；
+#   波形复盘见 .tmp/opt/probe_top.py：按【开始】那一刻 pos 还在动、只锁了 1 块）。
+#   现在改为：最后一次确认 + 消抖余量 24 轮 + **320 轮观察窗**（= 5.12 ms > 断言 ⑬⑭
+#   需要的 4.6 ms：2 Hz 闪 2 个周期 1.6 ms 再常亮 + 余量）。
+K3_START = KEYS_L2[-1][0] + 24 + 320
 K3_CONF = K3_START + 21 + 500 + 80                  # 预览 5 s(=500 轮) 之后再按确认
 KEYS_FAIL, _k_after_fail = _plan_keys(K3_CONF, ["confirm"] * 3)
 KEY_PLAN3 = ([(K3_START, K3_START + HOLD - 1, 0, 1, "start(第四场景)")] + KEYS_FAIL)
@@ -466,7 +487,7 @@ def check(vf):
                 n_dark += 1
             else:
                 n_other += 1
-        t += 20_000.0                       # 20 us 一个采样点（远小于 800 us 半周期）
+        t += 20_000.0                       # 20 us 一个采样点（远小于 400 us 半周期）
     _, _, _, dig_s = scan_panel(vf, T_SELFTEST[0], T_SELFTEST[1], 2000.0)
     all8 = all("8" in [DIGITS.get(s, "?") for s in dig_s.get(i, set())] for i in range(8))
     res.append((
@@ -623,7 +644,7 @@ def check(vf):
     ))
 
     # ⑯ ★ A2/S1：第二关预览显示的必须是**图案库里被选中的那一幅**
-    #    （模式 A：pat_sel="00" → 图案 0 = 原 4x4 方块；模式 B：pat_sel="11" → 图案 3 = S/Z）
+    #    （模式 A：pat_sel="00" → 图案 0 = 田/4x4 方块；模式 B：pat_sel="10" → 图案 2 = S/Z）
     #    这条断言是「开局锁存 pat_sel → pattern_rom 按 (level,pat) 选图案 → 顶层预览切片」
     #    整条链路的回归判据：latch 错、接线错、行切片错位，逐行掩码立刻不符。
     wantP = pat_rows(FORCE_PAT)
@@ -639,14 +660,14 @@ def check(vf):
            [hex(x) for x in gP]),
     ))
 
-    # ⑪ ★ 第二关：四块 2x2 摆成目标图案的块锚点集 + 全确认 → 胜利
+    # ⑪ ★ 第二关：四块**异形**零片拼成图案 + 全确认 → 胜利
     pos2 = vf.bus_value_at("u_puzzle|pos", T_L2_CONF)
     lock2 = vf.bus_value_at("u_puzzle|locked", T_L2_CONF)
     st_l2 = vf.bus_value_at("u_fsm|st", T_WIN)
     res.append((
-        "⑪ ★【整机·第二关】四块摆成**图案 %d**（%s）的块锚点集（画面与目标图案逐格一致）"
-        "并全部确认 → **胜利状态**（B10；ERR-021 的整机回归；图案 0 还额外覆盖"
-        "「锚点元组 != 写死的 L2_TGT 的置换」）"
+        "⑪ ★【整机·第二关】四块异形零片（3+2+5+6 格）拼成**图案 %d**（%s）的"
+        "**唯一铺法**（画面与目标图案逐格一致）并全部确认 → **胜利状态**"
+        "（B10；ERR-021 的整机回归：判据只看画面，RTL 里没有任何锚点常量）"
         % (FORCE_PAT, "田/4x4 方块" if FORCE_PAT == 0 else "S/Z 锯齿"),
         pos2 == L2_EXPECT_POS and lock2 == 0xF and st_l2 == 4,
         "确认后锚点=0x%s（期望 0x%08X）、locked=%s；1 ms 后 o_state=%s（4=胜利）"

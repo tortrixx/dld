@@ -15,14 +15,18 @@
            P3 = L 形 3 格    {(0,1),(1,0),(1,1)}
        —— 这两边（PDF 解码 vs `rtl/puzzle_pkg.vhd` 的位串）是**两份独立材料**，
           对上了才说明 RTL 常量没抄错。
-    ② 第二关四块 2x2 方块是自设计图案：`bbox=2x2 且 4 格` ⇒ 只能是实心 2x2。
+    ② 第二关四块零片是**本工程自拟的异形**（2026-10-09 第 11 工作阶段，题目 B10 只要求
+       "零片图案自拟、位置随机、不能重叠"，形状完全自由）。独立参考是**设计意图**
+       （下面 `L2_SHAPES_DESIGN` 的坐标集合），RTL 位串要与它对上：
+           Q0 = 1x3 横条 3 格 / Q1 = 1x2 竖条 2 格 / Q2 = J 形 5 格 / Q3 = 六格块 6 格
+       共 3+2+5+6 = 16 格 = 目标图案格数（面积守恒）。
     ③ **可解性**（最强的一条）：把实测掩码当形状，程序化穷举
        「每块恰用一次 / 两两不重叠 / 并集 == 目标」：
          · 第一关在 4x3 矩形（第 2~5 行 x 第 2~4 列，12 格）内**恰 2 种**铺法
            （`.ref/solve_l1.py` 的已知结论；其中 (2,2)(3,2)(4,3) 就是 pkg 的
             L1_TGT0/1/2）；
-         · 第二关在 4x4 方块（16 格）内锚点集合**唯一** = {(2,2),(2,4),(4,2),(4,4)}
-           （= pkg 的 L2_TGT0..3）。
+         · 第二关在 4x4 方块（16 格）内**恰 1 种**铺法 = pkg 的 L2_TGT0..3
+           （旧实现四块全同 2x2 有 24 种等价摆法；换成异形后解唯一，玩法变真拼图）。
        这条断言只用"形状能不能铺满目标"这一语义，**不引用 RTL 里的任何掩码常量**。
     ④ 面积守恒：三块零片格数之和 == 目标图案格数（第一关 12、第二关 16）。
        pkg 注释里记着参考仓库曾出现"11 格 vs 12 格不守恒"的事故。
@@ -60,8 +64,13 @@ L1_SHAPES_PDF = [
     frozenset({(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (2, 0)}),        # P2 6 格
     frozenset({(0, 1), (1, 0), (1, 1)}),                                # P3 L 形 3 格
 ]
-# 独立参考 ②：第二关四块 2x2 实心方块（自设计图案的语义描述）
-L2_SHAPE = frozenset({(0, 0), (0, 1), (1, 0), (1, 1)})
+# 独立参考 ②：第二关四块**自拟异形**（设计意图的坐标描述；与 pkg 的位串是两份材料）
+L2_SHAPES_DESIGN = [
+    frozenset({(0, 0), (0, 1), (0, 2)}),                                   # Q0 1x3 横条 3 格
+    frozenset({(0, 0), (1, 0)}),                                           # Q1 1x2 竖条 2 格
+    frozenset({(0, 0), (0, 1), (0, 2), (1, 2), (2, 2)}),                   # Q2 J 形 5 格
+    frozenset({(0, 0), (1, 0), (1, 1), (1, 2), (2, 1), (2, 2)}),           # Q3 六格块 6 格
+]
 
 # 目标图案的几何（课程 PDF 图 4-1 / docs/02：两关共用同一区域，第二关右扩一列）
 T1_CELLS = frozenset((r, c) for r in range(2, 6) for c in range(2, 5))    # 4x3 = 12
@@ -232,15 +241,21 @@ def check(vf):
         "\n".join(bad) if bad else "P1=1x3 横条(3) P2=6 格阶梯 P3=L 形(3)：全部一致",
     ))
 
-    # ---- ③ 第二关：块数 4、四块都是实心 2x2、格数和 16 = 目标格数 ----
-    ok = (n2 == 4 and l2_pc == [4, 4, 4, 4] and sum(l2_pc) == len(T2_CELLS)
-          and all(c == L2_SHAPE for c in l2_cells))
+    # ---- ③ 第二关：块数 4、四块**互不相同**的异形（3/2/5/6 格）、形状 == 设计意图 ----
+    bad = []
+    for i in range(4):
+        if l2_cells[i] != L2_SHAPES_DESIGN[i]:
+            bad.append("槽%d 实测:\n%s\n      期望:\n%s"
+                       % (i, _render(l2_cells[i] or set()), _render(L2_SHAPES_DESIGN[i])))
+    ok = (n2 == 4 and l2_pc == [3, 2, 5, 6] and sum(l2_pc) == len(T2_CELLS)
+          and len({c for c in l2_cells}) == 4 and not bad)
     res.append((
-        "③ 第二关 o_n=4；四块均为实心 2x2；格数 4x4 = %d = 目标图案格数 %d"
-        % (sum(l2_pc), len(T2_CELLS)),
+        "③ 第二关 o_n=4；四块**形状互不相同**的异形（格数 %s，共 %d = 目标图案格数 %d），"
+        "且逐格 == 设计意图 Q0 横条/Q1 竖条/Q2 J 形/Q3 六格块"
+        % (l2_pc, sum(l2_pc), len(T2_CELLS)),
         ok,
-        "o_n=%s  各块格数=%s  四块形状均 == 2x2 实心：%s"
-        % (n2, l2_pc, all(c == L2_SHAPE for c in l2_cells)),
+        "\n".join(bad) if bad else
+        "o_n=%s  各块格数=%s  四块互不相同：%s" % (n2, l2_pc, len(set(l2_cells)) == 4),
     ))
 
     # ---- ④ 包围盒自洽：实测掩码的实际包围盒 == 声明的 o_h/o_w，且 <= PIECE_MAX_DIM ----
@@ -304,16 +319,14 @@ def check(vf):
         % (L1_TGT, len(placed[0] | placed[1] | placed[2]), len(T1_CELLS)),
     ))
 
-    # ---- ⑧ ⭐ 可解性（第二关）：锚点集合唯一，且 == pkg 的 L2_TGT0..3 ----
+    # ---- ⑧ ⭐ 可解性（第二关）：铺法**唯一**，且 == pkg 的 L2_TGT0..3 ----
     sols2 = enumerate_tilings(T2_CELLS, l2_cells)
-    sets2 = {frozenset(s) for s in sols2}
     res.append((
-        "⑧ ⭐ 可解性：第二关四块实测掩码在 4x4 目标内合法铺法 > 0，"
-        "且**去重后的锚点集合唯一** = {(2,2),(2,4),(4,2),(4,4)}（== pkg 的 L2_TGT0..3）",
-        len(sets2) == 1 and frozenset(L2_TGT) in sets2,
-        "有序铺法数 = %d，去重锚点集合数 = %d，唯一集合 = %s（pkg L2_TGT = %s）"
-        % (len(sols2), len(sets2),
-           sorted(min(sets2)) if sets2 else None, L2_TGT),
+        "⑧ ⭐ 可解性：第二关四块实测异形零片在 4x4 目标内**恰好 1 种**铺法，"
+        "且 == pkg 的 L2_TGT0..3（旧实现四块同形 2x2 有 24 种等价摆法 → 玩法只是搬运）",
+        len(sols2) == 1 and sols2[0] == tuple(L2_TGT),
+        "铺法数 = %d；唯一铺法 = %s（pkg L2_TGT = %s）"
+        % (len(sols2), list(sols2[0]) if sols2 else None, L2_TGT),
     ))
 
     # ---- ⑨ i_level 真的在换一套零片（不是常量输出）----

@@ -110,97 +110,109 @@ package puzzle_pkg is
 
     -- Level-2 complete picture (self-designed, see docs/02):
     --   solid 4x4 square, rows 2..5, cols 2..5  -> 16 cells
-    --   VERIFIED to equal the union of the four L2 pieces at their target
-    --   anchors (scripts/check_geometry.py).  An earlier literal put the square
-    --   at rows 3..6 while the piece targets were at rows 2..5, so the red ghost
-    --   was drawn one row below where the puzzle had to be assembled -- the
-    --   player following the ghost could never match it.
+    --   VERIFIED to equal the union of the four L2 pieces at their witness
+    --   anchors (scripts/check_geometry.py enumerates every exact tiling).
+    --   An earlier literal put the square at rows 3..6 while the piece targets
+    --   were at rows 2..5, so the red ghost was drawn one row below where the
+    --   puzzle had to be assembled -- the player following the ghost could never
+    --   match it.
     --
     -- ⚠️ 2026-10-09：这个常量**降级成"图案库的第 0 幅"**（提高要求 A2 / 自拟 S1
-    --    "多种拼图图案随机选择"）。它本身**一字未改**，仍叫 L2_TARGET_MASK 以便
-    --    既有证据（整机 puzzle_top r22 的 ⑬、check_geometry 的旧检查）继续有效；
-    --    新名字是 L2_PAT0，实际图案库见下面「第二关图案库」一节。
+    --    "多种拼图图案随机选择"）。它本身**一字未改**（仍然 = 4x4 实心方块），
+    --    仍叫 L2_TARGET_MASK 以便既有证据（整机 puzzle_top 的 ⑬、check_geometry
+    --    的旧检查）继续有效；新名字是 L2_PAT0，实际图案库见下面「第二关图案库」。
     constant L2_TARGET_MASK : std_logic_vector(63 downto 0) :=
         "0000000000000000001111000011110000111100001111000000000000000000";
 
     ----------------------------------------------------------------------------
-    -- 第二关**图案库**（提高要求 A2 / 自拟功能 S1，2026-10-09 实现）
+    -- 第二关 = **四块自拟异形零片的"七巧板"** + 4 幅图案库
+    --          （A2 / S1；2026-10-09 第 11 工作阶段重做形状）
     --
-    -- 范围决策（**第一关不随机**）：B4 明文要求第一关显示"完整拼图图案（图 4-1）"，
-    --   而 B10 说第二关图案自拟 —— 所以图案库只加在**第二关**，第一关恒为图 4-1。
-    --   （A2 的原文是"多种拼图图案随机选择"；本设计在自拟的第二关实现了它，
-    --     docs/00 §1.2 会如实写成"A2 部分实现：图案随机仅第二关"。）
+    -- 【为什么重做】原实现第二关零片是**四块一模一样的 2x2 方块**，图案库也只能是
+    --   "4x4 块网格上恰好 4 个 2x2 块"的四种放大方块。用户上板后直接问：
+    --   "第二关 4 幅图案库为什么只能是 2x2 的零片来做，也可以使用其他形状吧"——
+    --   而题目 B10 原文只要求"四块零片、零片图案自拟、位置随机、不能重叠"，
+    --   **零片形状完全自拟**，没有任何"必须是方块"的约束。原实现是自缚手脚。
     --
-    -- 选取点：每局进入 **S_PREVIEW**（即按【开始】/过关后的预览起点）时，把
-    --   rng_lfsr 当前值的低 2 位锁存成 pat_sel（rtl/puzzle_top.vhd），
-    --   散落仍用同一个 LFSR 的后续值 —— 两者互不干扰。
+    -- 【现在怎么做】四块零片 = 三种大小、四种形状（共 16 格）；图案库 = 四幅
+    --   **用这四块零片恰好铺满**的、肉眼可辨的轮廓（"七巧板"玩法）：
     --
-    -- ⚠️ 硬约束（不满足就会**死局**）：每幅图案必须能被**现成的四块 2x2 零片
-    --    恰好铺满**（B10 的四块零片是自拟的 2x2 方块，piece_rom 不改）。
-    --    本库用"块网格"构造：把 8x8 看成 4x4 个 2x2 块（块 (b,c) = 格
-    --    (2b..2b+1, 2c..2c+1)），每幅图案 = **恰好 4 个块**的并集。于是
-    --      · 天生可铺：四块零片放到这 4 个块上即可；
-    --      · 也只有这一种铺法：2x2 零片覆盖图案格子时必然落在块网格上 ——
-    --        等价摆法只有 4! = 24 种**置换**（这正是 ERR-021 把成功判据从
-    --        "锚点编号"改成"整帧画面比较"的原因）。
-    --    逐图案的**穷举可铺性**由 scripts/check_geometry.py 独立复核：它不信任
-    --    这里的构造，而是真的枚举 49 个 2x2 摆位里选 4 个的所有组合。
+    --     Q0  1x3 横条    3 格        Q1  1x2 竖条    2 格
+    --     ###                          #        （竖着放 2 格）
+    --                                  #
+    --     Q2  J 形 5 格               Q3  六格块      6 格
+    --     ###                          #..
+    --     ..#                          ###
+    --     ..#                          .##
     --
-    --   图案      块坐标 (b,c)              形状（8x8 点阵上的样子）
-    --   L2_PAT0  (1,1)(1,2)(2,1)(2,2)     田：4x4 实心方块（行 2~5 x 列 2~5）
-    --   L2_PAT1  (1,1)(1,2)(1,3)(2,2)     T：横杠（列 2~7）+ 中柱
-    --   L2_PAT2  (1,1)(2,1)(3,1)(3,2)     L：竖杠（行 2~7）+ 右足
-    --   L2_PAT3  (0,0)(0,1)(1,1)(1,2)     S/Z：锯齿（左上方）
+    --   图案（每幅 = 上面四块的**平移**拼装；四幅互不相同）：
+    --     PAT0 田   4x4 实心方块（**与原实现一字未改** → ERR-021/023 旧证据继续有效）
+    --     PAT1 十   胖十字（4 行 x 5 列）
+    --     PAT2 S/Z  锯齿（4 行 x 6 列）
+    --     PAT3 阶梯 阶梯形（4 行 x 5 列）
+    --
+    -- 【可解性（死局防线）】零片**只能平移、不能旋转**（A4 明确不做），所以
+    --   "恰好铺满"必须逐幅**穷举**验证：scripts/check_geometry.py 对每幅图案枚举
+    --   四块零片的所有平移摆位（不信任这里的手算），要求存在恰好覆盖的解。
+    --   实测：PAT0/PAT1/PAT2 各 **1 种**铺法、PAT3 **2 种**（见 docs/02 §9.2）。
+    --   ⚠️ PAT0 从原实现的"4! = 24 种等价摆法"变成"1 种"：玩法从"随便填满方块"
+    --      升级成真的要**拼出**轮廓。40 秒够用：散落最大位移 14 步、平均约 9 步/块。
+    --
+    -- 【面积账】零片与图案仍然全是**编译期常量**：piece_rom 0 LE、pattern_rom 4 LE
+    --   与改版前**逐位相同** —— 换成异形零片没多花一个 LE（"装不下"的不是这里）。
+    --
+    -- 【选取点】每局进入 S_PREVIEW（按【开始】/过关）那一拍锁存 rng_lfsr 低 2 位成
+    --   pat_sel（rtl/puzzle_top.vhd）；第一关按 B4 恒为图 4-1，i_pat 只对第二关有效。
     ----------------------------------------------------------------------------
     constant L2_PAT0 : std_logic_vector(63 downto 0) :=
         "0000000000000000001111000011110000111100001111000000000000000000";  -- 田（= 原图案）
     constant L2_PAT1 : std_logic_vector(63 downto 0) :=
-        "0000000000000000001100000011000011111100111111000000000000000000";  -- T
+        "0000000000000000000111000011111000111110000111000000000000000000";  -- 十（胖十字）
     constant L2_PAT2 : std_logic_vector(63 downto 0) :=
-        "0011110000111100000011000000110000001100000011000000000000000000";  -- L
+        "0000000000000000000111100111100001111000000111100000000000000000";  -- S/Z 锯齿
     constant L2_PAT3 : std_logic_vector(63 downto 0) :=
-        "0000000000000000000000000000000000111100001111000000111100001111";  -- S/Z
+        "0000000000000000001110000011110000111110000111100000000000000000";  -- 阶梯
 
     -- 图案库：pat_sel 的 2 位正好 4 幅（不要超过 4：pat_sel 只有 2 位）
     type pat_arr_t is array (0 to 3) of std_logic_vector(63 downto 0);
     constant L2_PATS : pat_arr_t := (L2_PAT0, L2_PAT1, L2_PAT2, L2_PAT3);
     constant L2_PAT_N : integer := 4;
 
-    -- Level-2 four pieces  4 + 4 + 4 + 4 = 16 cells (area conserved)
-    --   Q0..Q3 : 2x2 squares that tile the 4x4 target above
+    -- 第二关四块零片：3 + 2 + 5 + 6 = 16 格（== 每幅图案的 16 格）
+    --   （相对形状：bit = 8*行 + 列，行 0 在最低 8 位；与第一关零片同一约定）
     constant L2_P0 : std_logic_vector(63 downto 0) :=
-        "0000000000000000000000000000000000000000000000000000001100000011";
+        "0000000000000000000000000000000000000000000000000000000000000111";  -- Q0 1x3 横条 3 格
     constant L2_P1 : std_logic_vector(63 downto 0) :=
-        "0000000000000000000000000000000000000000000000000000001100000011";
+        "0000000000000000000000000000000000000000000000000000000100000001";  -- Q1 1x2 竖条 2 格
     constant L2_P2 : std_logic_vector(63 downto 0) :=
-        "0000000000000000000000000000000000000000000000000000001100000011";
+        "0000000000000000000000000000000000000000000001000000010000000111";  -- Q2 J 形 5 格
     constant L2_P3 : std_logic_vector(63 downto 0) :=
-        "0000000000000000000000000000000000000000000000000000001100000011";
+        "0000000000000000000000000000000000000000000001100000011100000001";  -- Q3 六格块 6 格
 
-    -- Target anchors: where each piece is EXPECTED to end up.  They describe the
-    -- intended arrangement and are verified against the pictures by
-    -- scripts/check_geometry.py ("target picture == union of the pieces at these
-    -- anchors").
+    -- Target anchors: where each piece is EXPECTED to end up.  They describe a
+    -- WITNESS arrangement and are verified against the pictures by
+    -- scripts/check_geometry.py (which enumerates every exact tiling).
     --
     -- ⚠️ ERR-021: these constants are **NOT** the success test any more.  Comparing
     --    each piece's anchor with the value below rejects every equivalent tiling:
-    --    level 2 is four IDENTICAL 2x2 squares (24 equivalent placements, 1 accepted)
-    --    and level 1's rectangle has 2 equivalent tilings (1 accepted), so a player
-    --    who assembled the picture correctly was still told "wrong".
-    --    puzzle_ctrl now compares the assembled picture (union of the pieces) with
-    --    the target mask.  Solved offline by exhaustive search (.ref/solve_l1.py).
+    --    level 2 used to be four IDENTICAL 2x2 squares (24 equivalent placements, 1
+    --    accepted) and level 1's rectangle has 2 equivalent tilings (1 accepted), so a
+    --    player who assembled the picture correctly was still told "wrong".
+    --    puzzle_ctrl compares the assembled picture (union of the pieces) with the
+    --    target mask.  Solved offline by exhaustive search (.ref/solve_l1.py).
     constant L1_TGT0 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- (2,2)
     constant L1_TGT1 : std_logic_vector(7 downto 0) := "0011" & "0010";  -- (3,2)
     constant L1_TGT2 : std_logic_vector(7 downto 0) := "0100" & "0011";  -- (4,3)
     constant L1_TGT3 : std_logic_vector(7 downto 0) := "0000" & "0000";  -- unused
 
-    -- Level-2 targets: the four 2x2 squares tile the 4x4 block at rows 2..5 x
-    -- cols 2..5 as (2,2) (2,4) (4,2) (4,4).  (Any permutation of the four is an
-    -- equally correct assembly -- see the ERR-021 note above.)
-    constant L2_TGT0 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- (2,2)
-    constant L2_TGT1 : std_logic_vector(7 downto 0) := "0010" & "0100";  -- (2,4)
-    constant L2_TGT2 : std_logic_vector(7 downto 0) := "0100" & "0010";  -- (4,2)
-    constant L2_TGT3 : std_logic_vector(7 downto 0) := "0100" & "0100";  -- (4,4)
+    -- Level-2 witness: the four self-designed pieces tile PAT0 (the 4x4 square,
+    -- rows 2..5 x cols 2..5) exactly as (5,3) (4,2) (2,3) (2,2) for Q0..Q3.
+    --   PAT0's tiling is UNIQUE (check_geometry.py enumerates it), so this witness
+    --   set == the only solution; tb_piece_rom ⑧ checks that.
+    constant L2_TGT0 : std_logic_vector(7 downto 0) := "0101" & "0011";  -- Q0 @ (5,3)
+    constant L2_TGT1 : std_logic_vector(7 downto 0) := "0100" & "0010";  -- Q1 @ (4,2)
+    constant L2_TGT2 : std_logic_vector(7 downto 0) := "0010" & "0011";  -- Q2 @ (2,3)
+    constant L2_TGT3 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- Q3 @ (2,2)
 
     -- Result-picture masks shown at the end of a game (self-designed).
     --
@@ -234,7 +246,10 @@ package puzzle_pkg is
     constant FAIL_MASK : std_logic_vector(63 downto 0) :=
         "0000000011000011011001100011110000111100011001101100001100000000";
 
-    -- Bounding-box limit of every piece: all pieces fit in 3x3
+    -- Bounding-box limit of every piece: all pieces (level 1 and level 2, the new
+    -- self-designed level-2 shapes included) fit in a 3x3 box.  This is what lets
+    -- the engine scan a 3x3 neighbourhood instead of the whole panel, and it is
+    -- also the precondition of the scatter's bounded-candidate arithmetic.
     constant PIECE_MAX_DIM : integer := 3;
 
     ----------------------------------------------------------------------------
@@ -256,6 +271,14 @@ package puzzle_pkg is
     constant CNT_2HZ : integer := 100 / 2 - 1;
     -- stage 5 : 100 Hz -> 1 Hz    (divide by 100)    : second counter
     constant CNT_1HZ : integer := 100 / 1 - 1;
+    -- ⚠️ stage 6 : 100 Hz -> **4 Hz**（divide by 25，= 250 ms 一个脉冲）
+    --    2026-10-09 第 11 工作阶段（全项目审计发现，ERR-038）：B1 要求自检"以 **2 Hz**
+    --    闪烁"。原来的做法是"每个 tick_2hz（500 ms）翻转一次 blink_r"，得到的是
+    --    **1 s 周期 = 1 Hz** 的方波 —— 只有要求的一半，而且四处注释/文档都按 2 Hz 记账
+    --    （与 ERR-031 同类的"2 倍算错"）。2 Hz 方波需要**每 250 ms 翻转一次**，
+    --    所以这里加一路 4 Hz 节拍：game_fsm 在它上面翻转 → 真正的 2 Hz、50% 占空。
+    --    tick_2hz 继续保留（蜂鸣器节奏、旧断言都用它），语义不再当"闪烁"。
+    constant CNT_4HZ : integer := 100 / 4 - 1;
 
     -- power-on reset : count tick_1k pulses, so only a 4-bit counter is needed
     -- ⚠️ 实测（tb_clk_gen）：释放发生在 por_cnt 到达 CNT_POR 时，即 **9** 个 1 ms 刻度，
@@ -283,7 +306,10 @@ package puzzle_pkg is
     --
     -- ⚠️ 2026-10-09 更正（ERR-031）：**一轮扫描 = 2 个 tick_200 = 10 ms，不是 5 ms。**
     --    keypad_scan 的相序是 SC_ALL_HIGH（等 tick）→ SC_ALL_LOW（**再等一个 tick**）
-    --    → SC_SETTLE（64 拍）→ SC_RELEASE（4×65 拍）→ 回 SC_ALL_HIGH；两个等待相
+    --    → SC_SETTLE（64 拍）→ SC_RELEASE（相 0 是 1 拍 + 相 1/2/3 各 64 拍 = 193 拍；
+    --      审计注：相 0 只有 1 拍是 `settle` 没在离开 SC_SETTLE 时清零造成的，
+    --      功能上无害——采样恰好落在相切换那一拍，列 0 仍能被识别（ERR-039b 记录，未改））
+    --      → 回 SC_ALL_HIGH；两个等待相
     --    各吃一个 200 Hz 周期，所以**消抖级每 10 ms 才采一个样**。仿真测试台独立
     --    按相序推出同样的结论（sim/tb_keypad_scan.py："一轮扫描 = 2 个 tick"）。
     --    旧注释/文档写"16 轮 = 80 ms"是把这个 2 倍算漏了：真实值是 **160 ms** ——
@@ -291,7 +317,8 @@ package puzzle_pkg is
     --    （用户 2026-10-09 上板反馈"防抖时间有点长"）。
     --
     -- 现值 = DEBOUNCE_MAX+1 = **4 轮 = 40 ms**：按下后 4 个连续"干净"采样（40 ms
-    --    连续一致读数）才改 stable；脉冲本身还要**再晚一个采样拍**（RTL 里脉冲判定
+    --    连续一致读数、**样与样相隔 10 ms**）才改 stable（所以 4 个样横跨 30 ms，
+    --    "按下 → 接受"才是 4 轮 = 40 ms）；脉冲本身还要**再晚一个采样拍**（RTL 里脉冲判定
     --    读的是同拍旧值），再算上打键落点相对扫描相位最多 10 ms 的抖动，
     --    **按下 → o_press 实测约 45 ms**（原来 16 轮 = 165 ms），松开同样约 50 ms；
     --    连按可达 ~12 次/秒（原来 ~3 次/秒）。证据：sim/tb_keypad_scan.py ⑨

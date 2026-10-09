@@ -1,0 +1,57 @@
+{
+  "module": "keypad_scan",
+  "round": 8,
+  "timestamp": "2026-10-09 12:22:51",
+  "duration_ns": 1792000.0,
+  "rtl_patches": [],
+  "passed": 9,
+  "total": 9,
+  "all_pass": true,
+  "assertions": [
+    {
+      "name": "① 复位后无键：o_key = 0（K_NONE）且 o_press 无脉冲",
+      "ok": true,
+      "detail": "t=24100.0 时 o_key=0；全程 o_press 脉冲数=2（期望 2：KEY1 与 KEY2 各一次）"
+    },
+    {
+      "name": "② 按下 (行1,列2) 后 o_key = 4*1+2 = 6（键码 = 4*行+列，ERR-004 的防线）",
+      "ok": true,
+      "detail": "实测 o_key = 6，期望 6"
+    },
+    {
+      "name": "③ o_press 脉冲**恰好 2 次**且**每次宽度 = 1 个时钟周期**(20 ns)",
+      "ok": true,
+      "detail": "脉冲时刻/宽度：72010ns..72030ns(20ns), 824010ns..824030ns(20ns)"
+    },
+    {
+      "name": "④ 按键保持不放时不再产生新的 o_press（按住只动作一次）",
+      "ok": true,
+      "detail": "按住期间(280100 ns 起)新增脉冲数=0，o_key=6"
+    },
+    {
+      "name": "⑤ 松开后 o_key 归 0，并且 o_release 恰好 2 次、每次 1 个时钟宽",
+      "ok": true,
+      "detail": "release 脉冲：504010ns, 1144010ns；松开后 o_key=0"
+    },
+    {
+      "name": "⑥ 换 (行3,列0) 的键仍得到 o_key = 12（第 0 列也能定列，不是只对某列有效）",
+      "ok": true,
+      "detail": "实测 o_key = 12（期望 12）"
+    },
+    {
+      "name": "⑦ 短按 3 轮（< 消抖 4 轮）不产生 o_press，o_key 保持 0（消抖有效）",
+      "ok": true,
+      "detail": "短按后 o_key=0；全程 press 脉冲总数仍为 2"
+    },
+    {
+      "name": "⑨ ★ 消抖时长 = **4 个连续相同样 = 40 ms 板上**（DEBOUNCE_MAX=3；ERR-031：一轮扫描 = 2 个 tick_200 = 10 ms，旧文档的「16 轮 = 80 ms」把 2 倍算漏了，真实曾是 **160 ms**）。实测 o_press 在 9T、o_release 在 63T（改 stable 后再晚一个采样拍出脉冲；换算板上按下→o_press ≈ **45 ms**，原来 33T = 165 ms）",
+      "ok": true,
+      "detail": "实测 press=['72010', '824010']（期望 ['72000', '824000']）、release=['504010', '1144010']（期望 ['504000', '1144000']）；T = 8 us 仿真 = 5 ms 板上"
+    },
+    {
+      "name": "⑧ 列驱动自洽：出现'四列全拉低'相，且其余所有相恰好一位为低",
+      "ok": true,
+      "detail": "见到全低相=True；非法相 0 个"
+    }
+  ]
+}

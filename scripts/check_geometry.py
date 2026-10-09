@@ -115,11 +115,55 @@ def count_tilings(target, pieces):
         return total
     return rec(0, frozenset())
 
+def const_anchor(name):
+    """Parse a packed 8-bit anchor constant: "row(4 bits)" & "col(4 bits)"."""
+    m = re.search(r"constant\s+" + name +
+                  r"\s*:\s*std_logic_vector\(7 downto 0\)\s*:=\s*\"([01]{4})\"\s*&\s*\"([01]{4})\"",
+                  src, re.S)
+    if not m:
+        raise SystemExit(f"anchor constant {name} not found")
+    return int(m.group(1), 2), int(m.group(2), 2)
+
+
+def tilings_no_rotation(target, pieces):
+    """Every EXACT tiling of `target` by `pieces`, TRANSLATION ONLY.
+
+    Level 2 has no rotation key (improvement requirement A4 is explicitly out of
+    scope), so allowing the mirror/rotation transforms used for the level-1 figure
+    would be an over-permissive proof of "solvable": a pattern that only tiles with
+    a rotated piece would be a DEAD END on the real board.
+    Returns a list of slot-ordered anchor tuples.
+    """
+    T = frozenset(target)
+    shapes = [norm(p) for p in pieces]
+    sizes = [(max(r for r, _ in s) + 1, max(c for _, c in s) + 1) for s in shapes]
+    out = []
+
+    def rec(i, used, acc):
+        if i == len(shapes):
+            if used == T:
+                out.append(tuple(acc))
+            return
+        h, w = sizes[i]
+        for r0 in range(0, 9 - h):
+            for c0 in range(0, 9 - w):
+                p = frozenset((r + r0, c + c0) for r, c in shapes[i])
+                if p <= T and not (p & used):
+                    acc.append((r0, c0))
+                    rec(i + 1, used | p, acc)
+                    acc.pop()
+
+    rec(0, frozenset(), [])
+    return out
+
+
 print("\n-- exact tilings (pieces cover the complete picture)")
 n1 = count_tilings(C["L1_TARGET_MASK"], [C["L1_P0"], C["L1_P1"], C["L1_P2"]])
-chk(n1 > 0, f"level-1 pieces can tile L1 target ({n1} tilings found)")
-n2 = count_tilings(C["L2_TARGET_MASK"], [C["L2_P0"], C["L2_P1"], C["L2_P2"], C["L2_P3"]])
-chk(n2 > 0, f"level-2 pieces can tile L2 target ({n2} tilings found)")
+chk(n1 > 0, f"level-1 pieces can tile L1 target ({n1} tilings found; rotations allowed, "
+            f"as documented -- the engine's verdict is the assembled picture anyway)")
+n2 = tilings_no_rotation(C["L2_TARGET_MASK"], [C["L2_P0"], C["L2_P1"], C["L2_P2"], C["L2_P3"]])
+chk(len(n2) > 0, f"level-2 pieces can tile L2 (PAT0) by TRANSLATION ONLY "
+                 f"({len(n2)} tiling(s) found)")
 
 print("\n-- L2 area conservation")
 chk(sum(len(C[f'L2_P{i}']) for i in range(4)) == len(C["L2_TARGET_MASK"]),
@@ -134,8 +178,8 @@ TGT = {
     "L1": ([C["L1_P0"], C["L1_P1"], C["L1_P2"]], [(2, 2), (3, 2), (4, 3)],
            C["L1_TARGET_MASK"]),
 }
-TGT2_TARGETS = [(2, 2), (2, 4), (4, 2), (4, 4)]
-TGT["L2"] = ([C["L2_P0"], C["L2_P1"], C["L2_P2"], C["L2_P3"]], TGT2_TARGETS,
+L2_WITNESS = [const_anchor(f"L2_TGT{i}") for i in range(4)]
+TGT["L2"] = ([C["L2_P0"], C["L2_P1"], C["L2_P2"], C["L2_P3"]], L2_WITNESS,
              C["L2_TARGET_MASK"])
 for name, (pieces, anchors, target) in TGT.items():
     u = set()
@@ -144,24 +188,31 @@ for name, (pieces, anchors, target) in TGT.items():
     chk(u == target, f"{name}: target picture == union of pieces at target anchors")
 
 # --- 第二关**图案库**（提高要求 A2 / 自拟 S1「多种拼图图案随机选择」，2026-10-09）---
-# 硬约束：**每幅候选图案都必须能被现成的四块 2x2 零片恰好铺满** —— 铺不满就是死局。
-# 这里不信任"块网格"构造，而是**独立穷举**：49 个 2x2 摆位里选 4 个的所有组合，
-# 看有没有哪一组恰好覆盖该图案（同一组 4 个摆位对应 4! = 24 种置换，与 tb_puzzle_ctrl
-# 里"第二关 24 种等价摆法"的说法一致）。
-print("\n-- 第二关图案库（A2/S1）：逐图案穷举可铺性")
+# 硬约束：**每幅候选图案都必须能被现成的四块零片（形状自拟，2026-10-09 由 2x2 方块
+# 改成 3/2/5/6 格的四种异形）恰好铺满** —— 铺不满就是死局。
+# 零片只能**平移**（无旋转键，A4 不实现），所以这里用 tilings_no_rotation 独立穷举，
+# 不允许镜像/旋转变换（用 count_tilings 会放松成"旋转后能铺"，那是过度宽松的证明）。
+print("\n-- 第二关图案库（A2/S1）：逐图案**只许平移**的穷举可铺性")
 PAT_N = 4
 PATS = [C[f"L2_PAT{i}"] for i in range(PAT_N)]
+L2P = [C[f"L2_P{i}"] for i in range(4)]
 chk(C["L2_TARGET_MASK"] == C["L2_PAT0"],
     "L2_TARGET_MASK 仍等于 L2_PAT0（图案 0 = 原第二关图案，一字未改 → 旧证据继续有效）")
+chk(sum(len(p) for p in L2P) == 16, "第二关四块零片面积 = 3+2+5+6 = 16 格")
+chk(len({frozenset(norm(p)) for p in L2P}) == 4, "第二关四块零片**形状互不相同**（不再是四块 2x2）")
 for i, p in enumerate(PATS):
-    chk(len(p) == 16, f"L2_PAT{i}: 面积 = {len(p)} 格（必须 16 = 四块 2x2）")
+    chk(len(p) == 16, f"L2_PAT{i}: 面积 = {len(p)} 格（必须 16 = 四块零片之和）")
     chk(len(p) == 16 and min(r for r, _ in p) >= 0 and max(r for r, _ in p) <= 7
         and min(c for _, c in p) >= 0 and max(c for _, c in p) <= 7,
         f"L2_PAT{i}: 全部格子落在 8x8 点阵内")
-    n = count_tilings(p, [C["L2_P0"], C["L2_P1"], C["L2_P2"], C["L2_P3"]])
-    # n 是"按零片编号的有序铺法数"：同一组 4 个摆位有 4! = 24 种置换
-    chk(n > 0 and n % 24 == 0,
-        f"L2_PAT{i}: 四块 2x2 零片能**恰好铺满**（有序铺法 {n} 种 = {n // 24} 组摆位 x 24 种置换）")
+    sols = tilings_no_rotation(p, L2P)
+    chk(len(sols) > 0,
+        f"L2_PAT{i}: 四块异形零片能**恰好铺满**（只许平移：{len(sols)} 种铺法）")
+    if i == 0 and sols:
+        chk(len(sols) == 1 and sols[0] == tuple(L2_WITNESS),
+            f"L2_PAT0（田）的解**唯一**，且 == pkg.L2_TGT0..3 写的见证锚点 {L2_WITNESS}")
+    if sols:
+        print(f"   L2_PAT{i} 见证铺法（槽 0..3 的锚点）: {sols[0]}")
 chk(len(set(frozenset(p) for p in PATS)) == PAT_N,
     f"{PAT_N} 幅图案互不相同（去重后 {len(set(frozenset(p) for p in PATS))} 幅）")
 for i, p in enumerate(PATS):

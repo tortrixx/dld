@@ -11,11 +11,23 @@
 --      which matters because the EPM1270 has only 1270 LEs.
 --
 --  Time base produced
---    tick_1k   : 1   kHz  (1 ms)      -> game seconds, reset timing
---    tick_200  : 200 Hz  (5 ms)       -> keypad scan round (NOT the displays)
+--    tick_1k   : 1   kHz  (1 ms)      -> 秒计数/复位；**点阵行推进与数码管位选**
+--    tick_200  : 200 Hz  (5 ms)       -> keypad scan round + 引擎行渲染（内容 25 Hz）
 --    tick_100  : 100 Hz  (10 ms)      -> generic 10 ms grid
---    tick_2hz  : 2   Hz (500 ms)      -> self-test flash, "blink" flag
+--    tick_2hz  : 2   Hz (500 ms)      -> 音效节奏（**不再当"闪烁"用**，见 tick_4hz）
+--    tick_4hz  : 4   Hz (250 ms)      -> 翻转它得到 **2 Hz 方波**（B1 自检闪烁、结算闪示）
 --    tick_1hz  : 1   Hz (1 s)         -> one-second game counter
+--    tick_40   : 40  Hz (25 ms)       -> **仅 board_test_top 自检用**（点阵逐行轮播）
+--
+--  ⚠️ 2026-10-09 第 11 工作阶段（全项目审计发现）：
+--    · tick_1k 的用途表原来只写 "game seconds, reset timing"，漏了它在 puzzle_top 里
+--      真正驱动的两条线（点阵行计数器 mrow、seg_scan 位选）—— 这正是 ERR-031 那类
+--      "注释少写一句 → 后人把时序算错"的温床，已补全；
+--    · tick_2hz 原来被写成 "self-test flash, blink flag"，但"每个 2 Hz 脉冲翻转一次"
+--      得到的是 **1 Hz** 方波（B1 要 2 Hz）→ 新增 tick_4hz 专供翻转，语义写清楚；
+--    · tick_40 原来写 "这一路已不再使用"，**是错的**：board_test_top 的 9 阶段自检
+--      用它逐行推进点阵（`elsif (t_40 = '1') then row_idx <= row_idx + 1`）。
+--      tick_100 才是真的悬空（全工程只声明、无读者）。
 --
 --  Reset polarity : o_rst is ACTIVE HIGH.
 -- ============================================================================
@@ -32,14 +44,14 @@ entity clk_gen is
         o_rst    : out std_logic;                      -- system reset, active HIGH
         o_tick_1k  : out std_logic;                    -- 1 ms pulse
         o_tick_200 : out std_logic;                    -- 5 ms pulse
-        o_tick_100 : out std_logic;                    -- 10 ms pulse
-        o_tick_2hz : out std_logic;                    -- 500 ms pulse
+        o_tick_100 : out std_logic;                    -- 10 ms pulse（当前无人使用）
+        o_tick_2hz : out std_logic;                    -- 500 ms pulse（音效节奏）
+        o_tick_4hz : out std_logic;                    -- 250 ms pulse（翻转 → 2 Hz 方波）
         o_tick_1hz : out std_logic;                    -- 1 s pulse
-        -- 200 Hz / 5 = 40 Hz.
-        -- ⚠️ 2026-10-08：这一路**已不再使用**。它当初是为了"点阵行扫描与引擎渲染
-        --    同源"而加的，但两者都走 40 Hz 时帧率只有 40/8 = 5 Hz（闪得厉害），
-        --    后来两边都改成 200 Hz（帧率 25 Hz，仍然可见闪），最终统一到 **1 kHz**
-        --    （帧率 125 Hz）。输出保留，避免动 tb_clk_gen 的节拍断言。
+        -- 200 Hz / 5 = 40 Hz。
+        -- ⚠️ 这一路**仍在使用**：board_test_top 的 9 阶段硬件自检靠它逐行推进点阵
+        --    （见 board_test_top.vhd 的 `elsif (t_40 = '1')`）。游戏的显示扫描走
+        --    tick_1k（125 Hz，ERR-027），与此无关。**不要按误解删这个端口**。
         o_tick_40  : out std_logic
     );
 end entity clk_gen;
@@ -61,7 +73,10 @@ architecture rtl of clk_gen is
     -- stage 5 : 100 Hz -> 1 Hz
     signal c5      : unsigned(6 downto 0)  := (others => '0');  -- 100 -> needs 7 bit
     signal t5      : std_logic := '0';
-    -- stage 6 : 200 Hz -> 40 Hz  (divide by 5), for the row-scan lockstep
+    -- stage 6 : 100 Hz -> 4 Hz  (divide by 25)  -> 2 Hz 方波的翻转节拍（ERR-038）
+    signal c7      : unsigned(4 downto 0)  := (others => '0');  -- 25 -> needs 5 bit
+    signal t7      : std_logic := '0';
+    -- stage 7 : 200 Hz -> 40 Hz  (divide by 5), for the board self-test scan
     signal c6      : unsigned(2 downto 0)  := (others => '0');
     signal t6      : std_logic := '0';
 
@@ -71,7 +86,11 @@ architecture rtl of clk_gen is
     signal s_btn   : std_logic := '0';
 
     -- Power-on counter: saturating, never wraps -> cannot produce a phantom
-    -- reset later on.  Counts 0..T_POR_MS-1, so 4 bits are enough.
+    -- reset later on.  Counts 0..T_POR_MS-1.
+    -- ⚠️ 审计（2026-10-09 第 11 工作阶段）：4 位只在 **T_POR_MS ≤ 16** 时够用 ——
+    --    比较用的是 `to_unsigned(CNT_POR, por_cnt'length)`，一旦 T_POR_MS ≥ 17，
+    --    CNT_POR 会被**截断成 0**、比较恒假、上电复位直接失效（而且不报错）。
+    --    改 T_POR_MS 时请同时加宽 por_cnt（或改用 8 位）。
     signal por_cnt : unsigned(3 downto 0) := (others => '0');
 
 begin
@@ -134,9 +153,21 @@ begin
                 t5 <= '0';
             end if;
 
-            -- stage 6 : 200 Hz -> 40 Hz (divide by 5).  The engine renders one
-            -- display row per 5 ticks of tick_200, so the matrix driver advances
-            -- one row per 40 Hz pulse and the two stay in lockstep.
+            -- stage 6 : 100 Hz -> 4 Hz (divide by 25) = 250 ms.  ERR-038：game_fsm
+            -- 在它上面翻转 → **2 Hz 方波**（B1 要求的"2 Hz 闪烁"）。tick_2hz 那一路
+            -- 直接当闪烁用只能得到 1 Hz，全项目审计时才发现。
+            if (t3 = '1') then
+                if (c7 = CNT_4HZ) then
+                    c7 <= (others => '0'); t7 <= '1';
+                else
+                    c7 <= c7 + 1;          t7 <= '0';
+                end if;
+            else
+                t7 <= '0';
+            end if;
+
+            -- stage 7 : 200 Hz -> 40 Hz (divide by 5).  **只有 board_test_top
+            -- 的硬件自检用**：它每 40 Hz 脉冲推进一行，8 行轮一遍 = 200 ms。
             if (t2 = '1') then
                 if (c6 = 4) then
                     c6 <= (others => '0'); t6 <= '1';
@@ -153,6 +184,7 @@ begin
     o_tick_200 <= t2;
     o_tick_100 <= t3;
     o_tick_2hz <= t4;
+    o_tick_4hz <= t7;
     o_tick_1hz <= t5;
     o_tick_40  <= t6;
 

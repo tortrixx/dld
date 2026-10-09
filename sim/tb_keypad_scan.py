@@ -217,14 +217,18 @@ def check(vf):
     ))
 
     # ⑨ ★ 消抖时长本身（ERR-031：一轮 = 2 个 tick = 10 ms 板上，所以 4 轮 = 40 ms）
-    #    实测（读 .vwf 的 cnt 跳变，消抖采样拍 = 奇数个 T）：KEY1 的 cnt 序列
-    #        1T→1, 3T→2, 5T→3, **7T→0（= 第 4 个相同样，改 stable）**；释放侧
-    #        55T→1, 57T→2, 59T→3, **61T→0**。
-    #    o_press/o_release 比"改 stable"再晚**一个采样拍**（RTL 里脉冲判定读的是
-    #    同拍旧值 stable），所以实测脉冲落在 9T / 63T；KEY2 同构：103T / 143T。
-    #    换算板上（× 625）：按下 → o_press ≈ 45 ms（原来是 33T = 165 ms）。
+    #    实测（读 .vwf 的 cnt 跳变，消抖采样拍 = 奇数个 T）：
+    #      ⚠️ ERR-036（2026-10-09 第 11 工作阶段审计）：**上电后第一个键**原来只要
+    #         **3** 个相同样就被接受（o_press 落在 9T），因为 `row_all` 没有初值/复位值，
+    #         上电时为低 = KP_ACTIVE ⇒ 组合进程先造出一个"第 3 行全按下"的幻影候选，
+    #         把消抖计数预置成 1。修掉之后（row_all 初值/复位值 = 全 1）：
+    #         KEY1 的 cnt 序列 = 1T→0（cand 与 stable 相同）、3T→1、5T→2、7T→3、
+    #         **9T→0（= 第 4 个连续相同样，改 stable）**，o_press 再晚一个采样拍 → **11T**。
+    #         KEY2（此时 row_all 已是真实锁存值）不受影响，仍 103T / 143T。
+    #    释放侧不受幻影影响：KEY1 仍是 55T→1 … **61T→0（改 stable）**、o_release 63T。
+    #    换算板上（× 625）：按下 → o_press ≈ 55 ms（KEY2 ≈ 45 ms），原来 ≈ 45 ms。
     #    这条断言把"消抖到底几毫秒"钉死：改 DEBOUNCE_MAX 而忘了改这里，立即挂。
-    exp_p = [9 * T, 103 * T]          # KEY1 / KEY2 的 o_press 上升沿
+    exp_p = [11 * T, 103 * T]         # KEY1（上电首键，ERR-036 修复后）/ KEY2
     exp_r = [63 * T, 143 * T]         # KEY1 / KEY2 的 o_release 上升沿
     lat_ok = (len(press) == 2 and len(release) == 2
               and all(abs(press[i][0] - exp_p[i]) <= 30.0 for i in range(2))
@@ -232,8 +236,9 @@ def check(vf):
     res.append((
         "⑨ ★ 消抖时长 = **4 个连续相同样 = 40 ms 板上**（DEBOUNCE_MAX=3；ERR-031："
         "一轮扫描 = 2 个 tick_200 = 10 ms，旧文档的「16 轮 = 80 ms」把 2 倍算漏了，"
-        "真实曾是 **160 ms**）。实测 o_press 在 9T、o_release 在 63T（改 stable 后"
-        "再晚一个采样拍出脉冲；换算板上按下→o_press ≈ **45 ms**，原来 33T = 165 ms）",
+        "真实曾是 **160 ms**）。实测 o_press 在 11T（上电首键）/103T、o_release 在 63T/143T"
+        "（改 stable 后再晚一个采样拍出脉冲）—— 上电首键现在是**同样 4 个连续样**，"
+        "不再被 ERR-036 的幻影候选少算一轮",
         lat_ok,
         "实测 press=%s（期望 %s）、release=%s（期望 %s）；T = 8 us 仿真 = 5 ms 板上"
         % (["%.0f" % a for (a, _b) in press], ["%.0f" % x for x in exp_p],

@@ -72,6 +72,7 @@ architecture rtl of puzzle_top is
             o_tick_200 : out std_logic;
             o_tick_100 : out std_logic;
             o_tick_2hz : out std_logic;
+            o_tick_4hz : out std_logic;
             o_tick_1hz : out std_logic;
             o_tick_40  : out std_logic
         );
@@ -98,6 +99,7 @@ architecture rtl of puzzle_top is
             i_sw        : in  std_logic;
             i_tick_1hz  : in  std_logic;
             i_tick_2hz  : in  std_logic;
+            i_tick_4hz  : in  std_logic;
             i_press     : in  std_logic;
             i_key       : in  std_logic_vector(3 downto 0);
             o_sel       : out std_logic;
@@ -247,6 +249,7 @@ architecture rtl of puzzle_top is
     signal t_200    : std_logic;
     signal t_100    : std_logic;
     signal t_2hz    : std_logic;
+    signal t_4hz    : std_logic;
     signal t_1hz    : std_logic;
     signal t_40     : std_logic;
 
@@ -376,6 +379,7 @@ begin
             o_tick_200 => t_200,
             o_tick_100 => t_100,
             o_tick_2hz => t_2hz,
+            o_tick_4hz => t_4hz,
             o_tick_1hz => t_1hz,
             o_tick_40  => t_40
         );
@@ -402,6 +406,7 @@ begin
             i_sw        => sw7,
             i_tick_1hz  => t_1hz,
             i_tick_2hz  => t_2hz,
+            i_tick_4hz  => t_4hz,
             i_press     => press,
             i_key       => key,
             o_sel       => sel,
@@ -574,8 +579,13 @@ begin
                     FAIL_MASK(63 downto 56) when others;
 
     ----------------------------------------------------------------------------
-    -- 结算画面的闪烁节奏：先闪 **2 个 2 Hz 周期**（4 个半周期，抓注意力），
+    -- 结算画面的闪烁节奏：先闪 **2 个 2 Hz 周期**（4 个半周期 = 1 s，抓注意力），
     -- 然后常亮（远距离读图）。离开 WIN/FAIL 立刻复位。
+    --
+    -- ⚠️ ERR-038（2026-10-09 第 11 工作阶段，审计发现）：原来数的是 **t_2hz**（500 ms
+    --    一个脉冲），4 个脉冲 = **2 s** —— 而注释与文档都写"2 个 2 Hz 周期 = 1 s"，
+    --    又是"把 tick_2hz 当 2 Hz 节拍"的 2 倍记账错误（真正的 2 Hz 半周期是 250 ms）。
+    --    现在数 **t_4hz**（250 ms）：4 个半周期 = **1 s**，与文档一致。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -586,9 +596,9 @@ begin
             elsif (state /= S_WIN) and (state /= S_FAIL) then
                 endflash_cnt <= (others => '0');
                 endflash_on  <= '0';
-            elsif (t_2hz = '1') then
+            elsif (t_4hz = '1') then
                 if (endflash_cnt = 3) then
-                    endflash_on <= '1';          -- 4 个半周期后：常亮
+                    endflash_on <= '1';          -- 4 个 250 ms 半周期后：常亮
                 else
                     endflash_cnt <= endflash_cnt + 1;
                 end if;

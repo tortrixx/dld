@@ -97,6 +97,12 @@ def qsf(top: str) -> str:
     # that assignment name for MAX II ("Error reading Quartus II Settings File").
     L.append("# unused pins: keep them high-Z so the LCD / PS2 / VGA pins do not fight")
     L.append("set_global_assignment -name RESERVE_ALL_UNUSED_PINS \"AS INPUT TRI-STATED\"")
+    # ERR-033（2026-10-09 第 11 工作阶段）：**打开资源复用**。
+    #   渲染器（每拍算一行）与重叠检查引擎用的是同一套 row_mask/srl8 逻辑，
+    #   但它们在两个进程里 → 综合器默认不合并。实测（同一份 RTL，只差这一行）：
+    #     面积 1254 → **1190 LE（−64）**（配合两拍流水后 1199 → **1200 LE**、
+    #     Fmax 44.97 → **51.44 MHz**）；不打开时这条设置默认 Off（见 map.rpt）。
+    L.append("set_global_assignment -name AUTO_RESOURCE_SHARING ON")
     L.append("")
     L.append("# ---------------- pins ----------------")
 

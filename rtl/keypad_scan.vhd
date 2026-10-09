@@ -8,7 +8,11 @@
 --
 --  KEY CODE reported
 --     o_key = 4*row + column,  i.e. the plain key index in READING ORDER
---     (row 0 = the top physical row, column 0 = the left-most column).
+--     ⚠️ 修正（2026-10-09 审计）：这里的 "row 0" 是**板上丝印的最下一行 ROW0**
+--     （PIN_111），不是"最上一行"—— 手册附图 26 里 ROW3 在最上、ROW0 在最下，
+--     而 `i_row(0)` 接的就是 `kp_row[0] = PIN_111`。键位图以 `game_fsm.key_of()`
+--     为准（该处已按实测的 KEY14=index1=开始 / KEY16=index3=选择 校核过）；
+--     本模块只负责"报出 4*行+列"这个原始编号。
 --     Interpreting that index as a game control is game_fsm's job (key_of).
 --
 --  ---------------------------------------------------------------------------
@@ -71,7 +75,16 @@ architecture rtl of keypad_scan is
     signal phase   : unsigned(1 downto 0) := (others => '0');
     signal settle  : unsigned(7 downto 0) := (others => '0');
 
-    signal row_all : std_logic_vector(3 downto 0);    -- rows with ALL columns LOW
+    signal row_all : std_logic_vector(3 downto 0) := (others => KP_ACTIVE);
+    -- ⚠️ ERR-036（2026-10-09 第 11 工作阶段，全项目审计发现）：原来 row_all **没有初值**，
+    --    复位分支也不给它赋值 → 上电后到第一轮锁存之前它是确定的 0（MAX IV/MAX II 上电为低），
+    --    而 0 的每一位都 = KP_ACTIVE ⇒ 配合**旧判据**（取"最后一个有效行"）会先造出一个
+    --    "第 3 行被按下"的幻影候选，把消抖计数预置成 1：**上电后第一个键只要 3 轮
+    --    （30 ms）就被接受**，比设计值少 1 轮（tb 断言 ⑨ 把 9T 当成了期望值）。
+    --    现在：① 初值与复位分支都**显式**写出该值；② 判据改成"必须**恰好一行**被拉低"
+    --    （见下面的组合进程）—— 全 0（4 行都"有效"）与全 1（0 行有效）**都判为"没有键"**，
+    --    所以这个初值只影响上电头几拍，**不改变任何按键行为**（这也是本轮不为它重跑
+    --    整机仿真的理由：行为等价、只是把默认值写明）。
     -- per-phase record: col_low(c) = '1' means that while column c was the
     -- only one released, a row line fell -> the pressed key is in column c.
     signal col_low : std_logic_vector(3 downto 0) := (others => '0');
@@ -107,6 +120,7 @@ begin
                 col_all <= '0';
                 col_low <= (others => '0');
                 rd_done <= '0';
+                row_all <= (others => KP_ACTIVE);     -- ERR-036：把上电默认值写明（判据见下）
             else
                 case state is
 
@@ -191,23 +205,36 @@ begin
         variable crow : integer;
         variable ccol : integer;
         variable found : boolean;
+        variable nrow : integer;
     begin
         hit   := '0';
         crow  := 0;
         ccol  := 0;
 
-        -- (1) is any row active with all columns low?
+        -- (1) 必须**恰好一行**被拉低。
+        --     ⚠️ ERR-036（2026-10-09 第 11 工作阶段审计）：原来取"最后一行为低"，
+        --     手里同时按下两个不同行的键时会合成一个**谁都没按过的"鬼键"**
+        --     （例：(行1,列2)+(行2,列0) → 报 4*2+2=10 = K_UP）。课程需求没有规定多键
+        --     行为，所以最不坏的语义是"看不清就不报"：行数 ≠ 1 → K_NONE。
+        nrow := 0;
         for r in 0 to 3 loop
             if (row_all(r) = KP_ACTIVE) then
-                hit  := '1';
+                nrow := nrow + 1;
                 crow := r;
             end if;
         end loop;
+        if (nrow = 1) then hit := '1'; else hit := '0'; end if;
 
-        -- (2) which column?  col_low(c) was set if a row fell while column c was
-        --     the only released one.  Normally exactly one bit is set.  If none is
-        --     (inconsistent wiring), keep the key but fall back to column 0 so it
-        --     is still reported rather than silently lost.
+        -- (2) 哪一列？col_low(c) 表示"只有列 c 被释放时有一行落下"。
+        --     正常恰好一位置 1；若一列都没命中（接线/极端情况），保持原来的回退语义
+        --     （列 0），"宁可报一个键也不要静默丢键"。
+        --     ⚠️ **这里故意不做"恰好一列"的强校验**（ERR-036b 的一次尝试，已在整机上
+        --     证实有害）：由于 ERR-039b（SC_RELEASE 的相 0 只有 1 拍、采样恰好落在
+        --     相切换那一拍），整机测试台的行激励窗口（SETTLE 段一直拉到 +1400 ns）
+        --     会让**相 0 也采到一次"行低"**，于是 col_low 同时命中两列。取"最后一个命中"
+        --     （原语义）得到的是**真实按下的那一列**；改成"必须恰好一列"会把按键
+        --     全部丢成 K_NONE（实测整机 ①③④…全部失败）。要收严这一条，必须先修
+        --     ERR-039b 并把两个测试台的按键窗口整体重新标定。
         found := false;
         if (hit = '1') then
             for c in 0 to 3 loop
@@ -217,7 +244,7 @@ begin
                 end if;
             end loop;
             if not found then
-                ccol := 0;
+                ccol := 0;                        -- 回退（保持原有行为）
             end if;
         end if;
 

@@ -24,8 +24,14 @@
 --  computes the row the driver is about to display.  Every colour decision is
 --  8 bits wide and the frame is produced over 8 ticks, i.e. the refresh period.
 --
---  Nothing 64-bit is stored.  State: four piece anchors (8 bits each) + four
---  locked flags.  Footprints, colours and collisions are all derived.
+--  ⚠️ 审计更正（2026-10-09 第 11 工作阶段）：这一段原来写 "Nothing 64-bit is stored.
+--     State: four piece anchors (8 bits each) + four locked flags." —— **是错的**：
+--     引擎内部有 frame_r/frame_g（各 64 位，共 128 个触发器）以及 chk_shp(64)、
+--     pos_frm(32)、chk_orow/chk_prow 等（本模块 FF 约 345 个，见 docs/02 §4）。
+--     真实成立的说法是：**每一拍的组合计算路径只有 8 位宽**（一拍只算一行的
+--     row_mask 并把它并进帧），这才是"引擎能塞进 EPM1270"的原因；64 位的帧寄存器
+--     仍然存在，而且顶层就是靠它按 mrow 切片的（ERR-027 之后扫描 125 Hz、内容 25 Hz
+--     不同源也不会错行）。
 --
 --  Bit convention (shared with puzzle_pkg):
 --      bit index = 8*row + col,  bit 0 = TOP-LEFT cell
@@ -134,6 +140,34 @@ architecture rtl of puzzle_ctrl is
         return srl8(base, ac);
     end function;
 
+    ----------------------------------------------------------------------------
+    -- ⚠️ ERR-035（2026-10-09 第 11 工作阶段，全项目审计发现）：B8 原文是"零片移到合适
+    --    位置后按【确认】键变为黄色显示，同时**不可再选择及移动**"。
+    --    "不可移动"早就挡住了（移动路径要求 `locked(sel)='0'`），但"**不可再选择**"
+    --    没有实现：`sel` 照旧循环，转回已锁定的零片时渲染器把它的红列灭掉（把它并进
+    --    selrow → 只亮绿）→ 玩家看到**黄块变绿**，直接违反 B8 的可见语义。
+    --    修法：选择/确认推进 `sel` 时**跳过已锁定的零片**（全锁时停在原处）。
+    --    另外渲染器也加了一道防御（不把已锁定零片当"选中的"着色），两处一起保证
+    --    "锁定 = 黄且不可选中"这条不变量。
+    ----------------------------------------------------------------------------
+    function next_unlocked(cur  : unsigned(1 downto 0);
+                           lk   : std_logic_vector(3 downto 0);
+                           lvl2 : boolean) return unsigned is
+        variable n   : integer;
+        variable top : integer;
+    begin
+        if lvl2 then top := 4; else top := 3; end if;
+        n := to_integer(cur);
+        for i in 1 to 4 loop
+            n := n + 1;
+            if (n >= top) then n := 0; end if;
+            if (lk(n) = '0') then
+                return to_unsigned(n, 2);
+            end if;
+        end loop;
+        return cur;                          -- 全部已锁定：停在原处
+    end function;
+
     signal pos    : std_logic_vector(31 downto 0) := (others => '0');
     signal locked : std_logic_vector(3 downto 0)  := (others => '0');
     signal sel    : unsigned(1 downto 0) := (others => '0');
@@ -161,6 +195,10 @@ architecture rtl of puzzle_ctrl is
     signal mv_pend  : std_logic := '0';
     signal mv_anchor: std_logic_vector(7 downto 0) := (others => '0');
     signal mv_dir   : std_logic_vector(3 downto 0) := (others => '0');
+    -- ERR-033b：移动校验再拆一拍（夹紧后的锚点 + 当时选中的槽都先落寄存器）
+    signal mv_clamp : std_logic_vector(7 downto 0) := (others => '0');
+    signal mv_sel   : unsigned(1 downto 0) := (others => '0');
+    signal mv_go    : std_logic := '0';
     -- registered scatter operands (pipelining -- see the header note)
     signal sc_hh    : std_logic_vector(2 downto 0) := (others => '0');
     signal sc_ww    : std_logic_vector(2 downto 0) := (others => '0');
@@ -177,6 +215,14 @@ architecture rtl of puzzle_ctrl is
     signal frow    : unsigned(2 downto 0) := (others => '0');  -- row being built
     signal frame_r : std_logic_vector(63 downto 0) := (others => '0');
     signal frame_g : std_logic_vector(63 downto 0) := (others => '0');
+
+    -- ERR-033（2026-10-09 第 11 工作阶段）：行渲染的**两拍流水**中间寄存器。
+    -- 第一拍（下面的渲染进程）只算"这一行"（red_a/grn_a/bad_a + 行号 row_a），
+    -- 第二拍（紧随其后的进程）才把这一行并进 frame 并跑整帧判据协议。
+    signal row_a  : unsigned(2 downto 0) := (others => '0');
+    signal red_a  : std_logic_vector(7 downto 0) := (others => '0');
+    signal grn_a  : std_logic_vector(7 downto 0) := (others => '0');
+    signal bad_a  : std_logic := '0';
 
     ----------------------------------------------------------------------------
     -- ⚠️ ERR-021 : 成功判据 = 「**拼出来的画面** == 目标图案」
@@ -253,18 +299,21 @@ begin
     -- ROW-SCAN RENDERER.
     -- For the scanned row, fetch that row from each piece's 3x3 relative shape,
     -- shift it by the piece's anchor column, then combine:
-    --     red   = piece cells OR (target cells with no piece on them)
+    --     red   = piece cells that are NOT the selected one
     --     green = cells of the selected piece or of any locked piece
+    --
+    -- ⚠️ 审计更正（2026-10-09 第 11 工作阶段）：这里原来还写着"phase 0..3 每相一块、
+    --    phase 4 发布、一帧 32 拍"——那是**更早的 32 相版本**的遗留注释，与实现无关。
+    --    实际实现是：**一拍算一行**（同一拍里把 4 块零片各自的 row_mask 并起来），
+    --    8 拍一帧；顶层 i_tick 接 tick_200 → 一帧 40 ms（内容 25 Hz），而**显示扫描**
+    --    走 tick_1k（8 ms = 125 Hz，ERR-027）——两者节拍不同源也不会错行，因为整帧
+    --    存在 frame_r/frame_g 里、顶层只按 mrow 切片。
     ----------------------------------------------------------------------------
-    -- Time-multiplexed row renderer.
-    --   phase 0..3 : one piece per phase accumulates into the row accumulators
-    --   phase 4    : the accumulated row is published
-    -- The dot-matrix driver scans one row per tick, so a row is produced every
-    -- four ticks and the frame takes 32 ticks -- the same as the reference
-    -- implementation's 32-phase frame engine.
 
     ----------------------------------------------------------------------------
     -- FRAME RENDERER -- one ROW per i_tick, whole frame every 8 ticks.
+    --                       （第 11 工作阶段起：并入帧与判据协议在**下一拍**，
+    --                         见 ERR-033 的两拍流水）
     --
     -- WHY IT IS ORGANISED THIS WAY
     -- Two earlier arrangements were MEASURED on the board:
@@ -316,14 +365,10 @@ begin
             if (i_rst = '1') then
                 frow    <= (others => '0');
                 scanrow <= (others => '0');
-                frame_r <= (others => '0');
-                frame_g <= (others => '0');
-                frm_bad   <= '0';
-                frm_ok    <= '0';
-                frm_valid <= '0';
-                pos_frm   <= (others => '0');
-                lvl_frm   <= '0';
-                pat_frm   <= (others => '0');
+                row_a   <= (others => '0');
+                red_a   <= (others => '0');
+                grn_a   <= (others => '0');
+                bad_a   <= '0';
             elsif (i_tick = '1') then
                 r   := to_integer(frow);
                 cov    := (others => '0');
@@ -340,7 +385,7 @@ begin
                     rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
                     cov := cov or rw;
                     if (locked(0) = '1') then kc := kc or rw; end if;
-                    if (sel = "00") then selrow := selrow or rw; end if;
+                    if (sel = "00") and (locked(0) = '0') then selrow := selrow or rw; end if;
                 end if;
 
                 -- ---- piece 1 -------------------------------------------------
@@ -352,7 +397,7 @@ begin
                         rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
                         cov := cov or rw;
                         if (locked(1) = '1') then kc := kc or rw; end if;
-                    if (sel = "01") then selrow := selrow or rw; end if;
+                    if (sel = "01") and (locked(1) = '0') then selrow := selrow or rw; end if;
                     end if;
                 end if;
 
@@ -365,7 +410,7 @@ begin
                         rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
                         cov := cov or rw;
                         if (locked(2) = '1') then kc := kc or rw; end if;
-                    if (sel = "10") then selrow := selrow or rw; end if;
+                    if (sel = "10") and (locked(2) = '0') then selrow := selrow or rw; end if;
                     end if;
                 end if;
 
@@ -378,7 +423,7 @@ begin
                         rw := row_mask(shp, srow, to_integer(unsigned(pk(3 downto 0))));
                         cov := cov or rw;
                         if (locked(3) = '1') then kc := kc or rw; end if;
-                    if (sel = "11") then selrow := selrow or rw; end if;
+                    if (sel = "11") and (locked(3) = '0') then selrow := selrow or rw; end if;
                     end if;
                 end if;
 
@@ -401,35 +446,6 @@ begin
                 -- 无关，只与玩家看到的画面有关（等价摆法必须算成功）。
                 if (cov = tgtrow) then bad := '0'; else bad := '1'; end if;
 
-                if (r = 0) then
-                    -- 帧头：重启本帧的失配累加器，并把本帧各行结果所依赖的东西
-                    -- （零片锚点、关卡、图案下标）拍个快照
-                    frm_bad <= bad;
-                    pos_frm <= pos;
-                    lvl_frm <= i_level;
-                    pat_frm <= i_pat;
-                elsif (r = 7) then
-                    -- 帧尾：发布判据。"干净"= 这一帧里 pos、level 与图案下标都没变过，
-                    -- 否则 8 行可能取自两种不同摆法/两幅不同图案，错的会被看成对的。
-                    -- 跟踪 level **和 pat** 就够：i_target 与 i_sh* 都由 puzzle_top 的
-                    -- pattern_rom / piece_rom 直接按 (level, pat) 选择，两者没变
-                    -- ⇒ 目标图案与零片形状都没变（这条接线约定必须保持）。
-                    if (pos_frm = pos) and (lvl_frm = i_level) and (pat_frm = i_pat) then
-                        frm_valid <= '1';
-                        if (frm_bad = '0') and (bad = '0') then
-                            frm_ok <= '1';
-                        else
-                            frm_ok <= '0';
-                        end if;
-                    else
-                        frm_valid <= '0';
-                        frm_ok    <= '0';
-                    end if;
-                    frm_bad <= '0';
-                else
-                    frm_bad <= frm_bad or bad;
-                end if;
-
                 -- Colour of this row.
                 --   green = selected piece OR locked piece
                 --   red   = every piece cell that is not the selected one
@@ -449,25 +465,13 @@ begin
                 redrow := cov and (not selrow);
                 grnrow := kc or selrow;
 
-                -- ---- merge the row into the frame ----------------------------
-                case r is
-                    when 0      => frame_r(63 downto 56) <= redrow;
-                                   frame_g(63 downto 56) <= grnrow;
-                    when 1      => frame_r(55 downto 48) <= redrow;
-                                   frame_g(55 downto 48) <= grnrow;
-                    when 2      => frame_r(47 downto 40) <= redrow;
-                                   frame_g(47 downto 40) <= grnrow;
-                    when 3      => frame_r(39 downto 32) <= redrow;
-                                   frame_g(39 downto 32) <= grnrow;
-                    when 4      => frame_r(31 downto 24) <= redrow;
-                                   frame_g(31 downto 24) <= grnrow;
-                    when 5      => frame_r(23 downto 16) <= redrow;
-                                   frame_g(23 downto 16) <= grnrow;
-                    when 6      => frame_r(15 downto 8) <= redrow;
-                                   frame_g(15 downto 8) <= grnrow;
-                    when others => frame_r(7 downto 0) <= redrow;
-                                   frame_g(7 downto 0) <= grnrow;
-                end case;
+                -- ---- 第一拍的结果进流水寄存器（ERR-033）-----------------------
+                -- 并入 frame 与整帧判据协议都在**下一拍**做（见紧跟着的进程），
+                -- 这样"锚点 → 形状移位 → 帧寄存器"这条最长路径被切成两半。
+                row_a <= frow;
+                red_a <= redrow;
+                grn_a <= grnrow;
+                bad_a <= bad;
 
                 -- the scanned row follows the row being built, one tick behind
                 if (frow = 7) then
@@ -476,6 +480,86 @@ begin
                     frow <= frow + 1;
                 end if;
                 scanrow <= frow;
+            end if;
+        end if;
+    end process;
+
+    ----------------------------------------------------------------------------
+    -- ERR-033：行渲染的**第二拍** —— 把第一拍算好的行并进帧，并跑整帧判据协议。
+    --
+    -- 为什么必须拆（实测，不是推理）：整机 1254 LE 时最差路径就是
+    --   `pos[12] → frame_g[53]`，slack 只有 **+0.023 ns**（Fmax 50.06 MHz，等于没有余量）；
+    --   一旦打开 `AUTO_RESOURCE_SHARING`（省 64 LE），同一个路径变成 **−2.714 ns**。
+    --   拆成两拍后：本拍只做"并入帧 + 帧头/帧尾判据"，与第一拍的 row_mask 计算
+    --   互相独立 → 面积只多 20 个寄存器（LE 几乎不变），余量却回到几个 ns。
+    --
+    -- 语义与拆之前**逐拍等价**：原来第 N 拍算第 r 行并并进帧；现在第 N 拍算、第 N+1 拍并。
+    -- "干净帧"判据仍然只比较**同一帧**内看到的 pos/level/pat（窗口整体后移一拍）。
+    ----------------------------------------------------------------------------
+    process (i_clk)
+        variable rb : integer;
+    begin
+        if rising_edge(i_clk) then
+            if (i_rst = '1') then
+                frame_r   <= (others => '0');
+                frame_g   <= (others => '0');
+                frm_bad   <= '0';
+                frm_ok    <= '0';
+                frm_valid <= '0';
+                pos_frm   <= (others => '0');
+                lvl_frm   <= '0';
+                pat_frm   <= (others => '0');
+            elsif (i_tick = '1') then
+                rb := to_integer(row_a);
+
+                if (rb = 0) then
+                    -- 帧头：重启本帧的失配累加器，并把本帧各行结果所依赖的东西
+                    -- （零片锚点、关卡、图案下标）拍个快照
+                    frm_bad <= bad_a;
+                    pos_frm <= pos;
+                    lvl_frm <= i_level;
+                    pat_frm <= i_pat;
+                elsif (rb = 7) then
+                    -- 帧尾：发布判据。"干净"= 这一帧里 pos、level 与图案下标都没变过，
+                    -- 否则 8 行可能取自两种不同摆法/两幅不同图案，错的会被看成对的。
+                    -- 跟踪 level **和 pat** 就够：i_target 与 i_sh* 都由 puzzle_top 的
+                    -- pattern_rom / piece_rom 直接按 (level, pat) 选择，两者没变
+                    -- ⇒ 目标图案与零片形状都没变（这条接线约定必须保持）。
+                    if (pos_frm = pos) and (lvl_frm = i_level) and (pat_frm = i_pat) then
+                        frm_valid <= '1';
+                        if (frm_bad = '0') and (bad_a = '0') then
+                            frm_ok <= '1';
+                        else
+                            frm_ok <= '0';
+                        end if;
+                    else
+                        frm_valid <= '0';
+                        frm_ok    <= '0';
+                    end if;
+                    frm_bad <= '0';
+                else
+                    frm_bad <= frm_bad or bad_a;
+                end if;
+
+                -- ---- merge the pipelined row into the frame -------------------
+                case rb is
+                    when 0      => frame_r(63 downto 56) <= red_a;
+                                   frame_g(63 downto 56) <= grn_a;
+                    when 1      => frame_r(55 downto 48) <= red_a;
+                                   frame_g(55 downto 48) <= grn_a;
+                    when 2      => frame_r(47 downto 40) <= red_a;
+                                   frame_g(47 downto 40) <= grn_a;
+                    when 3      => frame_r(39 downto 32) <= red_a;
+                                   frame_g(39 downto 32) <= grn_a;
+                    when 4      => frame_r(31 downto 24) <= red_a;
+                                   frame_g(31 downto 24) <= grn_a;
+                    when 5      => frame_r(23 downto 16) <= red_a;
+                                   frame_g(23 downto 16) <= grn_a;
+                    when 6      => frame_r(15 downto 8) <= red_a;
+                                   frame_g(15 downto 8) <= grn_a;
+                    when others => frame_r(7 downto 0) <= red_a;
+                                   frame_g(7 downto 0) <= grn_a;
+                end case;
             end if;
         end if;
     end process;
@@ -504,6 +588,7 @@ begin
         variable rw     : std_logic_vector(7 downto 0);
         variable lvl2   : boolean;
         variable me     : std_logic_vector(1 downto 0);   -- piece being validated
+        variable xr, xc : integer;                        -- ERR-032: bounded candidates
     begin
         if rising_edge(i_clk) then
             if (i_rst = '1') then
@@ -515,6 +600,9 @@ begin
                 sh_att <= (others => '0');
                 mv <= '0';
                 mv_pend <= '0';
+                mv_go <= '0';
+                mv_clamp <= (others => '0');
+                mv_sel <= (others => '0');
                 chk <= CH_IDLE;
                 chk_orow <= (others => '1');
                 chk_prow <= (others => '1');
@@ -540,11 +628,11 @@ begin
                             when 2      => locked(2) <= '1';
                             when others => locked(3) <= '1';
                         end case;
-                        if (sel = "10" and not lvl2) then sel <= "00";
-                        else                              sel <= sel + 1; end if;
+                        -- ERR-035：确认后自动跳到下一个**未锁定**的零片（B8）
+                        sel <= next_unlocked(sel, locked, lvl2);
                     elsif (i_select = '1') then
-                        if (sel = "10" and not lvl2) then sel <= "00";
-                        else                              sel <= sel + 1; end if;
+                        -- ERR-035：【选择】跳过已锁定的零片（B8 不可再选择）
+                        sel <= next_unlocked(sel, locked, lvl2);
                     elsif (i_move = '1') then
                         mv <= '1';
                         -- ⚠️ ERR-020: 方向必须与移动请求**同一拍**锁存。
@@ -569,20 +657,14 @@ begin
                     mv_anchor<= sel_p;
                 end if;
 
-                -- stage 2: clamp, test the bounds and launch the overlap engine.
-                -- All operands are register outputs, so this is a short path.
+                -- stage 2a（ERR-033b）：只做"夹紧"并把结果落寄存器。
+                -- 拆出来的原因：渲染器流水化之后，最差路径变成
+                --   `mv_anchor → 夹紧 → 边界比较 → chk_shp`（slack −0.19 ns）。
                 if (mv_pend = '1') and (chk = CH_IDLE) then
                     mv_pend <= '0';
 
                     cr := to_integer(unsigned(mv_anchor(7 downto 4)));
                     cc := to_integer(unsigned(mv_anchor(3 downto 0)));
-                    case to_integer(sel) is
-                        when 0      => hh := to_integer(unsigned(i_h0)); ww := to_integer(unsigned(i_w0)); shp := i_sh0;
-                        when 1      => hh := to_integer(unsigned(i_h1)); ww := to_integer(unsigned(i_w1)); shp := i_sh1;
-                        when 2      => hh := to_integer(unsigned(i_h2)); ww := to_integer(unsigned(i_w2)); shp := i_sh2;
-                        when others => hh := to_integer(unsigned(i_h3)); ww := to_integer(unsigned(i_w3)); shp := i_sh3;
-                    end case;
-
                     if (mv_dir(3) = '1') then
                         if (cr > 0) then cr := cr - 1; end if;
                     elsif (mv_dir(2) = '1') then
@@ -592,13 +674,31 @@ begin
                     elsif (mv_dir(0) = '1') then
                         if (cc < 7) then cc := cc + 1; end if;
                     end if;
+                    mv_clamp <= std_logic_vector(to_unsigned(cr, 4)) &
+                                std_logic_vector(to_unsigned(cc, 4));
+                    mv_sel   <= sel;
+                    mv_go    <= '1';
+                end if;
+
+                -- stage 2b：边界 + 锁定检查，然后启动重叠检查引擎。
+                -- 操作数全是寄存器输出（mv_clamp / mv_sel / i_h* / i_w* / locked）。
+                if (mv_go = '1') and (chk = CH_IDLE) then
+                    mv_go <= '0';
+
+                    cr := to_integer(unsigned(mv_clamp(7 downto 4)));
+                    cc := to_integer(unsigned(mv_clamp(3 downto 0)));
+                    case to_integer(mv_sel) is
+                        when 0      => hh := to_integer(unsigned(i_h0)); ww := to_integer(unsigned(i_w0)); shp := i_sh0;
+                        when 1      => hh := to_integer(unsigned(i_h1)); ww := to_integer(unsigned(i_w1)); shp := i_sh1;
+                        when 2      => hh := to_integer(unsigned(i_h2)); ww := to_integer(unsigned(i_w2)); shp := i_sh2;
+                        when others => hh := to_integer(unsigned(i_h3)); ww := to_integer(unsigned(i_w3)); shp := i_sh3;
+                    end case;
 
                     -- bounds: analytic, verified against geometry in
                     -- .ref/model_ctrl.py (0 mismatches for every shape/position)
                     if (cr + hh <= 8) and (cc + ww <= 8)
-                       and (locked(to_integer(sel)) = '0') then
-                        chk_pos  <= std_logic_vector(to_unsigned(cr, 4)) &
-                                    std_logic_vector(to_unsigned(cc, 4));
+                       and (locked(to_integer(mv_sel)) = '0') then
+                        chk_pos  <= mv_clamp;
                         chk_shp  <= shp;
                         chk_h    <= std_logic_vector(to_unsigned(hh, 3));
                         chk_w    <= std_logic_vector(to_unsigned(ww, 3));
@@ -629,8 +729,15 @@ begin
                         when others => hh := to_integer(unsigned(i_h3)); ww := to_integer(unsigned(i_w3));
                     end case;
 
-                    ch := 8 - hh;  if (ch < 1) then ch := 1; end if;
-                    cw := 8 - ww;  if (cw < 1) then cw := 1; end if;
+                    -- ⚠️ ERR-037（2026-10-09 第 11 工作阶段，全项目审计发现）：这里原来写
+                    --   `ch := 8 - hh` / `cw := 8 - ww`，于是候选锚点只取 0..(7-hh)，
+                    --   而合法上界是 0..(8-hh)（移动路径的判据是 `cr + hh <= 8`）——
+                    --   **最后一行/最后一列永远抽不到**，而且 0..7 mod 7 让锚点 0 的概率
+                    --   是其它值的 2 倍（分布既截断又不均匀）。修法：除数改成 `9 - hh`。
+                    --   对本设计所有零片（hh ≤ 3）恒有 ch ∈ {6,7,8} ≥ 4、x ≤ 7 < 2*ch，
+                    --   所以下面"一次条件相减"的等价改写依然成立。
+                    ch := 9 - hh;  if (ch < 1) then ch := 1; end if;
+                    cw := 9 - ww;  if (cw < 1) then cw := 1; end if;
 
                     -- Pipeline stage 1: latch the operands and the two modulo
                     -- results.  The modulo is the expensive part of the critical
@@ -638,10 +745,28 @@ begin
                     -- in SH_CHK rather than being chained into the validity test.
                     sc_hh   <= std_logic_vector(to_unsigned(hh, 3));
                     sc_ww   <= std_logic_vector(to_unsigned(ww, 3));
-                    sc_cand <= std_logic_vector(to_unsigned(
-                                   to_integer(unsigned(rnd_val(2 downto 0))) mod ch, 4)) &
-                               std_logic_vector(to_unsigned(
-                                   to_integer(unsigned(rnd_val(5 downto 3))) mod cw, 4));
+                    -- ⚠️ ERR-032（2026-10-09，第 11 工作阶段）：原来这里是
+                    --     `x mod ch` / `x mod cw`，x = rnd_val(2:0) ∈ 0..7。
+                    --   零片都是 2x2 时 ch = cw = 7 是**常量**，综合器把取模折叠成
+                    --   LUT；第 11 工作阶段零片改成 3/2/5/6 格的异形后 ch/cw 随
+                    --   零片变化（6/7/8，由 sh_k 选择）→ 真的实例化出两个
+                    --   **变除数除法器**（lpm_divide）：实测整机 Fmax
+                    --   **44.77 → 36.68 MHz**（最差 slack −7.3 ns、TNS −926 ns）。
+                    --   修法：x ∈ 0..7 且 ch ≥ 4（所有零片包围盒 ≤ 4x4，本设计 ≤3x3）
+                    --   ⇒ x < 2*ch ⇒ **x mod ch == (x - ch if x >= ch else x)**，
+                    --   一次"比较 + 条件相减"即可，**候选序列逐拍完全相同**（行为等价）。
+                    --   实测（同一版本 RTL，只差这一处）：Fmax 36.68 → **50.06 MHz**
+                    --   （TNS −926 → 0），面积 1246 → **1254 LE（+8）**。
+                    --   ⚠️ 对**旧的**四块 2x2 版本（除数恒定），同样的替换是 −1.7 MHz/+12 LE
+                    --      （那次取模本来就是常量、被折叠了），所以当时没做 ——
+                    --      这个优化**只在除数真的变化时才有意义**。
+                    --   前置条件（零片包围盒 ≤ 4x4）由 scripts/check_geometry.py 断言。
+                    xr := to_integer(unsigned(rnd_val(2 downto 0)));
+                    xc := to_integer(unsigned(rnd_val(5 downto 3)));
+                    if (xr >= ch) then xr := xr - ch; end if;
+                    if (xc >= cw) then xc := xc - cw; end if;
+                    sc_cand <= std_logic_vector(to_unsigned(xr, 4)) &
+                               std_logic_vector(to_unsigned(xc, 4));
                     sh <= SH_CHK;
                 end if;
 

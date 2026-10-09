@@ -3035,8 +3035,7 @@ TRANSITION_LIST("o_mask[0][2]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 200.0;
-		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 400.0;
 	}
 }
 
@@ -3090,8 +3089,7 @@ TRANSITION_LIST("o_mask[0][8]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 200.0;
-		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 400.0;
 	}
 }
 
@@ -3100,8 +3098,7 @@ TRANSITION_LIST("o_mask[0][9]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 200.0;
-		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 400.0;
 	}
 }
 
@@ -3596,8 +3593,7 @@ TRANSITION_LIST("o_h[0][0]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 200.0;
-		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 400.0;
 	}
 }
 
@@ -3606,8 +3602,7 @@ TRANSITION_LIST("o_h[0][1]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 200.0;
-		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 400.0;
 	}
 }
 
@@ -3625,8 +3620,7 @@ TRANSITION_LIST("o_w[0][0]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 200.0;
-		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 400.0;
 	}
 }
 
@@ -3662,7 +3656,8 @@ TRANSITION_LIST("o_mask[1][1]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 400.0;
+		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 200.0;
 	}
 }
 
@@ -3735,7 +3730,8 @@ TRANSITION_LIST("o_mask[1][9]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 400.0;
+		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 200.0;
 	}
 }
 
@@ -4259,8 +4255,7 @@ TRANSITION_LIST("o_w[1][0]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 200.0;
-		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 400.0;
 	}
 }
 
@@ -4269,7 +4264,8 @@ TRANSITION_LIST("o_w[1][1]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 400.0;
+		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 200.0;
 	}
 }
 
@@ -4306,7 +4302,8 @@ TRANSITION_LIST("o_mask[2][2]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -4360,7 +4357,8 @@ TRANSITION_LIST("o_mask[2][8]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 400.0;
+		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 200.0;
 	}
 }
 
@@ -4369,7 +4367,8 @@ TRANSITION_LIST("o_mask[2][9]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 1 FOR 400.0;
+		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 200.0;
 	}
 }
 
@@ -4378,7 +4377,8 @@ TRANSITION_LIST("o_mask[2][10]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -4450,7 +4450,8 @@ TRANSITION_LIST("o_mask[2][18]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -4864,7 +4865,8 @@ TRANSITION_LIST("o_h[2][0]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -4891,7 +4893,8 @@ TRANSITION_LIST("o_w[2][0]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -4928,8 +4931,7 @@ TRANSITION_LIST("o_mask[3][1]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 200.0;
-		LEVEL 1 FOR 200.0;
+		LEVEL 0 FOR 400.0;
 	}
 }
 
@@ -5012,7 +5014,8 @@ TRANSITION_LIST("o_mask[3][10]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -5075,7 +5078,8 @@ TRANSITION_LIST("o_mask[3][17]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -5084,7 +5088,8 @@ TRANSITION_LIST("o_mask[3][18]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -5498,7 +5503,8 @@ TRANSITION_LIST("o_h[3][0]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
@@ -5526,7 +5532,8 @@ TRANSITION_LIST("o_w[3][0]")
 	NODE
 	{
 		REPEAT = 1;
-		LEVEL 0 FOR 400.0;
+		LEVEL 0 FOR 200.0;
+		LEVEL 1 FOR 200.0;
 	}
 }
 
