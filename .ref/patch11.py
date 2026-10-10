@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Replace the render loop's variable-index row fetches with explicit guarded
-cases, mirroring the technique used by the reference implementation: one row per
-tick, 8-bit accumulators, no variable slicing of a wide vector.
+"""把渲染循环中按变量下标取行的写法换成显式的带保护分支，
+与参考实现所用的技巧一致：每个 tick 处理一行，使用 8 位累加器，
+不对宽向量做可变切片。
 """
 import pathlib
 

@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
-"""puzzle_ctrl: final structural pass to cut area.
+"""puzzle_ctrl：为压缩面积而做的最后一轮结构优化。
 
-Root causes found by measurement (.ref/attrib.py: the move path alone cost 961
-logic cells):
-  * `pos(8*sel+7 downto 8*sel)` is a VARIABLE SLICE -> every bit becomes its own
-    mux tree.  Replaced by four straight reads through one explicit 4:1 select.
-  * `for r in 0 to 7 ... occ(8*r+7 downto 8*r) := ...` builds a per-row mux.
-    Replaced by 8 explicit slice assignments (pure wiring).
-  * the selected footprint was read via `inst_mask(to_integer(sel))`; now it is
-    selected once into a dedicated signal.
-  * the render cone is registered (see patch5).
+通过测量找到的根因（.ref/attrib.py：仅移动路径就花掉 961
+个逻辑单元）：
+  * `pos(8*sel+7 downto 8*sel)` 是 VARIABLE SLICE -> 每一位都变成自己的
+    多路器树。改为通过一个显式的 4 选 1 选择做四次直接读取。
+  * `for r in 0 to 7 ... occ(8*r+7 downto 8*r) := ...` 会生成按行的多路器。
+    改为 8 条显式切片赋值（纯连线）。
+  * 被选中的覆盖形状原先经 `inst_mask(to_integer(sel))` 读取；现在只
+    选择一次放进专用信号。
+  * 渲染锥已寄存（见 patch5）。
 """
 import pathlib, re
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---------------------------------------------------------------- declarations
+# ---------------------------------------------------------------- 声明
 s = s.replace(
     "    -- candidates for the scatter\n"
     "    signal sh_pos : std_logic_vector(7 downto 0) := (others => '0');\n",
@@ -24,7 +24,7 @@ s = s.replace(
 s = s.replace(
     "    signal sh_col : unsigned(3 downto 0) := (others => '0');\n",
     "")
-# add explicit per-piece anchor selects
+# 增加显式的逐零片锚点选择
 s = s.replace(
     "    signal sel_p  : std_logic_vector(7 downto 0);\n"
     "    signal sel_m  : std_logic_vector(63 downto 0);\n",
@@ -32,7 +32,7 @@ s = s.replace(
     "    signal sel_m  : std_logic_vector(63 downto 0);\n"
     "    signal sel_locked : std_logic;\n")
 
-# ---------------------------------------------------- add the explicit selects
+# ---------------------------------------------------- 加入显式的选择
 s = s.replace(
     "    with sel select\n"
     "        sel_m <= m0 when \"00\",\n"
@@ -51,7 +51,7 @@ s = s.replace(
     "                      locked(2) when \"10\",\n"
     "                      locked(3) when others;\n")
 
-# ------------------------------------------------------------- rewrite the move
+# ------------------------------------------------------------- 重写移动路径
 start = s.index("                if (mv = '1') then")
 end = s.index("                ------------------------------------------------------------------\n                -- 3. Scatter sequencer.")
 new_move = """                if (mv = '1') then
@@ -150,7 +150,7 @@ new_move = """                if (mv = '1') then
 """
 s = s[:start] + new_move + s[end:]
 
-# ------------------------------------------- scatter: replace variable slices
+# ------------------------------------------- 散落：替换变量切片
 s = s.replace("""                        cr := to_integer(unsigned(sh_pos(7 downto 4)));
                         cc := to_integer(unsigned(sh_pos(3 downto 0)));""",
               """                        cr := to_integer(unsigned(sh_pos(7 downto 4)));

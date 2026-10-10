@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Patch: game_fsm port naming (inputs named i_*) + puzzle_ctrl busy output."""
+"""补丁：game_fsm 的端口命名（输入统一命名为 i_*）+ puzzle_ctrl 的 busy 输出。"""
 import pathlib
 
 # ---- game_fsm.vhd ---------------------------------------------------------
@@ -11,7 +11,7 @@ s = s.replace("        o_solved   : in  std_logic;                      -- from 
               "        i_solved   : in  std_logic;                      -- from puzzle_ctrl\n"
               "        i_all_lock : in  std_logic;                      -- from puzzle_ctrl\n"
               "        i_shuf_busy: in  std_logic;                      -- from puzzle_ctrl\n")
-# body references
+# 结构体内的引用
 s = s.replace("o_solved = '1'", "i_solved = '1'")
 s = s.replace("o_all_lock = '1'", "i_all_lock = '1'")
 s = s.replace("o_shuf_busy = '0'", "i_shuf_busy = '0'")
@@ -20,7 +20,7 @@ s = s.replace("o_solved, o_all_lock)", "i_solved, i_all_lock)")
 p.write_text(s, encoding="utf-8")
 print("game_fsm patched")
 
-# ---- puzzle_ctrl.vhd : add the busy output -------------------------------
+# ---- puzzle_ctrl.vhd：增加 busy 输出 -------------------------------
 q = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 t = q.read_text(encoding="utf-8")
 t = t.replace("        o_solved  : out std_logic;                      -- all locked AND all on target\n"

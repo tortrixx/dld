@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""FIX 5 -- matrix content per state.
+"""修复 5 —— 各状态下的点阵内容。
 
-The state multiplexer only special-cased SELF_TEST / WIN / FAIL; every other
-state (including S_IDLE and S_PREVIEW) displayed the ENGINE frame.  But the
-scatter only starts in S_PLAYING, so during idle and preview all pieces still sit
-at anchor (0,0) and the panel showed a blob in the top-left corner instead of:
-    S_IDLE    -> panel dark               (requirement B2 "点阵全灭")
-    S_PREVIEW -> the complete pattern     (requirement B4)
-The target picture is a package constant, so the preview just slices i_target
-directly -- no engine involvement needed.
+状态多路选择器只对 SELF_TEST / WIN / FAIL 做了特判；其余每个
+状态（包括 S_IDLE 和 S_PREVIEW）都显示引擎帧。但散落只在
+S_PLAYING 中才开始，所以空闲和预览期间所有零片仍停在
+锚点 (0,0)，点阵左上角只显示一团，而不是：
+    S_IDLE    -> 点阵全灭               （需求 B2「点阵全灭」）
+    S_PREVIEW -> 完整图案               （需求 B4）
+目标图案是包常量，所以预览只需直接切出 i_target，
+不需要引擎参与。
 """
 import pathlib
 
@@ -101,7 +101,7 @@ new = """    process (state, gblink, mrow, eng_fr, eng_fg, win_row, fail_row, pr
 assert old in s
 s = s.replace(old, new)
 
-# add the preview row source: slice tgt_mask in PACKAGE convention (row 0 = bits 7..0)
+# 增加预览行来源：按包约定（第 0 行 = bit 7..0）切出 tgt_mask
 s = s.replace("    signal win_row  : std_logic_vector(7 downto 0);",
               "    signal win_row  : std_logic_vector(7 downto 0);\n"
               "    signal prev_row : std_logic_vector(7 downto 0);  -- target picture row\n"

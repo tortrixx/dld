@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Build a scratch project containing ONLY the modules given, to attribute area.
+"""建一个只含指定模块的临时工程，用来把面积归因到模块。
 
-Usage:  python scripts/scratch_build.py puzzle_ctrl clk_gen ...
-Creates .tmp/scratch/<name>/ with a qsf listing just those files plus a wrapper
-top level that instantiates the first module named, and reports the logic cells.
+用法： python scripts/scratch_build.py puzzle_ctrl clk_gen ...
+在 .tmp/scratch/<name>/ 下生成 qsf，其中只列这些文件，外加一个
+只例化第一个模块的包装顶层，并报告逻辑单元数。
 """
 import pathlib, shutil, subprocess, sys, re
 
@@ -48,7 +48,7 @@ def build(files, top, name):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    # default: measure each module in isolation inside a trivial nothing-top
+    # 默认：在只有一个空顶层的工程里，逐个模块单独测面积
     if not args:
         for m, f in [("clk_gen", "clk_gen.vhd"),
                      ("keypad_scan", "keypad_scan.vhd"),

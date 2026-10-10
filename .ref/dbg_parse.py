@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Inspect what parse_entity_ports actually sees."""
+"""检查 parse_entity_ports 实际看到的内容。"""
 import pathlib, re, sys
 
 ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")

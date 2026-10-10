@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
-"""Pipeline the engine so it meets the 50 MHz requirement.
+"""给引擎加流水，以满足 50 MHz 的要求。
 
-Measured: the design fits (1028/1270 LE) but TimeQuest reported only 38.98 MHz
-(critical path 25.65 ns from sh_k).  The long paths are the scatter datapath:
+实测：设计能装下（1028/1270 LE），但 TimeQuest 只报出 38.98 MHz
+（关键路径 25.65 ns，起点 sh_k）。长路径都在散落数据通路上：
     cand = (rnd_val mod (8-h)) & (rnd_val mod (8-w))
-computed combinationally from sh_k, then a range check and a write.  The scatter
-sequencer already runs over many cycles, so it costs nothing to split that work
-across two clocks and register the intermediate values.
+这一串是从 sh_k 组合算出来的，后面还跟着范围检查和写入。散落
+序列器本来就要跑很多个周期，所以把这份工作拆到两个时钟、并把中间值
+寄存起来不花任何代价。
 
-Editions: SH_TRY now only LATCHES cand/hh/ww (no validity test); the validity test
-moves to a new SH_CHK state one clock later, where the operands are register
-outputs rather than a function of sh_k.
+修订：SH_TRY 现在只**锁存** cand/hh/ww（不做有效性检查）；有效性检查
+推迟一个时钟、挪到新增的 SH_CHK 状态，那里操作数是寄存器的
+输出，而不是 sh_k 的函数。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# 1. new state
+# 1. 新增状态
 s = s.replace("    type sh_t is (SH_IDLE, SH_TRY, SH_NEXT, SH_DONE);",
               "    type sh_t is (SH_IDLE, SH_TRY, SH_CHK, SH_NEXT, SH_DONE);")
 
-# 2. registered scatter operands
+# 2. 寄存后的散落操作数
 s = s.replace(
     "    signal chk_w    : std_logic_vector(2 downto 0) := (others => '0');",
     "    signal chk_w    : std_logic_vector(2 downto 0) := (others => '0');\n"
@@ -31,7 +31,7 @@ s = s.replace(
     "    signal sc_cand  : std_logic_vector(7 downto 0) := (others => '0');\n"
     "    signal sc_ok    : std_logic := '0';")
 
-# 3. SH_TRY: latch only
+# 3. SH_TRY：只锁存
 old_try = s[s.index("                if (sh = SH_TRY) and (chk = CH_IDLE) then"):
             s.index("                ----------------------------------------------------------------\n                -- (4) Overlap engine: one panel row per tick")]
 new_try = """                if (sh = SH_TRY) and (chk = CH_IDLE) then

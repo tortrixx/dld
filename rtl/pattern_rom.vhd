@@ -1,14 +1,14 @@
 -- ============================================================================
---  pattern_rom  --  complete-picture lookup table
---  Subsystem : S5 (pictures and random data)
+--  pattern_rom  --  完整图案查找表
+--  子系统：S5（图案与随机数据）
 --
---  Pure combinational.  Only the two level pictures are stored; the win/fail
---  pictures are separate constants because they are not pictures the player ever
---  has to assemble.
+--  纯组合逻辑。只存两幅关卡图案；胜利/失败
+--  画面是单独的常量，因为玩家从来不需要
+--  把它们拼装出来。
 --
---  The level-1 picture is the figure-4-1 rectangle, DECODED FROM THE COURSE PDF
---  and verified bit-exact against the three pieces at their target anchors
---  (see .ref/solve_l1.py).  The level-2 picture is self-designed.
+--  第一关图案是图 4-1 矩形，从课程 PDF 中解码得到，
+--  并针对三块零片在其目标锚点处做过逐位精确核对
+--  （见 .ref/solve_l1.py）。第二关图案为自行设计。
 --
 --  ⚠️ 2026-10-09（D2：第二关固定 + 第三关随机；提高要求 A2 / 自拟 S1）：
 --    · **第一关只有一幅**（图 4-1，B4 明文指定）—— i_level='0' 时 i_pat 被忽略；
@@ -29,17 +29,17 @@ use work.puzzle_pkg.ALL;
 
 entity pattern_rom is
     port (
-        i_level : in  std_logic;                      -- '0' = level 1, '1' = level 2/3
+        i_level : in  std_logic;                      -- '0' = 第一关，'1' = 第二/三关
         i_pat   : in  std_logic_vector(1 downto 0);   -- 图案库下标（只对第二/三关有效）
-        o_mask  : out std_logic_vector(63 downto 0)   -- target picture mask
+        o_mask  : out std_logic_vector(63 downto 0)   -- 目标图案掩码
     );
 end entity pattern_rom;
 
 architecture rtl of pattern_rom is
 begin
 
-    -- Level 1 : the ONE figure-4-1 picture (requirement B4 fixes it).
-    -- Level 2/3 : the pattern LIBRARY, indexed by pat_sel (B10 fixed / A2 random).
+    -- 第一关：唯一一幅图 4-1 图案（要求 B4 指定）。
+    -- 第二/三关：图案库，由 pat_sel 索引（B10 固定 / A2 随机）。
     o_mask <= L1_TARGET_MASK when (i_level = '0')
               else L2_PATS(to_integer(unsigned(i_pat)));
 

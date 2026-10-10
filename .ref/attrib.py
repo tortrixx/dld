@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Attribute puzzle_ctrl's area by building variants with one feature removed.
+"""通过逐个去掉某项功能来构造变体，从而归属 puzzle_ctrl 的面积开销。
 
-Measures Total logic elements for:
-    full        as-is
-    no_render   o_px_red driven by a constant (render process removed)
-    no_scatter  scatter FSM forced to SH_IDLE (scatter logic removed)
-    no_move     move path disabled
-This tells us which construct actually costs the area, instead of guessing.
+分别测量以下变体的 Total logic elements：
+    full        原样
+    no_render   o_px_red 由常量驱动（去掉 render 进程）
+    no_scatter  散落状态机被强制为 SH_IDLE（去掉散落逻辑）
+    no_move     禁用移动路径
+这样就能看出究竟是哪个结构在消耗面积，而不是靠猜。
 """
 import pathlib, re, shutil, subprocess
 
@@ -61,7 +61,7 @@ def variant(name, text):
 # ---- full -----------------------------------------------------------------
 variant("full", SRC)
 
-# ---- render removed: o_px_red / o_px_grn tied to constants -----------------
+# ---- 去掉 render：o_px_red / o_px_grn 接常量 -----------------
 v = re.sub(r"    process \(m0, m1, m2, m3, locked, sel, i_target, i_level\).*?end process;",
            "    o_px_red <= (others => '0');\n    o_px_grn <= (others => '0');",
            SRC, flags=re.S)
@@ -70,13 +70,13 @@ v = v.replace("        o_px_red <= covered or (i_target and (not covered));\n"
 assert v != SRC
 variant("no_render", v)
 
-# ---- scatter removed: FSM jumps straight to SH_DONE ------------------------
+# ---- 去掉散落：状态机直接跳到 SH_DONE ------------------------
 v2 = SRC.replace("if (i_go = '1') then\n                        sh     <= SH_GET;",
                  "if (i_go = '1') then\n                        sh     <= SH_DONE;")
 assert v2 != SRC
 variant("no_scatter", v2)
 
-# ---- move path removed -----------------------------------------------------
+# ---- 去掉移动路径 -----------------------------------------------------
 v3 = SRC.replace("if (mv = '1') then\n                    mv <= '0';",
                  "if (false) then\n                    mv <= '0';")
 assert v3 != SRC

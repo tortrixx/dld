@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Rename puzzle_ctrl's row outputs to o_rowr / o_rowg (row-scan naming)."""
+"""把 puzzle_ctrl 的行输出改名为 o_rowr / o_rowg（行扫描命名）。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")

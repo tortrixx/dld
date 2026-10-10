@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""Verify three audit claims against the actual constants.
+"""用实际常量核对三条审计结论。
 
-Claims to test:
-  A. row_mask / srl8 shifts the piece the WRONG WAY (audit says base >> ac where
-     base << ac is needed).
-  B. L2_TARGET_MASK is one row below the L2 piece targets.
-  C. the engine's green channel can never be set without red (so the selected
-     piece is drawn yellow instead of green).
+待检验的结论：
+  A. row_mask / srl8 把零片移向了**错误**的方向（审计称需要 base << ac，
+     而实际用的是 base >> ac）。
+  B. L2_TARGET_MASK 比第二关的零片目标低一行。
+  C. 引擎的绿色通道绝不可能在没有红色的情况下被置起（于是被选中的
+     零片被画成黄色而不是绿色）。
 """
 import pathlib, re, sys
 
@@ -32,27 +32,27 @@ def bits_of(cs):
         v |= 1 << (8 * r + c)
     return format(v, "064b")
 
-# ---- the package's srl8 semantics -----------------------------------------
-# srl8(r, dc): v := '0' & r(7 downto 1) for dc=1  ->  v(c) = r(c-1), i.e. r << 1.
-# So srl8(x, ac) == x << ac, which MOVES a bit from column k to column k+ac.
-# Placing a piece whose shape is stored relative to its bbox origin at anchor
-# column ac therefore needs exactly x << ac == srl8(x, ac).  Claim A is FALSE if
-# the code uses srl8.  Verify by direct construction:
-P0 = cells(const_bits("L1_P0"))          # 1x3 bar, row 0 cols 0..2
+# ---- 包里 srl8 的语义 -----------------------------------------
+# srl8(r, dc)：dc=1 时 v := '0' & r(7 downto 1)  ->  v(c) = r(c-1)，即 r << 1。
+# 所以 srl8(x, ac) == x << ac，也就是把某一位从列 k 移到列 k+ac。
+# 因此，要把形状按相对其包围盒原点存储的零片放到锚点
+# 列 ac 上，恰好需要 x << ac == srl8(x, ac)。如果代码用的是 srl8，
+# 则结论 A 为**假**。用直接构造来验证：
+P0 = cells(const_bits("L1_P0"))          # 1x3 横条，行 0 列 0..2
 print("L1_P0 shape:", sorted(P0))
 for ac in range(6):
-    # srl8 semantics: new(c) = old(c-ac)
+    # srl8 语义：new(c) = old(c-ac)
     shifted = {(r, c + ac) for (r, c) in P0 if c + ac <= 7}
     print(f"  anchor col {ac} -> {sorted(shifted)}   (expected for 'placed at col {ac}')")
 
-# ---- claim B: L2 target vs L2 piece targets -------------------------------
+# ---- 结论 B：第二关目标与第二关零片目标 -------------------------------
 print("\nL2_TARGET_MASK cells:")
 l2t = cells(const_bits("L2_TARGET_MASK"))
 print(fig(l2t))
 print("rows:", sorted({r for r, _ in l2t}), " cols:", sorted({c for _, c in l2t}))
 
 L2_TGT = [(2, 2), (2, 4), (4, 2), (4, 4)]
-# the four 2x2 pieces
+# 四块 2x2 零片
 piece = {(0, 0), (0, 1), (1, 0), (1, 1)}
 union = set()
 for (r0, c0) in L2_TGT:
@@ -66,7 +66,7 @@ if l2t != union:
     good = {(r, c) for r in range(2, 6) for c in range(2, 6)}
     print('  "%s"' % bits_of(good))
 
-# ---- claim C: green without red ------------------------------------------
+# ---- 结论 C：有绿无红 ------------------------------------------
 print("\nClaim C (engine colour):")
 print("  redrow := cov or (tgtrow and not cov)  -> red is set for EVERY piece cell")
 print("  grnrow := kc, and kc is built only from cells already in cov")

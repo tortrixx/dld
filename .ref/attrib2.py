@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Narrow down: disable pieces of the SCATTER path and measure each."""
+"""逐步缩小范围：分别禁用 SCATTER 路径的各部分并逐项测量。"""
 import pathlib, shutil, subprocess
 
 ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
@@ -48,13 +48,13 @@ def measure(name, text):
 
 measure("full", SRC)
 
-# A. scatter never leaves SH_IDLE
+# A. 散落状态机从不离开 SH_IDLE
 v = SRC.replace("if (i_go = '1') then\n                        sh     <= SH_GET;",
                 "if (i_go = '1') then\n                        sh     <= SH_IDLE;")
 assert v != SRC
 measure("A_scatter_off", v)
 
-# B. remove the column-shift case in SH_PLACE (use sh_acc unchanged)
+# B. 去掉 SH_PLACE 中的列移位分支（sh_acc 保持不变）
 start = v.index("                        -- column shift: move each row right by cc (fixed loop)")
 end = v.index("                        ok := (cr + hh <= 8) and (cc + ww <= 8);\n                        if (ok) then\n                            if (i_level = '0') then\n                                case to_integer(sh_k) is\n                                    when 0      => rest := m1 or m2;")
 valsrc = """
@@ -62,7 +62,7 @@ valsrc = """
 """
 measure("B_nocolshift", SRC[:start] + valsrc + SRC[end:])
 
-# C. remove the serial row shifter (SH_SHIFT does nothing)
+# C. 去掉串行行移位器（SH_SHIFT 不做任何事）
 v3 = SRC.replace("""                        if (to_integer(sh_row) < lim) then
                             sh_row <= sh_row + 1;
                             if (to_integer(sh_row) = 0) then
@@ -77,7 +77,7 @@ v3 = SRC.replace("""                        if (to_integer(sh_row) < lim) then
 assert v3 != SRC
 measure("C_norowshift", v3)
 
-# D. no overlap check in SH_PLACE
+# D. SH_PLACE 中不做重叠检查
 v4 = SRC.replace("if ((occ and rest) /= MASK_ZERO) then\n                                ok := false;\n                            end if;\n                        end if;\n\n                        if (ok) then\n                            case to_integer(sh_k) is",
                  "null;\n                        end if;\n\n                        if (ok) then\n                            case to_integer(sh_k) is")
 measure("D_nooverlap", v4)

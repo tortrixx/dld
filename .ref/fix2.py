@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""FIX 2 -- make the key-pad index and the game key codes one coherent scheme.
+"""修复 2 —— 让键盘下标与游戏键码成为一套自洽的编码。
 
-DEFECT (confirmed): keypad_scan built its code as 4*column + row (column-major)
-while the K_* constants in puzzle_pkg are laid out row-major-shaped and put
-K_START at "0001".  No key in the documented layout could ever produce K_START,
-so the game could not react even with a working scanner.
+缺陷（已确认）：keypad_scan 生成的码是 4*column + row（列优先），
+而 puzzle_pkg 里的 K_* 常量是按行优先的形态排布，并把 K_START
+放在 "0001"。在文档所述布局中没有任何键能产生 K_START，
+所以即使扫描器工作正常，游戏也无法响应。
 
-FIX
-  * keypad_scan reports the plain KEY INDEX  4*row + column   (row-major, the
-    natural "key number" on the 4x4 keypad);
-  * game_fsm decodes that index into the game key with ONE explicit table
-    (key_of), so the physical layout is described in exactly one place and can be
-    corrected from a single measurement.
+修复
+  * keypad_scan 直接报出普通的键下标  4*row + column  （行优先，也就是
+    4x4 键盘上自然的「键号」）；
+  * game_fsm 用唯一一张显式表（key_of）把该下标解码成游戏键，
+    于是物理布局只在唯一一处描述，一次测量
+    就能校正。
 """
 import pathlib
 
@@ -51,7 +51,7 @@ print("keypad_scan: row-major index")
 q = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
 t = q.read_text(encoding="utf-8")
 
-# add the decode function to the architecture declarative part
+# 把解码函数加入结构体的声明部分
 anchor = "    signal st      : state_t := S_SELF_TEST;"
 assert anchor in t
 keyof = '''    ----------------------------------------------------------------------------
@@ -92,7 +92,7 @@ keyof = '''    -----------------------------------------------------------------
 '''
 t = t.replace(anchor, keyof + anchor)
 
-# add a decoded key signal and use it everywhere i_key was compared
+# 增加一个已解码的按键信号，并替换所有原先比较 i_key 的地方
 t = t.replace("    signal blink_r : std_logic := '0';",
               "    signal blink_r : std_logic := '0';\n"
               "    signal kdec    : std_logic_vector(3 downto 0) := K_NONE;  -- decoded game key")
@@ -100,7 +100,7 @@ t = t.replace("    o_state    <= st;",
               "    -- the scanner's raw key index is decoded into a game key in one place\n"
               "    kdec <= key_of(i_key);\n\n"
               "    o_state    <= st;")
-# replace comparisons with the decoded signal
+# 用解码后的信号替换原有的比较
 t = t.replace("(i_key = K_START)", "(kdec = K_START)")
 t = t.replace("case i_key is", "case kdec is")
 q.write_text(t, encoding="utf-8")

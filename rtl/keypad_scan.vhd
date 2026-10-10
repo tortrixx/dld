@@ -1,47 +1,47 @@
 -- ============================================================================
---  keypad_scan  --  4x4 matrix keypad scanner, debounced
---  Subsystem : S2 (keyboard input)
+--  keypad_scan  --  4x4 矩阵键盘扫描（带消抖）
+--  子系统：S2（键盘输入）
 --
---  BOARD WIRING (board manual, absolute truth)
---     columns COL0..COL3 -> PIN_117,118,119,120
---     rows    ROW0..ROW3 -> PIN_111,112,113,114
+--  板上接线（板级手册，绝对真值）
+--     列 COL0..COL3 -> PIN_117,118,119,120
+--     行 ROW0..ROW3 -> PIN_111,112,113,114
 --
---  KEY CODE reported
---     o_key = 4*row + column,  i.e. the plain key index in READING ORDER
+--  报出的键码
+--     o_key = 4*行 + 列，即按阅读顺序的朴素键号
 --     ⚠️ 修正（2026-10-09 审计）：这里的 "row 0" 是**板上丝印的最下一行 ROW0**
 --     （PIN_111），不是"最上一行"—— 手册附图 26 里 ROW3 在最上、ROW0 在最下，
 --     而 `i_row(0)` 接的就是 `kp_row[0] = PIN_111`。键位图以 `game_fsm.key_of()`
 --     为准（该处已按实测的 KEY14=index1=开始 / KEY16=index3=选择 校核过）；
 --     本模块只负责"报出 4*行+列"这个原始编号。
---     Interpreting that index as a game control is game_fsm's job (key_of).
+--     把这个键号解释成游戏控制是 game_fsm（key_of）的职责。
 --
 --  ---------------------------------------------------------------------------
---  SCAN SCHEME AND WHY
+--  扫描方案及其理由
 --  ---------------------------------------------------------------------------
---  Two schemes were tried on the bench:
+--  在实验台上试过两种方案：
 --
---   (a) column-major, one column driven LOW per phase, read the rows.
---       Worked, but only TWO keys were ever detected.  A row line is only read
---       while its own column is the driven one, so a single wiring/pull-up
---       problem on one column line removes a whole column silently.
+--   (a) 列优先：每个相位只把一列驱动为低，然后读行。
+--       可行，但始终只能检测到两个键。一条行线只在它自己所在的列被驱动
+--       时才被读取，所以只要某条列线上有一个接线/上拉问题，就会静默地
+--       丢掉整列键。
 --
---   (b) ALL columns driven LOW, then read the rows (used here).
---       Now a pressed key pulls its row LOW no matter which column it sits in,
---       so nothing can be lost to a single bad column.  The column is then found
---       by driving all columns HIGH and releasing ONE at a time; only the column
---       carrying the pressed key lets that row fall.
+--   (b) 所有列都驱动为低，然后读行（本模块采用）。
+--       这样，按下的键无论坐在哪一列，都会把它所在的行拉低，因此不会因为
+--       某一列有问题就丢掉任何一个键。随后，列号是通过"把所有列驱动为
+--       高，再每次只释放一列"来确定的：只有承载被按键的那一列，才会让
+--       对应的行落下。
 --
---  Scheme (b) is a superset of (a) in robustness: it converts "one bad column
---  loses four keys" into "one bad column loses at most a column identity, and
---  even then the key is still detected".
+--  在健壮性上，方案 (b) 是 (a) 的超集：它把"一列坏掉会丢四个键"
+--  变成"一列坏掉最多只丢一个列号，而且即便在这种情况下，这个键仍然
+--  能被检测到"。
 --
---  Debounce : a reading must be identical for DEBOUNCE_MAX+1 scan rounds
---             (now 4 rounds = 40 ms -- see the ERR-031 note in puzzle_pkg.vhd:
---              one round is TWO tick_200 periods = 10 ms, because SC_ALL_HIGH and
---              SC_ALL_LOW each wait for a tick; the old "16 x 5 ms = 80 ms" text
---              under-counted by 2x and the real value was 160 ms).
---  Outputs  : o_key holds the accepted index; o_press is a ONE-CLOCK pulse when a
---             newly accepted key appears, so a hold produces exactly one action.
+--  消抖：一次读数必须在连续 DEBOUNCE_MAX+1 轮扫描中保持一致
+--        （现在是 4 轮 = 40 ms —— 见 puzzle_pkg.vhd 里 ERR-031 的说明：
+--        一轮是两个 tick_200 周期 = 10 ms，因为 SC_ALL_HIGH 和
+--        SC_ALL_LOW 各自都要等一个 tick；旧的"16 x 5 ms = 80 ms"说法
+--        少算了一倍，真实值是 160 ms）。
+--  输出：o_key 保存被接受的键号；当一个新接受的键出现时，o_press 是一个
+--        单时钟脉冲，所以按住不放只会产生恰好一次动作。
 -- ============================================================================
 
 library IEEE;
@@ -52,21 +52,21 @@ use work.puzzle_pkg.ALL;
 entity keypad_scan is
     port (
         i_clk     : in  std_logic;
-        i_rst     : in  std_logic;                       -- active HIGH
-        i_tick    : in  std_logic;                       -- 200 Hz scan tick
-        i_row     : in  std_logic_vector(3 downto 0);    -- matrix rows ROW0..ROW3
-        o_col     : out std_logic_vector(3 downto 0);    -- matrix columns COL0..COL3
-        o_key     : out std_logic_vector(3 downto 0);    -- accepted key index
-        o_press   : out std_logic;                       -- one-clock pulse
-        o_release : out std_logic;                       -- one-clock pulse
-        o_raw     : out std_logic_vector(3 downto 0)     -- debug: live column drive
+        i_rst     : in  std_logic;                       -- 高电平有效
+        i_tick    : in  std_logic;                       -- 200 Hz 扫描 tick
+        i_row     : in  std_logic_vector(3 downto 0);    -- 矩阵行 ROW0..ROW3
+        o_col     : out std_logic_vector(3 downto 0);    -- 矩阵列 COL0..COL3
+        o_key     : out std_logic_vector(3 downto 0);    -- 被接受的键号
+        o_press   : out std_logic;                       -- 单时钟脉冲
+        o_release : out std_logic;                       -- 单时钟脉冲
+        o_raw     : out std_logic_vector(3 downto 0)     -- 调试：实时列驱动
     );
 end entity keypad_scan;
 
 architecture rtl of keypad_scan is
 
-    -- THE polarity constant of this project: the level a row line reads while
-    -- its key is pressed.  Measured on the bench: '0'.
+    -- 本项目的极性常量：按键被按下时行线读到的电平。
+    -- 实验台实测为 '0'。
     constant KP_ACTIVE : std_logic := '0';
 
     type scan_t is (SC_ALL_LOW, SC_ALL_HIGH, SC_RELEASE, SC_SETTLE);
@@ -79,7 +79,7 @@ architecture rtl of keypad_scan is
     --    那 2 个触发器是真花的钱。收到 6 位后 keypad_scan 少 12 个 LC（整机 -7 LE，
     --    见 .tmp/opt/p_kp_width 与 area_base 的对比）。
     --    ⚠️ 改这里必须确认判据值仍 ≤ 63（本模块的判据是 `settle = 63`）。
-    signal settle  : unsigned(5 downto 0) := (others => '0');   -- 0..63 -> 6 bit (was 8)
+    signal settle  : unsigned(5 downto 0) := (others => '0');   -- 0..63 -> 6 位（原为 8 位）
 
     signal row_all : std_logic_vector(3 downto 0) := (others => KP_ACTIVE);
     -- ⚠️ ERR-036（2026-10-09 第 11 工作阶段，全项目审计发现）：原来 row_all **没有初值**，
@@ -91,12 +91,12 @@ architecture rtl of keypad_scan is
     --    （见下面的组合进程）—— 全 0（4 行都"有效"）与全 1（0 行有效）**都判为"没有键"**，
     --    所以这个初值只影响上电头几拍，**不改变任何按键行为**（这也是本轮不为它重跑
     --    整机仿真的理由：行为等价、只是把默认值写明）。
-    -- per-phase record: col_low(c) = '1' means that while column c was the
-    -- only one released, a row line fell -> the pressed key is in column c.
+    -- 逐相位记录：col_low(c) = '1' 表示当只有列 c 被释放时，有一条行线落下
+    -- -> 被按下的键位于列 c。
     signal col_low : std_logic_vector(3 downto 0) := (others => '0');
-    signal col_all : std_logic := '0';                -- 1 = all columns LOW
+    signal col_all : std_logic := '0';                -- 1 = 所有列驱动为低
 
-    signal cand    : std_logic_vector(3 downto 0) := K_NONE;  -- candidate index
+    signal cand    : std_logic_vector(3 downto 0) := K_NONE;  -- 候选键号
     signal any_hit : std_logic := '0';
     signal rd_done : std_logic := '0';
 
@@ -106,7 +106,7 @@ architecture rtl of keypad_scan is
     --    收到 2 位（0..3）。**若 DEBOUNCE_MAX 改成 > 3，必须同步加宽 cnt**
     --    （位宽 = ceil(log2(DEBOUNCE_MAX+1))），否则 `cnt = DEBOUNCE_MAX` 恒不成立、
     --    消抖会永远接受不了按键（与 clk_gen 里 T_BTN_MS/por_cnt 的位宽陷阱同类）。
-    signal cnt       : unsigned(1 downto 0) := (others => '0'); -- 0..DEBOUNCE_MAX -> 2 bit (was 8)
+    signal cnt       : unsigned(1 downto 0) := (others => '0'); -- 0..DEBOUNCE_MAX -> 2 位（原为 8 位）
     signal key_r     : std_logic_vector(3 downto 0) := K_NONE;
     signal press_r   : std_logic := '0';
     signal release_r : std_logic := '0';
@@ -116,10 +116,10 @@ architecture rtl of keypad_scan is
 begin
 
     ----------------------------------------------------------------------------
-    -- Column drive.
-    --   SC_ALL_LOW / SC_SETTLE while col_all='1' : every column LOW
-    --   SC_RELEASE                                : all HIGH except the one
-    --                                               selected by 'phase'
+    -- 列驱动。
+    --   SC_ALL_LOW / SC_SETTLE 且 col_all='1' 时：所有列驱动为低
+    --   SC_RELEASE                              ：除由 'phase' 选中的那一列
+    --                                             外，其余全为高
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
@@ -135,16 +135,16 @@ begin
             else
                 case state is
 
-                    -- Phase A: pull ALL columns low, then sample the rows.
+                    -- 相位 A：把所有列驱动为低，然后采样各行。
                     when SC_ALL_LOW =>
                         if (i_tick = '1') then
                             col_all <= '1';
-                            col_low <= (others => '0');   -- new round
+                            col_low <= (others => '0');   -- 新一轮
                             settle  <= (others => '0');
                             state   <= SC_SETTLE;
                         end if;
 
-                    -- Settle, then latch the "all columns low" row pattern.
+                    -- 等待稳定，然后锁存"所有列驱动为低"时的行图样。
                     when SC_SETTLE =>
                         if (settle = 63) then
                             row_all <= i_row;
@@ -156,16 +156,16 @@ begin
                             settle <= settle + 1;
                         end if;
 
-                    -- Phase B: drive all HIGH and release ONE column per step.
-                    -- While column c is released, the only way a row can fall is
-                    -- if the pressed key sits in column c -- so each phase that
-                    -- sees a fall identifies one column.  The results must be
-                    -- ACCUMULATED (an earlier version overwrote a single register
-                    -- each phase, so only the last column was ever identified).
+                    -- 相位 B：全部驱动为高，每步只释放一列。
+                    -- 当列 c 被释放时，行能落下的唯一可能，
+                    -- 就是被按下的键正位于列 c —— 所以每个看到行落下的相位
+                    -- 都确定了一列。这些结果必须被**累加**
+                    -- （早先的版本每个相位都覆盖同一个寄存器，
+                    -- 因此只有最后一列会被识别出来）。
                     when SC_RELEASE =>
                         if (settle = 63) then
                             settle <= (others => '0');
-                            -- any row low while this column is released?
+                            -- 这一列被释放时有行线为低吗？
                             if (i_row(0) = KP_ACTIVE) or (i_row(1) = KP_ACTIVE)
                                or (i_row(2) = KP_ACTIVE) or (i_row(3) = KP_ACTIVE) then
                                 col_low(to_integer(phase)) <= '1';
@@ -190,8 +190,8 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Combinational column drive (never registered, so the drive and the phase
-    -- used to build the key code cannot disagree).
+    -- 组合逻辑列驱动（不打拍，所以驱动与用于生成键号的相位
+    -- 不会不一致）。
     ----------------------------------------------------------------------------
     with phase select
         col_drv <= "1110" when "00",
@@ -203,12 +203,12 @@ begin
     o_raw <= col_drv;
 
     ----------------------------------------------------------------------------
-    -- Row sampling -> candidate key index.
-    --   any pressed row?
-    --     yes -> the index is 4*row + column, and the column is the phase whose
-    --            RELEASE let that row fall (i.e. the row was low in row_rel).
-    --            If no release pinpoints it, fall back to column 0 so the key is
-    --            still reported rather than lost.
+    -- 行采样 -> 候选键号。
+    --   有行被按下吗？
+    --     有 -> 键号 = 4*行 + 列，而列就是"其 RELEASE 让该行落下"的那个相位
+    --            （即该行在 row_rel 期间为低）。
+    --            如果没有任何释放能定位它，就回退到列 0，这样键仍然会被报出
+    --            而不是被丢掉。
     ----------------------------------------------------------------------------
     process (row_all, col_low)
         variable r    : integer;
@@ -268,7 +268,7 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Debounce: exactly one sample per completed scan round.
+    -- 消抖：每完成一轮扫描恰好采样一次。
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
@@ -295,7 +295,7 @@ begin
                         cnt <= (others => '0');
                     end if;
 
-                    -- accept / release, one clock wide each
+                    -- 接受 / 释放，各一个时钟宽
                     -- ⚠️ 2026-10-09 第 15 工作阶段（面积优化；**穷举证明等价**）：
                     --    原来的三分支 if/elsif 逐条列了三种"改 key_r"的情形。对
                     --    (stable, key_r) 的全部 256 种取值逐一比对可以证明：
@@ -309,9 +309,9 @@ begin
                     --    行为（含"按住只发一次 / 换键当新按下"）逐拍不变。
                     key_r <= stable;
                     if ((stable /= K_NONE) and (stable /= key_r)) then
-                        -- a key was accepted, or a DIFFERENT key was accepted without
-                        -- an intervening release: both are reported as a new press so
-                        -- no key is swallowed
+                        -- 一个键被接受，或者在没有中间释放的情况下接受了另一个不同的键：
+                        -- 两者都报成一次新的按下，
+                        -- 这样任何键都不会被吞掉。
                         press_r <= '1';
                     elsif ((stable = K_NONE) and (key_r /= K_NONE)) then
                         release_r <= '1';

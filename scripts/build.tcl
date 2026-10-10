@@ -1,18 +1,18 @@
 # ============================================================================
-#  build.tcl -- full Quartus II 9.1 flow for the puzzle project
-#  Run with:  quartus_sh -t scripts/build.tcl
+#  build.tcl —— 拼图项目的完整 Quartus II 9.1 流程
+#  运行方式： quartus_sh -t scripts/build.tcl
 #
-#  Runs map -> fit -> asm -> sta and prints the numbers that actually matter:
-#  logic element usage (the EPM1270 has only 1270 LEs) and Fmax.
+#  依次执行 map -> fit -> asm -> sta，并打印真正重要的数字：
+#  逻辑单元用量（EPM1270 只有 1270 个 LE）与 Fmax。
 #
-#  NOTE: Fmax comes from quartus_sta (TimeQuest).  The classic quartus_tan does
-#  not read the .sdc, so its Fmax column is empty and proves nothing.
+#  注意：Fmax 来自 quartus_sta（TimeQuest）。经典的 quartus_tan 不读 .sdc，
+#  所以它的 Fmax 列是空的，证明不了任何事。
 # ============================================================================
 
-# execute_module lives in the ::quartus::flow package, which is NOT loaded by
-# default in a bare quartus_sh -t session.  Without this line every build fails
-# with 'Tcl command "execute_module" belongs to the "::quartus::flow" package
-# which is currently not loaded'.
+# execute_module 位于 ::quartus::flow 包中，而裸的 quartus_sh -t 会话
+# 默认不加载该包。没有这一行，每次编译都会失败并报
+# 'Tcl command "execute_module" belongs to the "::quartus::flow" package
+# which is currently not loaded'。
 load_package flow
 
 set script_dir [file dirname [info script]]
@@ -27,19 +27,19 @@ if {[catch {
 
     project_open -revision puzzle [file join $proj_dir puzzle]
 
-    # ---- 1. analysis & synthesis -------------------------------------------
+    # ---- 1. 分析与综合 -------------------------------------------
     execute_module -tool map
 
-    # ---- 2. fitter (pins are applied here) ---------------------------------
+    # ---- 2. 布局布线器（引脚在此应用） ---------------------------------
     execute_module -tool fit
 
-    # ---- 3. assembler (.pof for the USB-Blaster) ---------------------------
+    # ---- 3. 汇编器（为 USB-Blaster 生成 .pof） ---------------------------
     execute_module -tool asm
 
-    # ---- 4. classic timing analyser (kept for the resource summary) --------
+    # ---- 4. 经典时序分析器（保留用于资源汇总） --------
     execute_module -tool tan
 
-    # ---- 5. TimeQuest static timing analysis ------------------------------
+    # ---- 5. TimeQuest 静态时序分析 ------------------------------
     #  ⚠️⚠️ 2026-10-10 修正（**脚本的注释与代码互相矛盾**）：
     #     本文件头部一直写着 "Runs map -> fit -> asm -> **sta**"、
     #     并注明 "Fmax comes from quartus_sta (TimeQuest)"，

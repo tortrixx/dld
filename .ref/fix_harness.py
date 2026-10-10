@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Update the scratch harness for puzzle_ctrl's new row-scan port list."""
+"""为 puzzle_ctrl 新增的行扫描端口列表更新 scratch 测试框架。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.tmp\scratch\pc_only\scratch_top.vhd")
@@ -27,7 +27,7 @@ s = s.replace("    signal gr   : std_logic_vector(63 downto 0);\n",
               "    signal gr   : std_logic_vector(63 downto 0);\n"
               "    signal r8   : std_logic_vector(7 downto 0);\n"
               "    signal g8   : std_logic_vector(7 downto 0);\n")
-# use the new row outputs so they are not optimised away
+# 使用新的行输出，以免它们被优化掉
 s = s.replace("    sink <= tv;", "    sink <= tv xor (r8 & g8 & r8 & g8 & r8 & g8 & r8 & g8);")
 p.write_text(s, encoding="ascii")
 print("harness updated")

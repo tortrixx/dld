@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Lock the confirmed key mapping.
+"""锁定已确认的键位映射。
 
-BENCH EVIDENCE (keypad_diag_top, authoritative pins):
-  * raw index 1 is the key that starts the game (it produced the pattern).
-  * the scanner now reports distinct indexes per key and returns to 0 on release.
-  * pressing the three keys of the right-most physical column drove the reported
-    row lines to 110 / 101 / 011, i.e. rows 0..2 respond; row 3 did not move.
-  * only rows 0..3 as 4 bits are available, so the index is 4*row + column and
-    the confirmed START key is index 1.
+实测证据（keypad_diag_top，权威引脚）：
+  * 原始下标 1 就是启动游戏的那个键（它产生了该图案）。
+  * 扫描器现在对每个键报出互不相同的下标，并在松手时回到 0。
+  * 按下最右侧物理列的那三个键，使报出的行线变成 110 / 101 / 011，
+    即第 0..2 行有响应；第 3 行没有变化。
+  * 可用的只有第 0..3 行这 4 位，所以下标为 4*row + column，
+    已确认的 START 键是下标 1。
 
-Because a full 16-key survey was not completed, the map keeps the confirmed keys
-explicit and assigns sensible neighbours, with the whole table in ONE place
-(game_fsm.key_of) so it can be corrected from a single measurement.
+由于未完成全部 16 键的普查，该映射把已确认的键显式列出，并为其
+分配合理的相邻键，而整张表集中在唯一一处（game_fsm.key_of），
+因此一次测量就能校正它。
 """
 import pathlib
 

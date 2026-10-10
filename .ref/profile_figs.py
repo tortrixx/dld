@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Locate actual dot centres in the figures and build exact 8x8 masks."""
+"""在图中定位实际的点阵中心，并构造精确的 8x8 掩码。"""
 import pathlib
 from PIL import Image
 
@@ -11,7 +11,7 @@ def prof(name):
     px = im.load()
     print(f"\n=== {name} {W}x{H} ===")
 
-    # column-wise and row-wise count of "colourful" pixels (red or green)
+    # 按列和按行统计「有颜色」的像素数（红或绿）
     colred = [0] * W
     rowred = [0] * H
     for y in range(H):

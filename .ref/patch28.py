@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Remove the obsolete duplicate renderer process (the one that uses acc_cov /
-acc_kc / ph), which patch26 left behind next to the new frame renderer."""
+"""删掉过时的重复渲染进程（即使用 acc_cov /
+acc_kc / ph 的那个），它是 patch26 留在新帧渲染器旁边的残留。"""
 import pathlib, re
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 lines = p.read_text(encoding="utf-8").splitlines()
 
-# find every "process (i_clk)" block and keep those that do NOT mention acc_cov
-blocks = []      # (start_idx, end_idx) inclusive
+# 找出每一个 "process (i_clk)" 块，保留其中**不**提及 acc_cov 的
+blocks = []      # (起始下标, 结束下标)，闭区间
 i = 0
 while i < len(lines):
     if re.match(r"\s*process\s*\(", lines[i]):

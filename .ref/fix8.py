@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Fix the keypad diagnostic: unsigned -> std_logic_vector cast, and add buzz to
-the generator's port list (the new guard caught this omission, which is exactly
-what it was written for)."""
+"""修复键盘诊断：加上 unsigned -> std_logic_vector 的类型转换，并把 buzz
+加入生成器的端口列表（新的守护检查抓到了这处遗漏，而这正是
+它被写出来的目的）。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_diag_top.vhd")

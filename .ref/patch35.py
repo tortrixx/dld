@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Register keypad_raw_top in the generator."""
+"""在生成器里注册 keypad_raw_top。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\scripts\gen_project.py")

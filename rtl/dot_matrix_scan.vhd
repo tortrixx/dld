@@ -1,53 +1,53 @@
 -- ============================================================================
---  dot_matrix_scan  --  8x8 dual-colour dot-matrix driver (row scan)
---  Subsystem : S6 (display)
+--  dot_matrix_scan  ——  8x8 双色点阵驱动（行扫描）
+--  子系统：S6（显示）
 --
---  Board wiring / polarity (from the manual, absolute truth):
---     rows    ROW0..ROW7 -> PIN_8,7,6,5,4,3,2,1     (row = LOW to select)
---     red     COLR0..COLR7 -> PIN_22,21,16,15,14,13,12,11  (red  = HIGH to light)
---     green   COLG0..COLG7 -> PIN_45,44,43,42,41,40,39,38  (green= HIGH to light)
+--  板级连线 / 极性（来自手册，绝对真值）：
+--     行      ROW0..ROW7 -> PIN_8,7,6,5,4,3,2,1     （行 = 低电平选通）
+--     红      COLR0..COLR7 -> PIN_22,21,16,15,14,13,12,11  （红 = 高电平点亮）
+--     绿      COLG0..COLG7 -> PIN_45,44,43,42,41,40,39,38  （绿 = 高电平点亮）
 --
---  A dot lights RED   when its row is LOW, its red column is HIGH and its green
---  column is LOW.  It lights GREEN when its row is LOW, its red column is LOW and
---  its green column is HIGH.
---  BOTH columns HIGH lights BOTH LEDs of that dot -> it looks YELLOW; both LOW
---  means the dot is dark.  (An earlier version of this comment wrongly said
---  "both HIGH = dot off" -- that contradicts the two lines below it and the
---  board test, which draws the self-test as all-yellow.  Corrected 2026-10-08.)
+--  当某点的行为低电平、红色列为高电平、绿色列为低电平时，
+--  该点显示红色。当它的行为低电平、红色列为低电平、
+--  绿色列为高电平时，该点显示绿色。
+--  两列都为高电平会点亮该点的两个 LED -> 看起来是黄色；两列都为低电平
+--  则表示该点熄灭。（本注释的早期版本错误地写成
+--  "两列都为高电平 = 该点熄灭" —— 这与下面两行以及
+--  板级测试相矛盾，板级测试把自检画成全黄。已于 2026-10-08 更正。）
 --
---  Three display colours therefore come from only two bit-planes:
---     red only -> RED,  green only -> GREEN,  both -> YELLOW.
---  That is how requirement B8 draws locked pieces and how B1 draws the self-test.
+--  因此三种显示颜色只由两个位平面产生：
+--     仅红 -> 红，仅绿 -> 绿，两者都有 -> 黄。
+--  要求 B8 就是靠它绘制锁定的零片，要求 B1 也是靠它绘制自检。
 --
---  NOTE: this driver is a pure straight-through 2-bit-plane driver -- it does NOT
---  enforce red/green mutual exclusion.  "Mutual exclusion" is a property of the
---  *content* the caller supplies for single-colour pictures; if a caller drives
---  both planes high, the panel really does show yellow.
+--  注意：本驱动是纯粹直通的 2 位平面驱动 —— 它并不
+--  强制红/绿互斥。"互斥"是调用方为单色图案所提供的
+--  *内容* 的属性；如果调用方把两个平面都拉高，
+--  面板实际显示的就是黄色。
 --
---  INTERFACE: the driver takes ONE ROW at a time (8 bits per colour) plus the
---  index of that row.  This is deliberate: the puzzle engine renders a single row
---  per scan period, so there is no 64-bit frame buffer anywhere in the design.
---  Keeping the interface row-sized is what made the whole engine fit in the
---  EPM1270 (see the measured notes in puzzle_ctrl.vhd).
+--  接口：本驱动每次只接收一行（每种颜色 8 位）以及该行的
+--  索引。这是刻意的：拼图核心每个扫描周期只渲染一行，
+--  因此整个设计里没有任何 64 位帧缓存。
+--  把接口保持为行大小，正是让整个引擎能装进
+--  EPM1270 的原因（见 puzzle_ctrl.vhd 中的实测记录）。
 --
---  >>> HARDWARE CONSTRAINT -- READ BEFORE USING THE 16 LEDs <<<
---  The board shares PIN_38..45 between COLG0..COLG7 and LD8..LD15, and
---  PIN_137..144 between LD8..LD15 and the VGA port.  Driving the LEDs would cost
---  the matrix its green colour, which requirement B6 depends on.  No requirement
---  of topic 4 asks for the LEDs, so they are deliberately left unused.
+--  >>> 硬件约束 —— 使用这 16 个 LED 之前必读 <<<
+--  板上 PIN_38..45 由 COLG0..COLG7 与 LD8..LD15 共用，
+--  PIN_137..144 由 LD8..LD15 与 VGA 端口共用。驱动这些 LED 会让
+--  点阵失去绿色，而要求 B6 依赖绿色。题目 4 没有任何要求
+--  需要这些 LED，所以刻意不使用它们。
 --
---  ROW ORDER -- MEASURED ON REAL HARDWARE, DO NOT "SIMPLIFY" THIS AWAY:
---  the manual lists ROW0..ROW7 on PIN_8..PIN_1 but never says which physical edge
---  ROW0 is.  Measured with board_test_top test 2 (hollow frame whose top-left dot
---  is red): the red marker appeared at the BOTTOM-LEFT, so ROW0 is the BOTTOM row
---  and the logical row index must be counted up from the bottom.  The decode
---  below is therefore reversed.  Columns (COLR0 = left-most) and the red/green
---  banks were confirmed correct as-is.  Keeping this in the RTL (rather than
---  reversing the .qsf pin list) means the .qsf still matches the manual
---  pin-for-pin and simulation sees the same mapping as the silicon.
+--  行顺序 —— 在真实硬件上实测得出，不要"简化"掉：
+--  手册把 ROW0..ROW7 列在 PIN_8..PIN_1 上，但从未说明 ROW0 是
+--  哪一个物理边缘。用 board_test_top 的测试 2（左上角点为红色的
+--  空心方框）实测：红色标记出现在左下角，因此 ROW0 是最下面一行，
+--  逻辑行号必须从底部往上数。所以下面的译码
+--  是反过来的。列（COLR0 = 最左列）与红/绿
+--  两组引脚经确认本来就是对的。把它保留在 RTL 里（而不是
+--  反过来改 .qsf 的引脚表），意味着 .qsf 仍与手册
+--  逐引脚一致，仿真看到的映射与芯片上相同。
 --
---  Ghosting : the sources update the row data and the row index together, so a
---  row is never driven with another row's data.
+--  鬼影：信号源把行数据与行索引一起更新，所以
+--  一行绝不会被另一行的数据驱动。
 -- ============================================================================
 
 library IEEE;
@@ -58,12 +58,12 @@ use work.puzzle_pkg.ALL;
 entity dot_matrix_scan is
     port (
         i_clk   : in  std_logic;
-        i_rst   : in  std_logic;                       -- active HIGH
-        i_en    : in  std_logic;                       -- '0' = matrix fully dark
-        i_row   : in  std_logic_vector(2 downto 0);    -- which logical row (0 = top)
-        i_colr  : in  std_logic_vector(7 downto 0);    -- red   bits for that row
-        i_colg  : in  std_logic_vector(7 downto 0);    -- green bits for that row
-        o_row   : out std_logic_vector(7 downto 0);    -- ROW0..ROW7, active LOW
+        i_rst   : in  std_logic;                       -- 高电平有效
+        i_en    : in  std_logic;                       -- '0' = 点阵全灭
+        i_row   : in  std_logic_vector(2 downto 0);    -- 哪一逻辑行（0 = 顶部）
+        i_colr  : in  std_logic_vector(7 downto 0);    -- 该行的红色位
+        i_colg  : in  std_logic_vector(7 downto 0);    -- 该行的绿色位
+        o_row   : out std_logic_vector(7 downto 0);    -- ROW0..ROW7，低电平有效
         o_colr  : out std_logic_vector(7 downto 0);    -- COLR0..COLR7
         o_colg  : out std_logic_vector(7 downto 0)     -- COLG0..COLG7
     );
@@ -76,21 +76,21 @@ architecture rtl of dot_matrix_scan is
 begin
 
     ----------------------------------------------------------------------------
-    -- Row decode, one-hot, ACTIVE LOW, with the logical row counted from the
-    -- bottom (see the ROW ORDER note in the header).
+    -- 行译码，独热，低电平有效，逻辑行号从
+    -- 底部往上数（见文件头的行顺序说明）。
     ----------------------------------------------------------------------------
     with i_row select
-        row_sel <= "01111111" when "000",   -- logical row 0 = TOP    -> ROW7 (PIN_1)
+        row_sel <= "01111111" when "000",   -- 逻辑行 0 = 顶部    -> ROW7 (PIN_1)
                    "10111111" when "001",
                    "11011111" when "010",
                    "11101111" when "011",
                    "11110111" when "100",
                    "11111011" when "101",
                    "11111101" when "110",
-                   "11111110" when others;  -- logical row 7 = BOTTOM -> ROW0 (PIN_8)
+                   "11111110" when others;  -- 逻辑行 7 = 底部 -> ROW0 (PIN_8)
 
     ----------------------------------------------------------------------------
-    -- Registered outputs.  While disabled the whole panel is off.
+    -- 寄存器输出。禁用时整个面板熄灭。
     ----------------------------------------------------------------------------
     process (i_clk)
     begin

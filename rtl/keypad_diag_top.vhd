@@ -1,34 +1,34 @@
 -- ============================================================================
---  keypad_diag_top  --  KEYPAD MAP MEASUREMENT (authoritative pin constraints)
+--  keypad_diag_top  --  键盘映射实测（权威引脚约束）
 --
---  PURPOSE
+--  目的
 --  -------
---  The keypad now responds, but the physical position of each key is still an
---  assumption.  This build removes every assumption: it shows the raw key index
---  that the scanner measures (4*row + column, row 0 = top) AND the game key that
---  the current map derives from it, so the two can be compared in one glance.
+--  键盘现在有反应了，但每个键的物理位置仍是一个假设。
+--  本次构建把每一个假设都去掉：它显示扫描器测得的原始键号
+--  （4*行 + 列，行 0 = 最上）以及当前映射由该键号推出的游戏键，
+--  这样两者可以一眼对比。
 --
---  DISPLAY
---      DISP7 DISP6 = raw key index (0..15) as a TWO-DIGIT decimal (tens, units).
---                    Read them together, e.g. "1" "2" = key index 12.
---                    (Previously DISP7 held the raw 4-bit code directly, but the
---                     BCD decoder renders 10..15 as BLANK, so key indexes >= 10
---                     were unreadable.  Split into tens/units fixes that.)
---      DISP5      = a press counter (increments on every accepted new key)
---      DISP4      = number of DISTINCT key indexes seen so far (capped at 9)
---      DISP3      = decoded game key digit
+--  显示
+--      DISP7 DISP6 = 原始键号（0..15），用两位十进制表示（十位、个位）。
+--                    要连起来读，例如 "1" "2" = 键号 12。
+--                    （以前 DISP7 直接放 4 位原始编码，但
+--                     BCD 译码器把 10..15 译成空白，于是键号 ≥ 10
+--                     的键读不出来。拆成十位/个位解决了这个问题。）
+--      DISP5      = 按键计数器（每接受一个新键就加一）
+--      DISP4      = 目前见过的不同键号个数（上限 9）
+--      DISP3      = 译码后的游戏键数字
 --                      1=UP 2=START 3=DOWN 4=LEFT 5=RIGHT 6=SELECT 7=CONFIRM
---                      0=no key / unmapped
---      DISP2..DISP0 = live binary of the row lines ROW1 ROW2 ROW3 (raw
---                     electrical state, useful for spotting floating rows)
+--                      0=无键 / 未映射
+--      DISP2..DISP0 = 行线 ROW1 ROW2 ROW3 的实时二进制值（原始
+--                     电气状态，便于发现悬空的行）
 --
---  PROCEDURE
+--  操作步骤
 --  ---------
---  Press each key in turn and read the two digits (DISP7 DISP6).  That number is
---  the ONLY thing needed to fix the map.
---  NOTE: key index 0 is indistinguishable from "no key pressed" (the scanner
---  reports 0 = K_NONE), so KEY13 (bottom-left) is EXPECTED to show nothing and
---  must never be given a game function.
+--  依次按下每个键，读那两位数字（DISP7 DISP6）。这个数字就是
+--  修正映射唯一需要的东西。
+--  注意：键号 0 与"没有键按下"无法区分（扫描器
+--  报 0 = K_NONE），所以 KEY13（左下角）理应什么都不显示，
+--  并且绝不能给它分配游戏功能。
 -- ============================================================================
 
 library IEEE;
@@ -62,19 +62,19 @@ architecture rtl of keypad_diag_top is
     signal t_1hz   : std_logic;
     signal t_40    : std_logic;
 
-    signal key     : std_logic_vector(3 downto 0);   -- raw key index from the scanner
+    signal key     : std_logic_vector(3 downto 0);   -- 来自扫描器的原始键号
     signal press   : std_logic;
     signal release : std_logic;
     signal kp_raw  : std_logic_vector(3 downto 0);
 
-    signal kdec    : std_logic_vector(3 downto 0);   -- decoded game key
+    signal kdec    : std_logic_vector(3 downto 0);   -- 译码后的游戏键
     signal npress  : unsigned(3 downto 0) := (others => '0');
     signal nseen   : unsigned(3 downto 0) := (others => '0');
     signal seen    : std_logic_vector(15 downto 0) := (others => '0');
 
     signal disp    : std_logic_vector(31 downto 0);
 
-    -- decode table (mirror of game_fsm.key_of so the display shows the SAME map).
+    -- 译码表（与 game_fsm.key_of 一致，这样显示的是同一张映射表）。
     -- ⚠️ 这两处必须一致：以前这里和 game_fsm 不是同一张表，DISP3 会给出误导性的
     --    "功能"读数（DISP7 = 原始键号才是权威读数，与映射无关）。
     -- 物理对照见 rtl/game_fsm.vhd 的注释（板子丝印 KEY1..KEY16）。
@@ -93,7 +93,7 @@ architecture rtl of keypad_diag_top is
         end case;
     end function;
 
-    -- game key -> a single display digit
+    -- 游戏键 -> 单个显示数字
     function key_digit(k : std_logic_vector(3 downto 0))
         return std_logic_vector is
     begin
@@ -140,7 +140,7 @@ begin
 
     kdec <= key_of(key);
 
-    -- count presses and how many distinct keys have been seen
+    -- 统计按下次数，以及已经见过多少个不同的键
     process (clk)
     begin
         if rising_edge(clk) then
@@ -153,7 +153,7 @@ begin
                     npress <= npress + 1;
                 end if;
                 if (release = '1') and (nseen < 15) then
-                    null;                        -- placeholder, kept explicit
+                    null;                        -- 占位，显式保留
                 end if;
                 if (press = '1') and (seen(to_integer(unsigned(key))) = '0') then
                     seen(to_integer(unsigned(key))) <= '1';
@@ -179,9 +179,9 @@ begin
             disp(27 downto 24) <= std_logic_vector(to_unsigned(k, 4));     -- 个位
         end if;
     end process;
-    disp(23 downto 20) <= std_logic_vector(npress);      -- press counter
-    disp(19 downto 16) <= std_logic_vector(nseen);       -- distinct keys seen
-    disp(15 downto 12) <= key_digit(kdec);              -- decoded game key
+    disp(23 downto 20) <= std_logic_vector(npress);      -- 按下计数
+    disp(19 downto 16) <= std_logic_vector(nseen);       -- 见过的不同键数
+    disp(15 downto 12) <= key_digit(kdec);              -- 译码后的游戏键
     disp(11 downto 8)  <= "000" & kp_row(1);
     disp(7 downto 4)   <= "000" & kp_row(2);
     disp(3 downto 0)   <= "000" & kp_row(3);

@@ -4,52 +4,52 @@ use IEEE.NUMERIC_STD.ALL;
 use work.puzzle_pkg.ALL;
 
 -- ============================================================================
---  puzzle_top  --  TOP LEVEL of the integrated game
---  Topic 4 : Simple Jigsaw Puzzle Game  (Digital Circuits & Logic Design Lab)
---  Device  : Altera MAX II EPM1270T144C5   Tool: Quartus II 9.1   Language: VHDL
+--  puzzle_top  --  整机顶层
+--  题目 4：简易拼图游戏（数字电路与逻辑设计实验）
+--  器件：Altera MAX II EPM1270T144C5   工具：Quartus II 9.1   语言：VHDL
 --
---  This is the ONLY file that binds pins (together with quartus/puzzle.qsf).
---  Every sub-module is instantiated with an explicit component declaration and
---  NAMED port association: a missing or misspelled port in a named port map is a
---  compile error, whereas an omitted one can silently leave a signal dangling.
+--  这是唯一绑定引脚的文件（与 quartus/puzzle.qsf 一起）。
+--  每个子模块都用显式 component 声明与具名端口关联来实例化：
+--  具名端口映射里少写或写错端口是编译错误，
+--  而被省略的那个却可能悄悄留下悬空信号。
 --
---  Block diagram <-> code correspondence (the course requires the blocks of the
---  actual design document to match the implemented circuit):
+--  框图 <-> 代码对应关系（课程要求实际设计文档中的框图
+--  与所实现的电路一致）：
 --
---     S1 clk_gen          clock division, ticks, reset
---     S2 keypad_scan      4x4 keypad scan + debounce + one-shot press
---     S3 game_fsm         master state machine, countdowns, level switching
---     S4 puzzle_ctrl      placement / movement / locking / colouring engine
---     S5 pattern_rom      complete-picture ROM
---     S5 piece_rom        piece-shape ROM
---     S5 rng_lfsr         pseudo-random source for the scatter
---     S6 dot_matrix_scan  8x8 dual-colour matrix row driver
---     S6 seg_scan         8-digit seven-segment dynamic scan + BCD decode
---     S6 disp_format      state -> seven-segment content
---     S7 buzzer_ctrl      sound effects
+--     S1 clk_gen          时钟分频、tick、复位
+--     S2 keypad_scan      4x4 键盘扫描 + 消抖 + 按键单次触发
+--     S3 game_fsm         主状态机、倒计时、关卡切换
+--     S4 puzzle_ctrl      摆放 / 移动 / 锁定 / 着色引擎
+--     S5 pattern_rom      完整图案 ROM
+--     S5 piece_rom        零片形状 ROM
+--     S5 rng_lfsr         散落用的伪随机数源
+--     S6 dot_matrix_scan  8x8 双色点阵行驱动
+--     S6 seg_scan         8 位数码管动态扫描 + BCD 译码
+--     S6 disp_format      状态 -> 数码管内容
+--     S7 buzzer_ctrl      音效
 --
---  = 11 sub-modules + this top level, which is exactly the block diagram.
+--  = 11 个子模块 + 本顶层，与框图完全一致。
 --
---  HOW THE MATRIX IS DRIVEN
---  The engine (puzzle_ctrl) publishes ONE display row at a time -- 8 red bits and
---  8 green bits -- together with the index of that row.  This file turns that into
---  the panel's coloured picture for each game state, and dot_matrix_scan drives
---  the physical row.  There is no 64-bit frame buffer anywhere in the design;
---  keeping the whole rendering path 8 bits wide is what let the engine fit.
+--  点阵是如何驱动的
+--  引擎（puzzle_ctrl）每次只发布一行显示内容 —— 8 个红位与
+--  8 个绿位 —— 以及该行的行号。本文件把它变成
+--  每个游戏状态下面板的彩色画面，再由 dot_matrix_scan 驱动
+--  物理行。整个设计里没有任何 64 位帧缓存；
+--  把整条渲染通路保持 8 位宽，正是引擎能装得下的原因。
 --
---  HARDWARE NOTE -- THE 16 LEDs ARE DELIBERATELY UNUSED.
---  The board wires COLG0..COLG7 (matrix green columns) onto PIN_38..45, the same
---  group as LD8..LD15, and PIN_137..144 is shared by LD8..LD15 and VGA.  Driving
---  the LEDs would cost the matrix its green colour, which requirement B6
---  (the selected piece turns green) depends on.  No requirement of topic 4 asks
---  for the LEDs, so they are left unused on purpose.
+--  硬件说明 —— 这 16 个 LED 是故意不用的。
+--  板子把 COLG0..COLG7（点阵绿色列）接到 PIN_38..45，与 LD8..LD15
+--  同一组，而 PIN_137..144 由 LD8..LD15 与 VGA 共用。驱动
+--  LED 就会让点阵失去绿色，而要求 B6
+--  （选中的零片变绿）正依赖这一点。题目 4 没有任何要求
+--  用到这些 LED，所以故意把它们留着不用。
 -- ============================================================================
 
 entity puzzle_top is
     port (
-        clk      : in  std_logic;                       -- PIN_18 board clock
-        sw7      : in  std_logic;                       -- PIN_125, up = '1'
-        btn      : in  std_logic;                       -- PIN_61, BTN0 reset
+        clk      : in  std_logic;                       -- PIN_18 板载时钟
+        sw7      : in  std_logic;                       -- PIN_125，拨上 = '1'
+        btn      : in  std_logic;                       -- PIN_61，BTN0 复位
         kp_row   : in  std_logic_vector(3 downto 0);    -- PIN_111..114
         kp_col   : out std_logic_vector(3 downto 0);    -- PIN_117..120
         dot_row  : out std_logic_vector(7 downto 0);    -- PIN_8..1
@@ -246,7 +246,7 @@ architecture rtl of puzzle_top is
     end component;
 
     ----------------------------------------------------------------------------
-    -- Interconnect
+    -- 内部连线
     ----------------------------------------------------------------------------
     signal rst      : std_logic;
     signal t_1k     : std_logic;
@@ -292,11 +292,11 @@ architecture rtl of puzzle_top is
     signal pat_sel  : std_logic_vector(1 downto 0) := L2_FIXED_PAT;
     signal state_q  : std_logic_vector(2 downto 0) := S_SELF_TEST;  -- 上一拍的状态
 
-    -- engine output: a complete 64-bit frame per colour plane
+    -- 引擎输出：每个颜色平面一帧完整的 64 位数据
     signal eng_fr   : std_logic_vector(63 downto 0);
     signal eng_fg   : std_logic_vector(63 downto 0);
 
-    -- final row presented to the matrix driver
+    -- 最终送给点阵驱动的行
     signal mat_r    : std_logic_vector(7 downto 0);
     signal mat_g    : std_logic_vector(7 downto 0);
 
@@ -311,8 +311,8 @@ architecture rtl of puzzle_top is
     --   **预览只有 5 秒（B4 明文，不可改），之后对局中完全看不到目标图案** ——
     --   于是玩家要做的是"**回忆**"而不是"**识别**"，而人因工程里"识别远比回忆容易"
     --   （NN/g 的经典结论），无障碍设计准则也明确要求"允许在对局中提醒当前目标"
-    --   （Game Accessibility Guidelines: *Indicate / allow reminder of current
-    --   objectives during gameplay*，最佳实践含"长时间无进展时自动触发"）。
+    --   （Game Accessibility Guidelines：*在对局中指示／
+    --   允许提醒当前目标*，最佳实践含"长时间无进展时自动触发"）。
     --   所以**不是**把图案改简单（那会变无聊，用户明确不要），而是**在玩家卡住时把目标还给他**。
     --
     -- 【具体行为】倒计时 **≤ 10 秒** 时，把"**目标图案里还没有被零片盖住的格子**"
@@ -330,24 +330,24 @@ architecture rtl of puzzle_top is
     signal hint_on   : std_logic := '0';
     signal hint_mask : std_logic_vector(7 downto 0) := (others => '0');
 
-    -- row the matrix driver is currently lighting
+    -- 点阵驱动当前点亮的行
     signal mrow      : unsigned(2 downto 0) := (others => '0');
     signal disp_data  : std_logic_vector(31 downto 0);
     signal disp_blank : std_logic_vector(7 downto 0);
 
-    -- special-state row sources
+    -- 特殊状态的行数据源
     signal win_row  : std_logic_vector(7 downto 0);
-    signal prev_row : std_logic_vector(7 downto 0);  -- target picture row
+    signal prev_row : std_logic_vector(7 downto 0);  -- 目标图案的行
     signal fail_row : std_logic_vector(7 downto 0);
 
 begin
 
     ----------------------------------------------------------------------------
-    -- Matrix row counter.  It advances on the SAME tick as the engine's frame
-    -- renderer: the driver lights row r of the frame that is currently stable
-    -- while the engine rebuilds row r for the next frame.  Driving the two from
-    -- different ticks (40 Hz scan vs 200 Hz render) made displayed row and
-    -- rendered row unrelated, which looked like flicker.
+    -- 点阵行计数器。它与引擎的帧渲染器走同一个 tick：
+    -- 驱动点亮当前稳定帧的第 r 行，
+    -- 同时引擎为下一帧重建第 r 行。若让两者走
+    -- 不同的 tick（40 Hz 扫描 vs 200 Hz 渲染），显示的行与
+    -- 渲染的行就会互不相关，看起来就是闪烁。
     --
     -- ⚠️ 2026-10-08 用户反馈"点阵和数码管都闪得比较明显" —— 根因就是这里的**节拍**：
     --    原来 mrow 走 tick_200（200 Hz），8 行轮一遍 = 8×5 ms = 40 ms，
@@ -414,7 +414,7 @@ begin
         end if;
     end process;
 
-    -- S1 : clock, ticks, reset
+    -- S1：时钟、tick、复位
     u_clk : clk_gen
         port map (
             i_clk      => clk,
@@ -429,7 +429,7 @@ begin
             o_tick_40  => t_40
         );
 
-    -- S2 : keypad
+    -- S2：键盘
     u_keypad : keypad_scan
         port map (
             i_clk     => clk,
@@ -443,7 +443,7 @@ begin
             o_raw     => kp_raw
         );
 
-    -- S3 : master state machine
+    -- S3：主状态机
     u_fsm : game_fsm
         port map (
             i_clk       => clk,
@@ -473,7 +473,7 @@ begin
             o_lvl3      => lvl3
         );
 
-    -- S5 : shape database and complete picture
+    -- S5：零片形状库与完整图案
     u_pieces : piece_rom
         port map (
             i_level => level,
@@ -490,7 +490,7 @@ begin
             o_mask  => tgt_mask
         );
 
-    -- S5 : random source
+    -- S5：随机数源
     u_rng : rng_lfsr
         port map (
             i_clk  => clk,
@@ -499,19 +499,19 @@ begin
             o_val  => rnd_val
         );
 
-    -- ⚠️ ERR-023 : the engine is **always** given the real target picture.
+    -- ⚠️ ERR-023：引擎**始终**拿到真实的目标图案。
     --
-    -- The success test (ERR-021) compares the assembled picture with the target,
-    -- so blanking i_target during play made the test impossible to satisfy: the
-    -- measured bench symptom was "level 1 assembled correctly, press confirm,
-    -- and the game still shows the cross".
+    -- 成功判定（ERR-021）是把拼好的画面与目标图案比较，
+    -- 所以对局中把 i_target 置零会让该判定根本无法满足：
+    -- 实测到的现象是"第一关拼对了、按下确认，
+    -- 游戏却仍然显示十字"。
     --
-    -- The earlier reason for blanking it -- "do not hide the pieces under a red
-    -- outline during play" (ERR-013) -- is now handled inside the engine: it
-    -- simply does not draw the target ghost (see puzzle_ctrl's ERR-023 note).
-    -- The PREVIEW still shows the complete picture, from tgt_mask via prev_row.
+    -- 早先置零的理由 —— "对局中不要把零片藏在红色
+    -- 轮廓下面"（ERR-013）—— 现在已在引擎内部处理：
+    -- 它干脆不画目标幽灵（见 puzzle_ctrl 的 ERR-023 说明）。
+    -- 预览仍然显示完整图案，来自 tgt_mask，经 prev_row 送出。
 
-    -- S4 : puzzle engine
+    -- S4：拼图核心
     u_puzzle : puzzle_ctrl
         port map (
             i_clk     => clk,
@@ -560,7 +560,7 @@ begin
             o_rowg    => eng_fg
         );
 
-    -- S6 : seven-segment content + scan
+    -- S6：数码管内容 + 扫描
     u_disp : disp_format
         port map (
             i_state => state,
@@ -588,14 +588,14 @@ begin
         );
 
     ----------------------------------------------------------------------------
-    -- Pull one row out of a 64-bit picture.
-    -- Used for the win/fail screens, which are whole-picture constants rather
-    -- than assembled pieces.  The mask convention is bit index = 8*row + col with
-    -- row 0 at the top, so logical row 0 is the TOP slice (63..56).
+    -- 从 64 位图案里取出某一行。
+    -- 用于胜利/失败画面，它们是整幅图案常量而不是
+    -- 拼装出来的零片。掩码约定是位下标 = 8*row + col，
+    -- 第 0 行在最上方，所以逻辑第 0 行是位 7..0。
     ----------------------------------------------------------------------------
-    -- NOTE the slice order: in this project's convention bit = 8*row + col, so
-    -- logical row 0 is bits 7..0 (NOT the top slice).  Reading 63..56 for row 0
-    -- displayed both end pictures vertically mirrored.
+    -- 注意切片顺序：本项目的约定是 bit = 8*row + col，所以
+    -- 逻辑第 0 行是位 7..0（而不是最上面那一片）。第 0 行读 63..56
+    -- 会让两幅结算画面都上下镜像显示。
     with std_logic_vector(mrow) select
         win_row <= WIN_MASK( 7 downto  0) when "000",
                    WIN_MASK(15 downto  8) when "001",
@@ -606,8 +606,8 @@ begin
                    WIN_MASK(55 downto 48) when "110",
                    WIN_MASK(63 downto 56) when others;
 
-    -- Preview row: the complete pattern, sliced in PACKAGE convention where
-    -- row 0 occupies bits 7..0 (NOT the engine's internal MSB-first layout).
+    -- 预览行：完整图案，按包（package）内的约定切片，
+    -- 第 0 行占据位 7..0（而不是引擎内部 MSB 在前的布局）。
     with std_logic_vector(mrow) select
         prev_row <= tgt_mask(7 downto 0)   when "000",
                     tgt_mask(15 downto 8)  when "001",
@@ -669,11 +669,11 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Matrix content per state.
-    --   SELF_TEST : whole panel yellow, flashing at 2 Hz   (requirement B1)
-    --   WIN       : the victory picture (a BOLD **green** tick), first flashing then steady
-    --   FAIL      : the failure picture (a **red** cross), first flashing then steady
-    --   otherwise : whatever the engine rendered (preview / playing)
+    -- 各状态下的点阵内容。
+    --   SELF_TEST : 整屏黄色，以 2 Hz 闪烁   （要求 B1）
+    --   WIN       : 胜利画面（**绿色**粗对勾），先闪后常亮
+    --   FAIL      : 失败画面（**红色**叉），先闪后常亮
+    --   其它      : 引擎渲染出的内容（预览 / 对局）
     --
     -- ⚠️ 结算画面的演进（都来自上板反馈）：
     --   2026-10-08 ① "细对勾闪得效果不好" → 换成**黄色笑脸**（细线勾不出形状）；
@@ -699,8 +699,8 @@ begin
         lv := gblink;
         ev := gblink or endflash_on;
 
-        -- slice the row the driver is lighting out of the 64-bit picture.
-        -- bit index = 8*row + col with row 0 = TOP, so row 0 is the TOP slice.
+        -- 从 64 位图案里切出驱动正在点亮的行。
+        -- 位下标 = 8*row + col，第 0 行在最上，所以第 0 行是最上面那一片。
         case to_integer(mrow) is
             when 0      => rw := eng_fr(63 downto 56); gw := eng_fg(63 downto 56);
             when 1      => rw := eng_fr(55 downto 48); gw := eng_fg(55 downto 48);
@@ -713,18 +713,18 @@ begin
         end case;
 
         if (state = S_SELF_TEST) then
-            -- whole panel yellow, flashing at 2 Hz (requirement B1)
+            -- 整屏黄色，以 2 Hz 闪烁（要求 B1）
             mat_r <= (others => lv);
             mat_g <= (others => lv);
         elsif (state = S_IDLE) then
-            -- B2: the panel is DARK in standby.  The engine frame must NOT be
-            -- shown here: the pieces have not been scattered yet (that happens
-            -- when play starts) and would all be stacked at anchor (0,0).
+            -- B2：待机时点阵是全暗的。这里绝不能显示
+            -- 引擎帧：零片还没有散落（散落发生在
+            -- 开始对局时），否则它们会全部堆在锚点 (0,0) 上。
             mat_r <= (others => '0');
             mat_g <= (others => '0');
         elsif (state = S_PREVIEW) then
-            -- B4: show the COMPLETE pattern.  It is a package constant, so slice
-            -- it straight out of the target mask - the engine is not involved.
+            -- B4：显示完整图案。它是包里的常量，所以直接
+            -- 从目标掩码里切出来 —— 引擎不参与。
             mat_r <= prev_row;
             mat_g <= (others => '0');
         elsif (state = S_WIN) then
@@ -740,7 +740,7 @@ begin
             mat_r <= fail_row and (ev & ev & ev & ev & ev & ev & ev & ev);
             mat_g <= (others => '0');
         else
-            -- S_PLAYING: the assembled picture from the engine
+            -- S_PLAYING：来自引擎的拼装画面
             -- ⭐ 第 18 工作阶段：倒计时告急（≤10 s）时叠加"目标幽灵" ——
             --    只画"目标里有、而零片没盖住"的格子（红列），零片本身不变。
             --    `rw`/`gw` 分别是被选中的那块（绿）与其余零片（红），所以
@@ -758,9 +758,9 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- S6 : dot-matrix driver.
-    -- i_row comes from this file's row counter (mrow), which advances on tick_1k:
-    -- 8 rows = 8 ms -> **125 Hz** frame refresh.  改版前 mrow 走 tick_200，帧率只有
+    -- S6：点阵驱动。
+    -- i_row 来自本文件的行计数器（mrow），它按 tick_1k 推进：
+    -- 8 行 = 8 ms -> **125 Hz** 帧刷新率。改版前 mrow 走 tick_200，帧率只有
     -- 25 Hz，肉眼可见闪（用户 2026-10-08 上板反馈）。
     ----------------------------------------------------------------------------
     u_dot : dot_matrix_scan
@@ -776,7 +776,7 @@ begin
             o_colg  => dot_colg
         );
 
-    -- S7 : sound
+    -- S7：声音
     u_buzz : buzzer_ctrl
         port map (
             i_clk  => clk,

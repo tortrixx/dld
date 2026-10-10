@@ -1,4 +1,4 @@
-# Report the worst setup path with enough detail to fix it.
+# 报告最差 setup 路径，细节足够到能据此修时序。
 load_package sta
 project_open -revision puzzle "C:/Users/sznnn/Desktop/dld/quartus/puzzle"
 create_timing_netlist

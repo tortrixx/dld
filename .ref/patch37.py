@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Add a HARD guard: every port of the chosen top level must have a pin.
+"""加一道**硬**防线：所选顶层的每一个端口都必须有引脚。
 
-The existing guard only checked the ports LISTED in TOP_PORTS, so omitting a port
-from that list silently produced a design with unconstrained pins: Quartus then
-places them on arbitrary free pins and the peripheral simply never works.  That
-exact mistake cost a long debugging session on the keypad (docs/05 ERR-002).
+原有的防线只检查 TOP_PORTS 里**列出**的端口，所以从该列表里漏掉一个端口
+会悄无声息地产出一个引脚未约束的设计：Quartus 随后
+把它们放到任意空闲引脚上，外设就是永远不工作。正是
+这个错误让键盘那一段耗掉了一整轮漫长的调试（docs/05 ERR-002）。
 
-This guard parses the entity declaration of the top-level VHDL file and requires
-every one of its ports to appear in the pin table.
+这道防线会解析顶层 VHDL 文件的实体声明，并要求
+它的每一个端口都出现在引脚表中。
 """
 import pathlib
 
@@ -41,7 +41,7 @@ new = '''    # ---- guard 1: every listed port must have a pin -----------------
 assert old in s
 s = s.replace(old, new)
 
-# add the parser helper before the __main__ block
+# 在 __main__ 块之前加入解析辅助函数
 helper = '''
 def parse_entity_ports(top: str):
     """Return the port names declared by the entity of rtl/<top>.vhd.
@@ -76,7 +76,7 @@ def parse_entity_ports(top: str):
 
 '''
 s = s.replace("if __name__ == \"__main__\":", helper + "if __name__ == \"__main__\":")
-# make sure 're' is imported
+# 确保已导入 're'
 if "\nimport re" not in s:
     s = s.replace("import sys, pathlib", "import re, sys, pathlib")
 

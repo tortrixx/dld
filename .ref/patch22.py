@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Make the 2 Hz blink a proper square wave.
+"""把 2 Hz 闪烁做成真正的方波。
 
-clk_gen's tick_2hz is a ONE-CLOCK pulse (10 ms of every 500 ms).  Using it
-directly as the blink level leaves the display lit for a single clock per half
-period, i.e. visually never on -- which is why the board showed NOTHING during
-the 2-second self-test even though the state machine was running.  Toggling on
-each tick gives a 50 % duty 2 Hz square wave, as requirement B1 asks.
+clk_gen 的 tick_2hz 是**一个时钟宽**的脉冲（每 500 ms 只有 10 ms 为高）。
+直接把它当作闪烁电平，会让显示在每个半周期里只亮一个时钟，
+也就是肉眼根本看不到亮 —— 这正是自检那 2 秒里板上**什么都不显示**的原因，
+尽管状态机一直在跑。每个 tick 翻转一次即可得到占空比 50 % 的 2 Hz 方波，
+这正是要求 B1 所要求的。
 """
 import pathlib
 
@@ -21,7 +21,7 @@ s = s.replace('    signal sound_p : std_logic_vector(2 downto 0) := "000";',
               '    -- a 50 % duty square wave, which is what B1 ("flashing at 2 Hz") means.\n'
               '    signal blink_r : std_logic := \'0\';')
 
-# toggle process
+# 翻转进程
 s = s.replace("""    process (i_clk)
     begin
         if rising_edge(i_clk) then

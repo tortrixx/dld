@@ -1,21 +1,21 @@
 # -*- coding: utf-8 -*-
-"""Final restructure: serialise the overlap check as well.
+"""最终重构：把重叠检查也串行化。
 
-Measured history (puzzle_ctrl alone, EPM1270 has 1270 cells):
-    v4  64-bit footprint registers                        2350
-    v5  row-scan render                                    3751 (registers ok, logic not)
-    v5b one row_mask per render phase                      3595
-The remaining cost is the UNROLLED overlap check: it called row_mask 8 rows x
-4 pieces = 32 times.  This version checks ONE ROW PER TICK into an accumulator,
-exactly like the renderer, so there is a single row_mask evaluation alive at any
-instant and the synthesiser can share it across both users.
+实测历史（仅 puzzle_ctrl，EPM1270 有 1270 个单元）：
+    v4  64 位覆盖范围寄存器                                2350
+    v5  行扫描渲染                                         3751（寄存器可以，逻辑不行）
+    v5b 每个渲染相位一次 row_mask                          3595
+剩下的开销来自展开的重叠检查：它调用了 row_mask 8 行 x
+4 个零片 = 32 次。本版本每个 tick 检查一行并累加进累加器，
+与渲染器完全一样，因此任一时刻只有一个 row_mask 求值存活，
+综合器可以在两个使用者之间共享它。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---------------------------------------------------------------- sequential
+# ---------------------------------------------------------------- 串行部分
 start = s.index("    ----------------------------------------------------------------------------\n    -- Main sequential process")
 end = s.rindex("end architecture rtl;")
 
@@ -289,7 +289,7 @@ new = '''    -------------------------------------------------------------------
 '''
 s = s[:start] + new + s[end:]
 
-# ---- states and signals ----------------------------------------------------
+# ---- 状态与信号 ----------------------------------------------------
 s = s.replace("    type sh_t is (SH_IDLE, SH_TRY, SH_DONE);",
               "    type sh_t is (SH_IDLE, SH_TRY, SH_NEXT, SH_DONE);\n"
               "    type chk_t is (CH_IDLE, CH_RUN, CH_DONE);\n"

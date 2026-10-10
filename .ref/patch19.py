@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Fix the pipelined row index: make chk_orow unsigned (so to_integer applies)
-and derive it from the PREVIOUS row counter, which is the row being evaluated."""
+"""修正流水化的行号：把 chk_orow 改成 unsigned（这样 to_integer 才适用），
+并让它由**上一个**行计数器推导 —— 那才是正在求值的那一行。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")

@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-"""FIX 1 -- keypad_scan: the round result was destroyed before it was sampled.
+"""修复 1 —— keypad_scan：本轮结果在被采样之前就被销毁了。
 
-Defects (both confirmed by reading the code):
-  D1  round_code is cleared on EVERY clock while the scan sequencer sits in
-      ST_IDLE (~250 000 clocks), but the debounce stage only samples it on the
-      200 Hz tick.  The phase-3 capture therefore survives exactly one clock and
-      the sampler always reads K_NONE  ->  o_key is permanently 0, which is
-      exactly the bench symptom "pressing any key does nothing".
-  D2  only phase 3 is ever captured, so keys in columns 0..2 can never be seen.
+缺陷（两处均经阅读代码确认）：
+  D1  扫描时序器停留在 ST_IDLE 期间（约 250 000 个时钟）时，round_code 在每
+      个时钟都被清零，而消抖级只在 200 Hz tick 上采样它。于是第 3 相的捕获
+      只存活恰好一个时钟，采样器读到的永远是 K_NONE  ->  o_key 恒为 0，
+      这正是实测现象：
+      「按任何键都没有反应」。
+  D2  只有第 3 相会被捕获，所以第 0..2 列的按键永远看不到。
 
-Fix: capture on ANY settled phase of the round (first hit wins) and hold the
-result until the NEXT round begins.  Holding it for a whole scan period also
-makes the debounce stage's "stable for N rounds" comparison meaningful, which it
-could never be before.
+修复：在本轮的任意已稳定相位捕获（首次命中者胜出），并把结果保持到
+下一轮开始。把结果保持整整一个扫描周期，也让消抖级的「连续 N 轮稳定」
+比较真正有意义，而在此之前，
+这种比较根本不可能有意义。
 """
 import pathlib
 
@@ -54,12 +54,12 @@ new = """                -- Capture policy:
 assert old in s, "capture block not found"
 s = s.replace(old, new)
 
-# new arming flag
+# 新增的置位标志
 s = s.replace("    signal round_code : std_logic_vector(3 downto 0) := K_NONE;  -- key seen in this round",
               "    signal round_code : std_logic_vector(3 downto 0) := K_NONE;  -- key seen in this round\n"
               "    signal round_seen : std_logic := '0';   -- a hit was already taken this round")
 
-# reset the new flag
+# 复位这个新标志
 s = s.replace("                raw_hit    <= '0';\n                raw_code   <= K_NONE;\n                round_code <= K_NONE;",
               "                raw_hit    <= '0';\n                raw_code   <= K_NONE;\n"
               "                round_code <= K_NONE;\n                round_seen <= '0';")

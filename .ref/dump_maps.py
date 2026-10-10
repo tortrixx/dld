@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Dump every coloured pixel-run per page as a coarse ASCII map, to locate/identify each figure."""
+"""把每页的彩色像素段转储成粗略 ASCII 图，用于定位／辨认每一幅图。"""
 import pathlib
 from PIL import Image
 
@@ -9,7 +9,7 @@ for name in ["p09_0_IM76.jpg", "p09_4_IM80.jpg", "p09_5_IM81.jpg"]:
     W, H = im.size
     px = im.load()
     print(f"\n=== {name} {W}x{H} ===")
-    # coarse 48x49 map: '.' empty, 'B' black ring, 'R' red, 'G' green
+    # 粗略 48x49 图：'.' 表示空、'B' 表示黑环、'R' 表示红、'G' 表示绿
     step = 3
     for y in range(0, H, step):
         line = []

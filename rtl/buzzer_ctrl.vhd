@@ -1,11 +1,11 @@
 -- ============================================================================
 --  buzzer_ctrl  --  提示音效 / 音乐播放器（v2：整体升八度 + 预分频省面积）
---  Subsystem : S7 (sound output)
---  Improvement requirement A1 ("不同情况下播放不同的提示音效或音乐").
+--  子系统：S7（声音输出）
+--  改进需求 A1（「不同情况下播放不同的提示音效或音乐」）。
 --
---  The board's buzzer is driven on PIN_60: writing a square wave in the audio
---  band makes it sound.  A "note" is therefore just a divider ratio, and the
---  real work is deciding WHICH note to play and FOR HOW LONG.
+--  板载蜂鸣器由 PIN_60 驱动：写入音频段的方波即可让它发声。
+--  因此一个「音」不过是一个分频比，真正的工作是决定
+--  播放**哪个**音、以及**持续多久**。
 --
 --  ---------------------------------------------------------------------------
 --  ⚠️ 2026-10-09 第 14 工作阶段（用户实机反馈"游戏过程中完全没有声音"）：
@@ -103,10 +103,10 @@ use IEEE.NUMERIC_STD.ALL;
 entity buzzer_ctrl is
     port (
         i_clk  : in  std_logic;                      -- 50 MHz
-        i_rst  : in  std_logic;                      -- active HIGH
-        i_en   : in  std_logic;                      -- '0' = force silence (SW7)
-        i_sel  : in  std_logic_vector(3 downto 0);   -- sound code（本轮由 3 位加宽到 4 位）
-        i_t4   : in  std_logic;                      -- 4 Hz tick (250 ms)：一步一个音
+        i_rst  : in  std_logic;                      -- 高电平有效
+        i_en   : in  std_logic;                      -- '0' = 强制静音（SW7）
+        i_sel  : in  std_logic_vector(3 downto 0);   -- 音效码（本轮由 3 位加宽到 4 位）
+        i_t4   : in  std_logic;                      -- 4 Hz tick（250 ms）：一步一个音
         o_buzz : out std_logic
     );
 end entity buzzer_ctrl;
@@ -156,7 +156,7 @@ architecture rtl of buzzer_ctrl is
         return v;
     end function;
 
-    -- one melody = **16 steps** (4 s), each 4 bits = bit3 = 响不响, bits 2..0 = 音高索引
+    -- 一段旋律 = **16 步**（4 s），每步 4 位 = bit3 表示响不响、bits 2..0 = 音高索引
     -- 音高索引：0 E5  1 G5  2 A5  3 A#5  4 B5  5 C6  6 E6  7 G6
     -- ⚠️ 第 16 工作阶段：一句从 8 步（2 s）加长到 **16 步（4 s）**。代价不是 0：
     --    查表输入从 4+3=**7 位**变成 4+4=**8 位**，而一个 LUT4 只有 4 个输入 ——
@@ -334,7 +334,7 @@ architecture rtl of buzzer_ctrl is
 
     signal pre_cnt  : unsigned(7 downto 0) := (others => '0');   -- 256 分频计数器
     signal tick     : std_logic := '0';                          -- 195.3125 kHz 时间基准
-    signal step     : unsigned(3 downto 0) := (others => '0');   -- 0..15 (250 ms/step)
+    signal step     : unsigned(3 downto 0) := (others => '0');   -- 0..15（每步 250 ms）
     signal tone_sel : std_logic_vector(2 downto 0) := "000";     -- 8 音高（上电默认 E5）
     signal on_now   : std_logic := '0';
     signal cnt      : unsigned(7 downto 0) := (others => '0');   -- 8 位（第 16 工作阶段）
@@ -344,8 +344,8 @@ architecture rtl of buzzer_ctrl is
 begin
 
     ----------------------------------------------------------------------------
-    -- Prescaler: 50 MHz -> 195.3125 kHz (÷256).  Everything downstream counts this
-    -- tick, so the half-period counter below only needs to reach 148 (**8 bits**).
+    -- 预分频：50 MHz -> 195.3125 kHz（÷256）。下游的一切都数这个
+    -- tick，所以下面的半周期计数器只需数到 148（**8 位**）。
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
@@ -363,7 +363,7 @@ begin
     tick <= '1' when (pre_cnt >= PRE_DIV - 1) else '0';
 
     ----------------------------------------------------------------------------
-    -- Step counter: one step per 250 ms while a sound is selected.
+    -- 步进计数器：选中某个音效时，每 250 ms 推进一步。
     --
     -- ⚠️ 2026-10-09 第 14 工作阶段（**瞬时事件必须落在发声步上**，实测的取舍）：
     --    `game_fsm` 把瞬时事件码（按键/选择/移动/旋转/确认/拒绝/过关/拼错）
@@ -389,15 +389,15 @@ begin
             if (i_rst = '1') then
                 step <= (others => '0');
             elsif (i_t4 = '1') then
-                step <= step + 1;             -- 4 bits: wraps 15 -> 0, melody loops
+                step <= step + 1;             -- 4 位：15 -> 0 回绕，旋律循环
             end if;
         end if;
     end process;
 
     ----------------------------------------------------------------------------
-    -- Melody lookup.  Each arm reads a CONSTANT array with a runtime index, so
-    -- Quartus sees one small truth table (code & step -> tone & gate)
-    -- instead of sixteen separate 32-bit muxes.
+    -- 旋律查表。每个分支都用运行时索引读取一个常量数组，因此
+    -- Quartus 看到的是一张小真值表（码 & 步 -> 音高 & 发声门控），
+    -- 而不是十六个各自独立的 32 位多路器。
     -- ⚠️ 输出**寄存**（4 FF）：把"码/步 -> 音高 -> 半周期 -> 比较器"这条链
     --    切在表后面，缩短最差路径。
     ----------------------------------------------------------------------------
@@ -443,7 +443,7 @@ begin
     half <= note_half(tone_sel);
 
     ----------------------------------------------------------------------------
-    -- Square-wave generator (one shared oscillator for all sixteen pitches).
+    -- 方波发生器（全部十六个音高共用一个振荡器）。
     -- 结构：cnt 数到 half 就翻转 + 清零，否则 cnt+1；cnt 数的是**预分频后的 tick**
     -- （时钟使能），所以计数器只有 **8 位**（第 16 工作阶段由 9 位缩到 8 位）。
     -- ⚠️ 第 16 工作阶段把判定从 `cnt >= half` 改成 **`cnt = half`** 省面积：

@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Remove the target "ghost" from the play field.
+"""从游戏区中去掉目标「幽灵」。
 
-Design change, driven by the bench: the preview already shows the complete
-picture (requirement B4), so drawing it again as a red ghost underneath the
-pieces adds nothing and actively obscures them -- on the board the player could
-not tell the scattered pieces from the target outline.
+由实测驱动的设计变更：预览已经展示了完整图案（需求 B4），所以在零片
+下方再以红色幽灵重绘一遍既无增益，反而会主动遮挡零片——
+在板上，玩家无法分辨散落的零片
+与目标轮廓。
 
-Requirement B4 is explicit that the complete pattern is shown for 5 s and THEN
-the pieces appear, so the play field should contain the pieces only.
+需求 B4 明确规定完整图案先显示 5 s，然后零片才出现，
+所以游戏区只应包含零片。
 
-Implementation: the engine's i_target input is blanked while playing.  The engine
-keeps its ghost logic (useful for diagnostics and used by the board test), it is
-simply fed zeros during play.
+实现方式：游戏进行中把引擎的 i_target 输入置空。引擎保留其幽灵
+逻辑（对诊断有用，板级测试也在用），它只是在对局期间
+被喂以零。
 """
 import pathlib
 

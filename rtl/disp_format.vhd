@@ -1,32 +1,32 @@
 -- ============================================================================
---  disp_format  --  turns the game state into seven-segment content
---  Subsystem : S6 (display)
+--  disp_format  ——  把游戏状态转成数码管内容
+--  子系统：S6（显示）
 --
---  Requirements that pin the display down:
---    B1  self-test : ALL EIGHT digits show "8", flashing at 2 Hz
---    B2  idle      : DISP7 shows "5", DISP0 shows "1" (level 1), rest blank
---    B3  level number is shown by DISP0
---    B4  preview   : DISP7 counts down the 5 s preview
---    B5  playing   : DISP4:DISP3 show the two-digit remaining time
---    B9  level 2   : DISP2 additionally shows "2"
---    B10 level 2   : the complete picture is self-designed but FIXED (PAT3)
---    A2  level 3   : extra level (增加游戏关数); the picture is drawn at random
---                    from the four-picture library -- the DISPLAY does not care
---                    which one, it only shows the level number on DISP0
+--  决定显示内容的需求：
+--    B1  自检：八个数码管全部显示 "8"，以 2 Hz 闪烁
+--    B2  空闲      ：DISP7 显示 "5"，DISP0 显示 "1"（第 1 关），其余消隐
+--    B3  关卡编号由 DISP0 显示
+--    B4  预览      ：DISP7 显示 5 s 预览的倒计时
+--    B5  游戏中    ：DISP4:DISP3 显示两位剩余时间
+--    B9  第 2 关   ：DISP2 额外显示 "2"
+--    B10 第 2 关   ：完整图案自行设计但固定不变（PAT3）
+--    A2  第 3 关   ：新增关卡（增加游戏关数）；图案从四张图案库中
+--                    随机抽取 —— 显示部分不关心是哪一张，
+--                    它只在 DISP0 上显示关卡编号
 --
---  Level encoding (2026-10-09 / D2): two inputs, deliberately NOT one 2-bit bus
---    i_level='0'            -> level 1        DISP0 = 1
---    i_level='1', i_lvl3='0'-> level 2        DISP0 = 2, DISP2 = '2' (B9)
---    i_level='1', i_lvl3='1'-> level 3 (A2)   DISP0 = 3, DISP2 blank
---  Reason for two signals rather than a 2-bit level: see rtl/game_fsm.vhd --
---  widening the existing level net cost 2~5 MHz of Fmax on this 98%-full device.
+--  关卡编码（2026-10-09 / D2）：两个输入，刻意不用一根 2 位总线
+--    i_level='0'            -> 第 1 关        DISP0 = 1
+--    i_level='1', i_lvl3='0'-> 第 2 关        DISP0 = 2, DISP2 = '2' (B9)
+--    i_level='1', i_lvl3='1'-> 第 3 关 (A2)   DISP0 = 3, DISP2 消隐
+--  用两个信号而不是 2 位关卡值的原因：见 rtl/game_fsm.vhd ——
+--  在这个已占用 98% 的器件上，加宽原有的关卡网络损失了 2~5 MHz 的 Fmax。
 --
---  Digit numbering (matches the board: DISP7 is the left-most digit):
---    bits 31..28 = DISP7, bits 27..24 = DISP6, ... bits 3..0 = DISP0
+--  数码管编号（与板上一致：DISP7 是最左边一位）：
+--    位 31..28 = DISP7，位 27..24 = DISP6，... 位 3..0 = DISP0
 --
---  This module is purely combinational.  It owns no state -- deciding WHAT the
---  numbers are is the state machine's job, deciding HOW they are laid out is
---  this module's job.
+--  本模块是纯组合逻辑。它不保存任何状态 —— 决定这些数字是什么
+--  是状态机的职责，决定它们如何布局
+--  才是本模块的职责。
 -- ============================================================================
 
 library IEEE;
@@ -37,23 +37,23 @@ use work.puzzle_pkg.ALL;
 entity disp_format is
     port (
         i_state : in  std_logic_vector(2 downto 0);   -- state_t
-        i_level : in  std_logic;                      -- '0' = level 1, '1' = level 2/3
-        i_lvl3  : in  std_logic;                      -- '1' = third level (A2)
-        i_time  : in  std_logic_vector(5 downto 0);   -- countdown value in seconds
-        i_blink : in  std_logic;                      -- 2 Hz blink flag (self-test)
+        i_level : in  std_logic;                      -- '0' = 第 1 关，'1' = 第 2/3 关
+        i_lvl3  : in  std_logic;                      -- '1' = 第三关（A2）
+        i_time  : in  std_logic_vector(5 downto 0);   -- 倒计时值，单位秒
+        i_blink : in  std_logic;                      -- 2 Hz 闪烁标志（自检）
         o_data  : out std_logic_vector(31 downto 0);  -- 8 x BCD
-        o_blank : out std_logic_vector(7 downto 0)    -- '1' = blank that digit
+        o_blank : out std_logic_vector(7 downto 0)    -- '1' = 消隐该位
     );
 end entity disp_format;
 
 architecture rtl of disp_format is
 
-    -- helper: make one BCD digit, and one blank flag
+    -- 辅助函数：生成一位 BCD，以及一个消隐标志
     function bcd(v : integer) return std_logic_vector is
         variable r : std_logic_vector(3 downto 0);
     begin
         if (v < 0) or (v > 9) then
-            r := "1111";          -- out of range -> the decoder blanks it
+            r := "1111";          -- 超出范围 -> 译码器会把它消隐
         else
             r := std_logic_vector(to_unsigned(v, 4));
         end if;
@@ -71,10 +71,10 @@ begin
         variable lvlv : integer range 1 to 3;
     begin
         d  := (others => '0');
-        bl := (others => '1');            -- blank everything by default
+        bl := (others => '1');            -- 默认全部消隐
         t  := to_integer(unsigned(i_time));
 
-        -- B3: DISP0 always shows the CURRENT level -- 1, 2 or (A2) 3.
+        -- B3：DISP0 始终显示当前关卡 —— 1、2 或（A2 的）3。
         if (i_level = '0') then
             lvlv := 1;
         elsif (i_lvl3 = '1') then
@@ -86,9 +86,9 @@ begin
         case i_state is
 
             ------------------------------------------------------------------
-            -- B1 self-test : all eight digits "8", flashing at 2 Hz.
-            -- i_blink is '1' for half a 2 Hz period, so blanking on i_blink=0
-            -- gives exactly a 2 Hz on/off flash.
+            -- B1 自检：八个数码管全显 "8"，以 2 Hz 闪烁。
+            -- i_blink 在 2 Hz 周期的前半段为 '1'，因此在 i_blink=0 时消隐
+            -- 正好得到 2 Hz 的亮/灭闪烁。
             ------------------------------------------------------------------
             when S_SELF_TEST =>
                 for k in 0 to 7 loop
@@ -101,9 +101,9 @@ begin
                 end loop;
 
             ------------------------------------------------------------------
-            -- B2 idle : DISP7 = "5", DISP0 = level, everything else dark.
-            -- "5" on DISP7 is the requirement's literal idle picture; the level
-            -- digit on DISP0 satisfies B3 at the same time.
+            -- B2 空闲：DISP7 = "5"，DISP0 = 关卡，其余全灭。
+            -- DISP7 上的 "5" 是需求原文规定的空闲画面；DISP0 上的关卡
+            -- 数字同时满足 B3。
             ------------------------------------------------------------------
             when S_IDLE =>
                 d(31 downto 28) := bcd(5);
@@ -112,7 +112,7 @@ begin
                 bl(0) := '0';
 
             ------------------------------------------------------------------
-            -- B4 preview : DISP7 counts down, DISP0 shows the level.
+            -- B4 预览：DISP7 倒计时，DISP0 显示关卡。
             ------------------------------------------------------------------
             when S_PREVIEW =>
                 d(31 downto 28) := bcd(t);
@@ -121,19 +121,19 @@ begin
                 bl(0) := '0';
 
             ------------------------------------------------------------------
-            -- B5 playing : DISP4:DISP3 = remaining seconds (two digits),
-            -- DISP0 = level, and on level 2 DISP2 = "2" (requirement B9).
+            -- B5 游戏中：DISP4:DISP3 = 剩余秒数（两位），
+            -- DISP0 = 关卡，且在第二关时 DISP2 = "2"（要求 B9）。
             --   ⚠️ 2026-10-09（D2）：DISP2 只在**第二关**亮 —— B9 的原文是
             --      "游戏进入第二关，数码管DISP2 显示'2'"；第三关（A2 新增，题目
             --      没有规定）与第一关一样熄灭。这条口径是否要改成"第二关起一直亮
             --      / 第三关改亮 '3'"，用户 2026-10-09 决定**先问老师**，
             --      见 docs/06 §12、HANDOFF §1.4b（Q2b）。
             --
-            -- The tens/ones split uses a LOOKUP TABLE, not "/ 10" and "mod 10".
-            -- Quartus inferred an lpm_divide for the division, and the reported
-            -- critical path (26 ns, i.e. only 39 MHz) ran straight through its
-            -- carry chain.  A 64-entry table is a small ROM and removes the
-            -- divider from the design entirely.
+            -- 十位/个位的拆分用的是查找表，而不是 "/ 10" 和 "mod 10"。
+            -- Quartus 为这个除法推断出 lpm_divide，而报告的关键路径
+            -- （26 ns，也就是只有 39 MHz）正好穿过它的
+            -- 进位链。64 项的查找表就是一个小 ROM，能把
+            -- 除法器从设计中彻底去掉。
             ------------------------------------------------------------------
             when S_PLAYING =>
                 case t is
@@ -177,7 +177,7 @@ begin
                     when 37 => tens := 3; ones := 7;
                     when 38 => tens := 3; ones := 8;
                     when 39 => tens := 3; ones := 9;
-                    when others =>                 -- 40..63 (level-2 limit is 40)
+                    when others =>                 -- 40..63（第二关的上限是 40）
                         if (t >= 40) and (t < 50) then
                             tens := 4; ones := t - 40;
                         elsif (t >= 50) and (t < 60) then
@@ -201,7 +201,7 @@ begin
                 end if;
 
             ------------------------------------------------------------------
-            -- win / fail : 结算画面用**数码管拼字**（2026-10-08 用户拍板）
+            -- 胜利 / 失败：结算画面用**数码管拼字**（2026-10-08 用户拍板）
             --   S_WIN  → DISP7..DISP4 = "PASS"
             --   S_FAIL → DISP7..DISP4 = "FAIL"
             --   原来只是随意挑的 "75"/"00"（唯一理由是"和其它状态都不重复"），

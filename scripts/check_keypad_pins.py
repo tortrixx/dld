@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Cross-check EVERY keypad-related pin against the board manual text and against
-what the fitter actually placed.  This is the check that decides whether the
-keypad fault can possibly be a pin-assignment mistake in this project."""
+"""把每一个与键盘相关的引脚，同时与开发板手册文本和
+布局布线器实际放置的位置对账。这条检查用来判定：
+键盘故障有没有可能是本项目的引脚分配错误。"""
 import pathlib, re, sys
 
 ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
 sys.path.insert(0, str(ROOT / "scripts"))
 import gen_project as g
 
-# --- what the manual says (transcribed verbatim from the extracted text) -----
+# --- 手册怎么说（从提取出的文本逐字照抄） -----
 MANUAL = {
     "kp_col[0]": 117, "kp_col[1]": 118, "kp_col[2]": 119, "kp_col[3]": 120,
     "kp_row[0]": 111, "kp_row[1]": 112, "kp_row[2]": 113, "kp_row[3]": 114,
 }
 
-# --- what the generator emits -------------------------------------------------
+# --- 生成器发出什么 -------------------------------------------------
 want = {}
 for k, v in g.PINS.items():
     if isinstance(v, list):
@@ -23,7 +23,7 @@ for k, v in g.PINS.items():
     else:
         want[k] = v
 
-# --- what the fitter actually placed (from the last build's .pin report) -----
+# --- 布局布线器实际放在哪（取自最近一次编译的 .pin 报告） -----
 pinrpt = ROOT / "quartus" / "output_files" / "puzzle.pin"
 got = {}
 if pinrpt.exists():

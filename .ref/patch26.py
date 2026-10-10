@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
-"""Renderer v6: accumulate the WHOLE frame in 8 ticks (25 Hz) instead of one row
-per 5 ticks (5 Hz).
+"""渲染器 v6：用 8 个 tick 累积出**整帧**（25 Hz），而不是每 5 个
+tick 发布一行（5 Hz）。
 
-The board showed visible flicker.  The cause was the refresh rate, not the
-blanking: publishing one row per 5 ticks of a 200 Hz tick gives a frame rate of
-200/(5*8) = 5 Hz, well below flicker fusion.
+板上出现了可见的闪烁。原因是刷新率，而不是消隐：在 200 Hz 的 tick 下
+每 5 个 tick 发布一行，得到 200/(5*8) = 5 Hz 的帧率，
+远低于闪烁融合频率。
 
-The time-multiplexing is therefore re-organised to run over ROWS rather than over
-pieces: each tick still evaluates only ONE row_mask per slot (so the logic stays
-small), but the piece loop runs inside the row instead of the row being split
-across ticks.  A frame is then complete in 8 ticks and the display refresh is
-200/8 = 25 Hz.
+因此把时分复用重新组织成按**行**而不是按零片进行：
+每个 tick 仍然只求值每个槽位的一份 row_mask（逻辑量因此保持
+很小），但零片循环改在行内进行，而不再把一行拆到
+多个 tick 上。于是一帧在 8 个 tick 内完成，显示刷新率为
+200/8 = 25 Hz。
 
-Cost: one 8-bit accumulator pair plus a 64-bit frame register.  Measured below.
+代价：一对 8 位累加器外加一个 64 位帧寄存器。实测见下。
 """
 import pathlib
 
@@ -183,7 +183,7 @@ new = '''    -- ----------------------------------------------------------------
 '''
 s = s[:start] + new + s[end:]
 
-# signals: frow replaces ph/scanrow; frame_r/frame_g replace the old row regs
+# 信号：frow 取代 ph/scanrow；frame_r/frame_g 取代原来的行寄存器
 s = s.replace(
     "    signal scanrow : unsigned(2 downto 0) := (others => '0');\n"
     "    signal ph      : unsigned(2 downto 0) := (others => '0');\n"
@@ -196,13 +196,13 @@ s = s.replace(
     "    signal frame_g : std_logic_vector(63 downto 0) := (others => '0');\n"
     "    signal warm    : unsigned(3 downto 0) := (others => '0');\n")
 
-# o_rowr/o_rowg become 64-bit frame outputs
+# o_rowr/o_rowg 变成 64 位的帧输出
 s = s.replace("        o_rowr    : out std_logic_vector(7 downto 0);   -- red   bits for o_scanrow\n"
               "        o_rowg    : out std_logic_vector(7 downto 0)    -- green bits for o_scanrow\n",
               "        o_rowr    : out std_logic_vector(63 downto 0);  -- red   frame\n"
               "        o_rowg    : out std_logic_vector(63 downto 0)   -- green frame\n")
 
-# keep o_scanrow driven from frow (it is the row currently being built/scanned)
+# 保持 o_scanrow 由 frow 驱动（frow 就是当前正在构造/扫描的那一行）
 s = s.replace("    o_scanrow <= std_logic_vector(scanrow);",
               "    o_scanrow <= std_logic_vector(scanrow);\n"
               "    -- the matrix driver scans with its own 40 Hz pulse; the published frame\n"

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
-"""Measure puzzle_ctrl in isolation with LIVE inputs (so nothing is optimised
-away).  Reports logic elements / registers so we can attribute area instead of
-guessing which construct is expensive."""
+"""单独测量 puzzle_ctrl，输入接**活**信号（以免任何东西被优化掉）。
+报告逻辑单元/寄存器数，以便把面积归因到具体构造，而不是
+靠猜哪个写法贵。"""
 import pathlib, shutil, subprocess
 
 ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")

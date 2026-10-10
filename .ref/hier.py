@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Print the per-module logic-cell breakdown from a Quartus map report.
+"""从 Quartus 的 map 报告中打印各模块的逻辑单元分解。
 
-Quartus writes the hierarchy table with one row per node; the module rows are the
-shallow ones.  Print every row whose full path has at most 2 '|' separators so we
-see the direct children of the top level.
+Quartus 写的层次表每个节点一行；模块行就是那些层级较浅的
+行。打印完整路径中 '|' 分隔符不超过 2 个的所有行，
+从而看到顶层的直接子节点。
 """
 import pathlib, re, sys
 

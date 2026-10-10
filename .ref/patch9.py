@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Compact the overlap test.
+"""精简重叠判定。
 
-The previous version took four (anchor, shape) pairs and looped over 8 rows,
-so every call site replicated 32 row24 evaluations.  Replace it with a single
-8-bit row helper `row_mask`, and drive the loop from integer variables that are
-computed once per row outside the helper.
+旧版本接收四组（锚点，形状）对并在内部循环 8 行，
+于是每个调用点都复制出 32 次 row24 求值。现在换成一个
+8 位的行辅助函数 `row_mask`，循环由在辅助函数之外每行只算一次的
+整型变量驱动。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---- 1. swap the big function for a small row helper ----------------------
+# ---- 1. 把大函数换成小的行辅助函数 ----------------------
 start = s.index("    ----------------------------------------------------------------------------\n    -- EXACT overlap test.")
 end = s.index("    signal pos    : std_logic_vector(31 downto 0) := (others => '0');")
 new_fn = '''    ----------------------------------------------------------------------------

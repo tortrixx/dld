@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Verify every mask constant in rtl/puzzle_pkg.vhd against the PDF-decoded figures.
+"""把 rtl/puzzle_pkg.vhd 里的每个掩码常量与 PDF 解码出的图逐一对账。
 
-Parses the VHDL, decodes each constant to a cell set, and checks:
-  * L1_TARGET == FIG 4-1 exactly
-  * L1_P0/P1/P2 partition FIG 4-2 exactly (3+6+3 = 12)
-  * L1_P1 == FIG 4-3 green region
-  * L1 pieces tile L1_TARGET exactly
-  * L2 pieces (16 cells, 4 pieces) tile L2_TARGET exactly
-  * every piece fits in PIECE_MAX_DIM
+解析 VHDL，把每个常量解码成格子集合，然后检查：
+  * L1_TARGET == FIG 4-1（逐格一致）
+  * L1_P0/P1/P2 恰好划分 FIG 4-2（3+6+3 = 12）
+  * L1_P1 == FIG 4-3 的绿色区域
+  * 第一关零片恰好铺满 L1_TARGET
+  * 第二关零片（16 格、4 块）恰好铺满 L2_TARGET
+  * 每块零片都塞得进 PIECE_MAX_DIM
 """
 import re, pathlib, sys
 from itertools import product
@@ -32,12 +32,12 @@ def const_bits(name):
     raise SystemExit(f"constant {name} not found")
 
 def cells_xy(bits):
-    """bits is the VHDL literal: leftmost char = bit63. Return {(row,col)} with bit0 = top-left."""
-    val = int(bits, 2)          # bit i of val == index i in the literal from the right
+    """bits 是 VHDL 字面量：最左的字符 = bit63。返回 {(行,列)}，其中 bit0 = 左上角。"""
+    val = int(bits, 2)          # val 的 bit i == 字面量里从右数第 i 个字符
     return {(i // 8, i % 8) for i in range(64) if (val >> i) & 1}
 
 def norm(cells):
-    """Translate a cell set so its bbox top-left is (0,0) -- shape comparison."""
+    """把格子集合平移，使其紧包围盒左上角为 (0,0) —— 用于形状比较。"""
     mr = min(r for r, _ in cells); mc = min(c for _, c in cells)
     return frozenset((r - mr, c - mc) for r, c in cells)
 
@@ -63,20 +63,20 @@ def chk(cond, msg):
     if not cond: ok = False
 
 print("\n-- FIG 4-1 vs L1_TARGET_MASK")
-# target picture is stored in ABSOLUTE matrix coordinates -> must match the figure exactly
+# 目标图案存的是**点阵绝对坐标** → 必须与图逐格一致
 chk(C["L1_TARGET_MASK"] == FIG41, "L1_TARGET_MASK == FIG 4-1 (4x3 rect @ rows2-5, cols2-4)")
 
 print("\n-- FIG 4-2 partition (pieces are stored RELATIVE to their bbox top-left,")
 print("   so compare shape after normalising both sides)")
 P = [C["L1_P0"], C["L1_P1"], C["L1_P2"]]
 chk(len(P[0]) == 3 and len(P[1]) == 6 and len(P[2]) == 3, "piece areas are 3 / 6 / 3")
-# reconstruct FIG 4-2 by placing each piece at its position in the figure
+# 把每块零片放到它在图里的位置，重建 FIG 4-2
 FIG42_PIECES = [{(0,4),(0,5),(0,6)}, {(2,4),(2,5),(2,6),(3,4),(3,5),(4,4)}, {(4,1),(5,0),(5,1)}]
 for i, fp in enumerate(FIG42_PIECES):
     chk(norm(P[i]) == norm(fp), f"L1_P{i} shape == figure piece {i+1} shape {sorted(norm(fp))}")
 chk(sum(len(p) for p in P) == len(FIG42), "areas conserve (12 == 12)")
-# disjointness must be checked on the PLACED pieces (the relative masks all
-# share the origin (0,0) by construction, so comparing them directly is wrong)
+# 互不重叠必须在**摆好位置后**的零片上检查（相对掩码按定义
+# 都以原点 (0,0) 为锚，直接比较它们是错的）
 fp_sets = [frozenset(x) for x in FIG42_PIECES]
 chk(not (fp_sets[0] & fp_sets[1]) and not (fp_sets[0] & fp_sets[2])
     and not (fp_sets[1] & fp_sets[2]), "figure pieces are pairwise disjoint")
@@ -106,7 +106,7 @@ def count_tilings(target, pieces):
     T = norm(target)
     ts = [transforms(p) for p in pieces]
     n = len(pieces)
-    # recursive exact cover over tile placements anchored anywhere in target bbox
+    # 在目标包围盒内任意锚点递归做精确覆盖
     def rec(idx, occ):
         if idx == n:
             return 1 if occ == T else 0
@@ -120,7 +120,7 @@ def count_tilings(target, pieces):
     return rec(0, frozenset())
 
 def const_anchor(name):
-    """Parse a packed 8-bit anchor constant: "row(4 bits)" & "col(4 bits)"."""
+    """解析打包成 8 位的锚点常量："行(4 位)" & "列(4 位)"。"""
     m = re.search(r"constant\s+" + name +
                   r"\s*:\s*std_logic_vector\(7 downto 0\)\s*:=\s*\"([01]{4})\"\s*&\s*\"([01]{4})\"",
                   src, re.S)
@@ -130,13 +130,13 @@ def const_anchor(name):
 
 
 def tilings_no_rotation(target, pieces):
-    """Every EXACT tiling of `target` by `pieces`, TRANSLATION ONLY.
+    """`pieces` 对 `target` 的**所有**精确铺法，**只许平移**。
 
-    Level 2 has no rotation key (improvement requirement A4 is explicitly out of
-    scope), so allowing the mirror/rotation transforms used for the level-1 figure
-    would be an over-permissive proof of "solvable": a pattern that only tiles with
-    a rotated piece would be a DEAD END on the real board.
-    Returns a list of slot-ordered anchor tuples.
+    第二关没有旋转键（提高要求 A4 明确不在范围内），所以
+    若允许第一关图用过的镜像/旋转变换，就会给出过度宽松的
+    「可解」证明：只能靠旋转后的零片才铺得满的图案，
+    在真实板子上是**死局**。
+    返回按槽序排列的锚点元组列表。
     """
     T = frozenset(target)
     shapes = [norm(p) for p in pieces]
@@ -173,10 +173,10 @@ print("\n-- L2 area conservation")
 chk(sum(len(C[f'L2_P{i}']) for i in range(4)) == len(C["L2_TARGET_MASK"]),
     f"L2 pieces {sum(len(C[f'L2_P{i}']) for i in range(4))} == target {len(C['L2_TARGET_MASK'])}")
 
-# --- the target picture must equal the pieces at their TARGET ANCHORS --------
-# This is the check that would have caught L2_TARGET_MASK being one row below the
-# L2 piece targets: the ghost is drawn from the target mask, so if the two
-# disagree the player is shown a picture that cannot be assembled.
+# --- 目标图案必须等于各零片放在**目标锚点**上的并集
+# 正是这条检查本可以抓出 L2_TARGET_MASK 比第二关零片目标低一行的问题：
+# 幽灵图案是用目标掩码画的，所以两者一旦不一致，
+# 玩家看到的就会是一幅拼不出来的图案。
 print("\n-- target picture == union of pieces at their target anchors")
 TGT = {
     "L1": ([C["L1_P0"], C["L1_P1"], C["L1_P2"]], [(2, 2), (3, 2), (4, 3)],

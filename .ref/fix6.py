@@ -1,25 +1,25 @@
 # -*- coding: utf-8 -*-
-"""FIX 6 -- remove the duplicated fail_row declaration and un-mirror the WIN/FAIL
-picture slices.
+"""修复 6 —— 去掉重复的 fail_row 声明，并纠正 WIN/FAIL
+图案切片的镜像。
 
-The package convention is bit = 8*row + col, so row 0 occupies bits 7..0.  The
-WIN/FAIL row extraction was reading WIN_MASK(63 downto 56) for row 0, i.e. it
-displayed both end pictures VERTICALLY MIRRORED.  FAIL_MASK happens to be
-vertically symmetric so it looked fine; WIN_MASK (the tick) did not.
+包约定是 bit = 8*row + col，所以第 0 行占 bit 7..0。WIN/FAIL
+的行提取却为第 0 行读了 WIN_MASK(63 downto 56)，也就是说它把
+两幅结束图案都显示成上下镜像了。FAIL_MASK 恰好是上下
+对称的，所以看起来没问题；WIN_MASK（对勾）则不然。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_top.vhd")
 s = p.read_text(encoding="utf-8")
 
-# de-duplicate the declaration
+# 去重该声明
 s = s.replace("    signal prev_row : std_logic_vector(7 downto 0);  -- target picture row\n"
               "    signal fail_row : std_logic_vector(7 downto 0);\n"
               "    signal fail_row : std_logic_vector(7 downto 0);\n",
               "    signal prev_row : std_logic_vector(7 downto 0);  -- target picture row\n"
               "    signal fail_row : std_logic_vector(7 downto 0);\n")
 
-# un-mirror win_row
+# 纠正 win_row 的镜像
 old_win = """    with std_logic_vector(mrow) select
         win_row <= WIN_MASK(63 downto 56) when "000",
                    WIN_MASK(55 downto 48) when "001",

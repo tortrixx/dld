@@ -1,15 +1,15 @@
 -- ============================================================================
---  puzzle_pkg  --  global constants, types and pure functions
---  Topic 4 : Simple Jigsaw Puzzle Game  (Digital Circuits & Logic Design Lab)
---  Target  : Altera MAX II  EPM1270T144C5   /   Quartus II 9.1   /   VHDL
+--  puzzle_pkg  --  全局常量、类型与纯函数
+--  题目 4：简易拼图游戏（数字电路与逻辑设计实验）
+--  目标器件：Altera MAX II  EPM1270T144C5   /   Quartus II 9.1   /   VHDL
 --
---  This package is the SINGLE SOURCE OF TRUTH for:
---    * bit-order convention of the 8x8 dot-matrix masks
---    * pattern / piece geometry (decoded from the course PDF figures)
---    * all timing constants and state encodings
+--  本包是以下内容的**唯一真值源**：
+--    * 8x8 点阵掩码的位序约定
+--    * 图案 / 零片几何（由课程 PDF 图解码得到）
+--    * 全部时序常量与状态编码
 --
---  NOTE: this file contains constants and pure functions only -- no signals,
---        no processes, therefore it infers no hardware at all.
+--  注意：本文件只含常量与纯函数 —— 没有信号、
+--        没有进程，因此不推断出任何硬件。
 -- ============================================================================
 
 library IEEE;
@@ -19,8 +19,8 @@ use IEEE.NUMERIC_STD.ALL;
 package puzzle_pkg is
 
     ----------------------------------------------------------------------------
-    -- 1. Array types (a VHDL-93 port cannot use an anonymous array type,
-    --    so the types must be declared once here and shared by every module)
+    -- 1. 数组类型（VHDL-93 的端口不能使用匿名数组类型，
+    --    所以这些类型必须在这里声明一次、由每个模块共用）
     ----------------------------------------------------------------------------
     type mask_arr_t is array (0 to 3) of std_logic_vector(63 downto 0);
     type dim_arr_t  is array (0 to 3) of std_logic_vector(2 downto 0);
@@ -28,61 +28,61 @@ package puzzle_pkg is
     constant MASK_ZERO : std_logic_vector(63 downto 0) := (others => '0');
 
     ----------------------------------------------------------------------------
-    -- 2. Pure functions
-    --    mk_cell(row, col) : build a one-cell mask
-    --      bit index = 8*row + col,  bit0 = top-left corner
-    --      So inside one row, column 0 is bit 0 (NOT the MSB).
-    --      Column 0 is the left-most column on the panel.
-    --      => moving RIGHT by one column = shift the whole 64-bit mask LEFT.
-    --         (a plain "sll 1" is safe here because it is applied per row and
-    --          the mask is re-normalised by the ROM constants, see docs)
+    -- 2. 纯函数
+    --    mk_cell(row, col) ：构造只含一个格子的掩码
+    --      位序号 = 8*row + col，bit0 = 左上角
+    --      所以在一行之内，第 0 列是 bit 0（不是 MSB）。
+    --      第 0 列是面板上最左边的一列。
+    --      => 向右移动一列 = 把整条 64 位掩码向左移。
+    --         （这里直接用 "sll 1" 是安全的，因为它是逐行施加的，
+    --          而且掩码会被 ROM 常量重新归一化，见 docs）
     ----------------------------------------------------------------------------
     function mk_cell(r : integer; c : integer) return std_logic_vector;
 
-    -- number of '1' bits -- used by self-check / offline verification only
+    -- '1' 的个数 —— 仅用于自检 / 离线验证
     function popcount(m : std_logic_vector(63 downto 0)) return integer;
 
-    -- mask_to_px : convert an absolute 8x8 mask into the 64-bit pixel mask used
-    -- by dot_matrix_scan.  bit index = 8*row + col, bit0 = top-left.
-    -- NOTE the two conventions are DIFFERENT:
-    --   * puzzle masks (this package, from the PDF figures) use bit0 = TOP-LEFT
-    --     and are written as bit strings with the LEFT-most dot at bit63.
-    --   * the pixel mask for the display uses bit0 = TOP-LEFT as well, but is
-    --     built so that a plain shift moves right within a row safely.
-    --   This function is the ONLY place the two meet.
+    -- mask_to_px ：把绝对 8x8 掩码转换成 dot_matrix_scan 使用的 64 位像素掩码。
+    -- 位序号 = 8*row + col，bit0 = 左上角。
+    -- 注意这两种约定是**不同**的：
+    --   * 拼图掩码（本包，来自 PDF 图）用 bit0 = 左上角，
+    --     并且写成位串时最左边的点位于 bit63。
+    --   * 显示的像素掩码也用 bit0 = 左上角，但它的构造方式
+    --     保证一次普通移位就能安全地在行内向右移动。
+    --   本函数是两者唯一的交汇处。
     function mask_to_px(row : integer; col : integer) return std_logic_vector;
 
-    -- shift_mask : move a mask by (dr, dc) cells, clearing anything that would
-    -- leave the 8x8 field.  A plain "sll" cannot be used: shifting a mask left
-    -- by 1 makes the right-most cell of row r wrap into the left-most cell of
-    -- row r+1 (the classic "pixel walks through the wall" bug).
+    -- shift_mask ：把掩码平移 (dr, dc) 个格子，任何会离开
+    -- 8x8 区域的位都被清除。不能直接用 "sll"：把掩码左移
+    -- 1 位会让第 r 行最右边的格子绕回
+    -- 第 r+1 行最左边的格子（经典的「像素穿墙」bug）。
     function shift_mask(m : std_logic_vector(63 downto 0);
                         dr : integer; dc : integer)
         return std_logic_vector;
 
-    -- srl8 : shift ONE 8-bit row RIGHT by dc columns (towards higher column
-    -- numbers), filling with '0'.  "Right" in the panel sense: the piece's
-    -- relative column k is placed at panel column k + dc.
-    -- Kept separate (and only 8 bits wide) because a variable-distance shift of
-    -- a 64-bit word is a 64x6 crossbar: using it inside the engine cost 4690
-    -- logic cells on a 1270-cell device.  Shifting 8-bit rows instead is cheap.
+    -- srl8 ：把一个 8 位行向右移 dc 列（朝列号增大的方向），
+    -- 空出位补 '0'。这里的「右」是面板意义上的：零片的
+    -- 相对列 k 被放到面板列 k + dc。
+    -- 单独拆出来（而且只有 8 位宽）是因为对 64 位字做变距离移位
+    -- 相当于一个 64x6 交叉开关：在引擎内部使用它会在 1270 逻辑单元的器件上
+    -- 花掉 4690 个逻辑单元。改成移位 8 位行则很便宜。
     -- dc 允许 -2（A4 旋转补偿列移位可能为负）；限定范围让综合器按 3 位算。
     function srl8(r : std_logic_vector(7 downto 0); dc : integer range -2 to 7)
         return std_logic_vector;
 
-    -- row24 : 8-bit row mask of a piece at anchor column 'ac'.
-    --   shp24 : the piece's relative shape, packed as 3 rows of 8 bits
-    --           (bits 7..0 = row 0, 15..8 = row 1, 23..16 = row 2)
-    --   sr    : which of the piece's own rows to fetch (0..2)
-    -- Returns the 8 bits that this row contributes to the panel row it lands on.
-    -- Used for EXACT overlap tests: a bounding-box test over-approximates for the
-    -- cross and the L-tromino used by level 1, so legal moves would be rejected.
+    -- row24 ：零片在锚点列 'ac' 处的 8 位行掩码。
+    --   shp24 ：零片的相对形状，打包成 3 个 8 位行
+    --           （bit 7..0 = 第 0 行，15..8 = 第 1 行，23..16 = 第 2 行）
+    --   sr    ：要取出零片自身的哪一行（0..2）
+    -- 返回这一行落在面板行上时贡献的 8 位。
+    -- 用于精确的重叠检测：包围盒检测对第一关用到的
+    -- 十字和 L 形三格块会过度近似，导致合法走法被拒绝。
     function row24(shp24 : std_logic_vector(23 downto 0);
                    sr    : integer;
                    ac    : integer) return std_logic_vector;
 
     ----------------------------------------------------------------------------
-    -- 2b. ROTATION (提高要求 A4：零片不仅可以上下左右移动，还可以 90° 旋转)
+    -- 2b. 旋转（提高要求 A4：零片不仅可以上下左右移动，还可以 90° 旋转）
     --
     -- 朝向编码（2 位）：
     --     "00" = 原始朝向（ROM 里的写法）
@@ -140,20 +140,20 @@ package puzzle_pkg is
     function ori_next(ori : std_logic_vector(1 downto 0)) return std_logic_vector;
 
     ----------------------------------------------------------------------------
-    -- 3. Pattern geometry -- DECODED FROM THE COURSE PDF FIGURES (pixel exact)
-    --    See docs/00 sections 4.5 for the decoding evidence.
+    -- 3. 图案几何 —— 由课程 PDF 图解码得到（像素级精确）
+    --    解码依据见 docs/00 第 4.5 节。
     ----------------------------------------------------------------------------
 
-    -- FIG 4-1 : level-1 complete picture = a solid 4-row x 3-col rectangle
-    --           occupying matrix rows 2..5, cols 2..4  -> 12 cells
+    -- 图 4-1 ：第一关完整图案 = 一个 4 行 x 3 列的实心矩形，
+    --           占据点阵第 2..5 行、第 2..4 列  -> 12 格
     constant L1_TARGET_MASK : std_logic_vector(63 downto 0) :=
         "0000000000000000000111000001110000011100000111000000000000000000";
 
-    -- FIG 4-2 : level-1 three loose pieces  3 + 6 + 3 = 12 cells (area conserved)
-    --   P1 : 1x3 horizontal bar        (3 cells)
+    -- 图 4-2 ：第一关三块散落零片  3 + 6 + 3 = 12 格（面积守恒）
+    --   P1 ：1x3 横条        （3 格）
     constant L1_P0 : std_logic_vector(63 downto 0) :=
         "0000000000000000000000000000000000000000000000000000000000000111";
-    --   P2 : 6-cell staircase (3-2-1)
+    --   P2 ：6 格阶梯形（3-2-1）
     --        ⚠️ 2026-10-09 更正：这里原来写的是 "cross shape"，与实际掩码和课程 PDF 都不符 ——
     --        掩码是 3-2-1 阶梯形（行5 col7 / 行6 col6,7 / 行7 col5,6,7）。依据：
     --        `docs/03` §2 第 2 行——已用 `.ref/solve_l1.py` 对 **课程 PDF 图 4-2 逐像素解码**
@@ -163,18 +163,18 @@ package puzzle_pkg is
     --          由 scripts/check_geometry.py 的"目标图案 == 零片并集"检查保证。）
     constant L1_P1 : std_logic_vector(63 downto 0) :=
         "0000000000000000000000000000000000000000000000010000001100000111";
-    --   P3 : L-tromino, cells at (0,1)(1,0)(1,1) of its 2x2 bbox   (3 cells)
+    --   P3 ：L 形三格块，格子位于其 2x2 包围盒的 (0,1)(1,0)(1,1)   （3 格）
     constant L1_P2 : std_logic_vector(63 downto 0) :=
         "0000000000000000000000000000000000000000000000000000001100000010";
 
-    -- Level-2 complete picture (self-designed, see docs/02):
-    --   solid 4x4 square, rows 2..5, cols 2..5  -> 16 cells
-    --   VERIFIED to equal the union of the four L2 pieces at their witness
-    --   anchors (scripts/check_geometry.py enumerates every exact tiling).
-    --   An earlier literal put the square at rows 3..6 while the piece targets
-    --   were at rows 2..5, so the red ghost was drawn one row below where the
-    --   puzzle had to be assembled -- the player following the ghost could never
-    --   match it.
+    -- 第二关完整图案（自拟，见 docs/02）：
+    --   4x4 实心方块，第 2..5 行、第 2..5 列  -> 16 格
+    --   已验证它等于四块 L2 零片在其见证锚点
+    --   处的并集（scripts/check_geometry.py 枚举了每一种
+    --   精确铺法）。
+    --   早先的常量把方块放在第 3..6 行，而零片目标在
+    --   第 2..5 行，于是红色幽灵比该拼出的位置低了一行 ——
+    --   跟着幽灵拼的玩家永远对不上。
     --
     -- ⚠️ 2026-10-09：这个常量**降级成"图案库的第 0 幅"**（提高要求 A2 / 自拟 S1
     --    "多种拼图图案随机选择"）。它本身**一字未改**（仍然 = 4x4 实心方块），
@@ -295,26 +295,26 @@ package puzzle_pkg is
     --   编码：块 k 占 ori(2k+1 downto 2k)；"01" = 顺时针 90°，"10" = 180°，"11" = 270°。
     constant PIECE_ORI_INIT : std_logic_vector(7 downto 0) := "10" & "10" & "01" & "01";
 
-    -- Target anchors: where each piece is EXPECTED to end up.  They describe a
-    -- WITNESS arrangement and are verified against the pictures by
-    -- scripts/check_geometry.py (which enumerates every exact tiling).
+    -- 目标锚点：每块零片期望最终落在的位置。它们描述的是一种
+    -- 见证摆法，并由 scripts/check_geometry.py 对照图案逐一核对
+    -- （该脚本枚举每一种精确铺法）。
     --
-    -- ⚠️ ERR-021: these constants are **NOT** the success test any more.  Comparing
-    --    each piece's anchor with the value below rejects every equivalent tiling:
-    --    level 2 used to be four IDENTICAL 2x2 squares (24 equivalent placements, 1
-    --    accepted) and level 1's rectangle has 2 equivalent tilings (1 accepted), so a
-    --    player who assembled the picture correctly was still told "wrong".
-    --    puzzle_ctrl compares the assembled picture (union of the pieces) with the
-    --    target mask.  Solved offline by exhaustive search (.ref/solve_l1.py).
+    -- ⚠️ ERR-021：这些常量**不再**是成功判据。把每块零片的锚点与
+    --    下面的值比较会否掉每一种等价铺法：第二关以前是四块
+    --    **完全相同**的 2x2 方块（24 种等价摆位，只接受 1 种），
+    --    第一关的矩形有 2 种等价铺法（只接受 1 种），所以
+    --    正确拼出图案的玩家仍被判「错误」。
+    --    puzzle_ctrl 把拼好的图案（各零片的并集）与
+    --    目标掩码比较。该问题已用离线穷举求解（.ref/solve_l1.py）。
     constant L1_TGT0 : std_logic_vector(7 downto 0) := "0010" & "0010";  -- (2,2)
     constant L1_TGT1 : std_logic_vector(7 downto 0) := "0011" & "0010";  -- (3,2)
     constant L1_TGT2 : std_logic_vector(7 downto 0) := "0100" & "0011";  -- (4,3)
-    constant L1_TGT3 : std_logic_vector(7 downto 0) := "0000" & "0000";  -- unused
+    constant L1_TGT3 : std_logic_vector(7 downto 0) := "0000" & "0000";  -- 未使用
 
-    -- Level-2 witness: the four self-designed pieces tile PAT0 (the 4x4 square,
-    -- rows 2..5 x cols 2..5) exactly as (5,3) (4,2) (2,3) (2,2) for Q0..Q3.
-    --   PAT0's tiling is UNIQUE (check_geometry.py enumerates it), so this witness
-    --   set == the only solution; tb_piece_rom ⑧ checks that.
+    -- 第二关见证：四块自拟零片恰好铺满 PAT0（4x4 方块，
+    -- 第 2..5 行 x 第 2..5 列），Q0..Q3 分别位于 (5,3) (4,2) (2,3) (2,2)。
+    --   PAT0 的铺法是唯一的（check_geometry.py 枚举过），所以这组见证
+    --   就等于唯一解；tb_piece_rom ⑧ 核对了这一点。
     constant L2_TGT0 : std_logic_vector(7 downto 0) := "0101" & "0011";  -- Q0 @ (5,3)
     constant L2_TGT1 : std_logic_vector(7 downto 0) := "0100" & "0010";  -- Q1 @ (4,2)
     constant L2_TGT2 : std_logic_vector(7 downto 0) := "0010" & "0011";  -- Q2 @ (2,3)
@@ -332,9 +332,9 @@ package puzzle_pkg is
     constant L2_PAT3_TGT2 : std_logic_vector(7 downto 0) := "0011" & "0011";  -- Q2 @ (3,3)
     constant L2_PAT3_TGT3 : std_logic_vector(7 downto 0) := "0011" & "0010";  -- Q3 @ (3,2)
 
-    -- Result-picture masks shown at the end of a game (self-designed).
+    -- 一局结束时显示的结果图案掩码（自拟）。
     --
-    -- Requirement side (B9/B10): 拼图失败 → 点阵显示"失败图案"；第一关过关、第二关拼成
+    -- 要求侧（B9/B10）：拼图失败 → 点阵显示"失败图案"；第一关过关、第二关拼成
     -- → 点阵显示"胜利图案".  图案本身没有规定，要求只有一个：**一眼能看懂**。
     -- 自拟改进项 S5 还要求"闪示，便于远距离判读"。
     --
@@ -360,36 +360,36 @@ package puzzle_pkg is
     constant WIN_MASK : std_logic_vector(63 downto 0) :=
         "0000111000011111000110110011000101110000111000001100000010000000";
 
-    -- FAIL : a cross（红色；与绿色的胜利对勾互为反色 —— 交通灯配色）
+    -- FAIL ：一个叉（红色；与绿色的胜利对勾互为反色 —— 交通灯配色）
     constant FAIL_MASK : std_logic_vector(63 downto 0) :=
         "0000000011000011011001100011110000111100011001101100001100000000";
 
-    -- Bounding-box limit of every piece: all pieces (level 1 and level 2, the new
-    -- self-designed level-2 shapes included) fit in a 3x3 box.  This is what lets
-    -- the engine scan a 3x3 neighbourhood instead of the whole panel, and it is
-    -- also the precondition of the scatter's bounded-candidate arithmetic.
+    -- 每块零片的包围盒上限：所有零片（第一关与第二关，包括新自拟的
+    -- 第二关异形）都能装进 3x3 的盒子。正因如此，
+    -- 引擎可以只扫描 3x3 邻域而不是整块面板，这也是
+    -- 散落算法「有界候选」算术的前提。
     constant PIECE_MAX_DIM : integer := 3;
 
     ----------------------------------------------------------------------------
-    -- 4. Clock / timing constants
-    --    Board clock is selected by the USER_BTN on the top-right corner and
-    --    read from the FREQ LED row.  This design assumes the 50 MHz position.
-    --    Counter chain is CASCADED on purpose: only the first stage ever sees
-    --    50 MHz, the following stages just count pulses from the previous one.
+    -- 4. 时钟 / 时序常量
+    --    板上时钟由右上角的 USER_BTN 选择，
+    --    并从 FREQ LED 那一行读出。本设计假定选在 50 MHz 档。
+    --    计数器链是有意级联的：只有第一级见到 50 MHz，
+    --    后面各级只数上一级来的脉冲。
     ----------------------------------------------------------------------------
     constant CLK_HZ  : integer := 50_000_000;
 
-    -- stage 1 : 50 MHz -> 1 kHz   (divide by 50_000)
+    -- 第 1 级 ：50 MHz -> 1 kHz   （除以 50_000）
     constant CNT_1K  : integer := CLK_HZ / 1_000 - 1;
-    -- stage 2 : 1 kHz  -> 200 Hz  (divide by 5)      : dot-matrix / keypad scan
+    -- 第 2 级 ：1 kHz  -> 200 Hz  （除以 5）      ：点阵 / 键盘扫描
     constant CNT_200 : integer := 1_000 / 200 - 1;
-    -- stage 3 : 200 Hz -> 100 Hz  (divide by 2)      : 100 Hz time base
+    -- 第 3 级 ：200 Hz -> 100 Hz  （除以 2）      ：100 Hz 时基
     constant CNT_100 : integer := 200 / 100 - 1;
-    -- stage 4 : 100 Hz -> 2 Hz    (divide by 50)     : blink / self-test flash
+    -- 第 4 级 ：100 Hz -> 2 Hz    （除以 50）     ：闪烁 / 自检闪示
     constant CNT_2HZ : integer := 100 / 2 - 1;
-    -- stage 5 : 100 Hz -> 1 Hz    (divide by 100)    : second counter
+    -- 第 5 级 ：100 Hz -> 1 Hz    （除以 100）    ：秒计数器
     constant CNT_1HZ : integer := 100 / 1 - 1;
-    -- ⚠️ stage 6 : 100 Hz -> **4 Hz**（divide by 25，= 250 ms 一个脉冲）
+    -- ⚠️ 第 6 级 ：100 Hz -> **4 Hz**（除以 25，= 250 ms 一个脉冲）
     --    2026-10-09 第 11 工作阶段（全项目审计发现，ERR-038）：B1 要求自检"以 **2 Hz**
     --    闪烁"。原来的做法是"每个 tick_2hz（500 ms）翻转一次 blink_r"，得到的是
     --    **1 s 周期 = 1 Hz** 的方波 —— 只有要求的一半，而且四处注释/文档都按 2 Hz 记账
@@ -398,21 +398,21 @@ package puzzle_pkg is
     --    tick_2hz 继续保留（蜂鸣器节奏、旧断言都用它），语义不再当"闪烁"。
     constant CNT_4HZ : integer := 100 / 4 - 1;
 
-    -- power-on reset : count tick_1k pulses, so only a 4-bit counter is needed
+    -- 上电复位 ：数 tick_1k 脉冲，所以只需要一个 4 位计数器
     -- ⚠️ 实测（tb_clk_gen）：释放发生在 por_cnt 到达 CNT_POR 时，即 **9** 个 1 ms 刻度，
     --    不是 10 个（常量名 T_POR_MS 与计数差一）。功能上无害（9 ms 与 10 ms 对
     --    一个人机接口设计没有区别），因此保持与板上一致的行为，只更正了注释。
     constant T_POR_MS  : integer := 10;
     constant CNT_POR   : integer := T_POR_MS - 1;      -- 饱和值：计到它就释放
 
-    -- reset push-button debounce (counts tick_1k = 1 ms)
+    -- 复位按键消抖（数 tick_1k = 1 ms）
     constant T_BTN_MS  : integer := 20;
     constant CNT_BTN   : integer := T_BTN_MS - 1;
 
     ----------------------------------------------------------------------------
-    -- 5. Game timing (course requirement values, do not change casually)
+    -- 5. 游戏时序（课程要求值，不要随意改动）
     ----------------------------------------------------------------------------
-    constant T_SELFTEST : integer := 2;    -- B1/B2 : self-test lasts 2 s
+    constant T_SELFTEST : integer := 2;    -- B1/B2 ：自检持续 2 s
     -- ⭐ 2026-10-10（**ERR-051 修法**）：自检窗口改由 **tick_4hz（250 ms）** 计数，
     --    倒计数初值 = 8 拍 - 1。⚠️ **tick_4hz 是自由走的**（clk_gen 只被 i_rst 复位、
 --    与 FSM 入口无关）⇒ 从入口到第 8 个脉冲 = 7~8 个 250 ms 周期，即复位路径 ≈2.000 s、
@@ -432,9 +432,9 @@ package puzzle_pkg is
     --       器件 LAB 已满 127/127，实测正计数要新造 6 位加法器、**fitter 直接要
     --       128 LABs 装不下**（见 docs/05 §1.5 与 docs/06 的 ERR-051）。
     constant T_SELFTEST_T4 : integer := 7; -- 倒计数初值：8 拍 x 250 ms（≤2 s，见上）
-    constant T_PREVIEW  : integer := 5;    -- B4/B10: preview lasts 5 s
-    constant T_LEVEL1   : integer := 30;   -- B5    : level-1 time limit 30 s
-    constant T_LEVEL2   : integer := 40;   -- B10   : level-2 time limit 40 s
+    constant T_PREVIEW  : integer := 5;    -- B4/B10：预览持续 5 s
+    constant T_LEVEL1   : integer := 30;   -- B5    ：第一关限时 30 s
+    constant T_LEVEL2   : integer := 40;   -- B10   ：第二关限时 40 s
     -- 第三关（A2"增加游戏关数"的扩展关，2026-10-09）：题目**没有规定**，自拟。
     -- ⭐ 2026-10-10 第 18 工作阶段：**40 s → 60 s**。用户原话："第三关应该是比前面要难一点，
     --    那么倒计时也可以设置的长一点"。
@@ -447,12 +447,12 @@ package puzzle_pkg is
     --        它们是课程要求，改了就偏离题目。所以"降低难度"对前两关只能靠
     --        `puzzle_top` 的**倒计时幽灵提示**（≤10 s 时把目标图案显示出来，见该文件注释），
     --        对第三关则是"提示 + 加时"双管齐下。
-    constant T_LEVEL3   : integer := 60;   -- A2    : level-3 time limit 60 s（自拟）
+    constant T_LEVEL3   : integer := 60;   -- A2    ：第三关限时 60 s（自拟）
 
     ----------------------------------------------------------------------------
-    -- 6. Misc
+    -- 6. 杂项
     ----------------------------------------------------------------------------
-    -- Key debounce, counted in **scan rounds** of keypad_scan.
+    -- 按键消抖，以 keypad_scan 的**扫描轮**为单位计数。
     --
     -- ⚠️ 2026-10-09 更正（ERR-031）：**一轮扫描 = 2 个 tick_200 = 10 ms，不是 5 ms。**
     --    keypad_scan 的相序是 SC_ALL_HIGH（等 tick）→ SC_ALL_LOW（**再等一个 tick**）
@@ -478,11 +478,11 @@ package puzzle_pkg is
     --       与 sim/tb_keypad_scan.py 的断言 ⑨。
     constant DEBOUNCE_MAX : integer := 3;
 
-    -- LFSR seed : must NEVER be all zero (all-zero is the absorbing state)
+    -- LFSR 种子 ：绝不能全零（全零是吸收态）
     constant SEED_DEFAULT : std_logic_vector(7 downto 0) := x"5A";
 
     ----------------------------------------------------------------------------
-    -- 7. State encoding of the master FSM (3 bits, 6 states)
+    -- 7. 主状态机的状态编码（3 位，6 个状态）
     ----------------------------------------------------------------------------
     subtype state_t is std_logic_vector(2 downto 0);
 
@@ -494,7 +494,7 @@ package puzzle_pkg is
     constant S_FAIL      : state_t := "101";
 
     ----------------------------------------------------------------------------
-    -- 8. Key codes produced by keypad_scan (0 = no key)
+    -- 8. keypad_scan 产生的键码（0 = 无键）
     ----------------------------------------------------------------------------
     constant K_NONE    : std_logic_vector(3 downto 0) := "0000";
     constant K_START   : std_logic_vector(3 downto 0) := "0001";  -- "start"
@@ -507,7 +507,7 @@ package puzzle_pkg is
     -- ⚠️ 提高要求 A4（2026-10-09 第 13 工作阶段）：新增【旋转】键。
     --    物理键位 = KEY8（矩阵 ROW2 / COL3 → 索引 4*2+3 = 11），就在【上】键的右边。
     --    键码 "1000"（原来空着）。
-    constant K_ROT     : std_logic_vector(3 downto 0) := "1000";  -- "rotate" 90° CW
+    constant K_ROT     : std_logic_vector(3 downto 0) := "1000";  -- "rotate" 顺时针 90°
 
     ----------------------------------------------------------------------------
     -- 9. 音效码（提高要求 A1「不同情况下播放不同的提示音效或音乐」）
@@ -612,10 +612,10 @@ package body puzzle_pkg is
         return n;
     end function;
 
-    -- Convert an absolute cell (row, col) into the display pixel mask.
-    -- The display mask uses the SAME bit convention (bit 8*row + col, bit0 =
-    -- top-left), so this is a one-hot encode.  It exists as a function so that
-    -- no module ever hand-writes a mask literal for a single cell.
+    -- 把绝对格子坐标 (row, col) 转换成显示像素掩码。
+    -- 显示掩码使用**相同**的位序约定（bit 8*row + col，bit0 =
+    -- 左上角），所以这是一次独热编码。它做成函数是为了
+    -- 任何模块都不必为单个格子手写掩码字面量。
     function mask_to_px(row : integer; col : integer) return std_logic_vector is
         variable v : std_logic_vector(63 downto 0) := (others => '0');
     begin
@@ -625,11 +625,11 @@ package body puzzle_pkg is
         return v;
     end function;
 
-    -- Move every '1' in m by (dr, dc) cells.  Anything pushed outside the 8x8
-    -- field is DROPPED, which is what requirement B7 ("a piece may not leave the
-    -- 8x8 area") relies on: the caller can test for loss instead of having to
-    -- pre-clamp, and a naive whole-vector "sll" can never leak a cell from the
-    -- end of one row into the start of the next.
+    -- 把 m 中的每个 '1' 平移 (dr, dc) 个格子。任何被推出 8x8
+    -- 区域的位都会被**丢弃**，这正是要求 B7（「零片不得离开
+    -- 8x8 区域」）所依赖的：调用方可以检测丢失，而不必
+    -- 预先钳位，而且朴素地对整条向量做 "sll" 绝不会把一个格子从
+    -- 一行的末尾漏到下一行的开头。
     function shift_mask(m : std_logic_vector(63 downto 0);
                         dr : integer; dc : integer)
         return std_logic_vector is
@@ -655,24 +655,24 @@ package body puzzle_pkg is
         return v;
     end function;
 
-    -- Shift one 8-bit row RIGHT (towards higher column numbers) by dc columns,
-    -- filling the vacated left end with '0'.
+    -- 把一个 8 位行向右移 dc 列（朝列号增大的方向），
+    -- 空出的左端补 '0'。
     --
-    -- ⚠️ ERR-019: the FIRST version of this function wrote
+    -- ⚠️ ERR-019：本函数的第一版写的是
     --        v := '0' & r(7 downto 1)
-    --    which moves every bit from index i+1 down to index i -- i.e. towards
-    --    LOWER indices, which in this project's convention (bit = 8*row + col,
-    --    bit0 = left-most column) is a shift to the LEFT.  Placing a piece at
-    --    anchor column ac needs the row to move RIGHT by ac, so every piece with
-    --    ac > 0 was drawn at the wrong columns and lost cells off the left edge
-    --    (a 1x3 bar at anchor column 2 rendered as a single dot at column 0).
-    --    The same function feeds the overlap checker, so the collision test was
-    --    wrong too.  Caught by simulation (tb_puzzle_ctrl assertion ⑧: the
-    --    selected piece rendered nothing at all); see docs/06.
+    --    这会把每一位从下标 i+1 挪到下标 i —— 也就是朝
+    --    更小的下标方向，在本项目的约定下（bit = 8*row + col，
+    --    bit0 = 最左列）这是向左移。把零片放到
+    --    锚点列 ac 需要该行向右移 ac，所以每个 ac > 0 的零片
+    --    都被画到了错误的列上，还会从左边缘丢格子
+    --    （锚点列 2 处的 1x3 横条被渲染成第 0 列上的一个点）。
+    --    同一个函数还喂给重叠检测器，所以碰撞检测也
+    --    错了。由仿真抓出（tb_puzzle_ctrl 断言 ⑧：
+    --    选中的零片完全没有渲染出东西）；见 docs/06。
     --
-    --    Written as a 7-way mux tree over dc, NOT as a per-bit indexed loop:
-    --    the indexed form made Quartus build an adder-compare-select network per
-    --    bit, which was the critical path (41.5 MHz instead of 50+).
+    --    实现为对 dc 的 7 路 mux 树，而不是逐位索引循环：
+    --    索引写法让 Quartus 为每一位生成加法-比较-选择网络，
+    --    成了关键路径（41.5 MHz 而不是 50+）。
     function srl8(r : std_logic_vector(7 downto 0); dc : integer range -2 to 7)
         return std_logic_vector is
         variable rb, sb, v : std_logic_vector(7 downto 0);
@@ -713,10 +713,10 @@ package body puzzle_pkg is
                    ac    : integer) return std_logic_vector is
         variable base : std_logic_vector(7 downto 0) := (others => '0');
     begin
-        -- NOTE: 'base' is initialised and every branch assigns it, because a
-        -- subprogram is ELABORATED AT COMPILE TIME: a branch that can produce no
-        -- value makes Quartus fail with "expression has 0 elements" instead of
-        -- inferring a latch.
+        -- 注意：'base' 被初始化，且每个分支都会给它赋值，因为
+        -- 子程序是在编译期精化（elaborate）的：某个分支若产生不了
+        -- 值，Quartus 会报 "expression has 0 elements" 而失败，
+        -- 而不是推断出一个锁存器。
         if (sr = 0) then
             base := shp24(7 downto 0);
         elsif (sr = 1) then
@@ -730,7 +730,7 @@ package body puzzle_pkg is
     end function;
 
     ----------------------------------------------------------------------------
-    -- 2b. ROTATION primitives (A4)
+    -- 2b. 旋转原语（A4）
     --
     -- 只在 3x3 盒内做坐标置换，返回"第 sr 行"的 3 位（放在 8 位列掩码的低 3 位）。
     -- 循环体里的 c 是**编译期常量**（0/1/2），所以每个输出位只在 4 个固定的

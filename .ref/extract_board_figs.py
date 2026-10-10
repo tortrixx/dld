@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Extract the board manual's 7-segment module images (附图9/附图10) to read the
-physical segment naming/ordering printed on the board."""
+"""提取实验板手册里的数码管模块图片（附图9／附图10），以读取板上印制的
+实际段命名与排列顺序。"""
 import pathlib
 from pypdf import PdfReader
 

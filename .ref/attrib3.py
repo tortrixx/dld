@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Measure the row-scan renderer's share and test a static-shift variant."""
+"""测量行扫描渲染所占的面积份额，并测试一个静态移位变体。"""
 import pathlib, shutil, subprocess
 
 ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
@@ -50,8 +50,8 @@ def measure(name, text, pkg=None):
 
 measure("v5_current", SRC)
 
-# render replaced by a trivial constant, but keep o_red/o_grn driven from pos so
-# the state can not be optimised away
+# 把 render 换成平凡常量，但仍让 o_red/o_grn 由 pos 驱动，
+# 以免该状态被优化掉
 rstart = SRC.index("    process (scanrow, pos, locked, sel, i_level, i_sh0")
 rend = SRC.index("    ----------------------------------------------------------------------------\n    -- Scan row counter")
 v = SRC[:rstart] + """    o_red <= pos(7 downto 0) xor pos(15 downto 8);

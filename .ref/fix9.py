@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Fix the nibble widths: row lines are single bits, so the nibble needs three
-padding zeros (not one)."""
+"""修正半字节宽度：行线是单个 bit，所以半字节需要三个
+填充零（而不是一个）。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_diag_top.vhd")

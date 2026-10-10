@@ -1,22 +1,22 @@
 # -*- coding: utf-8 -*-
-"""Fix a real off-by-one in the keypad scan.
+"""修正键盘扫描里一个真实的差一错误。
 
-col_drv was REGISTERED while phase was updated in the same clock.  On the first
-cycle after a tick, phase still held 3 (from the previous round) while col_drv had
-just become "1110" (phase 0's column).  The sampler therefore associated every
-reading with the WRONG column -- keys decoded to the wrong code, and with the
-one-cycle offset the first column was effectively never read.  On the board this
-showed up as "pressing any key changes nothing".
+col_drv 是**寄存**的，而 phase 在同一时钟里更新。于是 tick 之后的第一个
+周期里，phase 还保持着 3（上一轮的残留），而 col_drv 刚刚
+变成 "1110"（相位 0 的列）。采样器因此把每一次
+读数都关联到了**错误**的列 —— 键被解码成错误的键码，而且由于
+这一个周期的偏移，第一列实际上从未被读到。在板上这表现为
+「按任何键都没有变化」。
 
-Fix: derive the column drive COMBINATIONALLY from phase, so the driven column and
-the index used to build the key code can never disagree.
+修法：列驱动改为**组合**地从 phase 推导，这样被驱动的列与
+用于构造键码的下标就绝不可能不一致。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
 s = p.read_text(encoding="utf-8")
 
-# --- sequencer: no longer drives columns -------------------------------------
+# --- 序列器：不再驱动列 -------------------------------------
 s = s.replace("""                    when ST_IDLE =>
                         -- kick off a round on the scan tick
                         if (i_tick = '1') then
@@ -62,7 +62,7 @@ s = s.replace("""                    when ST_SCAN =>
                             state  <= ST_SETTLE;
                         end if;""")
 
-# --- combinational column decode ---------------------------------------------
+# --- 组合逻辑列译码 ---------------------------------------------
 s = s.replace("    o_col <= col_drv;\n    o_raw <= col_drv;",
               """    ----------------------------------------------------------------------------
     -- Column drive: exactly one '0', at the position given by 'phase'.
@@ -77,7 +77,7 @@ s = s.replace("    o_col <= col_drv;\n    o_raw <= col_drv;",
     o_col <= col_drv;
     o_raw <= col_drv;""")
 
-# reset no longer needs to set col_drv (it is combinational now)
+# 复位不再需要设置 col_drv（它现在是组合的）
 s = s.replace("                phase   <= (others => '0');\n"
               "                settle  <= (others => '0');\n"
               "                col_drv <= \"1110\";",

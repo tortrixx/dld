@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Decode the 8x8 dot-matrix figures from the topics PDF into exact coordinate masks."""
+"""把题目 PDF 里的 8x8 点阵图解码成精确的坐标掩码。"""
 import pathlib
 from PIL import Image
 
@@ -9,9 +9,9 @@ def analyse(name, rows=8, cols=8):
     im = Image.open(FIG / name).convert("RGB")
     W, H = im.size
     px = im.load()
-    # board interior: figures have a black border; sample a grid inside it
+    # 板内区域：图有黑色边框；在其内部按网格取样
     print(f"\n=== {name}  {W}x{H} ===")
-    # find bounding box of non-white content
+    # 求非白色内容的包围盒
     xs, ys = [], []
     for y in range(H):
         for x in range(W):
@@ -20,7 +20,7 @@ def analyse(name, rows=8, cols=8):
                 xs.append(x); ys.append(y)
     x0, x1, y0, y1 = min(xs), max(xs), min(ys), max(ys)
     print(f"content bbox x[{x0},{x1}] y[{y0},{y1}]  size {x1-x0+1}x{y1-y0+1}")
-    # pitch from bbox
+    # 由包围盒推算间距
     pitchx = (x1 - x0 + 1) / cols
     pitchy = (y1 - y0 + 1) / rows
     grid = []
@@ -29,7 +29,7 @@ def analyse(name, rows=8, cols=8):
         for c in range(cols):
             cx = int(x0 + (c + 0.5) * pitchx)
             cy = int(y0 + (r + 0.5) * pitchy)
-            # sample small patch, classify dominant colour
+            # 取小片区域采样，判定主导颜色
             cntR = cntG = cntW = 0
             for dy in range(-3, 4):
                 for dx in range(-3, 4):

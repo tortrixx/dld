@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
-"""FIX 1 (clean) -- keypad_scan round capture.
+"""修复 1（干净版）—— keypad_scan 的本轮捕获。
 
-CONFIRMED DEFECTS
-  D1  round_code was cleared on EVERY clock while the sequencer sat in ST_IDLE
-      (about 250 000 clocks), yet the debounce stage only samples it on the
-      200 Hz tick.  The captured value survived one clock, so the sampler always
-      read K_NONE and o_key stayed 0 for ever -- exactly the bench symptom
-      "pressing any key does nothing".
-  D2  only phase 3 (column 3) was ever captured, so keys in columns 0..2 could
-      never be seen at all.
+已确认的缺陷
+  D1  时序器停留在 ST_IDLE 期间（约 250 000 个时钟），而 round_code 在
+      每个时钟都被清零，消抖级却只在 200 Hz tick 上采样它。捕获到的值
+      只存活一个时钟，所以采样器读到的永远是 K_NONE，o_key 恒为 0——
+      这恰恰就是实测现象
+      「按任何键都没有反应」。
+  D2  只有第 3 相（第 3 列）会被捕获，所以第 0..2 列的按键
+      完全看不到。
 
-FIX
-  * take the FIRST hit of ANY settled phase of the round;
-  * hold it until the next round starts, so the debounce stage (sampled on the
-    tick, ~5 ms later) can actually see it, and so "stable for N rounds" finally
-    means something.
+修复
+  * 取本轮任意已稳定相位的首次命中；
+  * 保持到下一轮开始，这样消抖级（在 tick 上采样，约 5 ms 之后）
+    才能真正看到它，而「连续 N 轮稳定」也终于
+    有了意义。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
 s = p.read_text(encoding="utf-8")
 
-# --- locate the whole row-sampling process body -----------------------------
+# --- 定位整个行采样进程体 -----------------------------
 start = s.index("            if (i_rst = '1') then\n                raw_hit    <= '0';")
 end = s.index("    end process;", start)
 body = '''            if (i_rst = '1') then
@@ -65,7 +65,7 @@ body = '''            if (i_rst = '1') then
 '''
 s = s[:start] + body + s[end:]
 
-# --- new signals -------------------------------------------------------------
+# --- 新信号 -------------------------------------------------------------
 s = s.replace("    signal round_code : std_logic_vector(3 downto 0) := K_NONE;  -- key seen in this round",
               "    signal round_code : std_logic_vector(3 downto 0) := K_NONE;  -- result of the LAST round\n"
               "    signal round_hold : std_logic_vector(3 downto 0) := K_NONE;  -- captured this round\n"

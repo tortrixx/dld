@@ -6,13 +6,13 @@ import pathlib
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# blank startup counter + published row register
+# 启动空白计数器 + 已发布行的寄存器
 s = s.replace(
     "    signal acc_kc  : std_logic_vector(7 downto 0) := (others => '0');\n",
     "    signal acc_kc  : std_logic_vector(7 downto 0) := (others => '0');\n"
     "    signal warm    : unsigned(3 downto 0) := (others => '0');  -- startup blank\n")
 
-# the renderer process: make phase 0 advance scanrow, and blank while warming
+# 渲染器进程：让相位 0 推进 scanrow，并在预热期间保持空白
 s = s.replace(
     """                case to_integer(ph) is
                     when 0 =>
@@ -36,7 +36,7 @@ s = s.replace(
                         -- on its 40 Hz tick, i.e. once per published row
                         case to_integer(scanrow) is""")
 
-# gate the published outputs on the warm counter
+# 用预热计数器对已发布的输出做门控
 s = s.replace(
     """                        o_red <= acc_cov or (tgtrow and (not acc_cov));
                         o_grn <= acc_kc;
@@ -57,7 +57,7 @@ s = s.replace(
 
                 ph <= ph + 1;""")
 
-# drive the warm counter from the reset branch / normal branch
+# 在复位分支 / 正常分支中驱动预热计数器
 s = s.replace(
     """            if (i_rst = '1') then
                 ph      <= (others => '0');

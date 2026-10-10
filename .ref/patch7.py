@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-"""puzzle_ctrl v5b: replace the rectangle-overlap test with an EXACT per-row
-mask comparison.
+"""puzzle_ctrl v5b：把矩形重叠判定换成**逐行掩码**的精确
+比较。
 
-The bounding-box test over-approximates for non-rectangular pieces (level 1 uses
-a cross and an L-tromino), so two pieces that do not actually touch could be
-rejected.  Exact comparison builds the piece's row mask and ANDs it with the
-other pieces' row masks -- which is what the model in .ref/model_ctrl.py
-validates.
+包围盒判定对非矩形零片（第一关用到一个十字形和一个 L 形三格）会过度
+近似，于是两块实际上并不接触的零片也可能被判为重叠。精确比较的做法是
+构造该零片的行掩码，再把它与其它零片的行掩码相与 —— 这正是
+.ref/model_ctrl.py 里的模型
+所校验的做法。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---- add a row-mask helper function to the architecture header ------------
+# ---- 在结构体头部加入一个行掩码辅助函数 ------------
 s = s.replace(
     "    signal scanrow : unsigned(2 downto 0) := (others => '0');\n\nbegin",
     """    signal scanrow : unsigned(2 downto 0) := (others => '0');
@@ -54,7 +54,7 @@ s = s.replace(
 
 begin""")
 
-# ---- replace both rectangle tests with exact row-mask tests ---------------
+# ---- 把两处矩形判定都换成精确的行掩码判定 ---------------
 OLD = """                                orow := to_integer(unsigned(npos(7 downto 4)));
                                 ocol := to_integer(unsigned(npos(3 downto 0)));
 
@@ -95,7 +95,7 @@ NEW2 = """                            orow := to_integer(unsigned(npos(7 downto 
 assert OLD2 in s
 s = s.replace(OLD2, NEW2)
 
-# ---- declare the extra variables and latch the shapes --------------------
+# ---- 声明额外变量并锁存各零片的形状 --------------------
 s = s.replace(
     "        variable oh, ow : integer;    -- other piece's height / width\n"
     "        variable orow, ocol : integer;\n",
@@ -106,7 +106,7 @@ s = s.replace(
     "        variable shp_new : std_logic_vector(63 downto 0);\n"
     "        variable rr    : integer;\n")
 
-# in the move path, resolve the selected shape before the overlap loop
+# 在移动路径中，于重叠循环之前先解析出被选中的形状
 s = s.replace(
     "                    case to_integer(sel) is\n"
     "                        when 0      => hh := to_integer(unsigned(i_h0)); ww := to_integer(unsigned(i_w0));\n"
@@ -121,7 +121,7 @@ s = s.replace(
     "                        when others => hh := to_integer(unsigned(i_h3)); ww := to_integer(unsigned(i_w3)); shp_sel := i_sh3;\n"
     "                    end case;\n", 1)
 
-# in the move overlap loop, resolve the other piece's shape too
+# 在移动的重叠循环中，也要解析出另一块零片的形状
 s = s.replace(
     "                                case k is\n"
     "                                    when 0      => npos := pos(31 downto 24);\n"
@@ -144,7 +144,7 @@ s = s.replace(
     "                                                   oh := to_integer(unsigned(i_h3));\n"
     "                                end case;\n", 1)
 
-# scatter path: resolve the new piece's shape and the other pieces' shapes
+# 散落路径：解析新零片的形状以及其它零片的形状
 s = s.replace(
     "                    case to_integer(sh_k) is\n"
     "                        when 0      => hh := to_integer(unsigned(i_h0)); ww := to_integer(unsigned(i_w0));\n"

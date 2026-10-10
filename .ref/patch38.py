@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
-"""Fix the entity-port parser: it must strip -- comments first.
+"""修正实体端口解析器：必须先剥掉 -- 注释。
 
-`entity\s+\w+\s+is\s+port` matched inside a comment ("-- PIN_61, BTN0 reset"),
-so the port clause was taken from the wrong place and only one port was found.
-A guard that silently under-reports ports is worse than no guard, because it
-would let an unconstrained pin through while looking like it had checked.
+`entity\s+\w+\s+is\s+port` 会匹配到注释内部（"-- PIN_61, BTN0 reset"），
+于是端口子句从错误的位置被截取，只找到一个端口。
+一道悄悄少报端口的防线比没有防线更糟，因为它
+会在看起来已经检查过的同时放过未约束的引脚。
 """
 import pathlib, re
 

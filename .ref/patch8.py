@@ -1,20 +1,20 @@
 # -*- coding: utf-8 -*-
-"""Replace the local per-call row_mask function with the package helper row24 and
-restructure the overlap tests so the candidate row is computed once per row."""
+"""把每次调用都重建的局部 row_mask 函数换成包内的辅助函数 row24，
+并重构重叠判定，使候选行每行只计算一次。"""
 
 import pathlib, re
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---- 1. drop the local row_mask function ---------------------------------
+# ---- 1. 删掉局部的 row_mask 函数 ---------------------------------
 start = s.index("    -- Row mask of a piece at a given position")
 end = s.index("begin\n\n    o_lock")
 s = s[:start] + s[end:]
 s = s.replace("    signal scanrow : unsigned(2 downto 0) := (others => '0');\n\n",
               "    signal scanrow : unsigned(2 downto 0) := (others => '0');\n\n")
 
-# ---- 2. move path: exact overlap, candidate row computed once -------------
+# ---- 2. 移动路径：精确重叠判定，候选行只算一次 -------------
 mstart = s.index("                    -- (2) rectangle overlap against the other pieces")
 mend = s.index("                    -- (3) locked pieces do not move")
 new_move = """                    -- (2) EXACT overlap test, row by row.  A bounding-box test

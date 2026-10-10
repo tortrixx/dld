@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Patch puzzle_ctrl:
-  * resolve the selected-piece footprint/shape into REGISTERS once per cycle
-    (a 64-bit 4:1 mux evaluated once, instead of several),
-  * register the render outputs (red/green) so the colour mix is computed once
-    per clock instead of being a deep combinational cone on the output ports.
+"""修补 puzzle_ctrl：
+  * 每个周期把被选中零片的覆盖形状/外形解析进**寄存器**一次
+    （一个 64 位 4 选 1 多路器只求值一次，而不是求值多次），
+  * 把渲染输出（红/绿）寄存起来，使颜色混合每个时钟只算一次，
+    而不是在输出端口上形成很深的组合逻辑锥。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# --- 1. register the render outputs ----------------------------------------
+# --- 1. 寄存渲染输出 ----------------------------------------
 s = s.replace(
     "    signal mv     : std_logic := '0';\n"
     "    signal solved_r  : std_logic;\n"
@@ -22,7 +22,7 @@ s = s.replace(
     "    signal grn_r     : std_logic_vector(63 downto 0) := (others => '0');\n"
     "    signal kcol_r    : std_logic_vector(63 downto 0) := (others => '0');\n")
 
-# --- 2. render: compute kcol combinationally but register the outputs -------
+# --- 2. 渲染：kcol 用组合逻辑算，但输出要寄存 -------
 old_render = s[s.index("    -- RENDER: selected -> green"):s.index("    ----------------------------------------------------------------------------\n    -- Scatter candidate lookup.")]
 new_render = """    -- RENDER.
     -- Three colours from two bit-planes: selected -> GREEN, locked -> YELLOW

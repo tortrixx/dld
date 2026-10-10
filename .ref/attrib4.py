@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Compare overlap strategies for the check engine.
+"""比较检查引擎的几种重叠判定策略。
 
-The exact row-mask test is costly because it needs row_mask (an 8-bit variable
-shift) plus per-row ANDs.  This measures a bounding-box version, which is what
-the reference implementation used and which needs only integer comparisons.
+精确的行掩码判定开销很大，因为它需要 row_mask（8 位可变移位）
+再加上逐行 AND。这里测量的是包围盒版本，也就是参考实现所用的做法，
+它只需要整数比较。
 """
 import pathlib, shutil, subprocess
 
@@ -52,7 +52,7 @@ def measure(name, text):
 
 measure("current_exact", SRC)
 
-# ---- bounding-box variant: replace the CH_RUN row ANDs with integer compares --
+# ---- 包围盒变体：把 CH_RUN 的逐行 AND 换成整数比较 --
 old = SRC[SRC.index("                    when CH_RUN =>"):SRC.index("                    when CH_DONE =>")]
 new = """                    when CH_RUN =>
                         chk_row <= chk_row + 1;

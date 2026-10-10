@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Point the scratch harness at puzzle_ctrl's row-scan port list."""
+"""让 scratch 测试框架改用 puzzle_ctrl 的行扫描端口列表。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.ref\scratch_pc.py")

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Remove the now-duplicate scanrow counter (scanrow is driven by the renderer)."""
+"""删掉现在已重复的 scanrow 计数器（scanrow 由渲染器驱动）。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")

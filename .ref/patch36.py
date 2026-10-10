@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Register the keypad diagnostics WITH the keypad ports, and make the generator
-reject a top whose declared port list omits a port the entity actually has.
+"""把键盘自检顶层连同键盘端口一起注册，并让生成器
+拒绝那些声明端口列表遗漏了实体实际拥有端口的顶层。
 
-Root cause of the "keypad never responds" saga:
-  keypad_raw_top and keypad_diag_top were added to TOP_PORTS with the clock,
-  switch, matrix and display ports but WITHOUT kp_row / kp_col.  The generator
-  only constrains ports that are listed, so the keypad pins were left
-  unconstrained; Quartus then placed them on arbitrary free pins.  The design
-  compiled and ran and simply drove/read the wrong pins.
+「键盘永远没反应」这段公案的根因：
+  keypad_raw_top 与 keypad_diag_top 加进 TOP_PORTS 时带了时钟、
+  开关、点阵和显示端口，却**没有** kp_row / kp_col。生成器
+  只会约束列出来的端口，于是键盘引脚处于
+  未约束状态；Quartus 随后把它们放到任意空闲引脚上。设计
+  能编译、能运行，只是读写的是错误的引脚。
 """
 import pathlib
 

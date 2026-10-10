@@ -1,30 +1,30 @@
 -- ============================================================================
---  keypad_raw_top  --  KEYPAD ELECTRICAL TEST (correctly constrained pins)
+--  keypad_raw_top  --  键盘电气测试（引脚已正确约束）
 --
---  IMPORTANT HISTORY -- WHY EVERY EARLIER KEYPAD RESULT WAS MEANINGLESS
+--  重要历史 —— 为什么此前每一个键盘结果都毫无意义
 --  --------------------------------------------------------------------
---  The first versions of this diagnostic were added to the project generator's
---  port table WITHOUT their kp_row / kp_col ports.  The generator only emits pin
---  constraints for the ports you list, so the keypad pins were left
---  unconstrained; the fitter then placed them on arbitrary free pins
---  (49, 102, 130, 88, ...).  The design compiled, ran, and simply drove and read
---  the WRONG PINS -- which is indistinguishable from broken hardware on the
---  bench.  Found by cross-checking the fitter's .pin report against the manual.
---  See docs/05 ERR-002 and scripts/check_keypad_pins.py.
+--  这个诊断设计最早的几个版本被加进项目生成器的端口表时，
+--  并没有带上它们的 kp_row / kp_col 端口。生成器只会为你列出的端口
+--  生成引脚约束，于是键盘引脚就处于未约束状态；
+--  随后 fitter 把它们放到了任意空闲引脚上
+--  （49、102、130、88……）。设计能编译、能运行，只是驱动和读取了
+--  **错误的引脚** —— 在实验台上，这与硬件坏掉无法区分。
+--  这是通过把 fitter 的 .pin 报告与手册交叉核对发现的。
+--  见 docs/05 ERR-002 与 scripts/check_keypad_pins.py。
 --
---  WHAT IT DOES
+--  它做什么
 --  ------------
---  Drives ALL FOUR COLUMNS LOW and displays the four row-line levels.
---  With every column low, pressing ANY key connects its row to a LOW line, so
---  that row MUST read LOW no matter which row/column the key occupies.  This is
---  the simplest test that cannot be fooled by row/column order.
+--  把全部四列都驱动为低，并显示四条行线的电平。
+--  在所有列都为低时，按下任何一个键都会把它所在的行连到低电平线上，
+--  所以无论这个键位于哪一行/哪一列，该行必然读为低。这是
+--  最简单的、不会被行/列顺序骗过的测试。
 --
---  DISPLAY
---      DISP7      = sub-step counter 0..3 (proves the firmware is running)
+--  显示
+--      DISP7      = 子步计数器 0..3（证明固件正在运行）
 --      DISP6      = '-'
 --      DISP5      = 0
 --      DISP4      = 0
---      DISP3..DISP0 = the four row lines: ROW1 ROW2 ROW3 ROW0
+--      DISP3..DISP0 = 四条行线：ROW1 ROW2 ROW3 ROW0
 -- ============================================================================
 
 library IEEE;
@@ -56,8 +56,8 @@ architecture rtl of keypad_raw_top is
     signal t_step  : std_logic := '0';
     signal step    : unsigned(1 downto 0) := (others => '0');
 
-    -- rows are shown live (no latch): the display refreshes 25 times a second, so
-    -- a held key is perfectly readable and a transient one cannot be missed
+    -- 行线是实时显示的（不锁存）：显示每秒刷新 25 次，
+    -- 所以按住的键完全可读，瞬态的按键也不会被漏掉
     signal disp    : std_logic_vector(31 downto 0);
 
 begin
@@ -73,7 +73,7 @@ begin
                 t200 <= '0';
             end if;
 
-            -- ~0.75 s per step at 50 MHz, as a liveness indicator
+            -- 50 MHz 下每步约 0.75 s，作为存活指示
             if (div2 = 33_554_431) then
                 div2   <= (others => '0');
                 t_step <= '1';
@@ -90,12 +90,12 @@ begin
             if (sw7 = '0') then
                 step <= (others => '0');
             elsif (t_step = '1') then
-                step <= step + 1;               -- free-running counter, wraps
+                step <= step + 1;               -- 自由运行计数器，会回绕
             end if;
         end if;
     end process;
 
-    -- ALL columns driven LOW: the decisive condition
+    -- 所有列都驱动为低：决定性条件
     kp_col <= "0000";
 
     disp(31 downto 28) <= "00" & std_logic_vector(step);

@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
-"""Add a pipeline register for the check engine's zero-based row index.
+"""为检查引擎的零基行号加一个流水寄存器。
 
-Reported critical path (41.5 MHz): pos -> Mux4 (the sel/= guards) -> LessThan
-(row range test) -> Add17 -> chk_pos -> Add19 -> process_2 -> row_mask.
-The row index (rr - piece_row) was computed combinationally from the register
-outputs and immediately fed into srl8.  Registering it splits the path without
-changing the algorithm, because the check already runs over many cycles.
+上报的关键路径（41.5 MHz）：pos -> Mux4（sel/= 的守卫）-> LessThan
+（行范围判定）-> Add17 -> chk_pos -> Add19 -> process_2 -> row_mask。
+行号（rr - piece_row）原先是从寄存器输出组合算出来的，并立刻
+送进 srl8。把它寄存起来就切断了这条路径，而算法不变，
+因为检查本来就要跑很多个周期。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# register for the currently evaluated zero-based row
+# 当前正在求值的零基行号所用的寄存器
 s = s.replace(
     "    signal chk_w    : std_logic_vector(2 downto 0) := (others => '0');",
     "    signal chk_w    : std_logic_vector(2 downto 0) := (others => '0');\n"
     "    signal chk_orow : std_logic_vector(3 downto 0) := (others => '0');")
 
-# in CH_RUN, latch the row index at the start of the state and use it next cycle
+# 在 CH_RUN 中，于状态起始处锁存行号，并在下一个周期使用
 old = """                    when CH_RUN =>
                         chk_row <= chk_row + 1;
                         if (chk_row = 8) then
@@ -39,7 +39,7 @@ new = """                    when CH_RUN =>
 assert old in s
 s = s.replace(old, new)
 
-# use the registered value instead of recomputing srow for the candidate
+# 候选行改用已寄存的值，不再重算 srow
 old2 = """                            -- candidate's mask for this panel row
                             srow := to_integer(chk_row) -
                                     to_integer(unsigned(chk_pos(7 downto 4)));

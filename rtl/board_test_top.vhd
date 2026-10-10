@@ -1,40 +1,40 @@
 -- ============================================================================
---  board_test_top  --  HARDWARE SELF-TEST TOP LEVEL
---  This is a DIAGNOSTIC top level, not the game.  Burn this first.
+--  board_test_top  --  硬件自检顶层
+--  这是一个诊断用顶层，不是游戏本体。先烧录这个。
 --
---  Why it exists
+--  为什么需要它
 --  -------------
---  The course manual fixes every PIN NUMBER, but it never states:
---    (a) whether COLR0 is the left-most physical column of the matrix,
---    (b) whether ROW0 is the top-most physical row of the matrix,
---    (c) the electrical polarity / row-column direction of the 4x4 keypad,
---    (d) whether the board clock selector really sits on the 50 MHz position.
---  All four are GLOBAL assumptions: if one is wrong, the game looks broken even
---  though its logic is correct.  This top level isolates them one at a time so a
---  failure can never be blamed on the game logic.
+--  课程手册固定了每个引脚编号（PIN NUMBER），但从未说明：
+--    (a) COLR0 是否是点阵最左边的物理列，
+--    (b) ROW0 是否是点阵最上边的物理行，
+--    (c) 4x4 键盘的电气极性 / 行列方向，
+--    (d) 板上的时钟选择开关是否真的在 50 MHz 档位。
+--  这四点都是全局性假设：只要有一点错了，即使游戏逻辑正确，
+--  画面看起来也是坏的。本顶层把它们逐个隔离出来，
+--  这样任何失败都不会被归咎于游戏逻辑。
 --
---  What each test shows  (index is shown on ALL 8 digits)
+--  各项测试显示什么（测试序号显示在全部 8 位数码管上）
 --  ---------------------------------------------------------------------------
---   Test 0  "CORNERS"  four corner dots YELLOW.
---           -> identifies axis mirroring immediately: if the border dots light
---              but the reported orientation is wrong, the .qsf bit order is
---              reversed.  A diagonal single dot would be ambiguous; corners are not.
---   Test 1  "ALL"      every dot YELLOW -> confirms all 16 row/column drivers work.
---   Test 2  "FRAME"    hollow rectangle, with the TOP-LEFT corner dot RED and the
---           remaining border YELLOW  -> gives an absolute "where is the origin" answer.
---   Test 3  "RED TOP / GREEN BOTTOM"  -> separates RED/GREEN bank swapping from
---           row mirroring (the two have different fixes).
---   Test 4  "WALK"     a single dot sweeps left->right then top->bottom at 2 Hz.
---           -> the direction of travel is unambiguous on the bench.
---   Test 5  "KEY"      press any key: the pressed key lights its own dot, and the
---           key code is shown on DISP7/DISP6 as hex.  This settles the keypad
---           polarity and its row/column direction.
---   Test 6  "BUTTON"   hold BTN0: whole matrix turns YELLOW.
---           -> confirms the reset key path.
+--   测试 0  "CORNERS"  四个角上的点显示黄色。
+--           -> 可立即识别坐标轴镜像：如果边框上的点亮了，
+--              但报告的方向不对，说明 .qsf 的位序
+--              反了。斜线上的单个点会有歧义，四个角不会。
+--   测试 1  "ALL"      每个点都是黄色 -> 确认全部 16 个行/列驱动都工作。
+--   测试 2  "FRAME"    空心矩形，其中左上角的点为红色，
+--           其余边框为黄色  -> 给出「原点在哪里」的绝对答案。
+--   测试 3  "RED TOP / GREEN BOTTOM"  -> 把红/绿组交换与
+--           行镜像区分开（两者的修法不同）。
+--   测试 4  "WALK"     单个点以 2 Hz 先从左到右、再从上到下扫过。
+--           -> 在实验台上行进方向一目了然。
+--   测试 5  "KEY"      按下任意键：该键点亮自己的点，
+--           键码以十六进制显示在 DISP7/DISP6 上。由此确定键盘的
+--           极性以及行列方向。
+--   测试 6  "BUTTON"   按住 BTN0：整个点阵变黄。
+--           -> 确认复位按键通路。
 --
---  Test index auto-advances every 3 s so a single burn covers everything, and
---  pressing the RIGHT-MOST key (BTN0) freezes it, so a test can be examined for
---  as long as needed.
+--  测试序号每 3 s 自动前进，因此烧录一次即可覆盖全部项目，
+--  按最右边的键（BTN0）可将其冻结，这样就能按需
+--  长时间观察某一项测试。
 -- ============================================================================
 
 library IEEE;
@@ -44,21 +44,21 @@ use work.puzzle_pkg.ALL;
 
 entity board_test_top is
     port (
-        -- clock and switch
+        -- 时钟与开关
         clk      : in  std_logic;                       -- PIN_18
-        sw7      : in  std_logic;                       -- PIN_125, up = '1'
-        btn      : in  std_logic;                       -- PIN_61, BTN0 = right-most, press = '1'
-        -- 4x4 matrix keypad
+        sw7      : in  std_logic;                       -- PIN_125，向上 = '1'
+        btn      : in  std_logic;                       -- PIN_61，BTN0 = 最右边，按下 = '1'
+        -- 4x4 矩阵键盘
         kp_row   : in  std_logic_vector(3 downto 0);    -- PIN_111..114
         kp_col   : out std_logic_vector(3 downto 0);    -- PIN_117..120
-        -- dot matrix
+        -- 点阵
         dot_row  : out std_logic_vector(7 downto 0);    -- PIN_8..1
         dot_colr : out std_logic_vector(7 downto 0);    -- PIN_22,21,16,15,14,13,12,11
         dot_colg : out std_logic_vector(7 downto 0);    -- PIN_45,44,43,42,41,40,39,38
-        -- seven-segment
+        -- 数码管
         seg      : out std_logic_vector(7 downto 0);    -- PIN_62,59,58,57,55,53,52,51
         cat      : out std_logic_vector(7 downto 0);    -- PIN_63,66,67,68,69,70,30,31
-        -- buzzer
+        -- 蜂鸣器
         buzz     : out std_logic                        -- PIN_60
     );
 end entity board_test_top;
@@ -66,10 +66,10 @@ end entity board_test_top;
 architecture rtl of board_test_top is
 
     ----------------------------------------------------------------------------
-    -- Component declarations.
-    -- The project convention is component + port map (NOT "entity work.xxx"):
-    -- a missing port in an explicit port map is then a compile error, whereas a
-    -- positional/omitted one can silently leave a signal dangling.
+    -- 元件声明。
+    -- 本项目约定使用 component + 端口映射（而不是 "entity work.xxx"）：
+    -- 这样显式端口映射中漏掉端口会变成编译错误，而
+    -- 位置关联/省略端口则可能悄悄留下悬空信号。
     ----------------------------------------------------------------------------
     component clk_gen
         port (
@@ -140,53 +140,53 @@ architecture rtl of board_test_top is
     signal key      : std_logic_vector(3 downto 0);
     signal kp_raw   : std_logic_vector(3 downto 0);
 
-    -- test sequencing
+    -- 测试序列控制
     signal test_idx : unsigned(3 downto 0) := (others => '0');
     signal sec_cnt  : unsigned(1 downto 0) := (others => '0');   -- 0..2 = 3 s
-    signal walk_cnt : unsigned(5 downto 0) := (others => '0');   -- 0..63 walk position
+    signal walk_cnt : unsigned(5 downto 0) := (others => '0');   -- 0..63 走动位置
     signal frozen   : std_logic := '0';
     signal btn_d    : std_logic := '0';
     signal btn_dd   : std_logic := '0';
 
-    -- (segment diagnostics are declared further down, next to the display logic)
+    -- （数码管诊断信号在下面、紧挨显示逻辑处声明）
 
-    -- final picture sent to the matrix
+    -- 最终送往点阵的画面
     signal px_red   : std_logic_vector(63 downto 0) := (others => '0');
     signal px_grn   : std_logic_vector(63 downto 0) := (others => '0');
-    -- row being displayed: the driver samples one row at a time, so the
-    -- diagnostic picture is sliced to match
+    -- 正在显示的行：驱动器一次只取一行，所以
+    -- 诊断画面按此切片
     signal row_idx  : unsigned(2 downto 0) := (others => '0');
     signal row_r    : std_logic_vector(7 downto 0) := (others => '0');
     signal row_g    : std_logic_vector(7 downto 0) := (others => '0');
 
-    signal disp     : std_logic_vector(31 downto 0);            -- 8 digits of BCD
-    -- the diagnostic top level blanks no digit, so this is a constant: as a
-    -- signal it would be reported as "never assigned a value".
+    signal disp     : std_logic_vector(31 downto 0);            -- 8 位 BCD
+    -- 诊断顶层不熄灭任何一位，所以这里用常量：若声明为
+    -- signal 会被报告为 "never assigned a value"。
     constant NO_BLANK : std_logic_vector(7 downto 0) := (others => '0');
     signal seg_en   : std_logic;
 
-    -- Segment diagnostics (tests 7 and 8).
-    --   test 7 : drive ONE segment line at a time -> reads off the segment map
-    --   test 8 : light ALL segments on ONE digit position -> reads off the
-    --            digit-select (CAT) order
-    -- decoded key position inside the 4x4 keypad grid (test 9)
+    -- 数码管诊断（测试 7 与 8）。
+    --   测试 7：一次只驱动一根段线 -> 读出段映射
+    --   测试 8：在同一个数码管位上点亮全部段 -> 读出
+    --            位选（CAT）顺序
+    -- 4x4 键盘网格内解码出的按键位置（测试 9）
     signal kp_row_idx : integer range 0 to 3 := 0;
     signal kp_col_idx : integer range 0 to 3 := 0;
     signal seg_raw_en : std_logic;
     signal seg_raw    : std_logic_vector(7 downto 0);
     signal walk_step  : unsigned(3 downto 0) := (others => '0');  -- 0..15
-    signal walk_sec   : unsigned(2 downto 0) := (others => '0');  -- seconds within step
+    signal walk_sec   : unsigned(2 downto 0) := (others => '0');  -- 步内的秒数
 
-    -- buzzer : a simple 1 kHz tone while a key is held (proves the buzzer path)
+    -- 蜂鸣器：按住按键时发出简单的 1 kHz 音（验证蜂鸣器通路）
     signal buzz_r   : std_logic := '0';
 
 begin
 
     ----------------------------------------------------------------------------
-    -- Key code -> keypad grid position, for the diagnostic display.
-    -- The code layout is deliberately spread over the grid so that a wrong
-    -- row/column order shows up as a visibly wrong POSITION rather than as
-    -- a merely wrong number.
+    -- 键码 -> 键盘网格位置，供诊断显示使用。
+    -- 键码布局故意在网格上分散开，这样行列顺序若搞错，
+    -- 表现出来的是明显错误的「位置」，而不仅仅是
+    -- 一个数字不对。
     ----------------------------------------------------------------------------
     process (key)
     begin
@@ -203,8 +203,8 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Reset generated from BTN0 only.  The game's own 2-second self-test is NOT
-    -- involved here, so BTN0 can be used purely as the "hold to inspect" key.
+    -- 复位仅由 BTN0 产生。游戏自身的 2 秒自检在这里
+    -- 不参与，所以 BTN0 可以纯粹当作「按住查看」键使用。
     ----------------------------------------------------------------------------
     u_clk : clk_gen
         port map (
@@ -228,19 +228,19 @@ begin
             i_row     => kp_row,
             o_col     => kp_col,
             o_key     => key,
-            -- o_press / o_release / o_raw exist for the game and for the .vwf
-            -- waveform; this diagnostic top level has no use for them, so they
-            -- are left open.  Named association makes that explicit and safe.
+            -- o_press / o_release / o_raw 是给游戏本体和 .vwf
+            -- 波形用的；本诊断顶层用不到它们，所以
+            -- 悬空处理。具名关联使这一点显式且安全。
             o_press   => open,
             o_release => open,
             o_raw     => kp_raw
         );
 
     ----------------------------------------------------------------------------
-    -- Freeze control : BTN0 press toggles "frozen".
-    -- The reset generated by clk_gen is derived from BTN0 itself, so the button
-    -- must be edge-detected here rather than sampled with t_1k while it is held.
-    -- The two-stage synchroniser is kept because BTN0 is an external pin.
+    -- 冻结控制：按下 BTN0 切换 "frozen"。
+    -- clk_gen 产生的复位本身就来自 BTN0，所以按键
+    -- 必须在这里做边沿检测，而不能在按住时用 t_1k 采样。
+    -- 因为 BTN0 是外部引脚，所以保留两级同步器。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -260,7 +260,7 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Test index sequencer : auto-advance every 3 seconds on tick_1hz.
+    -- 测试序号序列器：每 3 秒在 tick_1hz 上自动前进。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -272,7 +272,7 @@ begin
                 if (frozen = '0') and (t_1hz = '1') then
                     if (sec_cnt = 2) then
                         sec_cnt  <= (others => '0');
-                        test_idx <= test_idx + 1;               -- wraps 13 -> 0
+                        test_idx <= test_idx + 1;               -- 13 -> 0 回绕
                     else
                         sec_cnt <= sec_cnt + 1;
                     end if;
@@ -282,11 +282,11 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Segment / digit walk counter (tests 7 and 8).
-    -- One step per 2 seconds, 16 steps 0..15, so a full round is 32 s:
-    --   test 7 : steps 0..7  drive segment AA..AP one at a time (AP last)
-    --   test 8 : steps 0..7  light all segments on CAT0..CAT7 one at a time
-    -- Keeping 2 s per step makes the pattern trivially readable on a bench.
+    -- 段 / 位走动计数器（测试 7 与 8）。
+    -- 每 2 秒一步，共 16 步 0..15，所以一整轮为 32 s：
+    --   测试 7：步 0..7  一次驱动一个段 AA..AP（AP 最后）
+    --   测试 8：步 0..7  一次在 CAT0..CAT7 之一上点亮全部段
+    -- 每步保持 2 s，使该图案在实验台上极易辨认。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -298,7 +298,7 @@ begin
                 if (t_1hz = '1') then
                     if (walk_sec = 1) then
                         walk_sec  <= (others => '0');
-                        walk_step <= walk_step + 1;         -- wraps 15 -> 0
+                        walk_step <= walk_step + 1;         -- 15 -> 0 回绕
                     else
                         walk_sec <= walk_sec + 1;
                     end if;
@@ -311,14 +311,14 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Drive the segment diagnostic lines.
+    -- 驱动数码管诊断线。
     --
-    -- Test 7 : one segment line HIGH at a time, decoder bypassed.
-    --          The scan counter 'idx' below picks the current step, and the
-    --          operator watches which PHYSICAL segment lights.
-    -- Test 8 : all segment lines HIGH on every digit, but the DIGIT-SELECT
-    --          pattern puts exactly one cathode LOW, so a single digit position
-    --          lights up.  That reads off the CAT order.
+    -- 测试 7：一次一根段线拉高，绕过译码器。
+    --          下面扫描计数器的 'idx' 选取当前步，操作者
+    --          观察哪一个「物理」段点亮。
+    -- 测试 8：每个数码管位上所有段线都拉高，但位选
+    --          图案只让一个阴极拉低，因此只有一位
+    --          数码管点亮。由此读出 CAT 顺序。
     ----------------------------------------------------------------------------
     seg_raw_en <= '1' when ((test_idx = 7) or (test_idx = 8)) else '0';
 
@@ -330,12 +330,12 @@ begin
         s := to_integer(walk_step);
 
         if (test_idx = 7) then
-            -- i_raw bit index == segment number: bit0=AA ... bit6=AG, bit7=AP
+            -- i_raw 位索引 == 段号：bit0=AA ... bit6=AG，bit7=AP
             if (s < 8) then
                 v(s) := '1';
             end if;
         else
-            -- test 8 : every segment on; exactly one digit is selected by seg_scan
+            -- 测试 8：所有段点亮；由 seg_scan 恰好选中一位数码管
             v := (others => '1');
         end if;
 
@@ -343,7 +343,7 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Walk counter for test 4 : 2 Hz, 0..63
+    -- 测试 4 的走动计数器：2 Hz，0..63
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -357,17 +357,17 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Pattern generator.
-    -- Masks are 64-bit, bit index = 8*row + col, bit0 = TOP-LEFT dot, and within
-    -- a row column 0 is bit 0.  Writing them as bit strings (bit63 on the left)
-    -- keeps the position of every single dot explicit and auditable.
+    -- 图案生成器。
+    -- 掩码为 64 位，位索引 = 8*row + col，bit0 = 左上角的点，且在
+    -- 一行之内第 0 列就是 bit 0。把它们写成位串（bit63 在最左）
+    -- 可以让每一个点的位置都明确、可审计。
     ----------------------------------------------------------------------------
     process (test_idx, walk_cnt, key, btn, sw7)
         variable v_red : std_logic_vector(63 downto 0);
         variable v_grn : std_logic_vector(63 downto 0);
         variable v_row : integer range 0 to 7;
         variable v_col : integer range 0 to 7;
-        -- key codes are 1-based (K_NONE = 0), so subtract one before splitting
+        -- 键码从 1 开始（K_NONE = 0），所以拆分前先减一
         variable v_key : unsigned(3 downto 0);
     begin
         v_red := (others => '0');
@@ -375,31 +375,31 @@ begin
 
         case to_integer(test_idx) is
 
-            -- Test 0 : four corners YELLOW
+            -- 测试 0：四个角为黄色
             when 0 =>
                 v_red(0)  := '1'; v_red(7)  := '1';
                 v_red(56) := '1'; v_red(63) := '1';
                 v_grn := v_red;
 
-            -- Test 1 : everything YELLOW
+            -- 测试 1：全部为黄色
             when 1 =>
                 v_red := (others => '1');
                 v_grn := (others => '1');
 
-            -- Test 2 : hollow frame; TOP-LEFT dot RED, rest of frame YELLOW
+            -- 测试 2：空心边框；左上角的点为红色，其余边框为黄色
             when 2 =>
                 for c in 0 to 7 loop
-                    v_grn(c)      := '1';      -- top row    (row 0)
-                    v_grn(56 + c) := '1';      -- bottom row (row 7)
+                    v_grn(c)      := '1';      -- 顶行（第 0 行）
+                    v_grn(56 + c) := '1';      -- 底行（第 7 行）
                 end loop;
                 for r in 0 to 7 loop
-                    v_grn(8 * r)     := '1';   -- left column  (col 0)
-                    v_grn(8 * r + 7) := '1';   -- right column (col 7)
+                    v_grn(8 * r)     := '1';   -- 左列（第 0 列）
+                    v_grn(8 * r + 7) := '1';   -- 右列（第 7 列）
                 end loop;
-                v_red(0) := '1';               -- top-left corner marker
+                v_red(0) := '1';               -- 左上角标记
                 v_grn(0) := '0';
 
-            -- Test 3 : top half RED, bottom half GREEN
+            -- 测试 3：上半部分红色，下半部分绿色
             when 3 =>
                 for r in 0 to 3 loop
                     for c in 0 to 7 loop
@@ -412,37 +412,37 @@ begin
                     end loop;
                 end loop;
 
-            -- Test 4 : single walking dot, left->right then top->bottom
+            -- 测试 4：单个走动的点，先从左到右、再从上到下
             when 4 =>
                 v_row := to_integer(walk_cnt) / 8;
                 v_col := to_integer(walk_cnt) mod 8;
                 v_red(8 * v_row + v_col) := '1';
-                v_grn(8 * v_row + v_col) := '1';        -- yellow, easy to see
+                v_grn(8 * v_row + v_col) := '1';        -- 黄色，便于观察
 
-            -- Test 5 : keypad -> its own position on the matrix
+            -- 测试 5：键盘 -> 它在点阵上的自身位置
             when 5 =>
                 if (key /= K_NONE) then
                     v_key := unsigned(key) - 1;                         -- K_START=1 -> 0
-                    v_row := to_integer(v_key(3 downto 2));             -- key group
-                    v_col := to_integer(v_key(1 downto 0));             -- within group
+                    v_row := to_integer(v_key(3 downto 2));             -- 键组
+                    v_col := to_integer(v_key(1 downto 0));             -- 组内
                     v_red(8 * v_row + v_col) := '1';
                     v_grn(8 * v_row + v_col) := '1';
                 end if;
 
-            -- Test 6 : BTN0 -> whole matrix YELLOW while held
+            -- 测试 6：BTN0 -> 按住时整个点阵为黄色
             when 6 =>
                 if (btn = '1') then
                     v_red := (others => '1');
                     v_grn := (others => '1');
                 end if;
 
-            -- Test 9 : KEYPAD identification.
-            --   matrix row 7 shows the four RAW row-line levels (colour = level):
-            --       red   = that row line reads '0'
-            --       green = that row line reads '1'
-            --   the remaining rows show the decoded key position.
+            -- 测试 9：键盘识别。
+            --   点阵第 7 行显示四条原始行线的电平（颜色 = 电平）：
+            --       红色 = 该行线读到 '0'
+            --       绿色 = 该行线读到 '1'
+            --   其余各行显示解码出的按键位置。
             when 9 =>
-                -- raw row lines on the bottom row, so the idle polarity is visible
+                -- 原始行线放在最下面一行，以便看到空闲极性
                 for c in 0 to 3 loop
                     if (kp_row(c) = '0') then
                         v_red(8 * 7 + c) := '1';
@@ -451,26 +451,26 @@ begin
                     end if;
                 end loop;
 
-                -- decoded key drawn at its own grid position
+                -- 解码出的按键画在它自己的网格位置上
                 if (key /= K_NONE) then
                     v_red(8 * kp_row_idx + kp_col_idx) := '1';
                     v_grn(8 * kp_row_idx + kp_col_idx) := '1';
                 end if;
 
-            -- Test 7 : 7-segment SEGMENT identification.
-            --   The matrix stays dark; look at the DISPLAY.
-            --   Every 2 s exactly one segment line is driven (decoder bypassed),
-            --   bit0=AA ... bit6=AG, bit7=AP.  Note which PHYSICAL segment lights.
-            -- Test 8 : 7-segment DIGIT-position identification.
-            --   Every 2 s ALL segments are driven on exactly ONE digit position.
-            -- Test 9 : all segments on all digits (static "88888888").
+            -- 测试 7：7 段数码管的段识别。
+            --   点阵保持全暗；请看数码管显示。
+            --   每 2 s 恰好驱动一根段线（绕过译码器），
+            --   bit0=AA ... bit6=AG，bit7=AP。记下哪一个「物理」段点亮。
+            -- 测试 8：7 段数码管的位（DIGIT）位置识别。
+            --   每 2 s 在恰好一个数码管位上驱动全部段。
+            -- 测试 9：所有数码管位上的全部段点亮（静态 "88888888"）。
             when others =>
                 v_red := (others => '0');
                 v_grn := (others => '0');
 
         end case;
 
-        -- global switch B1 : SW7=0 blanks every display device
+        -- 全局开关 B1：SW7=0 熄灭所有显示器件
         if (sw7 = '0') then
             v_red := (others => '0');
             v_grn := (others => '0');
@@ -481,10 +481,10 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Row counter and picture slice for the matrix driver.
-    -- The driver takes one row at a time, so the 64-bit picture built above is
-    -- sliced here.  Row 0 is the TOP logic row; dot_matrix_scan applies the
-    -- measured physical row order.
+    -- 点阵驱动器的行计数器与画面切片。
+    -- 驱动器一次只取一行，所以上面构造的 64 位画面在
+    -- 这里切片。第 0 行是逻辑上的最上一行；dot_matrix_scan 施加
+    -- 实测得到的物理行序。
     --
     -- ⚠️ ERR-039（2026-10-09 第 11 工作阶段，全项目审计发现）：这里原来把
     --    row_idx=0 切到 px(63..56)。本文件的画图约定是 "bit = 8*row+col、
@@ -527,7 +527,7 @@ begin
                  px_grn(63 downto 56) when others;
 
     ----------------------------------------------------------------------------
-    -- Dot-matrix driver
+    -- 点阵驱动器
     ----------------------------------------------------------------------------
     u_dot : dot_matrix_scan
         port map (
@@ -543,23 +543,23 @@ begin
         );
 
     ----------------------------------------------------------------------------
-    -- Seven-segment content.
+    -- 数码管内容。
     --
-    --  Test 0..6 : every digit shows the TEST INDEX, so the operator can always
-    --              tell which test is on screen.
-    --  Test 7    : a segment-identification test.  All digits show the SAME
-    --              value, which is the point -- it isolates the segment lines
-    --              from the digit-select lines.  The displayed digit cycles
-    --              through the values in SEG_SUB_BCD every 2 s.
+    --  测试 0..6：每一位都显示测试序号，这样操作者总能
+    --              知道当前屏幕上跑的是哪一项测试。
+    --  测试 7    ：段识别测试。所有数码管位显示相同的
+    --              值，这正是要点所在 —— 它把段线与位选线
+    --              隔离开来。显示的数码管值每 2 s 循环
+    --              经过 SEG_SUB_BCD 中的各个值。
     --
-    -- Because the decoder lives in seg_scan, a single segment cannot be
-    -- requested directly; only legal BCD digits can.  That is why test 7 uses
-    -- the "one segment only" digits identified in SEG_SUB_BCD.
+    -- 因为译码器位于 seg_scan 中，无法直接请求单根段；
+    -- 只能请求合法的 BCD 数字。这就是测试 7 使用
+    -- SEG_SUB_BCD 中那些「只亮一段」数字的原因。
     ----------------------------------------------------------------------------
     ----------------------------------------------------------------------------
-    -- Seven-segment content : every digit shows the 4-bit test index, so the
-    -- operator can always tell which test is on screen.  Tests 7 and 8 replace
-    -- the decoded content with a raw segment pattern (see seg_raw above).
+    -- 数码管内容：每一位都显示 4 位测试序号，这样
+    -- 操作者总能知道当前屏幕上跑的是哪一项测试。测试 7 与 8 用
+    -- 原始段图案取代译码后的内容（见上面的 seg_raw）。
     ----------------------------------------------------------------------------
     process (test_idx, key)
         variable v_nib  : std_logic_vector(3 downto 0);
@@ -572,7 +572,7 @@ begin
         end loop;
 
         if (test_idx = 9) then
-            -- DISP1:DISP0 = decoded key code (0..7), all other digits blanked
+            -- DISP1:DISP0 = 解码后的键码（0..7），其余数码管位熄灭
             v_disp := (others => '0');
             v_disp(3 downto 0) := key;
         end if;
@@ -596,8 +596,8 @@ begin
         );
 
     ----------------------------------------------------------------------------
-    -- Buzzer : 1 kHz gated by a held key.  Proves the buzzer path independently
-    -- of the game's sound effects.  Also silent when SW7=0.
+    -- 蜂鸣器：由按住的键门控的 1 kHz。可独立于游戏的音效
+    -- 验证蜂鸣器通路。SW7=0 时同样静音。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -605,7 +605,7 @@ begin
             if (rst = '1') then
                 buzz_r <= '0';
             elsif (t_1k = '1') then
-                buzz_r <= not buzz_r;      -- 1 kHz square wave
+                buzz_r <= not buzz_r;      -- 1 kHz 方波
             end if;
         end if;
     end process;

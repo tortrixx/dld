@@ -1,14 +1,14 @@
 # -*- coding: utf-8 -*-
-"""go_done must be driven from ONE process only.  It was assigned both in the
-state-register process (lines 133/142) and in the command process.  The command
-process already re-arms it whenever the state is not S_PLAYING, so the state
-process doesn't need to touch it at all."""
+"""go_done 只能由一个进程驱动。它既在状态寄存器进程（第 133/142 行）
+里被赋值，又在命令进程里被赋值。命令进程已经在状态不是 S_PLAYING 时
+重新置位它，所以状态进程
+完全不需要碰它。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
 s = p.read_text(encoding="utf-8")
 
-# drop the two assignments in the state-register process (they end with "go_done <= '0';\n")
+# 删掉状态寄存器进程里的那两处赋值（都以 "go_done <= '0';\n" 结尾）
 s = s.replace("                selfc <= (others => '0');\n                go_done <= '0';\n",
               "                selfc <= (others => '0');\n")
 s = s.replace("                selfc <= (others => '0');\n                go_done <= '0';\n",

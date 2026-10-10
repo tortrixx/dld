@@ -1,24 +1,24 @@
 # -*- coding: utf-8 -*-
-"""Add a dedicated keypad diagnostic to board_test_top (test 9).
+"""给 board_test_top 加一个专门的键盘自检（测试 9）。
 
-The integrated game showed "start does nothing", so the keypad path has to be
-isolated before any game logic is suspected.  This test shows, for the key that
-is being pressed:
-  * the four RAW row line levels on the matrix row 7 (one dot per row line),
-    which reveals the idle/pressed polarity directly, and
-  * a dot at the key's own position in the 4x4 grid,
-  * the decoded key code on DISP1:DISP0.
+整机联调时出现「按 start 毫无反应」，所以在怀疑任何游戏逻辑之前，
+必须先把键盘这条通路单独隔离出来。这个测试会针对当前
+被按下的键显示：
+  * 点阵第 7 行上的四条**原始**行线电平（每条行线一个点），
+    从而直接暴露空闲/按下时的极性，以及
+  * 在该键于 4x4 网格中自身位置上的一个点，
+  * DISP1:DISP0 上显示解码出的键码。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\board_test_top.vhd")
 s = p.read_text(encoding="utf-8")
 
-# extend the test index to cover test 9
+# 扩展测试下标以覆盖测试 9
 s = s.replace("signal test_idx : unsigned(3 downto 0) := (others => '0');",
               "signal test_idx : unsigned(3 downto 0) := (others => '0');")
 
-# ---- pattern generator: add test 9 ------------------------------------------
+# ---- 图案生成：加入测试 9 ------------------------------------------
 old = """            -- Test 7 : 7-segment SEGMENT identification."""
 new = """            -- Test 9 : KEYPAD identification.
             --   matrix row 7 shows the four RAW row-line levels (colour = level):
@@ -45,7 +45,7 @@ new = """            -- Test 9 : KEYPAD identification.
 assert old in s
 s = s.replace(old, new, 1)
 
-# ---- decode the key code into a 4x4 grid position ---------------------------
+# ---- 把键码解码成 4x4 网格中的位置 ---------------------------
 s = s.replace("    signal seg_raw_en : std_logic;",
               "    -- decoded key position inside the 4x4 keypad grid (test 9)\n"
               "    signal kp_row_idx : integer range 0 to 3 := 0;\n"
@@ -76,7 +76,7 @@ s = s.replace("begin\n\n    ----------------------------------------------------
               "    ----------------------------------------------------------------------------\n"
               "    -- Reset generated from BTN0 only.")
 
-# ---- seven-segment: show the key code on DISP1:DISP0 during test 9 ----------
+# ---- 数码管：测试 9 期间在 DISP1:DISP0 上显示键码 ----------
 old_disp = """    process (test_idx)
         variable v_nib  : std_logic_vector(3 downto 0);
         variable v_disp : std_logic_vector(31 downto 0);

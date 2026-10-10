@@ -1,27 +1,27 @@
 -- ============================================================================
---  game_fsm  --  master state machine : game flow, countdowns, level switching
---  Subsystem : S3 (game control)
+--  game_fsm  --  主状态机：游戏流程、倒计时、关卡切换
+--  子系统：S3（游戏控制）
 --
---  This module owns TIME and DECISIONS.  It owns no coordinates: every spatial
---  question is answered by puzzle_ctrl.
+--  本模块掌管「时间」与「决策」，不掌管任何坐标：每一个空间上的
+--  问题都由 puzzle_ctrl 回答。
 --
---  State flow (requirement numbers in brackets):
+--  状态流程（方括号内是需求编号）：
 --
---      SW7=0 ──► everything dark (B1)
---      S_SELF_TEST  2 s, 2 Hz flash (B1)
---      S_IDLE       DISP7=5, DISP0=level (B2, B3)
+--      SW7=0 ──► 全部熄灭（B1）
+--      S_SELF_TEST  2 s，2 Hz 闪烁（B1）
+--      S_IDLE       DISP7=5，DISP0=level（B2、B3）
 --        --"start"-->  S_PREVIEW
---      S_PREVIEW    5 s preview, countdown on DISP7 (B4)
---        --preview ends--> scatter pieces, S_PLAYING
---      S_PLAYING     30 s (level 1) / 40 s (level 2) / **60 s (level 3, self-designed)**
---                    "select" cycles the selected piece (B6)
---                    arrows move it, validated by puzzle_ctrl (B7)
---                    "confirm" locks it (B8)
---                    all locked and on target  -> S_WIN (level 1 -> level 2, level 2 -> level 3)
---                    all locked but wrong, or timeout -> S_FAIL (B9, B10)
---      S_WIN / S_FAIL   picture shown; "start" begins a new game (B11)
+--      S_PREVIEW    5 s 预览，倒计时显示在 DISP7 上（B4）
+--        --预览结束--> 散落零片，进入 S_PLAYING
+--      S_PLAYING     30 s（第一关）/ 40 s（第二关）/ **60 s（第三关，自拟）**
+--                    "select" 循环切换选中的零片（B6）
+--                    方向键移动它，由 puzzle_ctrl 校验（B7）
+--                    "confirm" 锁定它（B8）
+--                    全部锁定且都在目标上  -> S_WIN（第一关 -> 第二关，第二关 -> 第三关）
+--                    全部锁定但位置错误，或超时 -> S_FAIL（B9、B10）
+--      S_WIN / S_FAIL   显示图案；"start" 开始新一局（B11）
 --
---  "start" also works DURING play, which is requirement B11.
+--  "start" 在**对局进行中**也同样有效，这就是需求 B11。
 --
 --  ---------------------------------------------------------------------------
 --  ⚠️ 2026-10-09（第 12 工作阶段 / D2 设计）：**关数从 2 关变成 3 关**。
@@ -50,17 +50,17 @@ use work.puzzle_pkg.ALL;
 entity game_fsm is
     port (
         i_clk      : in  std_logic;
-        i_rst      : in  std_logic;                      -- active HIGH
-        i_sw       : in  std_logic;                      -- SW7 system switch
+        i_rst      : in  std_logic;                      -- 高电平有效
+        i_sw       : in  std_logic;                      -- SW7 系统开关
         i_tick_1hz : in  std_logic;
         -- ⚠️ 第 16 工作阶段：**删掉了 `i_tick_2hz` 端口**（从未使用；ERR-038 改成用
         --    i_tick_4hz 翻转得到 2 Hz 方波）。留着它只会让顶层多一根死线。
         i_tick_4hz : in  std_logic;                      -- ERR-038：翻转它 → 2 Hz 方波
-        i_press    : in  std_logic;                      -- 1-clock: a key was accepted
-        i_key      : in  std_logic_vector(3 downto 0);   -- accepted key code
-        o_sel      : out std_logic;                      -- 1-clock: cycle selection
-        o_move     : out std_logic;                      -- 1-clock: move request
-        o_conf     : out std_logic;                      -- 1-clock: lock request
+        i_press    : in  std_logic;                      -- 单拍：有一个按键被接受
+        i_key      : in  std_logic_vector(3 downto 0);   -- 被接受的按键码
+        o_sel      : out std_logic;                      -- 单拍：循环切换选择
+        o_move     : out std_logic;                      -- 单拍：移动请求
+        o_conf     : out std_logic;                      -- 单拍：锁定请求
         o_go       : out std_logic;                      -- 散落请求：**电平**（请求/应答握手，
                                                          -- 不是单拍脉冲；见下方注释与
                                                          -- docs/02 §… 的 ERR-006/024 说明）
@@ -69,36 +69,36 @@ entity game_fsm is
         o_left     : out std_logic;
         o_right    : out std_logic;
         o_rot      : out std_logic;                      -- A4: 90° 旋转请求（1 拍）
-        o_level    : out std_logic;                      -- '0' = level 1, '1' = level 2/3
-        o_lvl3     : out std_logic;                      -- '1' = third level (A2: 增加关数)
+        o_level    : out std_logic;                      -- '0' = 第一关，'1' = 第二关/第三关
+        o_lvl3     : out std_logic;                      -- '1' = 第三关（A2：增加关数）
         o_state    : out std_logic_vector(2 downto 0);   -- state_t
-        o_time     : out std_logic_vector(5 downto 0);   -- countdown seconds
-        o_blink    : out std_logic;                      -- 2 Hz blink flag
-        i_solved   : in  std_logic;                      -- from puzzle_ctrl
-        i_all_lock : in  std_logic;                      -- from puzzle_ctrl
-        i_shuf_busy: in  std_logic;                      -- from puzzle_ctrl
-        o_sound    : out std_logic_vector(3 downto 0)    -- sound effect selector（4 位，A1 v2）
+        o_time     : out std_logic_vector(5 downto 0);   -- 倒计时秒数
+        o_blink    : out std_logic;                      -- 2 Hz 闪烁标志
+        i_solved   : in  std_logic;                      -- 来自 puzzle_ctrl
+        i_all_lock : in  std_logic;                      -- 来自 puzzle_ctrl
+        i_shuf_busy: in  std_logic;                      -- 来自 puzzle_ctrl
+        o_sound    : out std_logic_vector(3 downto 0)    -- 音效选择码（4 位，A1 v2）
     );
 end entity game_fsm;
 
 architecture rtl of game_fsm is
 
     ----------------------------------------------------------------------------
-    -- KEY MAP -- the ONE place where a keypad position becomes a game key.
+    -- 按键映射表 —— 把键盘位置变成游戏按键的唯一一处。
     --
-    -- The scanner reports the plain index  4*row + column  where **row 0 is the
-    -- BOTTOM physical row** (the board's silkscreen labels the rows ROW3 at the
-    -- top down to ROW0 at the bottom -- see the board manual, 附图26) and column 0
-    -- is the LEFT-most column (COL0..COL3 printed left to right).
+    -- 键盘扫描上报的是普通索引 4*row + column，其中 **row 0 是最下面那一物理行**
+    -- （板子的丝印把行从最上面的 ROW3 标到最下面的 ROW0 —— 见板子手册，附图26），
+    -- 而 column 0 是最左边那一列
+    -- （COL0..COL3 从左到右印在板上）。
     --
-    -- The board's keys are printed KEY1..KEY16, reading left-to-right and
-    -- top-to-bottom, so the physical grid and the reported index are:
+    -- 板子上的按键印成 KEY1..KEY16，按从左到右、从上到下的顺序读，
+    -- 因此物理网格与上报索引的对应关系是：
     --
     --            COL0   COL1   COL2   COL3
-    --   ROW3     KEY1   KEY2   KEY3   KEY4        index 12..15
-    --   ROW2     KEY5   KEY6   KEY7   KEY8        index  8..11
-    --   ROW1     KEY9   KEY10  KEY11  KEY12       index  4.. 7
-    --   ROW0     KEY13  KEY14  KEY15  KEY16       index  0.. 3   <- bottom
+    --   ROW3     KEY1   KEY2   KEY3   KEY4        索引 12..15
+    --   ROW2     KEY5   KEY6   KEY7   KEY8        索引  8..11
+    --   ROW1     KEY9   KEY10  KEY11  KEY12       索引  4.. 7
+    --   ROW0     KEY13  KEY14  KEY15  KEY16       索引  0.. 3   <- 最下面
     --
     -- ⚠️ 2026-10-09 第 13 工作阶段（提高要求 A4「零片 90° 旋转」）：新增【旋转】键
     --    KEY8（= 索引 11）。它就在【上】键右边，右手的食指/中指够得到，且不影响
@@ -112,18 +112,18 @@ architecture rtl of game_fsm is
     --   ROW0     KEY13   KEY14   KEY15     KEY16
     --            (无)    [START] [DOWN]    [SELECT]
     --
-    -- CONFIRMED ON THE BENCH (2026-10-08): KEY14 (= index 1) starts the game,
-    -- KEY16 (= index 3) selects a piece.  Both are kept where the player already
-    -- knows them: the bottom-left / bottom-right corners of the control pad.
+    -- 上板确认（2026-10-08）：KEY14（= 索引 1）开始游戏，
+    -- KEY16（= 索引 3）选择零片。两者都保留在玩家已经
+    -- 熟悉的位置：控制键区的左下角 / 右下角。
     --
-    -- ⚠️ index 0 IS UNUSABLE: the scanner reports K_NONE ("0000") when no key is
-    --    pressed, so KEY13 is indistinguishable from "nothing pressed".  It must
-    --    never be given a game function (the old table mapped it to LEFT, which
-    --    was dead code -- caught by simulation, see docs/06 / tb_puzzle_top ⑧).
+    -- ⚠️ 索引 0 **不可用**：没有按键按下时扫描器上报 K_NONE（"0000"），
+    --    所以 KEY13 与"没有按键按下"无法区分。绝不能
+    --    给它任何游戏功能（旧表把它映射成 LEFT，那是死代码 ——
+    --    仿真时抓到，见 docs/06 / tb_puzzle_top ⑧）。
     --
-    -- The seven controls are clustered in ONE contiguous 3x3 block at the bottom
-    -- right, with the arrows in the standard "plus" arrangement (centre = confirm,
-    -- exactly like a numeric keypad):
+    -- 七个控制键集中在右下角**同一个**连续的 3x3 区块里，
+    -- 方向键按标准的「十字」排列（中心 = 确认，
+    -- 与数字小键盘完全一样）：
     --
     --            COL1    COL2      COL3
     --   ROW2     KEY6    KEY7      KEY8
@@ -133,22 +133,22 @@ architecture rtl of game_fsm is
     --   ROW0     KEY14   KEY15     KEY16
     --            [START] [DOWN]    [SELECT]
     --
-    -- Everything else returns K_NONE.  If a bench measurement ever shows a
-    -- different physical position, change ONLY this function.
+    -- 其它一切情况都返回 K_NONE。如果哪天上板测量发现
+    -- 物理位置不同，只改这一个函数。
     ----------------------------------------------------------------------------
     function key_of(idx : std_logic_vector(3 downto 0))
         return std_logic_vector is
     begin
         case idx is
-            when "0001" => return K_START;    -- KEY14  (bench-confirmed)
-            when "0011" => return K_SELECT;   -- KEY16  (bench-confirmed)
-            when "1010" => return K_UP;       -- KEY7   upper arm of the plus
-            when "0010" => return K_DOWN;     -- KEY15  lower arm of the plus
-            when "0101" => return K_LEFT;     -- KEY10  left arm of the plus
-            when "0111" => return K_RIGHT;    -- KEY12  right arm of the plus
-            when "0110" => return K_CONFIRM;  -- KEY11  centre of the plus
-            when "1011" => return K_ROT;      -- KEY8   right of the plus (A4, bench-check)
-            when others => return K_NONE;     -- incl. "0000" = no key (KEY13)
+            when "0001" => return K_START;    -- KEY14（上板确认）
+            when "0011" => return K_SELECT;   -- KEY16（上板确认）
+            when "1010" => return K_UP;       -- KEY7   十字的上臂
+            when "0010" => return K_DOWN;     -- KEY15  十字的下臂
+            when "0101" => return K_LEFT;     -- KEY10  十字的左臂
+            when "0111" => return K_RIGHT;    -- KEY12  十字的右臂
+            when "0110" => return K_CONFIRM;  -- KEY11  十字的中心
+            when "1011" => return K_ROT;      -- KEY8   十字右侧（A4，上板核对）
+            when others => return K_NONE;     -- 含 "0000" = 无按键（KEY13）
         end case;
     end function;
 
@@ -192,8 +192,8 @@ architecture rtl of game_fsm is
     --    ⚠️ 复位 / SW7=0 / `when others` 三处入口都装载 `T_SELFTEST_T4`，
     --       保证**任何一条进入路径**的窗口长度都一样（ERR-051 的教训：绝对说法要逐路径验）。
 
-    -- one-cycle command strobes handed to puzzle_ctrl, created in the outputs
-    -- section below
+    -- 交给 puzzle_ctrl 的单拍命令脉冲，在下面的输出
+    -- 段里生成
     signal req_go  : std_logic := '0';
     signal move_r  : std_logic := '0';
 
@@ -206,7 +206,7 @@ architecture rtl of game_fsm is
     --    ⚠️ 刻意**没有**单独的"锁存码"寄存器：保持期内直接不给 `sound_p` 赋值即可
     --    （寄存器保持语义），省掉 4 个 FF + 一个 4 位多路器。
     signal snd_hold : unsigned(1 downto 0) := (others => '0');
-    -- 2 Hz SQUARE WAVE for the blinks.
+    -- 用于闪烁的 2 Hz 方波。
     -- ⚠️ ERR-038（2026-10-09 第 11 工作阶段，全项目审计发现）：B1 要求"以 **2 Hz** 闪烁"。
     --    原来拿 tick_2hz（500 ms 一个脉冲）直接翻转，得到的是 **1 s 周期 = 1 Hz** 方波
     --    —— 只有要求的一半，而注释/文档却按 2 Hz 记账（与 ERR-031 同类的 2 倍算错）。
@@ -215,8 +215,8 @@ architecture rtl of game_fsm is
     --    为什么必须翻转而不是直接当电平用：tick 是**一个时钟宽的脉冲**（20 ns），
     --    直接当电平只会每 250 ms 亮一个时钟，肉眼根本看不见。
     signal blink_r : std_logic := '0';
-    signal kdec    : std_logic_vector(3 downto 0) := K_NONE;  -- decoded game key
-    signal go_done : std_logic := '0';   -- scatter already requested this session
+    signal kdec    : std_logic_vector(3 downto 0) := K_NONE;  -- 译码后的游戏按键
+    signal go_done : std_logic := '0';   -- 本局已经请求过散落
 
     ----------------------------------------------------------------------------
     -- ⚠️ ERR-024 : 判决必须等**本局的散落**跑过之后才生效。
@@ -236,7 +236,7 @@ architecture rtl of game_fsm is
 begin
 
     ----------------------------------------------------------------------------
-    -- Countdown / state register.
+    -- 倒计时 / 状态寄存器。
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
@@ -247,9 +247,9 @@ begin
                 lvl3  <= '0';
                 cnt   <= to_unsigned(T_SELFTEST_T4, 6);   -- 自检倒计数初值（8 拍 = 2 s）
             elsif (i_sw = '0') then
-                -- B1: with the switch off the whole system is held at the top of
-                -- the sequence, so switching back on always shows a fresh
-                -- self-test / idle rather than resuming a half-played game.
+                -- B1：开关关闭时整个系统被保持在序列的起点，
+                -- 这样重新打开时总是从头显示一次自检 / 待机，
+                -- 而不是接着一局没玩完的游戏继续。
                 st    <= S_SELF_TEST;
                 level <= '0';
                 lvl3  <= '0';
@@ -277,26 +277,26 @@ begin
                     when S_IDLE =>
                         if (i_press = '1') and (kdec = K_START) then
                             cnt   <= to_unsigned(T_PREVIEW, 6);
-                            level <= '0';                  -- a new game starts at level 1
+                            level <= '0';                  -- 新一局从第一关开始
                             lvl3  <= '0';
                             st    <= S_PREVIEW;
                         end if;
 
                     when S_PREVIEW =>
                         if (i_press = '1') and (kdec = K_START) then
-                            -- B11: start again at any time
+                            -- B11：任何时候都可以重新开始
                             cnt   <= to_unsigned(T_PREVIEW, 6);
                             level <= '0';
                             lvl3  <= '0';
                             st    <= S_PREVIEW;
                         elsif (i_tick_1hz = '1') then
                             if (cnt <= 1) then
-                                -- Preview over.  Load the level's TIME LIMIT here
-                                -- (requirement B5 = 30 s, B10 = 40 s, third level = 60 s (was 40 s before stage 18);
-                                -- see puzzle_pkg.T_LEVEL3).  This was missing: cnt stayed
-                                -- at 1 from the preview, so the first playing tick
-                                -- immediately timed out and the game ended after
-                                -- under a second.
+                                -- 预览结束。在这里装载本关的**时限**
+                                -- （需求 B5 = 30 s、B10 = 40 s、第三关 = 60 s（第 18 工作阶段之前是 40 s）；
+                                -- 见 puzzle_pkg.T_LEVEL3）。这里原来是漏掉的：cnt 从预览
+                                -- 一直停在 1，于是进入对局后的第一个
+                                -- tick 就立刻超时，游戏在不到一秒内
+                                -- 就结束了。
                                 if (level = '0') then
                                     cnt <= to_unsigned(T_LEVEL1, 6);
                                 elsif (lvl3 = '1') then
@@ -320,22 +320,22 @@ begin
                         elsif (i_solved = '1') and (shuf_seen = '1')
                               and (i_shuf_busy = '0') then
                             if (level = '0') then
-                                level <= '1';              -- B9: go to level 2
+                                level <= '1';              -- B9：进入第二关
                                 cnt   <= to_unsigned(T_PREVIEW, 6);
                                 st    <= S_PREVIEW;
                             elsif (lvl3 = '0') then
-                                lvl3  <= '1';              -- A2: extra level 3
+                                lvl3  <= '1';              -- A2：新增第三关
                                 cnt   <= to_unsigned(T_PREVIEW, 6);
                                 st    <= S_PREVIEW;
                             else
-                                st <= S_WIN;               -- victory (last level done)
+                                st <= S_WIN;               -- 胜利（最后一关已完成）
                             end if;
                         elsif (i_all_lock = '1') and (shuf_seen = '1')
                               and (i_shuf_busy = '0') then
-                            st <= S_FAIL;                  -- B9: wrong assembly
+                            st <= S_FAIL;                  -- B9：拼装错误
                         elsif (i_tick_1hz = '1') then
                             if (cnt <= 1) then
-                                st <= S_FAIL;              -- B9/B10: timeout
+                                st <= S_FAIL;              -- B9/B10：超时
                             else
                                 cnt <= cnt - 1;
                             end if;
@@ -360,12 +360,12 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Command decoding: key strobes for puzzle_ctrl.
-    --   start   -> handled by the state register above
-    --   select  -> cycle the selected piece            (B6)
-    --   confirm -> lock the selected piece             (B8)
-    --   arrows  -> move the selected piece             (B7)
-    -- Movement and locking are only accepted while actually playing.
+    -- 命令译码：给 puzzle_ctrl 的按键单拍脉冲。
+    --   start   -> 由上面的状态寄存器处理
+    --   select  -> 循环切换选中的零片            (B6)
+    --   confirm -> 锁定选中的零片                (B8)
+    --   arrows  -> 移动选中的零片                (B7)
+    -- 只有在真正对局过程中才接受移动与锁定。
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
@@ -380,7 +380,7 @@ begin
                 req_go  <= '0';
                 shuf_seen <= '0';
             else
-                -- defaults: every command is a one-clock strobe
+                -- 默认值：每条命令都是单拍脉冲
                 sel_r  <= '0';
                 conf_r <= '0';
                 move_r <= '0';
@@ -401,23 +401,23 @@ begin
                     end case;
                 end if;
 
-                -- scatter request: raised when playing begins, held until the
-                -- engine reports it is no longer busy.  Using a request/ack
-                -- handshake (instead of one strobe) means the scatter can never
-                -- be missed, however long it takes.
-                -- Scatter request: ONE request per play session.
-                -- Without the go_done memory, the handshake re-fires the moment
-                -- the engine returns to idle, so the engine was being re-scattered
-                -- continuously -- which clears sel/locked every time and keeps the
-                -- engine busy, so no key could ever have an effect.
+                -- 散落请求：进入对局时置起，一直保持到
+                -- 引擎报告自己不再忙为止。用请求/应答
+                -- 握手（而不是单拍脉冲）意味着散落永远不会
+                -- 被漏掉，无论它要花多久。
+                -- 散落请求：每局只请求一次。
+                -- 没有 go_done 这个记忆位时，握手会在
+                -- 引擎一回到空闲时立刻重新触发，于是引擎被
+                -- 不停地反复散落 —— 每次都清掉 sel/locked 并让
+                -- 引擎一直忙，任何按键都不可能起作用。
                 if (st /= S_PLAYING) then
                     req_go  <= '0';
-                    go_done <= '0';                -- re-arm for the next session
+                    go_done <= '0';                -- 为下一局重新武装
                 elsif (req_go = '0') and (go_done = '0') and (i_shuf_busy = '0') then
-                    req_go <= '1';                 -- one request...
+                    req_go <= '1';                 -- 发出一次请求……
                 elsif (i_shuf_busy = '1') then
-                    req_go  <= '0';                -- ...accepted by the engine
-                    go_done <= '1';                -- never request again this session
+                    req_go  <= '0';                -- ……被引擎接受
+                    go_done <= '1';                -- 本局不再请求
                 end if;
 
                 -- ⚠️ ERR-024 : 判决的前置条件 —— 本局已经看到过散落的忙态。
@@ -433,9 +433,9 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- 2 Hz blink flag for B1 self-test / result screens.
-    -- ⚠️ ERR-038: flip on the 4 Hz tick -> a true 2 Hz square wave (a 500 ms
-    --    tick would only give 1 Hz).
+    -- B1 自检 / 结果画面的 2 Hz 闪烁标志。
+    -- ⚠️ ERR-038：在 4 Hz 节拍上翻转 -> 真正的 2 Hz 方波（500 ms
+    --    的节拍只能得到 1 Hz）。
     ----------------------------------------------------------------------------
     process (i_clk)
     begin
@@ -449,7 +449,7 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Sound effect selection (improvement requirement A1).
+    -- 音效选择（提高要求 A1）。
     --
     -- ⚠️ 2026-10-09 第 14 工作阶段重做（用户上板反馈"游戏过程中没有任何音效"）。
     --    v1 的三个缺口，逐条对应这里的三个改动：
@@ -548,7 +548,7 @@ begin
                         --    第三关 1011。两个位直接来自既有寄存器，**0 逻辑单元**。
                         when S_PLAYING   => sound_p <= "10" & lvl3 & level;
                         when S_WIN       => sound_p <= SND_WIN;      -- 胜利号角
-                        when S_FAIL      => sound_p <= SND_FAIL;     -- Game Over
+                        when S_FAIL      => sound_p <= SND_FAIL;     -- 游戏结束
                         when others      => sound_p <= SND_NONE;     -- 待机静音
                     end case;
                 end if;
@@ -557,9 +557,9 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Outputs
+    -- 输出
     ----------------------------------------------------------------------------
-    -- the scanner's raw key index is decoded into a game key in one place
+    -- 键盘扫描的原始键索引在唯一一处被译码成游戏按键
     kdec <= key_of(i_key);
 
     o_state    <= st;

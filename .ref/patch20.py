@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
-"""Break the reported critical path: pos -> o_solved -> game_fsm sound mux -> buzz.
+"""打断上报的关键路径：pos -> o_solved -> game_fsm 音效多路器 -> buzz。
 
-Registering the solved/all-lock status and the FSM's sound code removes two
-combinational stages from that path.  Both are sampled on slow ticks (1 Hz /
-2 Hz), so a one-clock pipeline delay is invisible in behaviour.
+把 solved/all-lock 状态与状态机的音效码寄存起来，可从该路径上
+去掉两级组合逻辑。两者都在慢节拍（1 Hz /
+2 Hz）上采样，所以一个时钟的流水延迟在行为上不可见。
 """
 import pathlib
 
-# ---- puzzle_ctrl: register the status outputs ------------------------------
+# ---- puzzle_ctrl：寄存状态输出 ------------------------------
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 s = s.replace(
@@ -39,7 +39,7 @@ s = s.replace("        if (ok and locked_ok) then solved_r <= '1'; else solved_r
 p.write_text(s, encoding="utf-8")
 print("puzzle_ctrl status registered")
 
-# ---- game_fsm: register the sound code -------------------------------------
+# ---- game_fsm：寄存音效码 -------------------------------------
 q = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
 t = q.read_text(encoding="utf-8")
 t = t.replace("    signal sound_r : std_logic_vector(2 downto 0) := \"000\";",

@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-"""puzzle_top: use the engine's 64-bit frame outputs and slice them for the matrix
-driver, which scans rows on t_40."""
+"""puzzle_top：改用引擎的 64 位帧输出，并为点阵驱动
+切出对应的行 —— 该驱动按 t_40 扫描各行。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_top.vhd")
 s = p.read_text(encoding="utf-8")
 
-# component port widths
+# 组件端口位宽
 s = s.replace("            o_scanrow : out std_logic_vector(2 downto 0);\n"
               "            o_rowr    : out std_logic_vector(7 downto 0);\n"
               "            o_rowg    : out std_logic_vector(7 downto 0)\n",
@@ -14,7 +14,7 @@ s = s.replace("            o_scanrow : out std_logic_vector(2 downto 0);\n"
               "            o_rowr    : out std_logic_vector(63 downto 0);\n"
               "            o_rowg    : out std_logic_vector(63 downto 0)\n")
 
-# signal declarations: engine now emits whole frames
+# 信号声明：引擎现在输出整帧
 s = s.replace("    -- engine output: one rendered row\n"
               "    signal eng_rowr : std_logic_vector(7 downto 0);\n"
               "    signal eng_rowg : std_logic_vector(7 downto 0);\n",
@@ -27,7 +27,7 @@ s = s.replace("            o_rowr    => eng_rowr,\n"
               "            o_rowr    => eng_fr,\n"
               "            o_rowg    => eng_fg")
 
-# add a scan row counter for the matrix driver (t_40)
+# 为点阵驱动（t_40）加一个扫描行计数器
 s = s.replace("    signal disp_data  : std_logic_vector(31 downto 0);",
               "    -- row the matrix driver is currently lighting\n"
               "    signal mrow      : unsigned(2 downto 0) := (others => '0');\n"
@@ -53,7 +53,7 @@ s = s.replace("begin\n\n    -- S1 : clock, ticks, reset",
               "    end process;\n\n"
               "    -- S1 : clock, ticks, reset")
 
-# matrix content: slice the engine frame, or substitute the whole-panel pictures
+# 点阵内容：切出引擎帧中的行，或替换成整屏画面
 s = s.replace("    process (state, gblink, eng_rowr, eng_rowg, scanrow, win_row, fail_row)\n"
               "        variable lv : std_logic;\n"
               "    begin\n"
@@ -112,11 +112,11 @@ s = s.replace("    process (state, gblink, eng_rowr, eng_rowg, scanrow, win_row,
               "        end if;\n"
               "    end process;")
 
-# win/fail row extraction must follow mrow, not scanrow
+# 胜利/失败图案取行必须跟随 mrow，而不是 scanrow
 s = s.replace("    with scanrow select\n        win_row <=", "    with std_logic_vector(mrow) select\n        win_row <=")
 s = s.replace("    with scanrow select\n        fail_row <=", "    with std_logic_vector(mrow) select\n        fail_row <=")
 
-# driver row index
+# 驱动的行号
 s = s.replace("            i_row   => scanrow,", "            i_row   => std_logic_vector(mrow),")
 
 p.write_text(s, encoding="utf-8")

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
-"""Strictly time-multiplex the engine: one piece per scan tick, with 8-bit
-accumulators.  This mirrors the reference implementation's approach (a 32-phase
-frame engine) and is what keeps the logic small: each cycle touches exactly one
-piece's geometry instead of all four in parallel.
+"""对引擎做严格的时间复用：每个扫描 tick 处理一个零片，使用 8 位
+累加器。这与参考实现的做法一致（32 相
+帧引擎），也正是逻辑保持精简的原因：每个周期只处理一个
+零片的几何信息，而不是并行处理全部四个。
 """
 import pathlib
 
@@ -106,7 +106,7 @@ new = '''    -- Time-multiplexed row renderer.
 '''
 s = s[:start] + new + s[end:]
 
-# declarations for the new signals
+# 为新信号做声明
 s = s.replace(
     "    signal scanrow : unsigned(2 downto 0) := (others => '0');\n",
     "    signal scanrow : unsigned(2 downto 0) := (others => '0');\n"
@@ -114,8 +114,8 @@ s = s.replace(
     "    signal acc_cov : std_logic_vector(7 downto 0) := (others => '0');\n"
     "    signal acc_kc  : std_logic_vector(7 downto 0) := (others => '0');\n")
 
-# o_red/o_grn are now registers assigned inside the process: remove the old
-# concurrent default assignments if any remain
+# o_red/o_grn 现在是在进程内部赋值的寄存器：如有遗留，
+# 删掉旧的并发默认赋值
 s = s.replace("    o_scanrow <= std_logic_vector(scanrow);\n",
               "    o_scanrow <= std_logic_vector(scanrow);\n")
 

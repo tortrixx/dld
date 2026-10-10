@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Fix keypad_raw_top: seg_scan needs a real scan tick (tying i_tick to '1' made
-the digit counter race at 50 MHz).  Add a 200 Hz tick and use the row latch."""
+"""修正 keypad_raw_top：seg_scan 需要一个真正的扫描 tick（把 i_tick 接成 '1' 会让
+数码管位计数器以 50 MHz 飞快计数）。增加一个 200 Hz tick，并使用行锁存。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_raw_top.vhd")

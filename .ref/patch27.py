@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-"""Finalise the frame renderer: unify to ONE pair of 64-bit frame registers and
-have the engine output them directly."""
+"""收尾帧渲染器：统一成**一对** 64 位帧寄存器，
+并让引擎直接输出它们。"""
 import pathlib, re
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# 1. drop the redundant o_rowr/o_rowg shadow writes (the frame registers ARE the outputs)
+# 1. 删掉多余的 o_rowr/o_rowg 影子写入（帧寄存器**就是**输出）
 s = re.sub(r"\n                -- ghost rows are ORed in as each row arrives.*?\n                end if;\n",
            "\n", s, flags=re.S)
 
-# 2. apply the ghost when merging each row into the red frame
+# 2. 把每一行并进红色帧时就地叠加幽灵
 s = s.replace("                    when 0      => frame_r(63 downto 56) <= cov;",
               "                    when 0      => frame_r(63 downto 56) <= cov or (tgtrow and (not cov));")
 for row, sl in [(1, "55 downto 48"), (2, "47 downto 40"), (3, "39 downto 32"),
@@ -20,14 +20,14 @@ for row, sl in [(1, "55 downto 48"), (2, "47 downto 40"), (3, "39 downto 32"),
 s = s.replace("                    when others => frame_r(7 downto 0) <= cov;",
               "                    when others => frame_r(7 downto 0) <= cov or (tgtrow and (not cov));")
 
-# 3. drive the outputs from the frame registers
+# 3. 由帧寄存器驱动输出
 s = s.replace("o_scanrow <= std_logic_vector(scanrow);",
               "o_scanrow <= std_logic_vector(scanrow);\n"
               "    -- the frame registers ARE the outputs: the matrix driver slices them\n"
               "    o_rowr <= frame_r;\n"
               "    o_rowg <= frame_g;")
 
-# 4. reset must clear the frame registers
+# 4. 复位必须清空帧寄存器
 s = s.replace("""                frow    <= (others => '0');
                 frame_r <= (others => '0');
                 frame_g <= (others => '0');

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
-"""Pipeline the move proposal.
+"""给移动请求加流水。
 
-Reported path (42.2 MHz): sel -> pos mux -> LessThan(bounds) -> cr -> chk_pos ->
+上报的路径（42.2 MHz）：sel -> pos 多路器 -> LessThan（边界）-> cr -> chk_pos ->
   Add10 -> process_2 -> chk.CH_IDLE
-i.e. anchor select, direction clamp, bounds test and state launch all in one
-clock.  Splitting it: the move handler now latches the ORIGINAL anchor and the
-active direction into a flag, and the clamp + bounds test happens one cycle later
-on register outputs.
+也就是说，锚点选择、方向夹紧、边界判定和状态启动全都挤在一个
+时钟里。拆开之后：移动处理现在把**原始**锚点和
+当前有效的方向锁存进标志位，夹紧与边界判定推迟一个周期，
+在寄存器输出上完成。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# extra registers
+# 额外的寄存器
 s = s.replace("    signal chk_orow : unsigned(3 downto 0) := (others => '0');  -- pipelined row index",
               "    signal chk_orow : unsigned(3 downto 0) := (others => '0');  -- pipelined row index\n"
               "    -- pending move proposal (pipelined so the clamp + bounds test is not\n"
@@ -22,11 +22,11 @@ s = s.replace("    signal chk_orow : unsigned(3 downto 0) := (others => '0');  -
               "    signal mv_anchor: std_logic_vector(7 downto 0) := (others => '0');\n"
               "    signal mv_dir   : std_logic_vector(3 downto 0) := (others => '0');")
 
-# reset the new registers
+# 复位新增的寄存器
 s = s.replace("                mv <= '0';\n                chk <= CH_IDLE;",
               "                mv <= '0';\n                mv_pend <= '0';\n                chk <= CH_IDLE;")
 
-# ---- stage 1: latch the proposal ------------------------------------------
+# ---- 第 1 级：锁存该请求 ------------------------------------------
 old = """                if (mv = '1') and (chk = CH_IDLE) then
                     mv  <= '0';
                     -- proposed new anchor, clamped so no integer goes negative

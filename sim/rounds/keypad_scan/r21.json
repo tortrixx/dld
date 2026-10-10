@@ -1,0 +1,80 @@
+{
+  "module": "keypad_scan",
+  "round": 21,
+  "timestamp": "2026-10-10 21:52:08",
+  "duration_ns": 1792000.0,
+  "rtl_patches": [],
+  "sources": {
+    "rtl/board_test_top.vhd": "46eaf36f3120",
+    "rtl/buzzer_ctrl.vhd": "be25f3715b89",
+    "rtl/clk_gen.vhd": "5bf36f4212ed",
+    "rtl/disp_format.vhd": "ce8126e59422",
+    "rtl/dot_matrix_scan.vhd": "94ca336009d5",
+    "rtl/game_fsm.vhd": "067ed55c8f67",
+    "rtl/keypad_diag_top.vhd": "079408cd827e",
+    "rtl/keypad_raw_top.vhd": "1b0eba85463b",
+    "rtl/keypad_scan.vhd": "c4cbd4410516",
+    "rtl/pattern_rom.vhd": "136dbc903f69",
+    "rtl/piece_rom.vhd": "3ccd01f494de",
+    "rtl/puzzle_ctrl.vhd": "cdf8ca74dbfd",
+    "rtl/puzzle_pkg.vhd": "a7aeea19c094",
+    "rtl/puzzle_top.vhd": "d98e6d2e2a08",
+    "rtl/rng_lfsr.vhd": "17e3ea9932c6",
+    "rtl/seg_scan.vhd": "89ea0f1ec6f8",
+    "sim/tb_keypad_scan.py": "d49e4da0b150"
+  },
+  "stimulus_vwf": "6ccded83250a",
+  "fingerprint_captured": "run-start",
+  "git_head": "3f17a8aa3773f7f05630b6311bbd6607daf8e5f6",
+  "git_dirty": true,
+  "passed": 9,
+  "total": 9,
+  "all_pass": true,
+  "assertions": [
+    {
+      "name": "① 复位后无键：o_key = 0（K_NONE）且 o_press 无脉冲",
+      "ok": true,
+      "detail": "t=24100.0 时 o_key=0；全程 o_press 脉冲数=2（期望 2：KEY1 与 KEY2 各一次）"
+    },
+    {
+      "name": "② 按下 (行1,列2) 后 o_key = 4*1+2 = 6（键码 = 4*行+列，ERR-004 的防线）",
+      "ok": true,
+      "detail": "实测 o_key = 6，期望 6"
+    },
+    {
+      "name": "③ o_press 脉冲**恰好 2 次**且**每次宽度 = 1 个时钟周期**(20 ns)",
+      "ok": true,
+      "detail": "脉冲时刻/宽度：88010ns..88030ns(20ns), 824010ns..824030ns(20ns)"
+    },
+    {
+      "name": "④ 按键保持不放时不再产生新的 o_press（按住只动作一次）",
+      "ok": true,
+      "detail": "按住期间(280100 ns 起)新增脉冲数=0，o_key=6"
+    },
+    {
+      "name": "⑤ 松开后 o_key 归 0，并且 o_release 恰好 2 次、每次 1 个时钟宽",
+      "ok": true,
+      "detail": "release 脉冲：504010ns, 1144010ns；松开后 o_key=0"
+    },
+    {
+      "name": "⑥ 换 (行3,列0) 的键仍得到 o_key = 12（第 0 列也能定列，不是只对某列有效）",
+      "ok": true,
+      "detail": "实测 o_key = 12（期望 12）"
+    },
+    {
+      "name": "⑦ 短按 3 轮（< 消抖 4 轮）不产生 o_press，o_key 保持 0（消抖有效）",
+      "ok": true,
+      "detail": "短按后 o_key=0；全程 press 脉冲总数仍为 2"
+    },
+    {
+      "name": "⑨ ★ 消抖时长 = **4 个连续相同样 = 40 ms 板上**（DEBOUNCE_MAX=3；ERR-031：一轮扫描 = 2 个 tick_200 = 10 ms，旧文档的「16 轮 = 80 ms」把 2 倍算漏了，真实曾是 **160 ms**）。实测 o_press 在 11T（上电首键）/103T、o_release 在 63T/143T（改 stable 后再晚一个采样拍出脉冲）—— 上电首键现在是**同样 4 个连续样**，不再被 ERR-036 的幻影候选少算一轮",
+      "ok": true,
+      "detail": "实测 press=['88010', '824010']（期望 ['88000', '824000']）、release=['504010', '1144010']（期望 ['504000', '1144000']）；T = 8 us 仿真 = 5 ms 板上"
+    },
+    {
+      "name": "⑧ 列驱动自洽：出现'四列全拉低'相，且其余所有相恰好一位为低",
+      "ok": true,
+      "detail": "见到全低相=True；非法相 0 个"
+    }
+  ]
+}

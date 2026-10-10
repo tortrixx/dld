@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-"""One-off patch: drop the now-unused i_piece_n port / mv_step signal from
-rtl/puzzle_ctrl.vhd and use the derived 'shape_n' instead."""
+"""一次性补丁：从 rtl/puzzle_ctrl.vhd 中删掉已不再使用的 i_piece_n 端口 /
+mv_step 信号，改用推导出来的 'shape_n'。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")

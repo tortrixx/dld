@@ -1,27 +1,27 @@
 # -*- coding: utf-8 -*-
-"""Solve level-1 piece geometry: choose a target (anchor) placement for the three
-pieces decoded from PDF figure 4-2 so that
+"""求解第一关的零片几何：为从 PDF 图 4-2 解码出的三块零片
+选择一组目标（锚点）摆位，使得
 
-  * every piece sits inside the 8x8 matrix,
-  * the pieces are pairwise disjoint,
-  * their union is EXACTLY the figure-4-1 rectangle (rows 2..5, cols 2..4),
+  * 每块零片都落在 8x8 点阵之内，
+  * 各零片两两不相交，
+  * 它们的并集**恰好**等于图 4-1 的矩形（行 2..5，列 2..4），
 
-then print the resulting target anchors and the derived target mask.  The chosen
-targets become constants in rtl/puzzle_pkg.vhd, and the target mask is DERIVED as
-the union of the pieces at their targets (so picture and pieces can never drift
-apart).
+然后打印得到的目标锚点和推导出的目标掩码。选定的
+目标会成为 rtl/puzzle_pkg.vhd 里的常量，而目标掩码是**推导**出来的 ——
+即各零片在其目标位置上的并集（这样画面与零片永远不会
+彼此脱节）。
 """
 import itertools, json
 
 ROWS, COLS = 8, 8
 
-# pieces as decoded from figure 4-2, coordinates relative to their bbox top-left
-P1 = {(0, 0), (0, 1), (0, 2)}                                  # 1x3 bar,  3 cells
-P2 = {(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (2, 0)}          # cross,    6 cells
-P3 = {(0, 1), (1, 0), (1, 1)}                                  # L-tromino,3 cells
+# 从图 4-2 解码出的各零片，坐标相对其包围盒左上角
+P1 = {(0, 0), (0, 1), (0, 2)}                                  # 1x3 横条，3 格
+P2 = {(0, 0), (0, 1), (0, 2), (1, 0), (1, 1), (2, 0)}          # 十字形，6 格
+P3 = {(0, 1), (1, 0), (1, 1)}                                  # L 形三格，3 格
 PIECES = [("P1", P1), ("P2", P2), ("P3", P3)]
 
-FIG41 = {(r, c) for r in range(2, 6) for c in range(2, 5)}     # 12 cells
+FIG41 = {(r, c) for r in range(2, 6) for c in range(2, 5)}     # 12 格
 
 def bbox(cells):
     return (max(r for r, _ in cells) + 1, max(c for _, c in cells) + 1)
@@ -29,7 +29,7 @@ def bbox(cells):
 def place(cells, r0, c0):
     return {(r + r0, c + c0) for r, c in cells}
 
-# candidate anchors: every position where the piece's bbox still fits in 8x8
+# 候选锚点：零片包围盒仍能放进 8x8 的每一个位置
 def anchors(cells):
     h, w = bbox(cells)
     return [(r, c) for r in range(ROWS - h + 1) for c in range(COLS - w + 1)]
@@ -55,13 +55,13 @@ def show(cells):
     return "\n".join("   " + " ".join("#" if (r, c) in cells else "." for c in range(8))
                      for r in range(8))
 
-# prefer a "centred / symmetric" placement: the cross (P2) as centred as possible
+# 偏好「居中/对称」的摆位：十字形（P2）尽量居中
 def score(sol):
     a1, a2, a3 = sol
-    # prefer P2 (the 6-cell cross) near the centre, and the bar on top/bottom edge
+    # 偏好 P2（6 格十字形）靠近中心，横条贴在上/下边缘
     cr, cc = a2
     centre_pen = abs(cr - 3) + abs(cc - 2)
-    # prefer the L-tromino in a corner region
+    # 偏好把 L 形三格放在角部区域
     corner_pen = min(abs(a3[0] - 0), abs(a3[0] - 6)) + min(abs(a3[1] - 0), abs(a3[1] - 5))
     return (centre_pen, corner_pen)
 
@@ -78,7 +78,7 @@ print("P3 (L):");     print(show(q3))
 assert (q1 | q2 | q3) == FIG41
 assert not (q1 & q2) and not (q1 & q3) and not (q2 & q3)
 
-# --- VHDL literals: bit index = 8*row + col, bit0 = top-left, bit63 leftmost char
+# --- VHDL 字面量：位号 = 8*行 + 列，bit0 = 左上角，bit63 对应最左边的字符
 def vhdl_lit(cells):
     val = 0
     for r in range(8):
@@ -92,7 +92,7 @@ print(f'L1_TARGET_MASK : "{vhdl_lit(q1 | q2 | q3)}"')
 for nm, cells in (("Q1", q1), ("Q2", q2), ("Q3", q3)):
     print(f'{nm} placed mask : "{vhdl_lit(cells)}"')
 
-# relative (normalised) mask for the ROM = the piece shape itself
+# ROM 里的相对（归一化）掩码 = 零片形状本身
 print("\n--- piece relative masks (as stored in piece_rom) ---")
 for nm, cells in PIECES:
     h, w = bbox(cells)

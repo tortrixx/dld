@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Fix the column-identification logic in the new scanner.
+"""修复新扫描器中的列识别逻辑。
 
-BUG: row_rel was overwritten at every release phase, so only the LAST phase's
-reading survived -- meaning only keys in column 3 could ever be identified.  The
-release phases must ACCUMULATE: each phase records the rows that fell while its
-own column was released, and the pressed column is whichever phase saw a fall.
+BUG：row_rel 在每个释放相位都被覆盖，所以只有最后一个相位的
+读数得以保留——这意味着只有第 3 列的按键能被识别出来。各释放
+相位必须累加：每个相位记录在它自己那一列被释放期间有哪些行
+被拉低，被按下的列就是看到行被拉低的那个相位。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---- accumulate per-phase column information --------------------------------
+# ---- 累加每个相位的列信息 --------------------------------
 s = s.replace(
     "    signal row_all : std_logic_vector(3 downto 0);    -- rows with ALL columns LOW\n"
     "    signal row_rel : std_logic_vector(3 downto 0);    -- rows with all but one HIGH\n",
@@ -58,7 +58,7 @@ s = s.replace("""                    -- Phase B: drive all HIGH, release one col
                             settle <= settle + 1;
                         end if;""")
 
-# clear the accumulator when a new round starts
+# 新一轮开始时清空累加器
 s = s.replace("                        if (i_tick = '1') then\n"
               "                            col_all <= '1';\n"
               "                            settle  <= (others => '0');\n"
@@ -83,7 +83,7 @@ s = s.replace("                state   <= SC_ALL_HIGH;\n"
               "                col_low <= (others => '0');\n"
               "                rd_done <= '0';")
 
-# ---- decode using the accumulator ------------------------------------------
+# ---- 用累加器解码 ------------------------------------------
 s = s.replace("    process (rd_done, row_all, row_rel, state)",
               "    process (row_all, col_low)")
 s = s.replace("""        -- (2) which column?  With all columns driven HIGH, releasing the column

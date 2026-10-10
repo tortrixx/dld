@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Replace the two overlap() call sites with inline 8-bit row-mask comparisons."""
+"""把两处 overlap() 调用点换成内联的 8 位行掩码比较。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---------- MOVE path -------------------------------------------------------
+# ---------- 移动路径 -------------------------------------------------------
 old_move = """                    -- (2) exact overlap against the live pieces
                     if (ok) then
                         live := "0000";
@@ -73,7 +73,7 @@ new_move = """                    -- (2) EXACT overlap test, row by row.  For ea
 assert old_move in s, "move block not found"
 s = s.replace(old_move, new_move)
 
-# ---------- SCATTER path ----------------------------------------------------
+# ---------- 散落路径 ----------------------------------------------------
 old_sc = """                    live := "0000";
                     if (to_integer(sh_k) /= 0) then live(0) := '1'; end if;
                     if (to_integer(sh_k) /= 1) then live(1) := '1'; end if;
@@ -130,7 +130,7 @@ new_sc = """                    ok := true;
 assert old_sc in s, "scatter block not found"
 s = s.replace(old_sc, new_sc)
 
-# ---------- variables -------------------------------------------------------
+# ---------- 变量 -------------------------------------------------------
 s = s.replace("        variable live     : std_logic_vector(3 downto 0);\n",
               "        variable candrow  : std_logic_vector(7 downto 0);\n"
               "        variable orow     : integer;\n"

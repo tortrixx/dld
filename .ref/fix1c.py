@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
-"""FIX 1c -- remove the needless round_code register.
+"""修复 1c —— 去掉多余的 round_code 寄存器。
 
-The tick edge both publishes the round result AND is when the debounce samples.
-With non-blocking assignment the debounce would read the OLD round_code (stale by
-one round).  Feeding the debounce straight from round_hold removes that extra
-register and the one-round lag: round_hold is already final by the time the tick
-arrives, because the round's last scan phase happened ~1 ms earlier.
+tick 边沿既发布本轮结果，又正是消抖级采样的时刻。
+若用非阻塞赋值，消抖级会读到旧的 round_code（滞后一轮）。
+让消抖级直接从 round_hold 取值，就去掉了这个多余的
+寄存器以及一轮的滞后：tick 到来时 round_hold 已经
+是最终值，因为本轮最后一次扫描相位大约在 1 ms 之前就结束了。
 """
 import pathlib
 

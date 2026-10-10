@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Adapt board_test_top to the new row-based dot-matrix interface.
+"""让 board_test_top 适配新的按行点阵接口。
 
-dot_matrix_scan now takes ONE row (8 bits) plus its index, because the integrated
-game renders a single row per scan period.  The diagnostic top level builds a
-64-bit picture for each test, so it keeps a row counter at 40 Hz and slices the
-picture for the driver.
+dot_matrix_scan 现在只接收**一行**（8 位）及其行号，因为整机
+游戏每个扫描周期只渲染一行。诊断顶层为每个测试构造一幅
+64 位画面，所以它保留一个 40 Hz 的行计数器，并为驱动
+切出对应的那一行画面。
 """
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\board_test_top.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---- clk_gen component gains o_tick_40 --------------------------------------
+# ---- clk_gen 组件新增 o_tick_40 --------------------------------------
 s = s.replace("""            o_tick_2hz : out std_logic;
             o_tick_1hz : out std_logic
         );
@@ -22,7 +22,7 @@ s = s.replace("""            o_tick_2hz : out std_logic;
         );
     end component;""")
 
-# ---- dot_matrix_scan component now row-based --------------------------------
+# ---- dot_matrix_scan 组件改为按行 --------------------------------
 s = s.replace("""    component dot_matrix_scan
         port (
             i_clk    : in  std_logic;
@@ -50,7 +50,7 @@ s = s.replace("""    component dot_matrix_scan
         );
     end component;""")
 
-# ---- new signals ------------------------------------------------------------
+# ---- 新增信号 ------------------------------------------------------------
 s = s.replace("""    signal px_red   : std_logic_vector(63 downto 0) := (others => '0');
     signal px_grn   : std_logic_vector(63 downto 0) := (others => '0');""",
               """    signal px_red   : std_logic_vector(63 downto 0) := (others => '0');
@@ -61,13 +61,13 @@ s = s.replace("""    signal px_red   : std_logic_vector(63 downto 0) := (others 
     signal row_r    : std_logic_vector(7 downto 0) := (others => '0');
     signal row_g    : std_logic_vector(7 downto 0) := (others => '0');""")
 
-# ---- tick_40 wire -----------------------------------------------------------
+# ---- tick_40 连线 -----------------------------------------------------------
 s = s.replace("    signal t_1hz    : std_logic;",
               "    signal t_1hz    : std_logic;\n    signal t_40     : std_logic;")
 s = s.replace("            o_tick_1hz => t_1hz\n        );",
               "            o_tick_1hz => t_1hz,\n            o_tick_40  => t_40\n        );")
 
-# ---- row counter + slice ----------------------------------------------------
+# ---- 行计数器与切片 ----------------------------------------------------
 s = s.replace("""    ----------------------------------------------------------------------------
     -- Dot-matrix driver
     ----------------------------------------------------------------------------""",
@@ -112,7 +112,7 @@ s = s.replace("""    -----------------------------------------------------------
     -- Dot-matrix driver
     ----------------------------------------------------------------------------""")
 
-# ---- port map ---------------------------------------------------------------
+# ---- 端口映射 ---------------------------------------------------------------
 s = s.replace("""            i_clk    => clk,
             i_rst    => rst,
             i_tick   => t_200,

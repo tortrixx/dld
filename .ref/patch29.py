@@ -1,17 +1,17 @@
 # -*- coding: utf-8 -*-
-"""Insert the frame renderer and fix declarations + output widths."""
+"""插入帧渲染器，并修正声明与输出位宽。"""
 import pathlib
 
 p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
 s = p.read_text(encoding="utf-8")
 
-# ---- 1. output port widths -------------------------------------------------
+# ---- 1. 输出端口位宽 -------------------------------------------------
 s = s.replace("        o_rowr    : out std_logic_vector(7 downto 0);   -- red   bits for o_scanrow\n"
               "        o_rowg    : out std_logic_vector(7 downto 0)    -- green bits for o_scanrow\n",
               "        o_rowr    : out std_logic_vector(63 downto 0);  -- red   frame\n"
               "        o_rowg    : out std_logic_vector(63 downto 0)   -- green frame\n")
 
-# ---- 2. declarations -------------------------------------------------------
+# ---- 2. 声明 -------------------------------------------------------
 s = s.replace(
     "    signal scanrow : unsigned(2 downto 0) := (others => '0');\n"
     "    signal ph      : unsigned(2 downto 0) := (others => '0');\n"
@@ -23,7 +23,7 @@ s = s.replace(
     "    signal frame_r : std_logic_vector(63 downto 0) := (others => '0');\n"
     "    signal frame_g : std_logic_vector(63 downto 0) := (others => '0');\n")
 
-# ---- 3. insert the frame renderer before the main sequential process --------
+# ---- 3. 在主时序进程之前插入帧渲染器 --------
 anchor = "    ----------------------------------------------------------------------------\n" \
          "    -- Main sequential process."
 assert anchor in s

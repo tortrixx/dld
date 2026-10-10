@@ -1,31 +1,31 @@
 -- ============================================================================
---  puzzle_ctrl  --  placement / movement / locking / colouring engine
---  Subsystem : S4 (puzzle core).  Owns everything spatial; holds no game timing.
+--  puzzle_ctrl  --  放置 / 移动 / 锁定 / 着色引擎
+--  子系统：S4（拼图核心）。掌管一切与空间有关的事；不持有任何游戏时序。
 --
 --  ---------------------------------------------------------------------------
---  ARCHITECTURE: ROW-SCAN RENDERER  (why this file is shaped this way)
+--  架构：行扫描渲染器（本文件为何长成这样）
 --  ---------------------------------------------------------------------------
---  The EPM1270 has 1270 logic cells and this module must share them with ten
---  others.  Four earlier versions were BUILT AND MEASURED, not guessed:
+--  EPM1270 有 1270 个逻辑单元，而本模块必须与另外十个
+--  模块共用它们。早先的四个版本都是**实际搭建并测量**出来的，不是猜的：
 --
---    v1  64-bit variable-distance shift per piece               -> 4690 cells
---    v2  8-bit row shift via a per-row CASE helper              -> 2969 cells
---    v3  loops with variable-indexed array reads                -> 2995 cells
---    v4  fixed-shift 64-bit footprint registers + render mux    -> 2350 cells
---        measured breakdown: 504 registers, 1717 LUT-only cells
+--    v1  每块零片做 64 位可变距离移位  -> 4690 个单元
+--    v2  通过逐行 CASE 辅助函数做 8 位行移位  -> 2969 个单元
+--    v3  使用变址数组读取的循环  -> 2995 个单元
+--    v4  固定移位的 64 位占位寄存器 + 渲染多路选择器  -> 2350 个单元
+--        实测分解：504 个寄存器，1717 个仅 LUT 的单元
 --
---  The measurements showed the cost is not one bad statement but the element of
---  holding 64-bit per-piece footprints at all: answering "does this piece cover
---  row r column c" needs an 8-bit AND, yet the 64-bit version materialises the
---  whole mask to get there.
+--  测量表明，代价并非来自某一条写得糟糕的语句，而是来自
+--  "每个零片都保存 64 位占位"这件事本身：回答"这块零片是否覆盖第 r 行第 c 列"
+--  只需要一个 8 位与门，而 64 位版本为了得到答案，却要把
+--  整个掩码都生成出来。
 --
---  v5 therefore renders ONE ROW PER SCAN TICK.  That costs nothing extra -- the
---  dot-matrix driver already scans one row at a time -- so the engine simply
---  computes the row the driver is about to display.  Every colour decision is
---  8 bits wide and the frame is produced over 8 ticks, i.e. the refresh period.
+--  因此 v5 **每个扫描节拍只渲染一行**。这不额外花任何代价 —— 点阵驱动
+--  本来就是一拍扫一行 —— 所以引擎只计算驱动即将显示的那一行。
+--  每一次配色判断都只有 8 位宽，而一帧在 8 个节拍内产生，
+--  也就是刷新周期。
 --
---  ⚠️ 审计更正（2026-10-09 第 11 工作阶段）：这一段原来写 "Nothing 64-bit is stored.
---     State: four piece anchors (8 bits each) + four locked flags." —— **是错的**：
+--  ⚠️ 审计更正（2026-10-09 第 11 工作阶段）：这一段原来写 "不保存任何 64 位的东西。
+--     状态：四个零片锚点（各 8 位）+ 四个锁定标志。" —— **是错的**：
 --     引擎内部有 frame_r/frame_g（各 64 位，共 128 个触发器）以及 chk_shp(64)、
 --     pos_frm(32)、chk_orow/chk_prow 等（本模块 FF 约 345 个，见 docs/02 §4）。
 --     真实成立的说法是：**每一拍的组合计算路径只有 8 位宽**（一拍只算一行的
@@ -33,23 +33,23 @@
 --     仍然存在，而且顶层就是靠它按 mrow 切片的（ERR-027 之后扫描 125 Hz、内容 25 Hz
 --     不同源也不会错行）。
 --
---  Bit convention (shared with puzzle_pkg):
---      bit index = 8*row + col,  bit 0 = TOP-LEFT cell
---      DOWN (row+1) = higher bit indices, RIGHT (col+1) = higher bits in a row
---      a packed anchor is row(3:0) & col(3:0)
+--  位序约定（与 puzzle_pkg 共用）：
+--      位下标 = 8*row + col，位 0 = 左上角格
+--      向下（row+1）= 位下标更大，向右（col+1）= 同一行内位下标更大
+--      打包后的锚点是 row(3:0) & col(3:0)
 --
---  Colours (B6 / B8): selected -> GREEN, locked -> YELLOW (red AND green), and
---  any remaining target-picture cell -> RED ghost.
+--  颜色（B6 / B8）：选中 -> 绿色，锁定 -> 黄色（红 AND 绿），
+--  其余任何目标图案的格子 -> 红色虚影。
 --
---  Bounds and overlap (B7 / B5): a move is accepted only if the new anchor keeps
---  the shape inside the 8x8 field AND the pieces do not share a cell.  The
---  overlap test is EXACT (row masks ANDed), not a bounding box: a bounding box
---  would reject legal moves of the cross and of the L-tromino in level 1.
+--  边界与重叠（B7 / B5）：只有新锚点让形状仍留在 8x8 场内，
+--  **且**各零片不共用同一个格子时，移动才被接受。重叠判定是
+--  **精确**的（逐行掩码相与），不是包围盒：用包围盒会误拒
+--  第一关中十字形与 L 形三格零片的合法移动。
 --
---  Success (B9) is decided on the ASSEMBLED PICTURE, not on piece identities:
---  o_solved rises when the union of the pieces equals i_target AND every piece is
---  locked.  See the ERR-021 note at the signal declarations -- comparing anchor
---  numbers against hardcoded targets made equivalent tilings fail.
+--  成功（B9）判在**拼出来的画面**上，而不是判在零片的身份上：
+--  当零片的并集等于 i_target **且**每块零片都已锁定时，o_solved 拉高。
+--  见信号声明处的 ERR-021 说明 —— 拿锚点编号去和写死的目标比较，
+--  会让等价的铺法被判失败。
 -- ============================================================================
 
 library IEEE;
@@ -66,7 +66,7 @@ entity puzzle_ctrl is
                                                         -- 顶层另走 1 kHz → 125 Hz，见下）
         rnd_step  : out std_logic;
         rnd_val   : in  std_logic_vector(7 downto 0);
-        i_level   : in  std_logic;                      -- '0' level 1, '1' level 2/3
+        i_level   : in  std_logic;                      -- '0' 第一关，'1' 第二/三关
                                                         -- （⚠️ D2 起是三关：第二关与
                                                         --   第三关共用 '1' —— 本模块只关心
                                                         --   "三块还是四块"，关口编号由
@@ -107,28 +107,28 @@ entity puzzle_ctrl is
         o_pos     : out std_logic_vector(31 downto 0);
         o_lock    : out std_logic_vector(3 downto 0);
         o_scanrow : out std_logic_vector(2 downto 0);
-        o_rowr    : out std_logic_vector(63 downto 0);  -- red   frame
-        o_rowg    : out std_logic_vector(63 downto 0)   -- green frame
+        o_rowr    : out std_logic_vector(63 downto 0);  -- 红色帧
+        o_rowg    : out std_logic_vector(63 downto 0)   -- 绿色帧
     );
 end entity puzzle_ctrl;
 
 architecture rtl of puzzle_ctrl is
 
     ----------------------------------------------------------------------------
-    -- EXACT overlap test helper.
+    -- 精确重叠判定辅助函数。
     --
-    -- The shapes are NOT all rectangles (level 1 uses a cross and an L-tromino),
-    -- so intersecting bounding boxes would reject legal moves.  This returns the
-    -- 8 bits a piece contributes to ONE panel row; the caller ANDs the candidate
-    -- row against the other pieces' rows.
+    -- 形状**并不**都是矩形（第一关用到十字形与 L 形三格零片），所以用
+    -- 包围盒求交会误拒合法移动。本函数返回一块零片
+    -- 对**某一**面板行贡献的 8 位；调用方把候选行与其它
+    -- 零片的行相与。
     --
-    -- Deliberately a small single-purpose function: an earlier version took four
-    -- (anchor, shape) pairs and looped over eight rows inside, which made every
-    -- call site replicate 32 evaluations and cost ~1500 logic cells.
+    -- 特意做成一个小而单一用途的函数：早先的版本接收四组
+    -- （锚点，形状）对，并在内部循环八行，结果每个调用点
+    -- 都要复制 32 次求值，代价约 1500 个逻辑单元。
     --
-    -- ar/ac are the piece anchor, row the panel row, sr the piece's own row.
-    -- All indices are guaranteed in range by the caller's guards, because a
-    -- subprogram is elaborated at compile time.
+    -- ar/ac 是零片锚点，row 是面板行，sr 是零片自身的行号。
+    -- 所有下标都由调用方的守卫保证在范围内，因为子程序
+    -- 是在编译期展开的。
     ----------------------------------------------------------------------------
     -- ⚠️ 2026-10-09 第 13 工作阶段（提高要求 A4）：多了一个**朝向**参数 `ori`。
     --    朝向的置换在**这一级**做（只动 3 位），而不是把 24 位形状整个转一遍 ——
@@ -222,8 +222,8 @@ architecture rtl of puzzle_ctrl is
     signal chk_prowr: unsigned(3 downto 0) := (others => '0');  -- 候选本行所在的面板行
                                                                 -- （循环不变量，载入时算一次）
     signal chk_crow : std_logic_vector(7 downto 0) := (others => '0');
-    -- pending move proposal (pipelined so the clamp + bounds test is not
-    -- chained after the anchor select in the same clock)
+    -- 待处理的移动提议（加流水，使夹紧 + 边界判定不会在同一拍里
+    -- 串接在锚点选择之后）
     signal mv_pend  : std_logic := '0';
     signal mv_anchor: std_logic_vector(7 downto 0) := (others => '0');
     signal mv_dir   : std_logic_vector(3 downto 0) := (others => '0');
@@ -231,7 +231,7 @@ architecture rtl of puzzle_ctrl is
     signal mv_clamp : std_logic_vector(7 downto 0) := (others => '0');
     signal mv_sel   : unsigned(1 downto 0) := (others => '0');
     signal mv_go    : std_logic := '0';
-    -- registered scatter operands (pipelining -- see the header note)
+    -- 已寄存的散落操作数（流水化 —— 见文件头说明）
     signal sc_hh    : std_logic_vector(2 downto 0) := (others => '0');
     signal sc_ww    : std_logic_vector(2 downto 0) := (others => '0');
     signal sc_cand  : std_logic_vector(7 downto 0) := (others => '0');
@@ -243,8 +243,8 @@ architecture rtl of puzzle_ctrl is
     signal mv     : std_logic := '0';
     signal alllock_r : std_logic;
 
-    signal scanrow : unsigned(2 downto 0) := (others => '0');  -- row being scanned
-    signal frow    : unsigned(2 downto 0) := (others => '0');  -- row being built
+    signal scanrow : unsigned(2 downto 0) := (others => '0');  -- 正在扫描的行
+    signal frow    : unsigned(2 downto 0) := (others => '0');  -- 正在构建的行
     signal frame_r : std_logic_vector(63 downto 0) := (others => '0');
     signal frame_g : std_logic_vector(63 downto 0) := (others => '0');
     -- ⚠️ A4 + 面积：渲染器**串行化**（讲义"串行化 / 资源共享"）。
@@ -326,7 +326,7 @@ begin
     o_sel_idx <= std_logic_vector(sel);
     o_pos     <= pos;
     o_scanrow <= std_logic_vector(scanrow);
-    -- the frame registers ARE the outputs: the matrix driver slices them
+    -- 帧寄存器**就是**输出：点阵驱动按行切片它们
     o_rowr <= frame_r;
     o_rowg <= frame_g;
 
@@ -337,7 +337,7 @@ begin
                  pos(7 downto 0)   when others;
 
     ----------------------------------------------------------------------------
-    -- ALL-LOCKED : straight equality test (no loops, no indexed reads)
+    -- 全部锁定：直接相等比较（无循环、无变址读取）
     --
     -- ⚠️ ERR-021: "零片都到位了吗"不再由这里回答。这里只回答"是不是全部已确认锁定"；
     --    画面是否正确由下面的整帧判据（frm_ok）回答 —— 玩家能看到的只有零片的并集。
@@ -362,11 +362,11 @@ begin
     o_busy     <= '0' when (sh = SH_IDLE) else '1';
 
     ----------------------------------------------------------------------------
-    -- ROW-SCAN RENDERER.
-    -- For the scanned row, fetch that row from each piece's 3x3 relative shape,
-    -- shift it by the piece's anchor column, then combine:
-    --     red   = piece cells that are NOT the selected one
-    --     green = cells of the selected piece or of any locked piece
+    -- 行扫描渲染器。
+    -- 对正在扫描的那一行，从每块零片的 3x3 相对形状中取出对应行，
+    -- 按该零片的锚点列移位，然后合并：
+    --     红 = 不属于选中零片的零片格子
+    --     绿 = 选中零片的格子，或任一已锁定零片的格子
     --
     -- ⚠️ 审计更正（2026-10-09 第 11 工作阶段）：这里原来还写着"phase 0..3 每相一块、
     --    phase 4 发布、一帧 32 拍"——那是**更早的 32 相版本**的遗留注释，与实现无关。
@@ -377,21 +377,21 @@ begin
     ----------------------------------------------------------------------------
 
     ----------------------------------------------------------------------------
-    -- FRAME RENDERER -- one ROW per i_tick, whole frame every 8 ticks.
+    -- 帧渲染器 —— 每个 i_tick 一行，8 个节拍出一整帧。
     --                       （第 11 工作阶段起：并入帧与判据协议在**下一拍**，
     --                         见 ERR-033 的两拍流水）
     --
-    -- WHY IT IS ORGANISED THIS WAY
-    -- Two earlier arrangements were MEASURED on the board:
-    --   * publishing one row per 5 ticks gave a frame rate of 200/(5*8) = 5 Hz,
-    --     which visibly FLICKERS;
-    --   * spawning all four pieces' row_masks in one tick made the logic far too
-    --     large to fit the EPC1270.
-    -- So the multiplexing runs over ROWS: each tick still evaluates only one
-    -- row_mask per piece slot (so the shared shifter stays cheap), but the frame
-    -- is assembled 8 bits at a time into a 64-bit register.
+    -- 为什么这样组织
+    -- 早先的两种安排在板上**实测**过：
+    --   * 每 5 个节拍发布一行，帧率是 200/(5*8) = 5 Hz，
+    --     肉眼可见地**闪烁**；
+    --   * 在一个节拍里同时生成四块零片的 row_mask，逻辑规模太大，
+    --     根本装不进 EPC1270。
+    -- 所以多路复用沿**行**进行：每个节拍仍然只为每个零片槽求一次
+    -- row_mask（这样共用的移位器才便宜），但整帧是每次 8 位地
+    -- 拼装进一个 64 位寄存器的。
     --
-    -- ⚠️ 2026-10-08 更正："200/8 = 25 Hz, above flicker fusion" 是**错的**：
+    -- ⚠️ 2026-10-08 更正："200/8 = 25 Hz，高于闪烁融合频率" 是**错的**：
     --    25 Hz 对 LED 明显可见闪（用户上板反馈"点阵和数码管都闪"）。
     --    但要分清两件事：
     --      · **闪烁 = 亮度调制**，只取决于**扫描率**。顶层把点阵行计数器 mrow 与数码管
@@ -402,12 +402,12 @@ begin
     --        "移动零片时画面滚动 ≤40 ms 的涂抹感"——不值，所以没改。
     --    每拍的组合逻辑量**没有变化**（仍然一拍只算一行的 row_mask），与节拍无关。
     --
-    -- The 64-bit frame is simply held; the matrix driver slices the row it is
-    -- scanning, so the panel never sees a partially built row and no lockstep
-    -- handshake is needed.
+    -- 64 位帧只是被保持住；点阵驱动按行切片它正在扫描的
+    -- 那一行，所以面板永远不会看到只拼了一半的行，也
+    -- 不需要任何锁步握手。
     --
-    -- Bit convention: bit index = 8*row + col, row 0 = TOP, so logical row 0 is
-    -- the TOP slice (63..56).
+    -- 位序约定：位下标 = 8*row + col，row 0 = 顶部，所以逻辑第 0 行就是
+    -- 顶部的切片（63..56）。
     ----------------------------------------------------------------------------
     process (i_clk)
         variable r      : integer;
@@ -418,7 +418,7 @@ begin
         variable pk     : std_logic_vector(7 downto 0);
         variable hh     : integer;
         variable npc    : integer;
-        variable rw     : std_logic_vector(7 downto 0);   -- unused (kept for diff size)
+        variable rw     : std_logic_vector(7 downto 0);   -- 未使用（为保持 diff 规模而保留）
         variable cov    : std_logic_vector(7 downto 0);
         variable kc     : std_logic_vector(7 downto 0);
         variable tgtrow : std_logic_vector(7 downto 0);
@@ -489,7 +489,7 @@ begin
                     kc_a    <= (others => '0');
                     sl_a    <= (others => '0');
 
-                    -- the scanned row follows the row being built
+                    -- 扫描行跟随正在构建的行
                     if (frow = 7) then
                         frow <= (others => '0');
                     else
@@ -651,7 +651,7 @@ begin
                     frm_bad <= frm_bad or bad_a;
                 end if;
 
-                -- ---- merge the pipelined row into the frame -------------------
+                -- ---- 把流水后的这一行并进帧 -------------------
                 case rb is
                     when 0      => frame_r(63 downto 56) <= red_a;
                                    frame_g(63 downto 56) <= grn_a;
@@ -676,14 +676,14 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- Main sequential process.
+    -- 主时序进程。
     --
-    -- Two strictly serialised tasks:
-    --   (a) the scatter sequencer, which places the pieces at random
-    --   (b) the validation of the requested move (move vs overlap check)
-    -- plus a small overlap-check engine that tests one panel row per tick into an
-    -- accumulator.  Serialising the check is what keeps ONE row_mask evaluation
-    -- alive at a time; the unrolled version instantiated 32 of them.
+    -- 两个严格串行化的任务：
+    --   (a) 散落序列器，把零片随机放置
+    --   (b) 对请求的移动做校验（移动 vs 重叠检查）
+    -- 另有一个小的重叠检查引擎，每个节拍把一行面板的检查结果累加进
+    -- 一个累加器。把检查串行化，才能保证同一时刻只有**一次** row_mask 求值
+    -- 存在；展开的版本会实例化出 32 个。
     ----------------------------------------------------------------------------
     process (i_clk)
         variable cr, cc : integer;
@@ -696,13 +696,13 @@ begin
         variable pk     : std_logic_vector(7 downto 0);
         variable prow   : integer;
         variable srow   : integer;
-        variable acv    : integer range 0 to 7;   -- anchor column of the slot being checked
+        variable acv    : integer range 0 to 7;   -- 正在检查的槽位的锚点列
         variable ov     : std_logic_vector(1 downto 0);  -- A4: 邻块的朝向
         variable ohv, owv : std_logic_vector(2 downto 0);  -- A4: 邻块原始高宽
-        variable rw     : std_logic_vector(7 downto 0);   -- unused (kept for diff size)
+        variable rw     : std_logic_vector(7 downto 0);   -- 未使用（为保持 diff 规模而保留）
         variable lvl2   : boolean;   -- "不是第一关"：四块零片 / 四槽可选
                                      -- （D2 起覆盖第二关与第三关，名字沿用历史；语义 == i_level='1'）
-        variable xr, xc : integer;                        -- ERR-032: bounded candidates
+        variable xr, xc : integer;                        -- ERR-032：有界候选
         variable hraw, wraw : integer range 0 to 7;       -- A4：原始高宽（旋转前）
         variable cand_o : std_logic_vector(1 downto 0);   -- A4：候选朝向
     begin
@@ -737,7 +737,7 @@ begin
                 lvl2 := (i_level = '1');
 
                 ----------------------------------------------------------------
-                -- (1) Buttons -- only while neither engine is busy
+                -- (1) 按键 —— 只在两个引擎都不忙时处理
                 ----------------------------------------------------------------
                 if (sh = SH_IDLE) and (chk = CH_IDLE) then
                     if (i_go = '1') then
@@ -782,10 +782,10 @@ begin
                 end if;
 
                 ----------------------------------------------------------------
-                -- (2) A move request starts the validation engine
+                -- (2) 移动请求启动校验引擎
                 ----------------------------------------------------------------
-                -- stage 1: latch the proposal (the anchor; the direction was
-                -- already latched together with the request -- see ERR-020)
+                -- 第 1 级：锁存提议（锚点；方向已随请求
+                -- 一起锁存 —— 见 ERR-020）
                 if (mv = '1') and (chk = CH_IDLE) then
                     mv       <= '0';
                     mv_pend  <= '1';
@@ -840,8 +840,8 @@ begin
                     if (cand_o(0) = '1') then hh := wraw; ww := hraw;
                     else                      hh := hraw; ww := wraw; end if;
 
-                    -- bounds: analytic, verified against geometry in
-                    -- .ref/model_ctrl.py (0 mismatches for every shape/position)
+                    -- 边界：解析式判定，已与
+                    -- .ref/model_ctrl.py 中的几何逐一对过（每种形状/位置都是 0 处不符）
                     -- A4：这里用的是**旋转之后**的高宽 —— 转到一半转出点阵的请求
                     -- 直接不启动检查（等效于"拒绝"），B7"不能移出 8x8"对旋转同样成立。
                     if (cr + hh <= 8) and (cc + ww <= 8)
@@ -858,15 +858,15 @@ begin
                         chk      <= CH_RUN;
                         chk_sr   <= (others => '0');
                         chk_slot <= (others => '0');
-                        chk_ld   <= '1';                 -- first tick: candidate row
+                        chk_ld   <= '1';                 -- 第一拍：候选本行
                         chk_hit  <= '0';
                     end if;
                 end if;
 
                 ----------------------------------------------------------------
-                -- (3) Scatter: each turn proposes an anchor, then runs the SAME
-                --     overlap engine.  Rejection sampling with a deterministic
-                --     fallback, so a scatter always completes.
+                -- (3) 散落：每一轮先提一个锚点，然后跑**同一套**
+                --     重叠引擎。采用拒绝采样并带确定性兜底，
+                --     所以散落总能完成。
                 ----------------------------------------------------------------
                 if (sh = SH_TRY) and (chk = CH_IDLE) then
                     rnd_step <= '1';
@@ -894,10 +894,10 @@ begin
                     ch := 9 - hh;  if (ch < 1) then ch := 1; end if;
                     cw := 9 - ww;  if (cw < 1) then cw := 1; end if;
 
-                    -- Pipeline stage 1: latch the operands and the two modulo
-                    -- results.  The modulo is the expensive part of the critical
-                    -- path, so it is evaluated here and consumed one cycle later
-                    -- in SH_CHK rather than being chained into the validity test.
+                    -- 流水第 1 级：锁存操作数以及两个取模
+                    -- 结果。取模是关键路径上昂贵的一环，所以在这里算，
+                    -- 晚一个周期在 SH_CHK 里消费，而不是串接进
+                    -- 合法性判定。
                     sc_hh   <= std_logic_vector(to_unsigned(hh, 3));
                     sc_ww   <= std_logic_vector(to_unsigned(ww, 3));
                     -- ⚠️ ERR-032（2026-10-09，第 11 工作阶段）：原来这里是
@@ -926,8 +926,8 @@ begin
                 end if;
 
                 ----------------------------------------------------------------
-                -- Pipeline stage 2: start the overlap check on the registered
-                -- operand set.
+                -- 流水第 2 级：在已寄存的操作数集合上
+                -- 启动重叠检查。
                 ----------------------------------------------------------------
                 if (sh = SH_CHK) and (chk = CH_IDLE) then
                     case to_integer(sh_k) is
@@ -949,7 +949,7 @@ begin
                     chk_rot <= '0';
                     chk_srmax <= resize(unsigned(sc_hh) - 1, 2);
                     chk_me  <= sh_k;
-                    chk_kind <= '1';                     -- '1' = scatter
+                    chk_kind <= '1';                     -- '1' = 散落
                     chk     <= CH_RUN;
                     chk_sr  <= (others => '0');
                     chk_slot<= (others => '0');
@@ -1036,7 +1036,7 @@ begin
                     when CH_DONE =>
                         chk <= CH_IDLE;
                         if (chk_hit = '0') then
-                            -- accept: commit the anchor
+                            -- 接受：提交锚点
                             if (chk_kind = '0') then
                                 if (chk_rot = '1') then
                                     -- A4：检查通过 -> 提交**朝向**（锚点不动）
@@ -1068,7 +1068,7 @@ begin
                             end if;
                         else
                             if (chk_kind = '0') then
-                                -- move simply rejected
+                                -- 移动被直接拒绝
                                 -- ⚠️ 第 14 工作阶段：这里原来发过"被拒绝"的 1 拍脉冲
                                 --    （o_nak → game_fsm 的 SND_NAK 低鸣），想给"贴边旋转
                                 --    没反应"一个听得见的反馈。**实测 +5 LE，且这条链把最差
@@ -1077,7 +1077,7 @@ begin
                                 --    现在的"被拒绝"反馈仍是引擎静默不改画面。
                                 null;
                             elsif (sh_att = 15) then
-                                -- deterministic fallback so a scatter always ends
+                                -- 确定性兜底，保证散落总能结束
                                 sh_att <= (others => '0');
                                 case to_integer(sh_k) is
                                     when 0      => pos(31 downto 24) <= "0000" & "0000";
@@ -1088,16 +1088,16 @@ begin
                                 pos_cnt <= pos_cnt + 1;
                                 sh <= SH_NEXT;
                             else
-                                -- ⚠️ ERR-018a: a retry MUST go back to SH_TRY.
-                                -- Staying in SH_CHK re-ran the check on the SAME
-                                -- registered candidate (sc_cand was only latched in
-                                -- SH_TRY), so all 16 "attempts" tested one single
-                                -- position: rejection sampling never resampled and
-                                -- the first conflict always ended in the hardcoded
-                                -- fallback anchor -- which is NOT overlap-checked
-                                -- (ERR-018b), so two pieces could end up on the
-                                -- same cells.  Simulated evidence: tb_puzzle_ctrl
-                                -- round 4, P1@(0,4) falling back onto P0@(1,4).
+                                -- ⚠️ ERR-018a：重试**必须**回到 SH_TRY。
+                                -- 留在 SH_CHK 会拿**同一个**已寄存的候选
+                                -- 重跑检查（sc_cand 只在 SH_TRY 里锁存过），
+                                -- 于是 16 次"尝试"全都在测同一个位置：
+                                -- 拒绝采样从未重新采样，第一次冲突就总是
+                                -- 落进写死的兜底锚点 —— 而它**不做**重叠
+                                -- 检查（ERR-018b），于是两块零片可能落在
+                                -- 同样的格子上。仿真证据：tb_puzzle_ctrl
+                                -- 第 4 轮，P1@(0,4) 兜底落到
+                                -- P0@(1,4)。
                                 sh_att <= sh_att + 1;
                                 sh     <= SH_TRY;
                             end if;
@@ -1107,7 +1107,7 @@ begin
                         chk <= CH_IDLE;
                 end case;
 
-                -- advance to the next piece, or finish the scatter
+                -- 推进到下一块零片，或结束散落
                 if (sh = SH_NEXT) then
                     if ((sh_k = 2) and (not lvl2)) or (sh_k = 3) then
                         sh <= SH_DONE;
