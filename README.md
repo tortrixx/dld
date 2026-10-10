@@ -89,7 +89,7 @@ docs/         00 规范理解与需求 / 02 模块详细设计 / 03 仿真验证
 
 ```powershell
 # 0) 依赖：Quartus II 9.1 装在 C:\QuartusII91\QuartusII91\；Python 用仓库脚本即可
-# 1) 生成/更新 Quartus 工程（改过 RTL 的文件列表或顶层时；★ 会写入 SEED 5）
+# 1) 生成/更新 Quartus 工程（改过 RTL 的文件列表或顶层时；★ 会写入 SEED 1）
 python scripts/gen_project.py puzzle_top
 
 # 1b) ⭐ 改过 fitter SEED / 综合属性后：**先清洁**（删这三处），否则会读到旧 fit 的残留报告
@@ -97,7 +97,13 @@ Remove-Item -Recurse -Force quartus/db, quartus/output_files, quartus/incrementa
 
 # 2) 编译（结果看 quartus/output_files/puzzle.fit.rpt 与 .sta.rpt）
 #    ★ 面积要读两行：Total logic elements **和** LAB 占用（本设计 LAB 127/127 已满）
+#    ★ 脚本收尾会直接打印 LE / LAB / 引脚 / Fmax 四行关键读数
+#    ⚠️ 2026-10-10 修（ERR-053）：本脚本原来只跑 `-tool tan`、**从不跑 TimeQuest**，
+#       于是 puzzle.sta.rpt 根本不由这条命令生成 —— 文档里的时序读数复现不出来。现已补上。
 & "C:/QuartusII91/QuartusII91/quartus/bin/quartus_sh.exe" -t scripts/build.tcl
+
+# 2b) ⭐ 编译成功后**记录固件身份**（RTL 指纹 + pof 的 sha256 + fit/sta 读数 → 入库）
+python scripts/record_build.py
 
 # 3) 烧录（在 quartus/output_files 目录下执行）
 & "C:/QuartusII91/QuartusII91/quartus/bin/quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
@@ -111,11 +117,28 @@ python scripts/sim_summary.py                 # 汇总所有模块最新轮次
 #   PowerShell:  $env:DLD_L3PAT=2; python scripts/sim.py run puzzle_top
 #   （第二关的图案自 D2 起恒为 PAT3 阶梯，不再是随机量）
 
-# 5) 静态检查
+# 5) 静态检查与证据审计（都只读）
 python scripts/check_geometry.py              # 图案/结算画面几何 + 逐图案可铺性穷举 + 功耗
 python scripts/check_keypad_pins.py           # 按键管脚 vs 手册
 python scripts/check_plans.py                 # 离线复核 tb 的四份走法计划（引擎规则 + 重叠）
+python scripts/audit_evidence.py              # ⭐ **一条命令跑完"对抗性审查"**：陈旧绿 / 音效码表四方对账 /
+                                              #    面积装箱时序 / 固件↔RTL / 仓库状态 / 文档数字对齐；有 FAIL 退出码 1
+python scripts/probe_nodes.py <模块>           # ⭐ 廉价校验 tb 的 OBSERVE 观测点是否存在（~2 秒，见下）
 ```
+
+> ⭐ **`probe_nodes.py` 为什么存在**：`sim.py` 的 `OBSERVE` 是硬契约（名字不在网表里就报错），
+> 但旧办法只有"把整个仿真跑完再看"（整机一轮 40~60 分钟）。
+> 现在只需 `quartus_map`（~1 s）+ **100 µs 截断冒烟仿真**（<1 s）+ 读 `sim.rpt` 的**节点表**
+> （仿真器自己列的全名，整机实测 41 823 条）⇒ **~2 秒**逐条判定。
+> 用法：`python scripts/probe_nodes.py puzzle_top --reuse`（复用已有报告）、
+> `--grep <正则>`（在节点表里找正确名字）。
+>
+> ⭐ **证据溯源**：每轮仿真记录（`sim/rounds/<模块>/rNN.json`）现在带 **`sources`** ——
+> 全部 `rtl/*.vhd` 与本模块 tb 的 **git blob 哈希**，外加 `git_head` / `git_dirty`。
+> 于是"这条绿证对应哪一版源码"是**可机检**的（`audit_evidence.py` 的 A 段），
+> 不再靠人肉比时间戳（ERR-022 的陈旧绿）。
+> 同理，`quartus/build_provenance.json`（**入库**）把"板上那份 `.pof`"与仓库 RTL 连起来
+> —— 因为 `quartus/output_files/` 是 `.gitignore` 的，以前**没有任何机检手段**做这件事。
 
 仿真用**压缩时钟**（`sim/tb_puzzle_top.py` 的 `RTL_PATCHES`：50 MHz → 80 kHz，随机源钉 0），
 所以 96 ms 的仿真等价于板上的 60 s 对局；断言里的 ns 要按 **625 倍**换算成板上时间。

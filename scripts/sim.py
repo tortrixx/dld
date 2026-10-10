@@ -207,13 +207,19 @@ def render_svg(vf, names, title, max_sig=24, max_trans=400):
     return "\n".join(out)
 
 
-def do_check(module, round_no=None, quiet=False, record=False):
+def do_check(module, round_no=None, quiet=False, record=False, fingerprint=None):
     """解析 + 比对。返回 (是否全过, results)。
 
     ⚠️ 2026-10-10 收尾审查（ERR-052）：**默认只读** —— 只有 `record=True`
     （即 `sim.py run`，或 `sim.py check --record`）才写轮次记录与波形图。
     旧版 `check` 无条件调 `_write_round()`，于是 `check <mod> --round N`
     会**静默覆盖**第 N 轮的证据（README 原来就警告过这个坑）。
+
+    ⚠️ 2026-10-10 第 17 工作阶段：`fingerprint` 由 `cmd_run` 在**仿真开始前**算好传进来
+    （`{"sources":…, "stimulus":…}`）。**不在这里现算** —— 因为本函数是在仿真**跑完之后**
+    才被调用的：若中途有人改了 tb 或 RTL，"现算"会把**改后**的哈希记到**改前**那一轮上，
+    于是记录里的指纹与实际跑的东西不符（这比不记指纹更坏）。`check --record` 没有这个
+    上下文，只能现算，此时会把 `sources` 标成"复核时现算"。
     """
     tb = load_tb(module)
     p = vwf_path(module)
@@ -252,7 +258,7 @@ def do_check(module, round_no=None, quiet=False, record=False):
         if not quiet:
             print("  ✓ 波形图已存 %s" % fig.relative_to(ROOT))
 
-        _write_round(module, round_no, results)
+        _write_round(module, round_no, results, fingerprint)
     elif not quiet:
         print("  （只读复核：未写轮次记录、未重画波形图；要落盘请加 --record）")
     return n_pass == len(results), results
@@ -309,6 +315,17 @@ def source_fingerprint(module):
     return files
 
 
+def stimulus_fingerprint(module):
+    """**激励文件**的指纹（`sim/<模块>.vwf` 生成后、被仿真结果覆盖前的字节）。
+
+    ⚠️ 为什么要单独记它：`sim/<模块>.vwf` 既是激励、又被 `quartus_sim
+    --overwrite_waveform` **回写**成结果。所以"仿真到底喂了什么"只在这一刻能看到。
+    它与 tb 源码的哈希一起，构成"这一轮究竟跑了什么"的完整描述。
+    """
+    p = vwf_path(module)
+    return _file_blob_hash(p)[:12] if p.exists() else None
+
+
 # ============================================================
 # 轮次记录（可追踪 / 可对比）
 # ============================================================
@@ -324,12 +341,17 @@ def _next_round(module):
     return (max(ns) + 1) if ns else 1
 
 
-def _write_round(module, round_no, results):
+def _write_round(module, round_no, results, fingerprint=None):
     n = round_no if round_no else _next_round(module)
     d = ROUNDS_DIR / module
     d.mkdir(parents=True, exist_ok=True)
     tb = load_tb(module)
     n_pass = sum(1 for (_n, ok, _d) in results if ok)
+
+    # ⚠️ 指纹由 `cmd_run` 在**仿真开始前**算好传进来；`check --record` 没有上下文才现算。
+    fp = fingerprint or {"sources": source_fingerprint(module),
+                         "stimulus": stimulus_fingerprint(module),
+                         "captured": "record-time"}
 
     manifest = {
         "module": module,
@@ -338,7 +360,9 @@ def _write_round(module, round_no, results):
         "duration_ns": getattr(tb, "DURATION", None),
         "rtl_patches": [list(x) for x in getattr(tb, "RTL_PATCHES", [])],
         # ⭐ 证据溯源（见文件里 `source_fingerprint` 的说明）：这一轮跑的是哪一版源码
-        "sources": source_fingerprint(module),
+        "sources": fp["sources"],
+        "stimulus_vwf": fp.get("stimulus"),
+        "fingerprint_captured": fp.get("captured", "run-start"),
         "git_head": _git("rev-parse", "HEAD"),
         "git_dirty": bool(_git("status", "--porcelain")),
         "passed": n_pass,
@@ -361,6 +385,10 @@ def _write_round(module, round_no, results):
           "- **源码指纹**：%d 个文件（逐文件 git blob 哈希见 `r%02d.json` 的 `sources`）；"
           "git HEAD `%s`%s" % (len(src), n, head[:12],
                               "，⚠️ 工作树有未提交改动" if manifest["git_dirty"] else ""),
+          "- **激励指纹**：`sim/%s.vwf` = `%s`（**仿真开始前**抓取；%s）"
+          % (module, manifest["stimulus_vwf"],
+             "运行期抓取，可信" if manifest["fingerprint_captured"] == "run-start"
+             else "⚠️ 复核时现算，仅供参照"),
           "- **被测模块 RTL**：`rtl/%s.vhd` = `%s`（子模块与 tb 的哈希同样在 JSON 里）"
           % (module, src.get("rtl/%s.vhd" % module, "（该模块无独立 RTL 文件）")),
           "- **测试台**：`sim/tb_%s.py` = `%s`" % (module, src.get("sim/tb_%s.py" % module, "-")),
@@ -526,11 +554,20 @@ def cmd_run(module, round_no=None):
     if rc:
         return rc
 
+    # ⭐ 证据溯源：**在仿真开始前**抓指纹 —— 此刻 `sim/<模块>.vwf` 还是刚生成的激励，
+    #    `rtl/` 也还没被任何人动过。之后（map/仿真可能要几十分钟）谁改了文件都不影响
+    #    这一轮记录的真实性：记录里写的是"真正跑的那一版"。
+    fp = {"sources": source_fingerprint(module),
+          "stimulus": stimulus_fingerprint(module),
+          "captured": "run-start"}
+
     patches = getattr(tb, "RTL_PATCHES", [])
     print()
     print("== 步骤 0：在 .tmp/ 生成隔离工程（仓库全程只读）==")
     proj = _make_isolated_project(module, patches)
     print("  ✓ %s（顶层 %s，RTL 补丁 %d 处）" % (proj.relative_to(ROOT), module, len(patches)))
+    print("  ✓ 源码指纹已在仿真开始前抓取（tb %s / 激励 %s）"
+          % (fp["sources"].get("sim/tb_%s.py" % module), fp["stimulus"]))
 
     try:
         print()
@@ -558,7 +595,7 @@ def cmd_run(module, round_no=None):
 
     print()
     print("== 步骤 3：解析结果 + 参考模型比对 + 写轮次记录 ==")
-    ok, _ = do_check(module, round_no, record=True)
+    ok, _ = do_check(module, round_no, record=True, fingerprint=fp)
     return 0 if ok else 1
 
 
