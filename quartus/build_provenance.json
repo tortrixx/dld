@@ -1,0 +1,38 @@
+{
+  "timestamp": "2026-10-10 11:10:07",
+  "git_head": "0b69da6d790d47e3b587e19e6c43f2754bf19617",
+  "git_dirty": true,
+  "sources": {
+    "rtl/board_test_top.vhd": "0339869e6822",
+    "rtl/buzzer_ctrl.vhd": "6d68b4bdb432",
+    "rtl/clk_gen.vhd": "2df2e50a2a8d",
+    "rtl/disp_format.vhd": "33b5e23a5734",
+    "rtl/dot_matrix_scan.vhd": "4f5d42b83f60",
+    "rtl/game_fsm.vhd": "7f5e4feb9182",
+    "rtl/keypad_diag_top.vhd": "1e5168860dc0",
+    "rtl/keypad_raw_top.vhd": "2789e990daba",
+    "rtl/keypad_scan.vhd": "983f93069b84",
+    "rtl/pattern_rom.vhd": "22b2ecc2cd66",
+    "rtl/piece_rom.vhd": "2125aa737c2d",
+    "rtl/puzzle_ctrl.vhd": "e21f95ffe461",
+    "rtl/puzzle_pkg.vhd": "3e4d2ecb702c",
+    "rtl/puzzle_top.vhd": "c0a80b3bb078",
+    "rtl/rng_lfsr.vhd": "390b323dd78f",
+    "rtl/seg_scan.vhd": "57ffbdf78b0c"
+  },
+  "pof": {
+    "mtime": "2026-10-10 00:20:22",
+    "sha256": "3cee0387a1d92b68ada7a3f29730ccbe00615ee229ecff957144aa7115d87dfc",
+    "bytes": 27312
+  },
+  "fit": {
+    "status": "Successful - Sat Oct 10 00:20:21 2026",
+    "le": "1,264 / 1,270 ( 100 % )",
+    "lab": "127 / 127 ( 100 % )",
+    "pins": "52 / 116 ( 45 % )"
+  },
+  "sta": {
+    "setup_slack": 1.231,
+    "hold_slack": 1.078
+  }
+}
