@@ -38,6 +38,7 @@
         DURATION / GRID_PERIOD
 """
 
+import hashlib
 import importlib.util
 import json
 import os
@@ -258,6 +259,57 @@ def do_check(module, round_no=None, quiet=False, record=False):
 
 
 # ============================================================
+# 证据溯源：把"这一轮跑的到底是哪一版源码"写进轮次记录
+# ============================================================
+# ⚠️ 2026-10-10（收尾对抗性审查的教训）：文档里引用过一个 `rtl/buzzer_ctrl.vhd` 的
+#    SHA256 `122676B1…`，声称"记录在 r21"—— 但**轮次记录根本不存哈希**，那个值是
+#    当时从隔离工程副本上 ad-hoc 抓的：既不可复现，也说不清对应哪一版。
+#    根因之一：`.gitattributes` 声明 `*.vhd text eol=lf`，而工作树里有若干物理 CRLF
+#    文件 ⇒ **同一个文件能算出两个哈希**（CRLF 副本 vs LF blob），引用时必然漂移。
+#    → 从此**每轮落盘都把源码指纹写进 rNN.json**：用 **git blob 哈希**（与
+#      `git hash-object` 同算法），并同时记下 HEAD 提交号与"工作树是否脏"。
+#      这样"这条绿证对应哪一版 RTL/tb"变成**可复现、可机检**的事实。
+#
+#    ⚠️ 为什么连 **tb 本身**也要记：轮次记录此前只记 `rtl_patches`，于是**改了测试台
+#       而不改 RTL** 时，旧记录看起来仍然"有效"（同 ERR-022 的陈旧绿，只是换了方向）。
+#       现在 tb 的哈希也在指纹里，`audit_evidence.py` 会据此判定证据是否过期。
+def _git_blob_hash(data):
+    """git 的 blob 哈希（与 `git hash-object` 完全一致）：sha1("blob <n>\\0" + data)。"""
+    h = hashlib.sha1()
+    h.update(b"blob %d\0" % len(data))
+    h.update(data)
+    return h.hexdigest()
+
+
+def _file_blob_hash(p):
+    """文件在**工作树上的字节**的 git blob 哈希（不做 EOL 归一，如实记录）。"""
+    return _git_blob_hash(pathlib.Path(p).read_bytes())
+
+
+def _git(*args):
+    """跑一条 git 命令；无 git / 非仓库时返回 None —— 绝不能让仿真因为记证据而挂掉。"""
+    try:
+        out = subprocess.run(["git"] + list(args), cwd=str(ROOT),
+                             stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        if out.returncode != 0:
+            return None
+        return out.stdout.decode("utf-8", "replace").strip()
+    except Exception:                                        # noqa: BLE001
+        return None
+
+
+def source_fingerprint(module):
+    """这一轮"被测源码"的指纹：**全部** rtl/*.vhd + 本模块的 tb（12 位短哈希）。"""
+    files = {}
+    for f in sorted((ROOT / "rtl").glob("*.vhd")):
+        files["rtl/" + f.name] = _file_blob_hash(f)[:12]
+    tbp = tb_path(module)
+    if tbp.exists():
+        files["sim/" + tbp.name] = _file_blob_hash(tbp)[:12]
+    return files
+
+
+# ============================================================
 # 轮次记录（可追踪 / 可对比）
 # ============================================================
 def _next_round(module):
@@ -285,6 +337,10 @@ def _write_round(module, round_no, results):
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "duration_ns": getattr(tb, "DURATION", None),
         "rtl_patches": [list(x) for x in getattr(tb, "RTL_PATCHES", [])],
+        # ⭐ 证据溯源（见文件里 `source_fingerprint` 的说明）：这一轮跑的是哪一版源码
+        "sources": source_fingerprint(module),
+        "git_head": _git("rev-parse", "HEAD"),
+        "git_dirty": bool(_git("status", "--porcelain")),
         "passed": n_pass,
         "total": len(results),
         "all_pass": n_pass == len(results),
@@ -294,12 +350,20 @@ def _write_round(module, round_no, results):
     (d / ("r%02d.json" % n)).write_text(
         json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
+    src = manifest["sources"]
+    head = manifest["git_head"] or "（非 git 工作树）"
     md = ["# %s · 第 %02d 轮仿真记录" % (module, n), "",
           "- **时间**：%s" % manifest["timestamp"],
           "- **结论**：%s（%d / %d 通过）" % (
               "✅ 全部通过" if manifest["all_pass"] else "❌ 有失败项", n_pass, len(results)),
           "- **激励时长**：%s ns" % manifest["duration_ns"],
           "- **RTL 补丁**：%s" % (manifest["rtl_patches"] or "无（未改任何 RTL）"),
+          "- **源码指纹**：%d 个文件（逐文件 git blob 哈希见 `r%02d.json` 的 `sources`）；"
+          "git HEAD `%s`%s" % (len(src), n, head[:12],
+                              "，⚠️ 工作树有未提交改动" if manifest["git_dirty"] else ""),
+          "- **被测模块 RTL**：`rtl/%s.vhd` = `%s`（子模块与 tb 的哈希同样在 JSON 里）"
+          % (module, src.get("rtl/%s.vhd" % module, "（该模块无独立 RTL 文件）")),
+          "- **测试台**：`sim/tb_%s.py` = `%s`" % (module, src.get("sim/tb_%s.py" % module, "-")),
           "- **波形图**：`docs/图/SIM-%s.svg`" % module, "",
           "| # | 断言 | 结果 | 实测 / 说明 |", "|---|---|---|---|"]
     for i, (nm, ok, dt) in enumerate(results, 1):
