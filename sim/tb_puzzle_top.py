@@ -95,7 +95,24 @@ RTL_PATCHES = [("puzzle_pkg.vhd", "50_000_000", "80_000"),
                # 第三场景要按"哪一块会落到哪里"写出按键计划，所以把随机源钉成 0
                # （只作用于 .tmp 隔离工程）：rnd_val 恒 0 → 每块候选恒为 (0,0)
                # → 16 次重试后落到**确定性回退锚点**
-               ("puzzle_pkg.vhd", 'x"5A"', 'x"00"')]
+               ("puzzle_pkg.vhd", 'x"5A"', 'x"00"'),
+               # ⭐ 第 18 工作阶段：**把第一关限时由 30 s 临时改成 17 s**（只作用于隔离副本）。
+               #    【为什么必须打这个补丁】本轮新增的"目标幽灵"只在**倒计时 ≤10 s** 时出现，
+               #    而本 tb 的**每一个第一关对局都只跑 5~8 s**（很快就被拼完 / 被 SW7 掐掉），
+               #    30 s 的倒计时**永远走不到 10 s** ⇒ 幽灵在仿真里**一次都不会出现**，
+               #    整机断言会"空跑"（第一次跑就是这样：断言报"找不到采样点"）。
+               #    改成 17 s 后，对局跑到 **7 s** 就进入 ≤10 s 窗口（t≈22.0 ms），
+               #    而**所有现有断言的观察窗都在 22.0 ms 之前或不用画面**（④ 11.9~15.0、
+               #    ⑤ 15.8~17.3、⑨ 17.6~19.9 用 chk_pos、⑰ 旋转 20.2~21.4 ms 判"格数守恒"）
+               #    ⇒ **不动时间轴、不加仿真时长**，就把新功能覆盖到了。
+               #    ⚠️ **"B5 = 30 s"这条要求并没有因此失去验证**：它由 `tb_game_fsm` ⑪b
+               #    （`T_L1 = 30`，读的是**仓库里的** pkg）与 `scripts/check_plans.py` 的
+               #    "pkg ↔ tb 关卡限时守卫"守着；这里改的只是**整机 tb 的激励**。
+               ("puzzle_pkg.vhd",
+                "constant T_LEVEL1   : integer := 30;",
+                "constant T_LEVEL1   : integer := 17;")]
+# ⚠️ 与上面那个补丁配套：④ 的倒计时期望值必须跟着改成**补丁后的** T_LEVEL1 - 1。
+PATCHED_T_LEVEL1 = 17
 if FORCE_PAT != 0:
     # 模式 B：绕过 LFSR 采样，把**第三关**的图案下发下标钉在 FORCE_PAT。
     # ⚠️ 补丁只作用于 .tmp 隔离工程的副本，仓库 rtl/ 一个字节都不动（sim.py 保证）。
@@ -311,7 +328,8 @@ T_L2_PREVIEW = T_L2_CONF + 1_000_000.0               # 应已进入**第三关�
 T_L3_CONF = S0 + (KEYS_L3[-1][0] + 24) * ROUND       # 第三关最后一次确认之后
 T_WIN = T_L3_CONF + 1_000_000.0                      # 应已进入胜利状态（D2：出口在第三关）
 # 结算画面"先闪 2 个 2 Hz 周期（4×400 us = 1.6 ms）再常亮"，所以要留出观察常亮的窗口
-DURATION = T_WIN + 6_000_000.0
+# ⚠️ 这里**不要**再给 DURATION 赋值：文件后面（失败场景那一段）会按最终场景重算。
+#    早先这里留过一次 `DURATION = T_WIN + 6ms` 的**死值**，照它估时间窗会偏小 15 ms。
 
 # 胜利结算画面（设计值；tb 里独立抄一份当参考模型）：**粗绿对勾**（只点绿列），逐行掩码
 #   ..............##  0x80      ##......####....  0x31
@@ -337,8 +355,9 @@ FAIL_ROWS = [0x00, 0xC3, 0x66, 0x3C, 0x3C, 0x66, 0xC3, 0x00]
 #   把这条链路在整机上钉死。
 #
 # ⚠️ 采样点**必须避开"瞬时事件码"的保持窗口**（`snd_hold` = 2 个旋律步 = 500 ms 标称
-#    = 本 tb 折算 800 us）：确认/旋转/过关/拼错之后 800 us 内音效码是**事件码**，
-#    不是常驻码。下面的 `+1_500_000`（1.5 ms）就是为绕开它。
+#    = 本 tb 折算 800 us）：**过关/拼错**之后 800 us 内音效码是**事件码**，不是常驻码。
+#    ⚠️ 第 18 工作阶段起【确认】【旋转】**不再产生事件码**（对局中任何按键都不发声），
+#       所以那两个采样点只需避开『过关/拼错』的保持窗（第一场景里两者都不发生）。下面的 `+1_500_000`（1.5 ms）就是为绕开它。
 # ============================================================================
 T_CONF1 = S0 + (1192 + DB_SHIFT + 10) * ROUND   # 第一场景【确认】被接受之后（第 18 工作阶段起：码应=1000，即不发声）
 T_ROT1 = S0 + (ROT_KEYS[0][0] + 10) * ROUND     # 第一场景【旋转】被接受之后（同上：码应=1000）
@@ -377,7 +396,11 @@ OBSERVE = ["clk", "sw7", "btn", "kp_row", "kp_col",
            "dot_row", "dot_colr", "dot_colg", "seg", "cat", "buzz",
            # 中间信号：顶层自己的 mrow/mat_r 在网表里存在；其余内部信号按
            # 「实例标签|信号名」的层次写法（已用探针实测确认能匹配上）
-           "mrow", "mat_r",
+           # ⭐ 第 18 工作阶段新增 `mat_g`：断言 ㉓ 要判"目标幽灵"（它只画在红列上、
+           #    且不画在绿列覆盖处），必须同时看到红/绿两个平面。
+           #    ⚠️ `hint_on` 本身**在网表里不存在**（被优化掉了，已用 probe_nodes 核对），
+           #       所以 ㉓ 只能从**可观测的像素效果**去判，不能直接读那个使能信号。
+           "mrow", "mat_r", "mat_g",
            "u_clk|t2", "u_keypad|key_r", "u_keypad|stable", "u_seg|idx",
            "u_fsm|st", "u_fsm|cnt", "u_fsm|level", "u_fsm|lvl3",
            "u_fsm|up_r", "u_fsm|down_r", "u_fsm|left_r", "u_fsm|right_r",
@@ -452,7 +475,7 @@ def build(b):
     b.output_bus("seg", 8)
     b.output_bus("cat", 8)
     b.output_bit("buzz")
-    for n, w in (("mrow", 3), ("mat_r", 8),
+    for n, w in (("mrow", 3), ("mat_r", 8), ("mat_g", 8),
                  ("u_clk|t2", 1), ("u_keypad|key_r", 4), ("u_keypad|stable", 4),
                  ("u_seg|idx", 3), ("u_fsm|st", 3), ("u_fsm|cnt", 6),
                  ("u_fsm|level", 1), ("u_fsm|lvl3", 1),
@@ -628,11 +651,14 @@ def check(vf):
         num = int(tens) * 10 + int(ones)
     res.append((
         "④ B5 预览结束进入对局：点阵出现零片（3+6+3 = 12 格，且不再是完整 4x3 矩形 →"
-        " 说明真的散落了），DISP4:DISP3 显示 30 秒限时倒计时",
+        " 说明真的散落了），DISP4:DISP3 显示限时倒计时（本 tb 把第一关限时补丁成 %d s，"
+        "所以读数是 %d；**B5 的 30 s 由 tb_game_fsm ⑪b + check_plans 守卫**）"
+        % (PATCHED_T_LEVEL1, PATCHED_T_LEVEL1 - 1),
         n_lit == 12 and rA != [0x1C if 2 <= r <= 5 else 0 for r in range(8)]
-        and num is not None and 25 <= num <= 30,
-        "点亮格数=%d（期望 12）；每行红=%s；DISP4:DISP3 = %s%s = %s"
-        % (n_lit, [hex(x) for x in rA], tens, ones, num),
+        and num is not None and (PATCHED_T_LEVEL1 - 5) <= num <= PATCHED_T_LEVEL1,
+        "点亮格数=%d（期望 12）；每行红=%s；DISP4:DISP3 = %s%s = %s（期望 %d~%d）"
+        % (n_lit, [hex(x) for x in rA], tens, ones, num,
+           PATCHED_T_LEVEL1 - 5, PATCHED_T_LEVEL1),
     ))
 
     # ⑤ B6 选择：绿色零片切换（选中的零片变绿）
@@ -1086,6 +1112,60 @@ def check(vf):
         "t=%.0f 时状态=%s（期望 0 自检）"
         % (T_SW2_SELF_SCAN[0], T_SW2_SELF_SCAN[1], n_burst, T_SW2_SELF_MIN, st_mid),
     ))
+
+    # ㉓ ★【第 18 工作阶段新功能】**倒计时 ≤10 s 时的"目标幽灵"**
+    #    ⚠️ 这一条是本轮**收尾审查补上的**：整机 tb 原来对"幽灵提示"**零覆盖**
+    #       （"175 条断言全过"并不覆盖本轮的头号新功能）。
+    #    判据（不依赖内部信号 `hint_on` —— 它在网表里已被优化掉，已用 probe_nodes 核对）：
+    #      ① **画出来了**：在"对局中且倒计时 ≤10 s"的窗口里，**每一个属于目标图案、
+    #         又不被绿列覆盖**的格子，红列必须是亮的
+    #         （实现是 `mat_r <= rw or (prev_row and (not gw) and hint_mask)`；
+    #          若幽灵没画、或 `hint_mask` 没接上，这条立刻挂）；
+    #      ② **只在告急时画**：同一局**倒计时 >10 s** 的窗口里，点亮格数必须**恰好等于
+    #         零片格数**（12）—— 这一条由**已有的断言 ④** 覆盖（幽灵若常亮，④ 的
+    #         "点亮格数=12"会挂）。①与④合起来把"该画时画、不该画时不画"钉住。
+    L1_ROWS = [0x00, 0x00, 0x1C, 0x1C, 0x1C, 0x1C, 0x00, 0x00]   # 图 4-1：行 2..5 × 列 2..4
+    #   ⚠️ 采样点必须在**幽灵已经出现**、而**SW7 还没被拨下去**（T_SW_OFF = 23.0 ms）的那一段里。
+    #      本 tb 把第一关限时补丁成 17 s（见文件头的 RTL_PATCHES 说明）⇒ 对局过了 7 s
+    #      就进入"倒计时 ≤10 s"窗口。**不去手算这个时刻**（手算过一次、算错了，
+    #      第一次跑就报"找不到采样点"）—— 改成**在第一场景的对局窗口里扫描**，
+    #      取第一个"状态=对局 且 倒计时 ≤10"的采样点。扫描范围避开 ④⑤⑰ 的观察窗。
+    T_GHOST = 22_300_000.0
+    hint_t = None
+    _t = 16_000_000.0
+    while _t < T_SW_OFF - 100_000.0:
+        if _rd("u_fsm|st", _t) == 3:                      # 3 = S_PLAYING
+            _g = _rd("u_fsm|cnt", _t)
+            if _g is not None and _g <= 10:
+                hint_t = _t
+                break
+        _t += 100_000.0
+    if hint_t is None:
+        res.append(("㉓ ★【第 18 工作阶段】倒计时 ≤10 s 时的目标幽灵",
+                    False,
+                    "在 t ∈ [16.0, %.1f] ms 内没找到『对局中且倒计时 ≤10 s』的采样点"
+                    "（T_SW_OFF=%.1f ms）—— 断言无法执行；"
+                    "若 RTL 的 `gtime <= 10` 判据被改掉，本条会以这种形式失败"
+                    % (T_SW_OFF / 1e6, T_SW_OFF / 1e6)))
+    else:
+        rr_h, gg_h, _s_h, _d_h = scan_panel(vf, hint_t - 100_000.0, hint_t + 200_000.0, step=1000.0)
+        miss = [(r, c) for r in range(8) for c in range(8)
+                if (L1_ROWS[r] >> c) & 1 and not ((gg_h[r] >> c) & 1)
+                and not ((rr_h[r] >> c) & 1)]
+        res.append((
+            "㉓ ★【第 18 工作阶段新功能】倒计时 ≤10 s 时显示『目标幽灵』："
+            "**目标图案里没被绿列覆盖的格子，红列必须亮**"
+            "（幽灵没画 / `hint_mask` 没接上 ⇒ 本条挂）；"
+            "而『倒计时 >10 s 时不画』由已有的断言 ④（点亮格数恰为 12）守住",
+            not miss,
+            "采样 t=%.0f ns（对局中、倒计时=%s）：目标 %d 格里未被绿列覆盖的有 %d 格，"
+            "其中红列**没亮**的 = %s"
+            % (hint_t, _rd("u_fsm|cnt", hint_t),
+               sum(bin(x).count("1") for x in L1_ROWS),
+               sum(1 for r in range(8) for c in range(8)
+                   if (L1_ROWS[r] >> c) & 1 and not ((gg_h[r] >> c) & 1)),
+               miss or "无（幽灵按设计画出来了）"),
+        ))
 
     return res
 

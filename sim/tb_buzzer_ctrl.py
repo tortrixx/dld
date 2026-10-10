@@ -39,7 +39,7 @@
     补丁**只作用于 `.tmp/sim_buzzer_ctrl/` 里的 RTL 副本**，仓库 `rtl/` 一个字节没动。
     ⚠️ 第 16 工作阶段把 PATCH_DIV 从 5 降到 **2**（真实 half 也从 498..187 缩到 148..62），
       取整粒度变成 ±1 个补丁 tick = ±2 个真实 tick —— 想**只凭实测间隔**还原出真实频率，
-      误差最大会到 **~2.0%**（A5 113 vs 111、A#5 101 vs 105）。这是**补丁的量化误差，
+      误差最大会到 **~2.0%**（A5 113 vs 111、**B5 101 vs 99**；⚠️ 早先这里把 101 配给了 A#5，实际 101 是 B5 的重建值）。这是**补丁的量化误差，
       不是设计误差**，所以判据拆成两段（都在判据 ⑥ 里）：
         · "实测翻转间隔 == (补丁 half + 1) × PRE_PATCH" —— **精确**，不设容差；
         · "真实设计频率 f = TICK_HZ/(2*(查表 half+1)) == 注释频率" —— 容差 **FREQ_TOL=1.5%**。
@@ -105,9 +105,12 @@ GRID_PERIOD = 10.0
 #        ② **音区只能做粗分**（同一音区内别再靠 1~2 个半音区分）—— 于是
 #           第一关=高音区(E6/G6)、第二关=低音区(E5/G5)。
 #        ③ **首音/尾音要各不相同**（共享起音是已证实的混淆源）。
-#      分配（"音符数"= 该句里发声的步数）：
-#        自检 0001 = 1（听到 1 声）  失败 0111 = 4   第二关 BGM 1001 = 6
-#        第三关 BGM 1011 = 9         胜利 0110 = 14  第一关 BGM 1000 = 16
+#      ⚠️ 分配（"发声步数"= 该句里 bit3='1' 的步数）——**以本文件的 `MEL` 表为准**：
+#        自检 0001 = 2（第 0/8 步各一声 ⇒ **听到 1 声**）   失败 0111 = 4
+#        胜利 0110 = 14        第一关/第二关/第三关 BGM = **16 / 16 / 16**
+#      ⚠️ **三关 BGM 一律 16/16**（见下面 MUSIC_CODES 的 assert）——
+#        本轮**一度**设计成 6/9 声的稀疏版，与 ERR-050（"断断续续"）直接冲突而否决；
+#        区分度改由**音区 + 换音速率**承担，不靠稀疏。（本行早先写成 6/9，已按表改正。）
 # ============================================================
 NOTE_NAME = ["E5", "G5", "A5", "A#5", "B5", "C6", "E6", "G6"]
 NOTE_HZ = [659.3, 784.0, 880.0, 932.3, 987.8, 1046.5, 1318.5, 1568.0]
@@ -132,7 +135,7 @@ MEL = {
          2, 2, 2, 2, 0, 0, 0, 0],                            #      (E5→G5→A5→E5 各 4 拍) ⇒ 唯一"低 + 慢"的
     10: [None] * 16,                                        # 1010 旋转（**RTL 查表臂已删** ⇒ when others 静音）
     11: [1, 4, 5, 6, 5, 4, 1, 4,                            # 1011 第三关 BGM = **跨音区 + 快速换音**
-         5, 6, 6, 5, 4, 1, 4, 5],                            #      (G5↔E6 来回、15 次换音) ⇒ 唯一"忙"的
+         5, 6, 6, 5, 4, 1, 4, 5],                            #      (G5↔E6 来回、**换 14 次音**) ⇒ 唯一"忙"的
     12: [None] * 16,                                        # 1100 确认 / 锁定（**RTL 查表臂已删** ⇒ 静音）
     13: [None] * 16,                                        # 1101 预留（RTL 分支已删 → when others 静音）
     14: [None] * 16,                                        # 1110 预留（同上）
@@ -187,7 +190,7 @@ assert all(any(x is not None for x in MEL[c]) for c in EMITTED[1:]), \
 #       ⇒ **背景音乐必须保持 16/16 发声**，区分度改由**音区**与**换音速率**承担：
 #         第一关 = 高音区 + 只换 4 次音（舒缓波浪）
 #         第二关 = 低音区 + 只换 3 次音（慢速块状脉冲）
-#         第三关 = 跨音区 + 换 15 次音（忙、紧）
+#         第三关 = 跨音区 + 换 14 次音（忙、紧）
 #       三者两两之间在"音区"或"换音速率"上都有数量级差异。
 for _c in MUSIC_CODES:
     _n = sum(1 for x in MEL[_c] if x is not None)
@@ -196,17 +199,35 @@ for _c in MUSIC_CODES:
 _mus = {}
 for _c in MUSIC_CODES:
     _p = [x for x in MEL[_c] if x is not None]
-    _mus[_c] = (sum(_p) / len(_p),                       # 平均音高索引 = 音区
-                sum(1 for a, b in zip(_p, _p[1:]) if a != b))   # 换音次数 = 节奏/忙碌度
-assert len({round(v[0], 1) for v in _mus.values()}) == len(_mus) or \
-       len({v[1] for v in _mus.values()}) == len(_mus), \
-    "三关背景音乐必须在'音区'或'换音次数'上两两不同，实测 %s" \
-    % {MEL_LABEL[c]: "音区%.2f/换音%d" % _mus[c] for c in MUSIC_CODES}
+    _mus[_c] = (min(_p), max(_p),                            # **音区**：最低音 / 最高音（半音级）
+                sum(1 for a, b in zip(_p, _p[1:]) if a != b))  # **换音次数** = 忙碌度
+# ⚠️ 2026-10-10 第 18 工作阶段（收尾审查整改）：这条规则原来写成
+#    `平均音高索引 round(0.1) 不同` **or** `换音次数不同` —— 两个漏洞：
+#      ① 用 `or` ⇒ 只要平均索引差 ≥0.05（远小于一个半音，听不出来）就算"音区不同"；
+#      ② **平均索引不是音区**：BGM1 实际含 7 个 G5（平均被拉低），与 BGM3 的下界同为 G5。
+#    ⇒ 改成用 **(最低音, 最高音) 的二元组** 表示音区（半音级、可听），并要求
+#      **三个维度（音区下界 / 音区上界 / 换音次数）合起来把三首两两分开**：
+#      任意两首之间，至少要有一个维度**严格不同**。
+for _a, _b in ((8, 9), (8, 11), (9, 11)):
+    _lo_a, _hi_a, _ch_a = _mus[_a]
+    _lo_b, _hi_b, _ch_b = _mus[_b]
+    assert (_lo_a, _hi_a, _ch_a) != (_lo_b, _hi_b, _ch_b), \
+        "背景音乐 %s 与 %s 在'音区/换音次数'上完全相同，听不出区别：%s" \
+        % (MEL_LABEL[_a], MEL_LABEL[_b], (_lo_a, _hi_a, _ch_a))
+assert len({(_mus[c][0], _mus[c][1]) for c in MUSIC_CODES}) >= 2, \
+    "三关背景音乐的音区（最低/最高音）至少要分成两组，实测 %s" \
+    % {MEL_LABEL[c]: (_mus[c][0], _mus[c][1]) for c in MUSIC_CODES}
+assert len({_mus[c][2] for c in MUSIC_CODES}) == len(MUSIC_CODES), \
+    "三关背景音乐的**换音次数**必须两两不同（这是最强的区分维度），实测 %s" \
+    % {MEL_LABEL[c]: _mus[c][2] for c in MUSIC_CODES}
 # ⭐ 一次性提示音/号角：**发声步数必须两两不同**（节奏是最强区分维度）
-_cues = {1: "自检", 2: "预览", 6: "胜利", 7: "失败"}
+#   ⚠️ 第 18 工作阶段整改：原来这里写死了一份 `_cues` 字典，而上面声明的 `CUE_CODES`
+#      从未被使用 ⇒ 改 `CUE_CODES` 不生效（静默漂移）。现在**由 `CUE_CODES` 现算**。
+_cues = {c: MEL_LABEL[c] for c in CUE_CODES}
 _cnt = {c: sum(1 for x in MEL[c] if x is not None) for c in _cues}
 assert len(set(_cnt.values())) == len(_cnt), \
-    "四个一次性提示音/号角的发声步数必须两两不同，实测 %s" % {_cues[c]: _cnt[c] for c in _cues}
+    "一次性提示音/号角（CUE_CODES）的发声步数必须两两不同，实测 %s" \
+    % {_cues[c]: _cnt[c] for c in _cues}
 
 
 def _clk_hz():
@@ -229,6 +250,7 @@ PRE_DIV = 256                           # 与 rtl/buzzer_ctrl.vhd 的 PRE_DIV �
 TICK_HZ = CLK_HZ / PRE_DIV              # 195_312.5 Hz
 NOTE_HALF = [148, 125, 111, 105, 99, 93, 74, 62]
 FREQ_TOL = 0.015                        # 1.5%（第 16 工作阶段 tick 变粗：设计音准最大偏 ~1.2%）
+assert len(NOTE_HZ) == len(NOTE_HALF) == 8, "音高表与半周期表必须都是 8 项"
 for _i, (_f, _h) in enumerate(zip(NOTE_HZ, NOTE_HALF)):
     assert _h == round(TICK_HZ / (2.0 * _f)), \
         "模块注释自相矛盾：%s 的注释频率 %g Hz 对应 %.2f 拍，四舍五入应为 %d，但注释写 half=%d" \
@@ -310,7 +332,10 @@ for _c in _CODES:                                     # ① 保证覆盖：每�
             break
 for (_r, _j) in _SLOTS:                               # ② 其余空位：填任意一个在该步会响的码
     if _EN0[_r][_j] is None:
-        _EN0[_r][_j] = next(c for c in _CODES if MEL[c][_j] is not None)
+        _cand = [c for c in _CODES if MEL[c][_j] is not None]
+        assert _cand, ("逐码静音窗口第 %d 步没有任何'有查表臂的码'会发声 —— "
+                       "这一步会空跑，必须调整窗口内容" % _j)
+        _EN0[_r][_j] = _cand[0]
 EN0_A, EN0_B, EN0_C = _EN0
 for _row in (EN0_A, EN0_B, EN0_C):
     WINS.append([(c, 0) for c in _row])
@@ -822,19 +847,29 @@ def check(vf):
         bad.append("预留码 %s 实测竟然有声 —— RTL 的 case 分支应已删除（落入 when others）"
                    % resv_sound)
     res.append((
-        "⑭ 被 game_fsm 发出的 13 个音效码（0000..1100）的实测（音高/节奏）序列**两两不同**"
-        "（%d 对全部比对过），且 0001..1100 没有一个是整句无声；1101/1110/1111 为**预留**"
-        "（RTL 分支已删）→ 实测必须整句静音 —— 不同情况耳听可辨" % n_pairs,
+        "⑭ **有查表臂的 11 个音效码**（0000..1001 与 1011；`game_fsm` 实际发出其中 10 个）的实测（音高/节奏）序列**两两不同**"
+        "（%d 对全部比对过），且这些码没有一个是整句无声；"
+        "1010/1100/1101/1110/1111 无查表臂 ⇒ 实测必须整句静音 —— 不同情况耳听可辨" % n_pairs,
         not bad,
         "；".join(bad) if bad else " ｜ ".join(detail),
     ))
 
     # ---- ⑮ 预分频器（tick = 195.3125 kHz，即 50 MHz ÷ 256）----
-    #   ⚠️ 2026-10-10 第 18 工作阶段：本 tb 现在**不压缩预分频**（`PATCH_PRE = 1`），
-    #      于是 `pre_cnt` 恒 0、被综合器整个优化掉，**网表里根本没有这个节点** ——
-    #      动态测不了。⇒ 这一条改成**静态核对**：直接从 RTL 源码读 `PRE_DIV` 的设计值，
-    #      断言它仍是 **256**（并说明它与音高表的换算关系由上面的 NOTE_HALF 断言守住）。
-    #      这样"预分频没被改坏"这件事**仍然被验**，只是从"量波形"换成"读源码 + 查表"。
+    #   ⚠️ 2026-10-10 第 18 工作阶段（**收尾审查整改**）：
+    #      这一条原来写成 `if PATCH_PRE > 1: 动态测量 else: 静态核对源码`，
+    #      而注释又写着"本 tb 现在不压缩预分频（PATCH_PRE = 1）"——**注释与代码不符**：
+    #      实际 `PATCH_PRE = 2`，于是 `else` 分支是**死代码**，
+    #      而动态分支只量"补丁副本"（补丁恰好把 PRE_DIV 改写成 2），
+    #      **它并没有验"RTL 里的设计值仍是 256"**（真正守住 256 的是 `scripts/sim.py`
+    #      的锚点"恰出现 1 次"检查，不是这里）。
+    #   ⇒ 现在**两件事分开做、都要过**：
+    #      (a) **静态**：直接从 RTL 源码读 `PRE_DIV`，断言 == 256（与 PATCH_PRE 无关，永远执行）；
+    #      (b) **动态**：只有当 `pre_cnt` 还存在于网表里（PATCH_PRE > 1）时才量回绕周期。
+    _src = (pathlib.Path(__file__).resolve().parent.parent
+            / "rtl" / "buzzer_ctrl.vhd").read_text(encoding="utf-8", errors="replace")
+    _m = re.search(r"constant\s+PRE_DIV\s*:\s*integer\s*:=\s*(\d+)\s*;", _src)
+    _div = int(_m.group(1)) if _m else None
+    _static_ok = (_div == PRE_DIV and PRE_DIV == 256)
     if PATCH_PRE > 1:
         a15, b15 = T0, T0 + 2 * PHRASE
         tr = _bus_trace(vf, "pre_cnt", BURIED["pre_cnt"])
@@ -844,28 +879,25 @@ def check(vf):
         tick_sim_hz = (1e9 / sp[0]) if len(sp) == 1 else 0.0
         tick_real_hz = tick_sim_hz * PATCH_PRE / PRE_DIV
         res.append((
-            "⑮ 预分频器真的在分频：中间信号 `pre_cnt[7:0]` 的回绕周期恒为 PRE_PATCH=%d 拍"
-            "（%g ns），即补丁后 tick = %g MHz；按补丁比例 256→%d 换算回真实 tick = %.2f kHz"
-            "（说明：%.1f kHz）"
+            "⑮ 预分频器（两件事都要过）：(a) **静态**核对 RTL 源码的 `PRE_DIV` == 256；"
+            "(b) **动态**量 `pre_cnt[7:0]` 的回绕周期 == PRE_PATCH=%d 拍（%g ns）"
+            "⇒ 补丁后 tick = %g MHz，按 256→%d 换算回真实 tick = %.2f kHz（说明 %.1f kHz）"
             % (PATCH_PRE, PATCH_PRE * CLK, tick_sim_hz / 1e6, PATCH_PRE,
                tick_real_hz / 1e3, TICK_HZ / 1e3),
-            len(wraps) > 100 and sp == [PATCH_PRE * CLK]
+            _static_ok and len(wraps) > 100 and sp == [PATCH_PRE * CLK]
             and abs(tick_real_hz - TICK_HZ) / TICK_HZ < 1e-9,
-            "窗口 [%.0f,%.0f] ns 内 pre_cnt 回绕 %d 次，相邻回绕间隔集合 = %s ns"
+            "(a) rtl/buzzer_ctrl.vhd 的 `PRE_DIV` = %s（期望 %d）⇒ %s；"
+            "(b) 窗口 [%.0f,%.0f] ns 内 pre_cnt 回绕 %d 次，相邻回绕间隔集合 = %s ns"
             "（期望 {%g}）；tick_sim=%g MHz → tick_real=%.4f kHz，注释 = %.4f kHz"
-            % (a15, b15, len(wraps), sp, PATCH_PRE * CLK, tick_sim_hz / 1e6,
-               tick_real_hz / 1e3, TICK_HZ / 1e3),
+            % (_div, PRE_DIV, "OK" if _static_ok else "**FAIL**", a15, b15, len(wraps), sp,
+               PATCH_PRE * CLK, tick_sim_hz / 1e6, tick_real_hz / 1e3, TICK_HZ / 1e3),
         ))
     else:
-        _src = (pathlib.Path(__file__).resolve().parent.parent
-                / "rtl" / "buzzer_ctrl.vhd").read_text(encoding="utf-8", errors="replace")
-        _m = re.search(r"constant\s+PRE_DIV\s*:\s*integer\s*:=\s*(\d+)\s*;", _src)
-        _div = int(_m.group(1)) if _m else None
         res.append((
-            "⑮ 预分频器设计值仍是 256（tick = 195.3125 kHz）—— "
-            "本 tb 把预分频补丁成 1（`pre_cnt` 被优化掉、动态测不了）⇒ 改为**静态核对 RTL 源码**；"
-            "音高表与 PRE_DIV 的换算关系另由上面的 NOTE_HALF 断言守住",
-            _div == PRE_DIV and PRE_DIV == 256,
+            "⑮ 预分频器：**静态**核对 RTL 源码的 `PRE_DIV` == 256（tick = 195.3125 kHz）—— "
+            "本 tb 把预分频补丁成 %d 时 `pre_cnt` 被优化掉、动态测不了，故只做静态核对；"
+            "音高表与 PRE_DIV 的换算关系另由上面的 NOTE_HALF 断言守住" % PATCH_PRE,
+            _static_ok,
             "rtl/buzzer_ctrl.vhd 的 `PRE_DIV` = %s（期望 %d）；tb 的补丁 PATCH_PRE = %d"
             % (_div, PRE_DIV, PATCH_PRE),
         ))

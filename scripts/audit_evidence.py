@@ -202,11 +202,18 @@ def audit_sound():
         add("FAIL", "C", "buzzer_ctrl 有分支、但 puzzle_pkg 里没有对应常量的码：%s" % orphan)
 
     # ---- 三首 BGM 的拼线取值必须与 SND_BGM* 一致
+    #   ⚠️ 2026-10-10 第 18 工作阶段（收尾审查整改）：原来写成 `for ... else:`，
+    #      而**循环体内没有 `break`** ⇒ `else`（OK 分支）**总会执行**，
+    #      于是"刚报了 FAIL 又报一条假 OK"。审查里用内存篡改 SND_BGM3 复现过。
+    #      ⇒ 改成先收集不一致项、循环后统一报一次。
+    _bgm_bad = []
     for lvl3, level, want in ((0, 0, "SND_BGM1"), (0, 1, "SND_BGM2"), (1, 1, "SND_BGM3")):
         code = "10" + str(lvl3) + str(level)
         if name2code.get(want) != code:
-            add("FAIL", "C", "BGM 拼线 `\"10\" & lvl3 & level`（lvl3=%d,level=%d → %s）"
-                "与 %s=%s 不一致" % (lvl3, level, code, want, name2code.get(want)))
+            _bgm_bad.append("lvl3=%d,level=%d → %s 与 %s=%s 不一致"
+                            % (lvl3, level, code, want, name2code.get(want)))
+    if _bgm_bad:
+        add("FAIL", "C", "BGM 拼线 `\"10\" & lvl3 & level` 与 SND_BGM* 不一致", "；".join(_bgm_bad))
     else:
         add("OK", "C", "三首 BGM 的拼线取值 1000/1001/1011 == SND_BGM1/2/3")
 
@@ -218,14 +225,20 @@ def audit_sound():
     else:
         add("OK", "C", "tb_buzzer_ctrl 的 MEL 表覆盖 0..15 全部 16 个码")
     m = re.search(r"EMITTED\s*=\s*\[([^\]]*)\]", tb)
-    n_emitted = None
-    if m:
-        n_emitted = len([x for x in re.split(r"[,\s]+", m.group(1)) if x.strip()])
-        if n_emitted != len(arms):
-            add("WARN", "C", "tb_buzzer_ctrl 的 EMITTED（%d 个）与 buzzer_ctrl 的查表臂（%d 个）不一致"
-                % (n_emitted, len(arms)))
+    if not m:
+        # ⚠️ 审查发现：正则匹配不到时这里**无声消失**（不加任何消息）⇒ 改成显式 WARN。
+        add("WARN", "C", "在 tb_buzzer_ctrl 里没匹配到 `EMITTED = [...]` —— 无法对账查表臂集合",
+            "tb 改了变量名或格式的话，这条检查会静默失效")
+    else:
+        emitted = sorted(int(x) for x in re.split(r"[,\s]+", m.group(1)) if x.strip())
+        arms_codes = sorted(int(c, 2) for c in arms)
+        # ⚠️ 审查发现：原来只比**个数**，不比集合内容 ⇒ 个数相同但码不同会被漏掉。
+        if emitted != arms_codes:
+            add("FAIL", "C", "tb_buzzer_ctrl 的 EMITTED 与 buzzer_ctrl 的查表臂**集合**不一致",
+                "tb=%s / RTL 臂=%s" % (emitted, arms_codes))
         else:
-            add("OK", "C", "tb_buzzer_ctrl 的 EMITTED 与 buzzer_ctrl 的查表臂数一致（%d）" % len(arms))
+            add("OK", "C", "tb_buzzer_ctrl 的 EMITTED 与 buzzer_ctrl 的查表臂集合一致（%d 个）"
+                % len(arms_codes))
 
     # ---- 预留码必须真的静音（没有 case 分支）
     #   ⚠️ 第 18 工作阶段起，"无查表臂"的码从 3 个变成 5 个：
@@ -267,14 +280,22 @@ def audit_reports():
     text = fit.read_text(encoding="utf-8", errors="replace")
 
     status = _fit_field(text, "Fitter Status")
-    if status and not status.lower().startswith("successful"):
-        add("FAIL", "D", "Fitter Status = %s" % status)
-    else:
-        add("OK", "D", "Fitter Status = %s" % status)
-
     le = _fit_field(text, "Total logic elements")
     lab = _fit_field(text, "Total LABs")
     pins = _fit_field(text, "Total pins")
+    # ⚠️ 2026-10-10 第 18 工作阶段（收尾审查整改）：解析不到时必须**明确报"报告格式可能变了"**，
+    #    否则会打出 `OK Fitter Status = None` + `WARN LAB 已满（0/0）` + 无条件的"面积余量"OK
+    #    —— 三个都是假结论（审查里用"删掉 fit.rpt 三行"复现过）。
+    missing = [k for k, v in (("Fitter Status", status), ("Total logic elements", le),
+                              ("Total LABs", lab), ("Total pins", pins)) if not v]
+    if missing:
+        add("WARN", "D", "fit.rpt 里解析不到：%s —— 报告格式可能变了" % "、".join(missing),
+            "解析不到时**不再**给出面积/装箱结论（否则会报出 0/0 这种假读数）")
+        return None
+    if not status.lower().startswith("successful"):
+        add("FAIL", "D", "Fitter Status = %s" % status)
+    else:
+        add("OK", "D", "Fitter Status = %s" % status)
     add("INFO", "D", "资源：LE %s；LAB %s；引脚 %s" % (le, lab, pins))
 
     def _num(s):
@@ -283,6 +304,9 @@ def audit_reports():
 
     le_u, le_m = _num(le)
     lab_u, lab_m = _num(lab)
+    if lab_m == 0 or le_m == 0:
+        add("WARN", "D", "面积字段解析不出 '占用/总量' 形式：LE=%r LAB=%r" % (le, lab))
+        return None
     if lab_u >= lab_m:
         add("WARN", "D", "LAB 已满（%d/%d）—— 再加逻辑必须先腾面积；"
                         "**判'装不下'要读 LAB，不是只读 LE**（ERR-046）" % (lab_u, lab_m))
@@ -405,7 +429,6 @@ def audit_doc_numbers(fit_info):
         return
     le_u = re.match(r"([\d,]+)", fit_info["le"] or "")
     cur_le = le_u.group(1).replace(",", "") if le_u else None
-    cur_lab = (fit_info["lab"] or "").split("/")[0].strip()
     found_le, found_seed, found_slack = set(), set(), set()
     for rel in DOCS:
         p = ROOT / rel
@@ -414,10 +437,15 @@ def audit_doc_numbers(fit_info):
         t = p.read_text(encoding="utf-8", errors="replace")
         found_le |= set(re.findall(r"(\d{3,4})\s*/\s*1[,]?270\s*LE", t))
         found_seed |= set(re.findall(r"SEED\s*(\d+)", t))
-        found_slack |= set(re.findall(r"slack\s*\**\s*\+?([\d.]+)\s*\**\s*ns", t))
-        # ⚠️ 上面的 `\**` 是 2026-10-10 第 18 工作阶段补的：文档里常写
-        #    `setup slack **+0.861 ns**`，而早先的正则没考虑 Markdown 强调符号，
-        #    于是"文档里没有当前 slack"这条**误报**了（0.861 明明写在 README 里）。
+        # ⚠️ 2026-10-10 第 18 工作阶段（收尾审查整改）：这条正则原来只认
+        #    `slack` 后面紧跟 `**`/空格/`+`，于是
+        #      · 认不出 `slack = +0.861 ns`（docs/05 就是这个写法）；
+        #      · 认不出**负值**（时序违例时最该认出来）；
+        #    而且把 setup 与 hold 的数值混进同一个集合（"当前 setup slack 在文档里"会被
+        #    hold 的数字蒙混过关）。现在按 setup/hold 分开收，并允许 `= : ≈ ** ` 等修饰。
+        for kind in ("setup", "hold"):
+            found_slack |= set(re.findall(
+                r"%s\s*slack\s*[=:≈]?\s*\**\s*`?\s*([+-]?[\d.]+)\s*`?\s*\**\s*ns" % kind, t, re.I))
     if cur_le and cur_le not in found_le:
         add("WARN", "G", "文档里**没有出现**当前的 LE 值 %s（出现过的是 %s）"
             % (cur_le, "、".join(sorted(found_le))))
@@ -436,9 +464,47 @@ def audit_doc_numbers(fit_info):
                 % (seed, "、".join(sorted(found_seed))))
     if fit_info.get("slack") is not None:
         s = "%.3f" % fit_info["slack"]
-        if s not in found_slack:
+        # ⚠️ 文档里常带符号写（`+0.861`），收集到的集合里也是带符号的 ⇒ 比较前统一去符号。
+        found_norm = {x.lstrip("+") for x in found_slack}
+        if s not in found_norm:
             add("WARN", "G", "文档里没有出现当前的 setup slack %s（出现过：%s）"
                 % (s, "、".join(sorted(found_slack))))
+        else:
+            # ⚠️ 审查发现：这条原来**没有 OK 分支** ⇒ 输出里分不清"查过且过了"与"根本没跑"。
+            add("OK", "G", "当前 setup slack %s 在文档里出现过" % s)
+
+    # ---- ⭐ 关卡限时常量（第 18 工作阶段补：**这条缺口让"第三关 40→60 s"的文档漂移漏网**）
+    #   审查发现：G 段只对账 LE/SEED/slack，于是 HANDOFF/docs/00/docs/02 里残留的
+    #   `T_LEVEL3 = 40` 一直没人发现。⇒ 现在把 4 个限时常量也纳入对账。
+    #   ⚠️ 只认**紧邻**的两种写法（`T_LEVEL3 = 40 s` 与 `40 s（自拟 T_LEVEL3）`）——
+    #      早先版本用"±80 字符窗口"，把同一张表里别的常量值也误报成漂移。
+    pkg = (ROOT / "rtl" / "puzzle_pkg.vhd").read_text(encoding="utf-8", errors="replace")
+    times = {}
+    for n in ("T_PREVIEW", "T_LEVEL1", "T_LEVEL2", "T_LEVEL3"):
+        mm = re.search(r"constant\s+%s\s*:\s*integer\s*:=\s*(\d+)" % n, pkg)
+        times[n] = mm.group(1) if mm else None
+    bad_doc = []
+    for n, v in times.items():
+        if v is None:
+            continue
+        pat_fwd = re.compile(r"%s\s*(?:=|:=|为|是)\s*\**\s*`?\s*(\d{1,3})\s*(?:s\b|秒)" % re.escape(n))
+        pat_rev = re.compile(r"(\d{1,3})\s*(?:s\b|秒)\s*[（(][^)）]{0,14}%s" % re.escape(n))
+        for rel in DOCS:
+            p = ROOT / rel
+            if not p.exists():
+                continue
+            t = p.read_text(encoding="utf-8", errors="replace")
+            for pat in (pat_fwd, pat_rev):
+                for mm in pat.finditer(t):
+                    if mm.group(1) != v:
+                        bad_doc.append("%s：`%s` 写成 %s s（当前 %s）" % (rel, n, mm.group(1), v))
+    if bad_doc:
+        add("WARN", "G", "文档里的**关卡限时常量**与 RTL 不一致（当前 %s）"
+            % "、".join("%s=%s" % (k, v) for k, v in times.items()),
+            "；".join(sorted(set(bad_doc))[:8]))
+    else:
+        add("OK", "G", "关卡限时常量与文档一致（%s）"
+            % "、".join("%s=%s" % (k, v) for k, v in times.items()))
 
 
 # ============================================================================

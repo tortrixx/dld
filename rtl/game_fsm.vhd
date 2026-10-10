@@ -13,7 +13,7 @@
 --        --"start"-->  S_PREVIEW
 --      S_PREVIEW    5 s preview, countdown on DISP7 (B4)
 --        --preview ends--> scatter pieces, S_PLAYING
---      S_PLAYING     30 s (level 1) / 40 s (level 2) / 40 s (level 3) countdown on DISP4:DISP3
+--      S_PLAYING     30 s (level 1) / 40 s (level 2) / **60 s (level 3, self-designed)**
 --                    "select" cycles the selected piece (B6)
 --                    arrows move it, validated by puzzle_ctrl (B7)
 --                    "confirm" locks it (B8)
@@ -172,7 +172,12 @@ architecture rtl of game_fsm is
     --
     -- 【现在怎么做】改数 **tick_4hz 满 8 拍**（8 × 250 ms = **恰好 2 s**，两条进入路径
     --    一致），窗口**恒为 8 个旋律步**；8 个连续步**必然恰好包含第 0 或第 8 步中的一个**
-    --    （两者相隔 8）⇒ **恒为一声**，且时长恒为 2 s（B2 的"2 秒"在两条路径上都成立）。
+    --    （两者相隔 8）⇒ **恒为一声**。
+--    ⚠️ **时长的准确说法**：窗口是"数满 8 个 `tick_4hz`"，而 `tick_4hz` 是自由走的
+--       （clk_gen 只被 i_rst 复位、与 FSM 入口无关）⇒ 从入口到第 8 个脉冲 = **7~8 个
+--       250 ms 周期**，即复位路径 ≈2.000 s、SW7 重入路径落在 **(1.75, 2.0] s**。
+--       所以只能说"窗口恒为 8 个旋律步、恰好一声"，**不要说"时长恒为 2 s"**
+--       （这正是 ERR-051 自己总结的"绝对说法要逐路径验"）。
     --
     -- 【为什么是"复用 cnt + 倒计数"】本器件 **LAB 已满 127/127**，每一步都要量：
     --      · 加宽 `selfc` 2→3 位（数 tick_4hz）：实测 SEED 5 下 fitter 要 **128 LABs，
@@ -287,8 +292,8 @@ begin
                         elsif (i_tick_1hz = '1') then
                             if (cnt <= 1) then
                                 -- Preview over.  Load the level's TIME LIMIT here
-                                -- (requirement B5 = 30 s, B10 = 40 s, third level =
-                                -- 40 s self-designed).  This was missing: cnt stayed
+                                -- (requirement B5 = 30 s, B10 = 40 s, third level = 60 s (was 40 s before stage 18);
+                                -- see puzzle_pkg.T_LEVEL3).  This was missing: cnt stayed
                                 -- at 1 from the preview, so the first playing tick
                                 -- immediately timed out and the game ended after
                                 -- under a second.
