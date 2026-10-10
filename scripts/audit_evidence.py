@@ -414,7 +414,10 @@ def audit_doc_numbers(fit_info):
         t = p.read_text(encoding="utf-8", errors="replace")
         found_le |= set(re.findall(r"(\d{3,4})\s*/\s*1[,]?270\s*LE", t))
         found_seed |= set(re.findall(r"SEED\s*(\d+)", t))
-        found_slack |= set(re.findall(r"slack\s*\+?([\d.]+)\s*ns", t))
+        found_slack |= set(re.findall(r"slack\s*\**\s*\+?([\d.]+)\s*\**\s*ns", t))
+        # ⚠️ 上面的 `\**` 是 2026-10-10 第 18 工作阶段补的：文档里常写
+        #    `setup slack **+0.861 ns**`，而早先的正则没考虑 Markdown 强调符号，
+        #    于是"文档里没有当前 slack"这条**误报**了（0.861 明明写在 README 里）。
     if cur_le and cur_le not in found_le:
         add("WARN", "G", "文档里**没有出现**当前的 LE 值 %s（出现过的是 %s）"
             % (cur_le, "、".join(sorted(found_le))))
