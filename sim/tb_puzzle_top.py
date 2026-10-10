@@ -327,6 +327,32 @@ WIN_ROWS = [0x80, 0xC0, 0xE0, 0x70, 0x31, 0x1B, 0x1F, 0x0E]
 #   ..####..  0x3C      ##....##  0xC3
 FAIL_ROWS = [0x00, 0xC3, 0x66, 0x3C, 0x3C, 0x66, 0xC3, 0x00]
 
+# ============================================================================
+# ⭐ 2026-10-10 新增：**整机音效断言的采样点**
+#
+# 【为什么要补这一组】此前整机 tb **只把 `buzz` 记进波形、没有任何音效断言** ——
+#   文档里反复写着"音效的证据始终是 buzzer_ctrl rNN + game_fsm rNN，不是整机那一轮"。
+#   也就是说："音效码真的从 game_fsm 走到 buzzer_ctrl 了吗？"在**整机层面**从来没被验过。
+#   现在观测 `u_fsm|sound_p`（4 位音效码）与 `u_buzz|on_now`（这一步响不响），
+#   把这条链路在整机上钉死。
+#
+# ⚠️ 采样点**必须避开"瞬时事件码"的保持窗口**（`snd_hold` = 2 个旋律步 = 500 ms 标称
+#    = 本 tb 折算 800 us）：确认/旋转/过关/拼错之后 800 us 内音效码是**事件码**，
+#    不是常驻码。下面的 `+1_500_000`（1.5 ms）就是为绕开它。
+# ============================================================================
+T_CONF1 = S0 + (1192 + DB_SHIFT + 10) * ROUND   # 第一场景【确认】被接受之后（码应=1100）
+T_ROT1 = S0 + (ROT_KEYS[0][0] + 10) * ROUND     # 第一场景【旋转】被接受之后（码应=1010）
+T_L2_PLAY = T_L1_PREVIEW + 9_000_000.0          # 第二关对局（预览 8 ms 之后，码应=1001）
+T_L3_PLAY = T_L2_PREVIEW + 9_000_000.0          # 第三关对局（预览 8 ms 之后，码应=1011）
+# SW7 关→开之后的自检窗口：**恒 8 个 tick_4hz**（ERR-051 修法），本 tb 折算 8 x 400 us。
+# ⚠️ **不能用 `T_SW_ON2 + 8 x 400 us` 当窗口上界**：`tick_4hz` 是**自由走**的
+#    （相位由复位后的分频链决定，与 SW7 的拨动时刻无关），所以"SW7 拉高 → 8 个 tick"
+#    的实际结束时刻落在 **[T+2.8 ms, T+3.2 ms]** 之间（8 个脉冲跨 7 个周期）。
+#    窗口取到 +3.4 ms 才能把两种极端都罩住；越过自检之后音效码变成 SND_NONE
+#    ⇒ `on_now` 恒 0，**不会多算一声**。
+T_SW2_SELF_MIN = T_SW_ON2 + 2_500_000.0         # 一定还在自检里（最早结束是 +2.8 ms）
+T_SW2_SELF_SCAN = (T_SW_ON2 + 50_000.0, T_SW_ON2 + 3_400_000.0)   # 数"响了几声"的窗口
+
 # ---- 第四场景：胜利画面之后按【开始】再开一局，故意"三块全确认但不摆位" ----
 # 目的：B9/B10 的**失败图案**是基本要求，而第三场景永远以胜利收场 —— 改版前
 #       顶层的失败分支没有任何仿真断言覆盖。这里补上：散落后（rnd 钉 0 → 回退锚点）
@@ -358,7 +384,14 @@ OBSERVE = ["clk", "sw7", "btn", "kp_row", "kp_col",
            "u_fsm|move_r", "u_fsm|conf_r", "u_fsm|sel_r",
            "u_puzzle|pos", "u_puzzle|locked", "u_puzzle|mv_dir",
            "u_puzzle|mv_pend", "u_puzzle|chk_pos",
-           "u_puzzle|ori", "u_puzzle|sel"]      # A4：朝向 + 选中槽
+           "u_puzzle|ori", "u_puzzle|sel",        # A4：朝向 + 选中槽
+           # ⭐ 2026-10-10（补音效断言）：`buzz` 只是**方波输出**，看它判"响没响"
+           #    要数方波；要判"**该响哪个音效**"必须看 4 位**音效码**本身。
+           #    `u_fsm|sound_p` = game_fsm 里那个寄存器（= o_sound 的源），
+           #    `u_buzz|on_now` = buzzer 侧"这一步响不响"的寄存输出。
+           #    两个名字都用 `scripts/probe_nodes.py` 对**仿真器节点表**核对过
+           #    （41823 条全名里确认存在），不是猜的。
+           "u_fsm|sound_p", "u_buzz|on_now"]
 
 # 段码 -> 数字（与 rtl/seg_scan.vhd 的共阴译码表一致；blank = 0x00）
 DIGITS = {0x3F: "0", 0x06: "1", 0x5B: "2", 0x4F: "3", 0x66: "4",
@@ -429,7 +462,9 @@ def build(b):
                  ("u_puzzle|pos", 32), ("u_puzzle|locked", 4),
                  ("u_puzzle|mv_dir", 4), ("u_puzzle|mv_pend", 1),
                  ("u_puzzle|chk_pos", 8),
-                 ("u_puzzle|ori", 8), ("u_puzzle|sel", 2)):
+                 ("u_puzzle|ori", 8), ("u_puzzle|sel", 2),
+                 # 音效码 + buzzer 侧"这一步响不响"的门控（见 OBSERVE 的说明）
+                 ("u_fsm|sound_p", 4), ("u_buzz|on_now", 1)):
         if w == 1:
             b.output_bit(n)
         else:
@@ -928,6 +963,125 @@ def check(vf):
         "锚点 o_pos 全程不变；点亮格数守恒",
         rot_ok,
         "；".join(rot_notes) + "（参考格数 %s）" % cells_ref,
+    ))
+
+    # ========================================================================
+    # ⭐ 2026-10-10 新增：**音效 · 整机**（此前这一块在整机层面完全没有断言）
+    # ========================================================================
+    def _snd(t):
+        return _rd("u_fsm|sound_p", t)
+
+    def _bursts(nm, t0, t1, step=20_000.0):
+        """[t0,t1] 内 `nm` 为 '1' 的**连续区间个数**（= 响了几"声"）。
+        方波本身在音频频率上翻转，所以判"响没响"要看 buzzer 侧的 `on_now` 门控，
+        而不是直接数 `buzz` 的边沿。"""
+        n, prev, t = 0, "0", t0
+        while t <= t1:
+            v = vf.value_at(nm, t) or "0"
+            if v == "1" and prev != "1":
+                n += 1
+            prev, t = v, t + step
+        return n
+
+    # ⑱ 六个常驻场景的音效码（自检/待机/预览/一关对局/胜利/失败）
+    cases = [
+        (T_SELFTEST[0] + 200_000.0, 0x1, "自检 = POST 单声短鸣（0001）"),
+        ((T_IDLE[0] + T_IDLE[1]) / 2, 0x0, "待机 = 静音（0000）"),
+        ((T_PREVIEW[0] + T_PREVIEW[1]) / 2, 0x2, "预览 = 金币音（0010）"),
+        ((T_PLAY[0] + T_PLAY[1]) / 2, 0x8, "第一关对局 = BGM1（1000）"),
+        (T_WIN + 1_500_000.0, 0x6, "通关胜利 = 过关号角（0110）"),
+        (T_FAIL_SCREEN + 1_500_000.0, 0x7, "失败 = Game Over（0111）"),
+    ]
+    bad = ["%s：实测 %s" % (nm, ("%04d" % bin(v)[2:]) if v is not None else "缺观测点")
+           for (t, want, nm) in cases for v in [_snd(t)] if v != want]
+    res.append((
+        "⑱ ★【音效 · 整机】六个常驻场景的音效码经 `game_fsm.sound_p → buzzer_ctrl.i_sel` "
+        "真的走到了蜂鸣器：自检 0001 / 待机 0000 / 预览 0010 / 一关 1000 / 胜利 0110 / 失败 0111",
+        not bad,
+        "；".join("%s t=%.0f 码=%s（期望 %s）"
+                  % (nm, t, _snd(t), format(want, "04b")) for (t, want, nm) in cases)
+        + ("；✗ " + "；".join(bad) if bad else ""),
+    ))
+
+    # ⑲ 三关三首 BGM 逐关不同
+    #    ⚠️ 2026-10-10 第一次跑时的**假失败**（教训值得留档）：原来在"第三关对局开始后 2 ms"
+    #       单点采样，结果读到 **1010（旋转音）** 而不是 1011 —— 因为走法计划的**第一条命令
+    #       就是【旋转】**，而瞬时事件码会被 `snd_hold` 保持 **2 个旋律步（800 us）**，
+    #       单点采样正好落在它的保持窗口里。⇒ 改成**扫描整个对局窗口**、
+    #       判"这一关的 BGM 码**出现过**"（对按键事件码免疫）。
+    #       这是"单点采样 vs 事件保持窗口"这类假失败的第二次出现（第一次在 ⑱ 的注释里）。
+    def _codes_in(t0, t1, step=100_000.0):
+        s, t = set(), t0
+        while t <= t1:
+            v = _snd(t)
+            if v is not None:
+                s.add(v)
+            t += step
+        return s
+
+    lvl_win = [(T_L1_PREVIEW + 7_000_000.0, T_L2_CONF, 0x9, "第二关"),
+               (T_L2_PREVIEW + 7_000_000.0, T_L3_CONF, 0xB, "第三关")]
+    got = [(nm, want, _codes_in(a, b)) for (a, b, want, nm) in lvl_win]
+    bad2 = ["%s：窗口内音效码集合 %s 不含 %s"
+            % (nm, sorted(format(c, "04b") for c in s), format(want, "04b"))
+            for (nm, want, s) in got if want not in s]
+    res.append((
+        "⑲ ★【音效 · 整机】**每一关一首不同的背景音乐**：一关 1000（⑱ 已测）、"
+        "二关 1001、三关 1011 —— A1 的『不同情况播放不同音乐』在整机上成立"
+        "（**扫描整段对局窗口**，对按键事件码免疫）",
+        not bad2,
+        "；".join("%s 对局窗口内音效码集合 = %s（应含 %s）"
+                  % (nm, sorted(format(c, "04b") for c in s), format(want, "04b"))
+                  for (nm, want, s) in got)
+        + ("；✗ " + "；".join(bad2) if bad2 else ""),
+    ))
+
+    # ⑳ 按键音效：确认 1100 / 旋转 1010 / 移动与选择**保持 BGM 不变**
+    sel_c = _snd((T_PLAY_SEL[0] + T_PLAY_SEL[1]) / 2)      # 【选择】之后
+    dir_c = _snd((T_DIR[0] + T_DIR[1]) / 2)                # 方向键之后
+    conf_c = _snd(T_CONF1)
+    rot_c = _snd(T_ROT1)
+    ok20 = (conf_c == 0xC and rot_c == 0xA and sel_c == 0x8 and dir_c == 0x8)
+    res.append((
+        "⑳ ★【音效 · 整机】对局里只有两个按键反馈音：**【确认】= 1100、【旋转】= 1010**；"
+        "而**【选择】与方向键保持背景音乐码 1000 不变**（用户原话：上下左右不要额外音效）",
+        ok20,
+        "选择后=%s（期望 1000）；方向上/下/左/右后=%s（期望 1000）；"
+        "确认=%s（期望 1100）；旋转=%s（期望 1010）"
+        % (format(sel_c or 0, "04b"), format(dir_c or 0, "04b"),
+           format(conf_c or 0, "04b"), format(rot_c or 0, "04b")),
+    ))
+
+    # ㉑ SW7=0 期间蜂鸣器恒不响（B1：所有显示器件不显示；`i_en` 同时门控蜂鸣器）
+    off_hi = []
+    t = T_OFF[0]
+    while t <= T_OFF[1]:
+        if (vf.value_at("buzz", t) or "0") == "1":
+            off_hi.append("%.0f" % t)
+        t += 20_000.0
+    res.append((
+        "㉑ ★【音效 · 整机】SW7=0 期间 `buzz` 恒为 '0'（B1：开关关掉时全部不显示，"
+        "蜂鸣器也由 `i_en` 一起门控）",
+        not off_hi,
+        "在 [%.0f, %.0f] 内采样 %d 点，高电平点 %s"
+        % (T_OFF[0], T_OFF[1], int((T_OFF[1] - T_OFF[0]) / 20_000.0) + 1,
+           off_hi or "无"),
+    ))
+
+    # ㉒ ★【ERR-051 回归 · 整机】SW7 关→开之后的自检**恰好一声**
+    #    自检音效的发声步是第 0/8 步，而 buzzer 的 `step` 是自由走的；
+    #    窗口**恒 8 步**（㉓ 的时长判据 + tb_game_fsm ㉘ 的节拍判据）⇒ 8 个连续步
+    #    **必然恰好包含**第 0 或第 8 步中的一个 ⇒ **恒为一声**。
+    #    旧实现的窗口是 (1,2] s = 4~8 步 ⇒ 某些相位**一声都不响**（板上"自检没声音"）。
+    n_burst = _bursts("u_buzz|on_now", T_SW2_SELF_SCAN[0], T_SW2_SELF_SCAN[1])
+    st_mid = _rd("u_fsm|st", T_SW2_SELF_MIN)
+    res.append((
+        "㉒ ★【ERR-051 回归 · 整机】SW7 关→开之后自检窗口内蜂鸣器**恰好响一声**，"
+        "且窗口中段仍在自检态（窗口恒 8 个旋律步 ⇒ 必含第 0 或第 8 步之一）",
+        n_burst == 1 and st_mid == 0,
+        "扫描窗口 [%.0f, %.0f]：`u_buzz|on_now` 连续区间 **%d** 个（期望 1）；"
+        "t=%.0f 时状态=%s（期望 0 自检）"
+        % (T_SW2_SELF_SCAN[0], T_SW2_SELF_SCAN[1], n_burst, T_SW2_SELF_MIN, st_mid),
     ))
 
     return res

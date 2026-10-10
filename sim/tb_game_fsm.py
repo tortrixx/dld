@@ -68,7 +68,11 @@ GRID_PERIOD = 10.0
 #    （它们一起平移），所以 ERR-024 的残留场景语义不变。
 D3_SHIFT = 20000.0
 
-DURATION = 192000.0 + D3_SHIFT
+DURATION = 202000.0 + D3_SHIFT
+# ⚠️ 2026-10-10：DURATION 由 192000+D3_SHIFT 延长到 **202000+D3_SHIFT** ——
+#    为 ERR-051 的**错相回归**腾出位置（见下面 T6_OFF/T6_ON）。
+#    原来的尾段只到 212000，而断言 ⑱（对局中按【开始】→ 重新散落）要到 ~210010 才看得到散落，
+#    所以错相的 SW7 关→开必须排在它**之后**，否则会把那一局提前掐断（第一次跑就是这样挂的）。
 
 S_SELF, S_IDLE, S_PREV, S_PLAY, S_WIN, S_FAIL = 0, 1, 2, 3, 4, 5
 T_PREVIEW, T_L1, T_L2 = 5, 30, 40          # 课程要求 B4 / B5 / B10
@@ -156,9 +160,20 @@ T_SW_ON2 = 122000.0 + D3_SHIFT             # SW7 再拨上去（自检 2 s -> �
 T_SW_OFF3 = 158000.0 + D3_SHIFT            # 第二次拨下去
 T_SW_ON3 = 160000.0 + D3_SHIFT             # 第三次拨上去
 T_PLAY3 = 138020.0 + D3_SHIFT              # 第三局对局开始（推算：见 §1.2 时间表）
+# ⭐ ERR-051 回归（2026-10-10）：**故意把 SW7 的关→开放在与 1 Hz 网格错开 700 ns 的相位上**。
+#   原来 tb 里三处 SW7 拨动（T_SW_ON2 / T_SW_OFF3 / T_SW_ON3）**全都是 2000 的整数倍**、
+#   正好落在 tick_1hz 网格上 —— 那正是这个缺陷**从来没被仿真抓到、只在板上以"没声音"暴露**
+#   的原因：入口与网格对齐时，旧实现"(1,2] s 的相位依赖"恰好退化成"正好 2 s"。
+#   所以这里专门加一段**错相**的 SW7 关→开（204700 mod 2000 = 700），
+#   用来钉住"自检窗口恒为 8 个 tick_4hz"这条不变量（见断言 ㉘）。
+T6_OFF = 214000.0                          # 第六场景：SW7 拨下去（错相回归用）
+T6_ON = 216700.0                           # 错开 1 Hz 网格 700 ns（216700 mod 2000 = 700）
+#   ⚠️ 必须排在断言 ⑱（对局中按【开始】→ ~210010 重新散落）**之后**，
+#      否则 SW7=0 会把那一局掐断（首跑实测：⑱ 报"再次散落时刻=无"）。
 # SW7 的拨动序列：(时刻, 电平)。第五场景需要**再清一次**，才能从干净的自检重新开局。
 SW_SPANS = [(0.0, T_SW_OFF2, 1), (T_SW_OFF2, T_SW_ON2, 0), (T_SW_ON2, T_SW_OFF3, 1),
-            (T_SW_OFF3, T_SW_ON3, 0), (T_SW_ON3, DURATION, 1)]
+            (T_SW_OFF3, T_SW_ON3, 0), (T_SW_ON3, T6_OFF, 1),
+            (T6_OFF, T6_ON, 0), (T6_ON, DURATION, 1)]
 
 OBSERVE = ["i_clk", "i_sw", "i_press", "i_key", "i_tick_1hz", "i_tick_4hz",
            "i_solved", "i_all_lock", "i_shuf_busy",
@@ -312,14 +327,16 @@ def _first_state(vf, want, after=0.0):
 def check(vf):
     res = []
     st_tr = _bus_trace(vf, "o_state")
-
-    # ① 复位 -> 自检；2 个 1 Hz 节拍后 -> 待机
+    # ① 复位 -> 自检；**恰好 8 个 tick_4hz** 后 -> 待机
+    #    ⚠️ 2026-10-10（ERR-051 修法）：自检窗口从"数 2 个 tick_1hz"改成"数 8 个 tick_4hz"。
+    #       复位路径下两者的**时长相同**（都是 2 s = 4000 ns），所以本断言的期望值不变；
+    #       变的只是它现在对**每一条进入路径**都成立（错相那条由 ㉘ 专门覆盖）。
     t_idle = _first_state(vf, S_IDLE)
     res.append((
-        "① 复位后进自检，2 个 1 Hz 节拍后进待机（B1/B2：自检 2 秒）",
+        "① 复位后进自检，恰好 8 个 tick_4hz（= 2 s，B1/B2）后进待机",
         _bus_at(vf, "o_state", 1000.0) == S_SELF and t_idle is not None
         and abs(t_idle - (2 * T1 + CLK)) < CLK,
-        "t=1000ns 状态=%s（期望 %d 自检）；进入待机时刻=%.0f ns（期望 %.0f ns = 2 个节拍）"
+        "t=1000ns 状态=%s（期望 %d 自检）；进入待机时刻=%.0f ns（期望 %.0f ns = 8 个 250 ms 拍）"
         % (_bus_at(vf, "o_state", 1000.0), S_SELF, -1 if t_idle is None else t_idle,
            2 * T1 + CLK),
     ))
@@ -508,15 +525,23 @@ def check(vf):
         % (_bus_at(vf, "o_state", T13), S_FAIL),
     ))
 
-    # ⑭ SW7=0 立刻回自检并清空
+    # ⑭ SW7=0 立刻回自检并清空（B1）
+    #    ⚠️ 2026-10-10（ERR-051 修法）：`o_time` 的期望值由 **0 改成 7**（= pkg.T_SELFTEST_T4）。
+    #       原因是自检窗口现在**复用 `cnt` 倒计数**（入口装载 7、数到 0 退出），
+    #       而 SW7=0 时 FSM 就停在 S_SELF_TEST 里 ⇒ `cnt` 自然停在 7。
+    #       **这不是"没清零"**：B1 要的是"全部不显示"，而 SW7=0 时点阵/数码管都被
+    #       `i_en` 门控熄灭，`o_time` 只对预览/对局的倒计时显示有意义（自检态不显示时间）。
+    #       真正要清的 `o_level`/`o_lvl3` 仍然是 0（下面照旧判）。
+    #       改这里之前请先看 RTL 里 `cnt` 的声明注释（三种写法只有"倒计数"装得下）。
     T14 = 120100.0 + D3_SHIFT
     res.append((
-        "⑭ SW7=0 立刻回到自检并清零（B1：开关关掉时全部不显示）",
+        "⑭ SW7=0 立刻回到自检并清零（B1：开关关掉时全部不显示）；"
+        "o_time = 自检倒计数初值 7（ERR-051 修法后 `cnt` 被自检复用，见 RTL 注释）",
         _bus_at(vf, "o_state", T14) == S_SELF
         and _bit_at(vf, "o_level", T14) == "0"
         and _bit_at(vf, "o_lvl3", T14) == "0"
-        and _bus_at(vf, "o_time", T14) == 0,
-        "SW 拉低后 o_state=%s（期望 %d）、o_level=%s、o_lvl3=%s、o_time=%s"
+        and _bus_at(vf, "o_time", T14) == 7,
+        "SW 拉低后 o_state=%s（期望 %d）、o_level=%s、o_lvl3=%s、o_time=%s（期望 7）"
         % (_bus_at(vf, "o_state", T14), S_SELF,
            _bit_at(vf, "o_level", T14), _bit_at(vf, "o_lvl3", T14),
            _bus_at(vf, "o_time", T14)),
@@ -791,6 +816,30 @@ def check(vf):
         "（背景音乐兜底 + 事件码覆盖）—— 上板「全程没声音」这条不可能再出现",
         not silent,
         "采样 %d 次，静音采样点=%s" % (n_samp, silent or "无"),
+    ))
+
+    # ㉘ ★【ERR-051 回归 · 根因】SW7 关→开（**相位与 1 Hz 网格错开 700 ns**）之后，
+    #    自检窗口必须**恰好 8 个 tick_4hz**（= 8 x 250 ms = **2 s**，B2），且与复位路径一致。
+    #    【为什么这条是 ERR-051 的根因判据】自检音效 `MEL_SELF` 的发声步是第 0/8 步，
+    #    而 buzzer_ctrl 的 `step` 是**自由走**的（换码不清零）。窗口**恰好 8 步**时，
+    #    8 个连续步**必然恰好包含**第 0 或第 8 步中的一个（两者相隔 8）⇒ **恒为一声**；
+    #    而旧实现的窗口是 **(1,2] s = 4~8 步**，某些相位**一个发声步都碰不到
+    #    ⇒ 整段 2 s 一声不响**（"恰好一声"只在复位路径成立 —— 这就是 ERR-051）。
+    #    ⚠️ 本 tb 原来三处 SW7 拨动**全都落在 1 Hz 网格上**，所以旧实现恰好也给出 2 s、
+    #       仿真一直是绿的；这条断言用**错相**激励才抓得住它（"绝对说法要逐路径验"）。
+    t6_exit = None
+    for (t, v) in st_tr:
+        if t >= T6_ON and v == S_IDLE:
+            t6_exit = t
+            break
+    n_t4 = (sum(1 for r in _rises(vf, "i_tick_4hz") if T6_ON <= r < t6_exit)
+            if t6_exit is not None else -1)
+    res.append((
+        "㉘ ★【ERR-051 回归】SW7 关→开（与 1 Hz 网格错开 700 ns）后，"
+        "自检窗口 = **恰好 8 个 tick_4hz**（8 x 250 ms = 2 s，B2）",
+        n_t4 == 8,
+        "SW7 在 t=%.0f 拉高；o_state 回待机 t=%s；其间 i_tick_4hz 上升沿 **%d** 个（期望 8）"
+        % (T6_ON, ("%.0f" % t6_exit) if t6_exit else "未出现", n_t4),
     ))
 
     return res
