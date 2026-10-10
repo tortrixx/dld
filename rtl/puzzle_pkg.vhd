@@ -413,6 +413,22 @@ package puzzle_pkg is
     -- 5. Game timing (course requirement values, do not change casually)
     ----------------------------------------------------------------------------
     constant T_SELFTEST : integer := 2;    -- B1/B2 : self-test lasts 2 s
+    -- ⭐ 2026-10-10（**ERR-051 修法**）：自检窗口改由 **tick_4hz（250 ms）** 计数，
+    --    倒计数初值 = 8 拍 - 1 ⇒ **恰好 2 s**。
+    --    为什么必须改：旧实现数 **tick_1hz**（`selfc` 2 位，`selfc = 1` 时退出），
+    --    时长 = 2 个 tick_1hz —— 但**入口相位不同，实际是 (1, 2] s**：
+    --      · 复位/上电路径：tick 计数器与 FSM 同时被 i_rst 清零 ⇒ 恰好 2.000 s；
+    --      · **SW7 关→开重新进入**：tick_1hz 自由走，入口可落在 1 s 网格任意处
+    --        ⇒ 1 s 就数满 ⇒ **自检只有 1 s**（B2 明文要求"2 秒后进入待机"）。
+    --    更严重的是它**放大了 ERR-051**：自检音效 `MEL_SELF` 的发声步是第 0/8 步，
+    --    而 `step` 是自由走的 —— 窗口只有 4~8 步时，某些相位**一个发声步都碰不到
+    --    ⇒ 整段 2 s 一声不响**。
+    --    改成数 tick_4hz 后窗口**恒为 8 个旋律步**；8 个连续步**必然恰好包含
+    --    第 0 或第 8 步中的一个**（两者相隔 8）⇒ **恒为一声**，且时长恒为 2 s。
+    --    ⚠️ 用**倒计数**（复用 `cnt` 在预览/对局里已有的减法器）而不是正计数：
+    --       器件 LAB 已满 127/127，实测正计数要新造 6 位加法器、**fitter 直接要
+    --       128 LABs 装不下**（见 docs/05 §1.5 与 docs/06 的 ERR-051）。
+    constant T_SELFTEST_T4 : integer := 7; -- 倒计数初值：8 拍 x 250 ms = 2 s
     constant T_PREVIEW  : integer := 5;    -- B4/B10: preview lasts 5 s
     constant T_LEVEL1   : integer := 30;   -- B5    : level-1 time limit 30 s
     constant T_LEVEL2   : integer := 40;   -- B10   : level-2 time limit 40 s

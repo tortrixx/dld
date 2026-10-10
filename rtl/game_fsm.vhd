@@ -158,7 +158,34 @@ architecture rtl of game_fsm is
     --    见文件头的说明（加宽 o_level 会让 Fmax 掉 2~5 MHz）。
     signal lvl3    : std_logic := '0';
     signal cnt     : unsigned(5 downto 0) := (others => '0');
-    signal selfc   : unsigned(1 downto 0) := (others => '0');   -- self-test seconds
+    -- ⚠️ **ERR-051 的修法（2026-10-10）：自检窗口复用 `cnt`，且刻意"倒计数"。**
+    --
+    -- 【原来错在哪】自检窗口用一个 2 位 `selfc` 数 tick_1hz（`selfc = 1` 时退出），
+    --    于是**入口相位不同、时长就是 (1, 2] s**：
+    --      · 复位/上电路径：tick 计数器与 FSM 同时被 i_rst 清零，入口落在 1 s 网格上
+    --        ⇒ 恰好 2.000 s；
+    --      · **SW7 关→开重新进入**：tick_1hz 自由走，入口可落在网格任意位置
+    --        ⇒ 只要 1 s 就数满 2 个脉冲 ⇒ 自检只有 **1 s**（B2 明文要求"2 秒后进入待机"）。
+    --    更要命的是它**放大了 ERR-051**：自检音效（buzzer_ctrl 的 MEL_SELF）发声步是
+    --    第 0/8 步，而 `step` 是自由走的 —— 窗口只有 4~8 步时，某些相位**一个发声步都
+    --    碰不到 ⇒ 整段 2 s 一声不响**（"恰好一声"只在复位路径成立）。
+    --
+    -- 【现在怎么做】改数 **tick_4hz 满 8 拍**（8 × 250 ms = **恰好 2 s**，两条进入路径
+    --    一致），窗口**恒为 8 个旋律步**；8 个连续步**必然恰好包含第 0 或第 8 步中的一个**
+    --    （两者相隔 8）⇒ **恒为一声**，且时长恒为 2 s（B2 的"2 秒"在两条路径上都成立）。
+    --
+    -- 【为什么是"复用 cnt + 倒计数"】本器件 **LAB 已满 127/127**，每一步都要量：
+    --      · 加宽 `selfc` 2→3 位（数 tick_4hz）：实测 SEED 5 下 fitter 要 **128 LABs，
+    --        直接装不下**；
+    --      · 复用 `cnt` 但**正计数**（`cnt <= cnt + 1` 比到 7）：`cnt` 在别处只有
+    --        `cnt - 1` 与常量装载，正计数要**新造一个 6 位加法器** —— 实测同样装不下；
+    --      · ✅ **复用 `cnt` + 倒计数**（入口装 7、数到 0 退出）：直接复用已有的
+    --        减法器与比较器，`selfc` 整个删掉（−2 FF）。**这是三种里唯一装得下的**。
+    --    这就是"99% 占用率下先找'已经在手边的资源'"那条经验（docs/05 §1.5）的又一次应用。
+    --    ⚠️ `cnt` 复用是安全的：自检期间它本来就空闲；S_IDLE 不用它；
+    --       进预览时会被重新装载为 T_PREVIEW（见下面 S_PREVIEW 分支）。
+    --    ⚠️ 复位 / SW7=0 / `when others` 三处入口都装载 `T_SELFTEST_T4`，
+    --       保证**任何一条进入路径**的窗口长度都一样（ERR-051 的教训：绝对说法要逐路径验）。
 
     -- one-cycle command strobes handed to puzzle_ctrl, created in the outputs
     -- section below
@@ -213,8 +240,7 @@ begin
                 st    <= S_SELF_TEST;
                 level <= '0';
                 lvl3  <= '0';
-                cnt   <= (others => '0');
-                selfc <= (others => '0');
+                cnt   <= to_unsigned(T_SELFTEST_T4, 6);   -- 自检倒计数初值（8 拍 = 2 s）
             elsif (i_sw = '0') then
                 -- B1: with the switch off the whole system is held at the top of
                 -- the sequence, so switching back on always shows a fresh
@@ -222,18 +248,24 @@ begin
                 st    <= S_SELF_TEST;
                 level <= '0';
                 lvl3  <= '0';
-                cnt   <= (others => '0');
-                selfc <= (others => '0');
+                cnt   <= to_unsigned(T_SELFTEST_T4, 6);   -- 自检窗口恒 8 拍 = 2 s
             else
                 case st is
 
                     when S_SELF_TEST =>
-                        if (i_tick_1hz = '1') then
-                            if (selfc = 1) then            -- 2 seconds
-                                selfc <= (others => '0');
-                                st    <= S_IDLE;
+                        -- ⚠️ ERR-051 修法（见 `cnt` 的声明注释）：数 **tick_4hz** 满 8 拍
+                        --    = 恰好 **2 s**（B2），且**两条进入路径都成立**。
+                        --    旧写法数 tick_1hz（2 拍）在 SW7 重新进入时只有 1 s，
+                        --    并让自检音效在某些相位整段不响。
+                        --    ⚠️ 这里**倒计数**（入口装载 7，数到 0 退出）而不是正计数：
+                        --       `cnt` 在预览/对局里本来就是**递减**的（`cnt <= cnt - 1`），
+                        --       倒计数直接复用**已有的减法器与比较器**；
+                        --       正计数则要新造一个 6 位加法器（实测会多要一个 LAB）。
+                        if (i_tick_4hz = '1') then
+                            if (cnt = 0) then            -- 8 拍 x 250 ms = 2 s
+                                st <= S_IDLE;
                             else
-                                selfc <= selfc + 1;
+                                cnt <= cnt - 1;
                             end if;
                         end if;
 
@@ -313,7 +345,10 @@ begin
                         end if;
 
                     when others =>
-                        st <= S_SELF_TEST;
+                        -- 不可达（6 个状态全部枚举）；保留兜底并同样装载自检倒计数初值，
+                        -- 免得万一进入时 `cnt` 停在别的值、自检窗口长度不定（ERR-051 的教训）。
+                        st  <= S_SELF_TEST;
+                        cnt <= to_unsigned(T_SELFTEST_T4, 6);
                 end case;
             end if;
         end if;
