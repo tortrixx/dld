@@ -11,7 +11,8 @@
 import pathlib
 from PIL import Image
 
-FIG = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.ref\topics_figs")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+FIG = ROOT / ".ref" / "topics_figs"
 im = Image.open(FIG / "p01_0_IM29.jpg").convert("RGB")
 W, H = im.size
 print("size", W, H)

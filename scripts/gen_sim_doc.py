@@ -8,8 +8,13 @@
 """
 import json
 import pathlib
+import sys
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+# 仓库根 = 本脚本所在目录的上一级（**不写死绝对路径**）
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 R = ROOT / "sim" / "rounds"
 OUT = ROOT / "docs" / "03-仿真验证方案.md"
 

@@ -9,7 +9,9 @@ tick 边沿既发布本轮结果，又正是消抖级采样的时刻。
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "keypad_scan.vhd"
 s = p.read_text(encoding="utf-8")
 
 s = s.replace("    signal round_code : std_logic_vector(3 downto 0) := K_NONE;  -- result of the LAST round\n"

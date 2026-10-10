@@ -2,7 +2,7 @@
 """检查 parse_entity_ports 实际看到的内容。"""
 import pathlib, re, sys
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 text = (ROOT / "rtl" / "puzzle_top.vhd").read_text(encoding="utf-8")
 
 m = re.search(r"entity\s+\w+\s+is\s+port\s*\(", text, re.I)

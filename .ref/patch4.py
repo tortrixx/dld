@@ -3,7 +3,9 @@
 赋值。把 ROM 的输出改名为 rom_row/rom_col。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 
 # 1. 在其它声明旁边加上 ROM 的输出信号

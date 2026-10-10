@@ -8,11 +8,22 @@
 
 用法：
     python scripts/gen_project.py                 # top = board_test_top
-    python scripts/gen_project.py puzzle_top      # top = puzzle_top
+    python scripts/gen_project.py puzzle_top      # top = puzzle_top（推荐）
+
+⚠️ 本脚本**可以在任意目录、任意克隆位置运行**：仓库根由 `__file__` 推出，
+   生成的文件一定落在**你自己克隆出来的** `quartus/` 下，不会写去别的地方。
 """
 import re, sys, pathlib
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+# 仓库根 = 本脚本所在目录（scripts/）的上一级。
+# ⚠️ 这里**绝不能写死绝对路径**：同学把仓库克隆到别的目录后，
+#    写死的 ROOT 会让他机器上"凭空新建"出作者的那条路径，
+#    而他自己仓库里的 quartus/puzzle.qpf 始终不存在 ——
+#    最坏的地方是它**不报错、退出码还是 0**，根本看不出来。
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 # Quartus 工程位于 quartus/（旧目录布局）。把生成的文件集中放在
 # 这一个子目录里，一份全新 clone 出来的仓库就能直接编译，
 # 无需任何手工建工程的步骤。
@@ -223,6 +234,17 @@ if __name__ == "__main__":
     top = sys.argv[1] if len(sys.argv) > 1 else "board_test_top"
     if top not in TOP_PORTS:
         raise SystemExit("unknown top: %s (known: %s)" % (top, list(TOP_PORTS)))
+    # ---- 检查 0：确认自己确实跑在一个**完整的克隆**里 ------------------
+    #   少了这一条，"克隆不完整/跑错目录"会退化成一个看不懂的报错
+    #   （或者更糟：生成到别处去）。这里提前给出可操作的中文提示。
+    if not (ROOT / "rtl").is_dir():
+        raise SystemExit(
+            "✗ 在 %s 下找不到 rtl/ 目录 —— 本脚本必须放在仓库的 scripts/ 里运行。\n"
+            "  正确用法（在仓库根目录）： python scripts/gen_project.py %s" % (ROOT, top))
+    src = ROOT / "rtl" / (top + ".vhd")
+    if not src.is_file():
+        raise SystemExit("✗ 找不到顶层源文件 %s —— 顶层实体名写错了吗？" % src)
+
     # ---- 检查 1：每个列出的端口都必须有引脚 ------------------------
     missing = [p for p in TOP_PORTS[top] if p not in PINS]
     if missing:
@@ -241,6 +263,10 @@ if __name__ == "__main__":
             % (top, unlisted, top)
         )
     PROJ.mkdir(parents=True, exist_ok=True)
+    # 先说要写什么、写到哪里 —— 幂等重跑时这一行能让人一眼确认"位置对不对"。
+    print("将写入（仓库根 = %s）：" % ROOT)
+    print("  · %s" % (PROJ / "puzzle.qpf"))
+    print("  · %s" % (PROJ / "puzzle.qsf"))
     # ⚠️ newline="\n" 是必须的：Windows 上 write_text 默认写 CRLF，而
     #    .gitattributes 规定仓库内文本一律 LF —— 不统一的话每台机器上
     #    `git status` 都会因为换行符抖动而显示"文件被修改"（假 diff）。
@@ -249,3 +275,8 @@ if __name__ == "__main__":
     n = sum(len(PINS[g]) if isinstance(PINS[g], list) else 1
             for g in TOP_PORTS[top])
     print("wrote quartus/puzzle.qpf and quartus/puzzle.qsf  (top=%s, %d pins)" % (top, n))
+    print()
+    print("下一步：")
+    print("  1) 用 Quartus II 9.1 打开 %s" % (PROJ / "puzzle.qpf"))
+    print("  2) Start Compilation（或 & \"$env:QUARTUS_ROOT\\quartus\\bin\\quartus_sh.exe\" -t scripts/build.tcl）")
+    print("  3) 烧录 %s" % (PROJ / "output_files" / "puzzle.pof"))

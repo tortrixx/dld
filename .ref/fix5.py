@@ -12,7 +12,9 @@ S_PLAYING 中才开始，所以空闲和预览期间所有零片仍停在
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_top.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_top.vhd"
 s = p.read_text(encoding="utf-8")
 
 old = """    process (state, gblink, mrow, eng_fr, eng_fg, win_row, fail_row)

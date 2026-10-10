@@ -2,8 +2,10 @@
 """补丁：game_fsm 的端口命名（输入统一命名为 i_*）+ puzzle_ctrl 的 busy 输出。"""
 import pathlib
 
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
 # ---- game_fsm.vhd ---------------------------------------------------------
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
+p = ROOT / "rtl" / "game_fsm.vhd"
 s = p.read_text(encoding="utf-8")
 s = s.replace("        o_solved   : in  std_logic;                      -- from puzzle_ctrl\n"
               "        o_all_lock : in  std_logic;                      -- from puzzle_ctrl\n"
@@ -21,7 +23,7 @@ p.write_text(s, encoding="utf-8")
 print("game_fsm patched")
 
 # ---- puzzle_ctrl.vhd：增加 busy 输出 -------------------------------
-q = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+q = ROOT / "rtl" / "puzzle_ctrl.vhd"
 t = q.read_text(encoding="utf-8")
 t = t.replace("        o_solved  : out std_logic;                      -- all locked AND all on target\n"
               "        o_all_lock: out std_logic;                      -- every piece locked\n",

@@ -8,7 +8,9 @@ BUG：row_rel 在每个释放相位都被覆盖，所以只有最后一个相位
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "keypad_scan.vhd"
 s = p.read_text(encoding="utf-8")
 
 # ---- 累加每个相位的列信息 --------------------------------

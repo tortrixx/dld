@@ -3,7 +3,9 @@
 数码管位计数器以 50 MHz 飞快计数）。增加一个 200 Hz tick，并使用行锁存。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_raw_top.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "keypad_raw_top.vhd"
 s = p.read_text(encoding="utf-8")
 
 s = s.replace("    signal seg_raw : std_logic_vector(7 downto 0);\n",

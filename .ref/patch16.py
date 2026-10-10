@@ -2,7 +2,9 @@
 """把 puzzle_ctrl 的行输出改名为 o_rowr / o_rowg（行扫描命名）。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 s = s.replace("        o_red     : out std_logic_vector(7 downto 0);   -- row o_scanrow, red\n"
               "        o_grn     : out std_logic_vector(7 downto 0)    -- row o_scanrow, green\n",

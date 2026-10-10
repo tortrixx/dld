@@ -5,10 +5,11 @@
 再加上逐行 AND。这里测量的是包围盒版本，也就是参考实现所用的做法，
 它只需要整数比较。
 """
-import pathlib, shutil, subprocess
+import os, pathlib, shutil, subprocess
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
-QUARTUS = pathlib.Path(r"C:\QuartusII91\QuartusII91\quartus\bin")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+# Quartus 安装目录：可用环境变量 QUARTUS_ROOT 覆盖，未设置时用常见安装路径兜底
+QUARTUS = pathlib.Path(os.environ.get("QUARTUS_ROOT", r"C:\QuartusII91\QuartusII91\quartus\bin"))
 SRC = (ROOT / "rtl" / "puzzle_ctrl.vhd").read_text(encoding="utf-8")
 
 def measure(name, text):

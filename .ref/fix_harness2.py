@@ -2,7 +2,9 @@
 """让 scratch 测试框架改用 puzzle_ctrl 的行扫描端口列表。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.ref\scratch_pc.py")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / ".ref" / "scratch_pc.py"
 s = p.read_text(encoding="utf-8")
 s = s.replace("""            o_sel_idx : out std_logic_vector(1 downto 0);
             o_pos     : out std_logic_vector(31 downto 0);

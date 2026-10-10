@@ -3,7 +3,9 @@
 并让它由**上一个**行计数器推导 —— 那才是正在求值的那一行。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 
 s = s.replace("    signal chk_orow : std_logic_vector(3 downto 0) := (others => '0');",

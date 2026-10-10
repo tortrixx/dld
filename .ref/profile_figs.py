@@ -3,7 +3,9 @@
 import pathlib
 from PIL import Image
 
-FIG = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.ref\topics_figs")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+FIG = ROOT / ".ref" / "topics_figs"
 
 def prof(name):
     im = Image.open(FIG / name).convert("RGB")

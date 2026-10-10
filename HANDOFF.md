@@ -1,5 +1,14 @@
 # HANDOFF — 会话交接单
 
+> ⭐ **克隆后第一步** = `python scripts/gen_project.py puzzle_top`（生成 `quartus/puzzle.qpf` + `quartus/puzzle.qsf`；**`.qpf` 故意不入库**，缺它就打不开工程）。
+> ⭐⭐ **第 19 工作阶段（2026-10-10 晚）已把仓库做成"换机器/换目录也能用"**：
+> 全仓库**不再有任何作者本机绝对路径**；Quartus 位置统一由 `scripts/qenv.py` 探测
+> （`QUARTUS_ROOT` → `QUARTUS_BIN` → `PATH` → 常见安装位置，**两种 `QUARTUS_ROOT` 填法都认**）；
+> 新增 `scripts/check_env.py`（环境自检）与 `scripts/bootstrap.ps1` / `.sh`（一键生成工程）；
+> README 顶部新增**「同学：克隆后如何编译烧录」六步**。详见 `PROGRESS.md` §25 / `AI_LOG.md` §25。
+> ⚠️ **纪律**：会重写 `quartus/puzzle.qsf` / `.qpf` 的动作（`gen_project.py`、`bootstrap.*`）
+> **与编译互斥** —— 本轮实测过一次"边重写 .qsf 边编译"导致编译失败。
+>
 > **给下一个会话：开工按此顺序读 —— 本文件 → `PROGRESS.md` → `docs/03-仿真验证方案.md`（仿真结果）→ `docs/06-硬件调试记录.md`（故障分析）**
 > 本文件是**自包含**的：原始 PDF 要求、板子信息、引脚、构建/烧录命令、
 > 当前进度、错误与经验、注意事项**全部收在这里**，不必再去翻 PDF。
@@ -82,13 +91,21 @@
 ## ⚠️ 上板前必做（本轮改了 RTL，板上固件已过期）
 
 ```powershell
+$env:QUARTUS_ROOT = "C:\altera\91"   # ← 改成你自己的安装目录（只需设一次）
 python scripts/gen_project.py puzzle_top          # ★ 会写入 SEED 6
 Remove-Item -Recurse -Force quartus/db, quartus/output_files, quartus/incremental_db
-& "C:/QuartusII91/QuartusII91/quartus/bin/quartus_sh.exe" -t scripts/build.tcl
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl
 python scripts/record_build.py                    # ★ 记固件身份（入库）
-& "C:/QuartusII91/QuartusII91/quartus/bin/quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
 python scripts/audit_evidence.py                  # ★ 上板前跑一遍：0 FAIL 才算证据链完整
 ```
+
+> ⭐ **`QUARTUS_ROOT` 怎么填**：它既可以指向 **Quartus 安装根目录**（其下就是 `quartus\bin\`），
+> 也可以直接指向 `quartus\bin`；仓库脚本 `scripts/qenv.py` 会按「**环境变量 → PATH → 常见安装位置**」
+> 的顺序自动找。上面的命令行按"**指向安装根目录**"给出（`$env:` 变量只对**当前 PowerShell 会话**有效，
+> 新开窗口要重设）。
+> ⚠️ **填错比不填更糟**（环境变量优先，会盖掉自动查找）；如果 Quartus 已经在 PATH 里，这段可以整段跳过。
+> （上面示例里的 `C:\altera\91` 只是**占位**，照抄等于填错。）
 
 ## 上板时**新增**的打勾点
 
@@ -167,11 +184,12 @@ python scripts/audit_evidence.py                  # ★ 上板前跑一遍：0 F
 ## ⚠️ 上板前必做（本轮改变了 RTL，板上的固件已过期）
 
 ```powershell
+$env:QUARTUS_ROOT = "C:\altera\91"   # ← 改成你自己的安装目录（只需设一次）
 python scripts/gen_project.py puzzle_top          # ★ 会写入 SEED 1
 Remove-Item -Recurse -Force quartus/db, quartus/output_files, quartus/incremental_db
-& "C:/QuartusII91/QuartusII91/quartus/bin/quartus_sh.exe" -t scripts/build.tcl
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl
 python scripts/record_build.py                    # ★ 记固件身份（入库）
-& "C:/QuartusII91/QuartusII91/quartus/bin/quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
 python scripts/audit_evidence.py                  # ★ 上板前跑一遍：0 FAIL 才算证据链完整
 ```
 
@@ -1197,7 +1215,7 @@ seed 重扫后固定 `SEED 5`；固件 00:20:22 生成、00:20:48 已重烧**。
 | 器件 | Altera MAX II **`EPM1270T144C5`**（144 脚 TQFP，C5 速度级，**1270 个 LE**） |
 | 工具 | **Quartus II 9.1**（Build 222），**VHDL** |
 | 开发板 | MAXII 数字逻辑实验开发板（**LCM12864 液晶版**） |
-| 工作目录 | `C:\Users\sznnn\Desktop\dld`（**从零新建**；旧仓库 `C:\Users\sznnn\Desktop\dld-lab` 仅供参考，勿改） |
+| 工作目录 | **仓库根目录（clone 到任意目录都可以）**（**从零新建**；旧仓库 `dld-lab` 仅供参考，勿改） |
 | 当前顶层 | `puzzle_top`（整机） |
 | 实测资源 | **1264 / 1270 LE（99%，余 6）**、**LAB 127/127（已满）**、**fitter `SEED 5`**，52 引脚，**满足 50 MHz 约束（clean build TimeQuest setup slack +1.231 ns ≈53.3 MHz、hold +1.078 ns、0 条违例）**（见 `docs/05` §1A/§1.4/§1.5/§5）；⚠️ **改常量值本身也会扰动装箱**（`1010`/`1011` 对调 → 128 LAB；16 步乐句 → +4 LE；⭐ **第二轮把休止填成音 → −5 LE**），且**改了 RTL（哪怕只改常量）就要重扫 seed**（四代可装种子：2/3/4/5/7、3/5/7/8、9/11、**1/5/7/9/13/15**） |
 | 仿真 | **收尾对抗性审查后已过**：`buzzer_ctrl` **`r23` = 16/16**（**tb 的 `MEL` 表已同步改成连奏值**；16 步乐句 / 8 音 E5..G6 / ÷256 / `cnt[7:0]` / 预留码静音）、`game_fsm` **`r25` = 29/29**（RTL 未改；**㉔ 改用【确认】、㉕ 改写为"确认 `1100` / 旋转 `1010`，选择与上保持背景音乐 `1000`（静音）"**）、⭐ **补跑两处陈旧绿证**：`pattern_rom` **`r10` = 8/8**、`piece_rom` **`r12` = 10/10**、⭐ **整机模式 A `puzzle_top` `r33` = 20/20（2026-10-10 00:25:13）**；**12 个模块/场景合计 169 条断言全过**（`check_geometry.py` = **ALL CHECKS PASSED**）；第 14 工作阶段的 `puzzle_ctrl` **`r26` = 27/27**（激励 **2 830 700 ns**、"**RTL 补丁：无**"）、`keypad_scan` **`r16` = 9/9** 仍是最近记录；⚠️ **`r33` 覆盖的是"玩法/判据/整机集成"，该 tb 没有音效断言** ⇒ 音效证据是 `r23`/`r25`；⚠️ **模式 B 仍待补跑**。历史轮次：`puzzle_top` `r31` 20/20（三关连过 + A4 旋转断言 ⑰）、`puzzle_ctrl` `r24` 26/26（含 7 条旋转用例）、`clk_gen` `r14` 10/10 |
@@ -1605,19 +1623,22 @@ mask 位号 = 8*行 + 列 ，bit0 = 左上角 ，第 0 行是【最上面】一�
 
 ## 4.1 标准工作流
 
-```bash
+```powershell
+# ⭐ 先设一次 Quartus 的安装位置（每个新开的 PowerShell 窗口都要设一次）
+$env:QUARTUS_ROOT = "C:\altera\91"   # ← 改成你自己的安装目录（只需设一次）
+
 # ① 切顶层 + 生成工程文件（引脚的真值源，改引脚只改 scripts/gen_project.py）
 python scripts/gen_project.py puzzle_top        # 或 board_test_top / keypad_diag_top / keypad_raw_top
 
 # ② 全流程编译（map→fit→asm→tan），会打印 LE 与 Fmax
-"C:/QuartusII91/QuartusII91/quartus/bin/quartus_sh.exe" -t scripts/build.tcl
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl
 
 # ③ 确认下载线在线
-"C:/QuartusII91/QuartusII91/quartus/bin/jtagconfig.exe"
+& "$env:QUARTUS_ROOT\quartus\bin\jtagconfig.exe"
 #   期望看到：USB-Blaster [USB-0]  /  020A30DD  EPM1270
 
 # ④ 烧录
-"C:/QuartusII91/QuartusII91/quartus/bin/quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
 ```
 
 产物在 `quartus/output_files/`（本工程用 `PROJECT_OUTPUT_DIRECTORY` 指定）：
@@ -1642,8 +1663,8 @@ python scripts/check_geometry.py        # 图案守恒、可铺性、锚点合�
 * `quartus_tan`（经典时序分析）**不读 `.sdc`**，Fmax 那一栏是空的；
   **Fmax 必须用 `quartus_sta`（TimeQuest）**。
 * **本机 `pip install pillow` 失败**（无网络/无匹配版本）。系统 Python 3.14 有 `pypdf`+`cryptography`；
-  捆绑 Python 有 `Pillow`。**PDF 提图用系统 Python，图像处理用捆绑 Python**：
-  `C:\Users\sznnn\.dsh\dsh-runtimes\dsh-primary-runtime\dependencies\python\python.exe`
+  捆绑 Python 有 `Pillow`。**PDF 提图用系统 Python，图像处理用捆绑 Python**
+  （捆绑 Python 的可执行文件在 DSH 运行时目录里，**路径随安装位置而变**，以本机会话的实际路径为准，**不要照抄**）。
 
 ## 4.4 ⚠️ 两条硬约束（本项目踩过，务必遵守）
 
@@ -1855,12 +1876,14 @@ ERR-022/025/026/028/029/034 与各条已回退/已否决的实验
 Erase/Program/Verify 全过，0 errors / 0 warnings，JTAG ID `0x020A30DD`；
 板子当前跑的就是这一版。**若期间又改过 RTL 或换过诊断固件，再按下面重烧一次**：
 
-```bash
+```powershell
+$env:QUARTUS_ROOT = "C:\altera\91"   # ← 改成你自己的安装目录（只需设一次）
 python scripts/gen_project.py puzzle_top          # ★ 会写入 SEED 5（改 seed 后必须清洁重编译）
-rm -rf quartus/db quartus/output_files quartus/incremental_db   # ★ 清洁（Windows: rd /s /q）
-"C:/QuartusII91/QuartusII91/quartus/bin/quartus_sh.exe" -t scripts/build.tcl
-python scripts/check_keypad_pins.py && python scripts/check_geometry.py
-"C:/QuartusII91/QuartusII91/quartus/bin/quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
+Remove-Item -Recurse -Force quartus/db, quartus/output_files, quartus/incremental_db   # ★ 清洁（删这三处）
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl
+python scripts/check_keypad_pins.py
+python scripts/check_geometry.py
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
 ```
 验收清单（**按物理键位**，见 §2.4 的键盘图；⭐ **本轮验收以"该听到什么"为主线**）：
 
@@ -2008,22 +2031,26 @@ dld/
 
 **最常用的六条命令**：
 
-```bash
+```powershell
+# ⭐ 先设一次 Quartus 的安装位置（每个新开的 PowerShell 窗口都要设一次）
+$env:QUARTUS_ROOT = "C:\altera\91"   # ← 改成你自己的安装目录（只需设一次）
+
 # ① 生成工程（引脚真值源）
 python scripts/gen_project.py puzzle_top
 
 # ② 全流程编译（map → fit → asm → tan）
-"C:/QuartusII91/QuartusII91/quartus/bin/quartus_sh.exe" -t scripts/build.tcl
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl
 
 # ③ 每次编译后必做：引脚三方对账 + 图案守恒/可铺性
-python scripts/check_geometry.py && python scripts/check_keypad_pins.py
+python scripts/check_geometry.py
+python scripts/check_keypad_pins.py
 
 # ④ 仿真（单个模块：激励→隔离工程→网表→仿真→断言→波形→轮次记录）
 python scripts/sim.py run puzzle_ctrl
 python scripts/sim_summary.py          # 所有模块的轮次总表
 
 # ⑤ 烧录
-"C:/QuartusII91/QuartusII91/quartus/bin/quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
 
 # ⑥ 报告素材回填（编译数字变了就重生成 docs/03）
 python scripts/gen_sim_doc.py

@@ -1611,3 +1611,50 @@ tb 立刻报出逐拍音高不符 —— 这正是"tb 的表**独立抄一份**�
   **没有改动网表**（这正是本项目"改了注释也要当成一次改动来对待"的做法）。
 * **全量重跑**：11 个模块 tb + 整机模式 A/B 全部重跑并通过。
 * `check_geometry.py` / `check_keypad_pins.py` / `check_plans.py` 全过。
+
+---
+
+## ⭐⭐ 25 · 第 19 工作阶段：**复现与可移植性**（让同学 clone 下来就能编译）
+
+> **触发**：用户给了一份 `复现与可移植性改进清单.md`，目标一句话 ——
+> 「任意目录 `git clone` 后，只需**系统 Python 3 + Quartus II 9.1**，执行
+> `python scripts/gen_project.py puzzle_top` 就能得到可编译烧录的工程；
+> 消除所有作者本机绝对路径；不引入第三方 Python 依赖。」
+> 范围限定：**只动"可移植/开箱即用"相关项；不改游戏逻辑、不改引脚真值、不扩大功能。**
+
+### ① 改了什么
+
+| 类别 | 文件 | 改动 |
+|---|---|---|
+| ⭐ **P0 修复** | `scripts/gen_project.py` | `ROOT` 由 `__file__` 推出（原来是 `C:\Users\sznnn\Desktop\dld`）；补 UTF-8 输出；**先打印将要写入的路径**；新增"这是不是一个完整克隆"的前置检查 |
+| ⭐ **新增** | `scripts/qenv.py` | **Quartus 探测集中到一处**：`QUARTUS_ROOT`（**两种填法都认**：安装根目录 / `quartus\bin`）→ `QUARTUS_BIN` → `PATH` → 常见安装位置；**惰性**（导入它不会因为没装 Quartus 而失败）；找不到时给出**三种解决办法**的报错 |
+| ⭐ **新增** | `scripts/check_env.py` | 环境自检：Python ≥3.8 / 必需文件 / 生成物 / Quartus / 第三方依赖；退出码 0/1，支持 `--quiet` |
+| ⭐ **新增** | `scripts/bootstrap.ps1`、`scripts/bootstrap.sh` | 一键 = 定位仓库根 + 找 Python（`python` → `py -3` 两级回退）+ 调 `gen_project.py puzzle_top` + 打印下一步 |
+| 路径相对化 | `scripts/sim.py`、`scratch_build.py` | Quartus 路径交给 `qenv`（`sim.py` 里写死的 `C:\QuartusII91\...` 删掉） |
+| 路径相对化 | `scripts/check_geometry.py`、`check_keypad_pins.py`、`gen_sim_doc.py`、`sim_summary.py` | `ROOT`/`PKG` 由 `__file__` 推出；缺 UTF-8 输出的补上 |
+| 路径相对化 | `scripts/sta_paths.tcl` | 仓库根由 `[info script]` 推出（原来写死作者路径） |
+| 路径相对化 | `.ref/*.py`（**70 个**） | 历史取证/补丁脚本：`ROOT` 由 `__file__` 推出；`dld-lab` 改 `ROOT.parent / "dld-lab"`（可用 `DLD_LAB_DIR` 覆盖）；Quartus 路径改 `QUARTUS_ROOT` + 兜底 |
+| 文档 | `README.md` | 顶部新增 **「同学：克隆后如何编译烧录」六步**（含"勾选 Add Python to PATH"、"`.qpf` 故意不入库"、"Quartus 会回写 2 行 `.qsf`，脏了别提交"） |
+| 文档 | `README.md` / `HANDOFF.md` / `docs/05` | 所有命令改成 `$env:QUARTUS_ROOT` 写法；示例值去作者化（`C:\altera\91`） |
+| 仓库卫生 | `quartus/puzzle.qsf` | **复原成生成器的规范输出**（Quartus 之前往里注入了 2 行：`LAST_QUARTUS_VERSION`、`RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND`）⇒ 现在"跑一次 `gen_project.py`"与仓库里的 `.qsf` **逐字节相同** |
+
+### ② 怎么验的
+
+| 判据 | 结果 |
+|---|---|
+| 全仓库 tracked 文件里**不再有作者用户名路径** | ✅ **0 命中**（`git grep -E 'C:\\Users\|sznnn\|Desktop[\\/]dld'`） |
+| 所有 Python 脚本能编译 | ✅ `py_compile` 覆盖全部（含 `.ref/` 70 个）rc=0 |
+| **网表未变**：清洁重编译 | ✅ `puzzle.pof` sha256 **`d5e16d98…` 与改前完全相同**；1268/1270 LE、LAB 127/127、Fmax 52.25 MHz、setup +0.861 ns |
+| 证据链 | ✅ `audit_evidence.py` = **0 FAIL / 1 WARN / 30 OK** |
+| **端到端验收（清单 §5）** | ✅ **clone 到另一个目录** → `check_env` → `gen_project puzzle_top` → **完整编译** → **`puzzle.pof` 与原仓库逐字节相同** |
+
+### ③ 两条教训（都是本轮实测踩出来的）
+
+1. ⭐ **"写死的 ROOT"最坏的地方不是报错，而是"静默写错地方且退出码 0"。**
+   审查者指出：同学 clone 到 `D:\hw\dld` 后跑 `gen_project.py`，它会在他机器上**凭空新建**
+   `C:\Users\sznnn\Desktop\dld\quartus\`，打印"成功"、退出码 0，而**他自己仓库里的 `.qpf` 始终不存在**。
+   —— 在作者本机测**完全看不出来**。这类缺陷只有"换一台机器/换一个目录"才能暴露，
+   所以**验收必须是"clone 到别的目录真跑一遍"**，而不是"在我这儿跑过了"。
+2. ⭐ **生成类脚本与编译不能并行。** 本轮我在跑清洁重编译的同时，另一个 agent 正在跑
+   `bootstrap.ps1`（它会**重写 `quartus/puzzle.qsf`**）⇒ 编译读到半截文件直接失败。
+   教训：**任何会重写工程文件（`.qsf`/`.qpf`）的动作，与编译是互斥的**。

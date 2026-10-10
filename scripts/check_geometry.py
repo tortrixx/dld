@@ -16,7 +16,9 @@ from itertools import product
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-PKG = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_pkg.vhd")
+# 仓库根 = 本脚本所在目录的上一级（**不写死绝对路径**，见 gen_project.py 的同款说明）
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+PKG = ROOT / "rtl" / "puzzle_pkg.vhd"
 src = PKG.read_text(encoding="utf-8")
 
 def const_bits(name):

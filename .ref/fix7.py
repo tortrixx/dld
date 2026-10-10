@@ -5,7 +5,9 @@
 完全不需要碰它。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "game_fsm.vhd"
 s = p.read_text(encoding="utf-8")
 
 # 删掉状态寄存器进程里的那两处赋值（都以 "go_done <= '0';\n" 结尾）

@@ -2,7 +2,9 @@
 """在生成器里注册 keypad_raw_top。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\scripts\gen_project.py")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "scripts" / "gen_project.py"
 s = p.read_text(encoding="utf-8")
 old = '''    "keypad_diag_top": ["clk", "sw7", "btn", "dot_row", "dot_colr", "dot_colg",
                         "seg", "cat"],'''

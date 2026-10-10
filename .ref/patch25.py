@@ -10,7 +10,9 @@ ph 是一个 3 位计数器（0..7），而 case 只用到 0..4。相位 5、6�
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 
 s = s.replace("                ph <= ph + 1;",

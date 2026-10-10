@@ -7,8 +7,10 @@
 """
 import pathlib
 
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
 # ---- puzzle_ctrl：寄存状态输出 ------------------------------
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 s = s.replace(
     "    signal solved_r  : std_logic;\n    signal alllock_r : std_logic;\n",
@@ -40,7 +42,7 @@ p.write_text(s, encoding="utf-8")
 print("puzzle_ctrl status registered")
 
 # ---- game_fsm：寄存音效码 -------------------------------------
-q = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
+q = ROOT / "rtl" / "game_fsm.vhd"
 t = q.read_text(encoding="utf-8")
 t = t.replace("    signal sound_r : std_logic_vector(2 downto 0) := \"000\";",
               "    signal sound_r : std_logic_vector(2 downto 0) := \"000\";\n"

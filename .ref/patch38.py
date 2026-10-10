@@ -8,7 +8,9 @@
 """
 import pathlib, re
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\scripts\gen_project.py")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "scripts" / "gen_project.py"
 s = p.read_text(encoding="utf-8")
 
 old_start = s.index("def parse_entity_ports(top: str):")

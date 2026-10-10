@@ -15,8 +15,10 @@
 """
 import pathlib
 
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
 # ---------------------------------------------------------------- keypad_scan
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
+p = ROOT / "rtl" / "keypad_scan.vhd"
 s = p.read_text(encoding="utf-8")
 
 s = s.replace("""                for r in 0 to 3 loop
@@ -48,7 +50,7 @@ p.write_text(s, encoding="utf-8")
 print("keypad_scan: row-major index")
 
 # ---------------------------------------------------------------- game_fsm
-q = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
+q = ROOT / "rtl" / "game_fsm.vhd"
 t = q.read_text(encoding="utf-8")
 
 # 把解码函数加入结构体的声明部分

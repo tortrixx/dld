@@ -9,7 +9,9 @@ clk_gen 的 tick_2hz 是**一个时钟宽**的脉冲（每 500 ms 只有 10 ms �
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "game_fsm.vhd"
 s = p.read_text(encoding="utf-8")
 
 s = s.replace('    signal sound_p : std_logic_vector(2 downto 0) := "000";',

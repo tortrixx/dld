@@ -11,7 +11,9 @@
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\board_test_top.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "board_test_top.vhd"
 s = p.read_text(encoding="utf-8")
 
 # 扩展测试下标以覆盖测试 9

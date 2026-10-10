@@ -3,7 +3,9 @@
 acc_kc / ph 的那个），它是 patch26 留在新帧渲染器旁边的残留。"""
 import pathlib, re
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 lines = p.read_text(encoding="utf-8").splitlines()
 
 # 找出每一个 "process (i_clk)" 块，保留其中**不**提及 acc_cov 的

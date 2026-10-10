@@ -6,7 +6,9 @@
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 
 start = s.index("    process (scanrow, pos, locked, sel, i_level, i_sh0, i_sh1, i_sh2, i_sh3, i_target)")

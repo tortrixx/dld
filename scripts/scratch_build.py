@@ -7,8 +7,14 @@
 """
 import pathlib, shutil, subprocess, sys, re
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
-QUARTUS = pathlib.Path(r"C:\QuartusII91\QuartusII91\quartus\bin")
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+# 仓库根 = 本脚本所在目录的上一级（**不写死绝对路径**，见 gen_project.py 的同款说明）
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+# ⚠️ Quartus 安装位置交给 scripts/qenv.py 探测（环境变量 → PATH → 常见安装位置）
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import qenv  # noqa: E402
 OUT = ROOT / ".tmp" / "scratch"
 
 def build(files, top, name):
@@ -29,7 +35,7 @@ def build(files, top, name):
         '<header><fileVersion version="1"/></header>\n'
         '<project><name>scratch</name><revision name="scratch"/></project>\n'
         '</project>\n', encoding="ascii")
-    cmd = [str(QUARTUS / "quartus_map.exe"), "scratch"]
+    cmd = [str(qenv.tool("quartus_map")), "scratch"]
     r = subprocess.run(cmd, cwd=d, capture_output=True, text=True, errors="replace")
     rpt = d / "scratch.map.rpt"
     lc = "?"

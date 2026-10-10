@@ -8,7 +8,9 @@ dot_matrix_scan 现在只接收**一行**（8 位）及其行号，因为整机
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\board_test_top.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "board_test_top.vhd"
 s = p.read_text(encoding="utf-8")
 
 # ---- clk_gen 组件新增 o_tick_40 --------------------------------------

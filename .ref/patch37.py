@@ -11,7 +11,9 @@
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\scripts\gen_project.py")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "scripts" / "gen_project.py"
 s = p.read_text(encoding="utf-8")
 
 old = '''    # guard: every declared port must have a pin, otherwise Quartus silently

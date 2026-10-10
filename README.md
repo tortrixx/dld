@@ -8,6 +8,39 @@ VHDL-93 + Quartus II 9.1，纯 RTL（无 Nios、无软核）。
 
 ---
 
+## 同学：克隆后如何编译烧录
+
+> 这一节是**给第一次拿到这个仓库的同学**的：从零到板子上跑起来只需要下面 6 步。
+> ⭐ **不需要虚拟环境、不需要 `pip install` 任何东西**（仓库里的脚本只用 Python 标准库）。
+
+1. **安装 Quartus II 9.1**（要装 **MAX II 器件支持**）—— 装到哪个目录都行，记下来，**§4** 里要用；
+2. **安装 Python 3**（**≥3.8**）—— 用系统 Python 就够，**无需虚拟环境、无需 pip 装任何包**；
+   ⚠️ **Windows 上安装时务必勾选 "Add Python to PATH"**（漏勾的话命令行里就没有 `python` 命令；
+   这时本仓库的一键脚本会自动退回用 `py -3` 启动器，手工执行的话把 `python` 换成 `py -3` 即可）；
+3. **`git clone <仓库地址>`**，再 `cd` 进仓库目录（clone 到**任意目录**都可以，与盘符、用户名无关）；
+4. **生成 Quartus 工程**（在仓库根目录下执行）：
+
+   ```powershell
+   python scripts/gen_project.py puzzle_top
+   ```
+
+   ⭐ 这一步会生成 `quartus/puzzle.qpf` 与 `quartus/puzzle.qsf`（后者是**引脚真值源**，不要手改）；
+   ⚠️ **`.qpf` 故意不入库**（Quartus 每次打开/编译都会往里写一行时间戳，会污染 `git status`），
+   所以**每次 clone 之后都要先跑一次上面这条命令** —— 缺 `.qpf` 时 Quartus 打不开工程是**预期行为**；
+   ⭐ 可选的一键脚本：[`scripts/bootstrap.ps1`](scripts/bootstrap.ps1)（Windows）/
+   [`scripts/bootstrap.sh`](scripts/bootstrap.sh)，干的就是这一条命令（省掉"记得先跑生成脚本"这一步）；
+5. **打开 `quartus/puzzle.qpf`** → **Start Compilation** → 烧录 `quartus/output_files/puzzle.pof`
+   （想用命令行编译/烧录，写法见 **§4**）；
+   ⚠️ Quartus 打开/编译工程后会往 `quartus/puzzle.qsf` **回写 2 行**
+   （`LAST_QUARTUS_VERSION`、`RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND`），于是 `git status` 会显示它被改动 ——
+   **这是正常的，不要提交**；想复原就跑一次第 4 步（`python scripts/gen_project.py puzzle_top`）；
+6. **板子**：MAXII 数字逻辑实验开发板（**EPM1270T144C5**）+ **LCM12864 扩展板**。
+
+> ⚠️ 上板之前再看一眼 [`HANDOFF.md`](HANDOFF.md) 顶部的「**上板前必做**」——
+> 只要这一轮改过 RTL，板上的固件就可能已经过期。
+
+---
+
 ## 1. 游戏规则（对应课程要求 B1~B11）
 
 | 关卡 | 目标图案 | 零片（`rtl/puzzle_pkg.vhd`） | 限时 |
@@ -93,7 +126,9 @@ docs/         00 规范理解与需求 / 02 模块详细设计 / 03 仿真验证
 ## 4. 常用命令（Windows · PowerShell）
 
 ```powershell
-# 0) 依赖：Quartus II 9.1 装在 C:\QuartusII91\QuartusII91\；Python 用仓库脚本即可
+# 0) 依赖：Quartus II 9.1（Python 用仓库脚本即可，**不需要 pip 装任何包**）
+#    ⭐ 先设一次 Quartus 的安装位置（每个新开的 PowerShell 窗口都要设一次）：
+$env:QUARTUS_ROOT = "C:\altera\91"   # ← 改成你自己的安装目录（只需设一次）
 # 1) 生成/更新 Quartus 工程（改过 RTL 的文件列表或顶层时；★ 会写入 SEED 1）
 python scripts/gen_project.py puzzle_top
 
@@ -105,13 +140,13 @@ Remove-Item -Recurse -Force quartus/db, quartus/output_files, quartus/incrementa
 #    ★ 脚本收尾会直接打印 LE / LAB / 引脚 / Fmax 四行关键读数
 #    ⚠️ 2026-10-10 修（ERR-053）：本脚本原来只跑 `-tool tan`、**从不跑 TimeQuest**，
 #       于是 puzzle.sta.rpt 根本不由这条命令生成 —— 文档里的时序读数复现不出来。现已补上。
-& "C:/QuartusII91/QuartusII91/quartus/bin/quartus_sh.exe" -t scripts/build.tcl
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl
 
 # 2b) ⭐ 编译成功后**记录固件身份**（RTL 指纹 + pof 的 sha256 + fit/sta 读数 → 入库）
 python scripts/record_build.py
 
 # 3) 烧录（在 quartus/output_files 目录下执行）
-& "C:/QuartusII91/QuartusII91/quartus/bin/quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
+& "$env:QUARTUS_ROOT\quartus\bin\quartus_pgm.exe" -c "USB-Blaster [USB-0]" -m jtag -o "p;puzzle.pof"
 
 # 4) 仿真：只跑一个模块（⚠️ 同一个模块不能并发跑！见 docs/06 ERR-028）
 python scripts/sim.py run game_fsm            # 自动分配轮次 rNN（run 总是落盘）
@@ -130,6 +165,13 @@ python scripts/audit_evidence.py              # ⭐ **一条命令跑完"对抗�
                                               #    面积装箱时序 / 固件↔RTL / 仓库状态 / 文档数字对齐；有 FAIL 退出码 1
 python scripts/probe_nodes.py <模块>           # ⭐ 廉价校验 tb 的 OBSERVE 观测点是否存在（~2 秒，见下）
 ```
+
+> ⭐ **`QUARTUS_ROOT` 怎么填**：它既可以指向 **Quartus 安装根目录**（其下就是 `quartus\bin\`），
+> 也可以直接指向 `quartus\bin`；仓库脚本 `scripts/qenv.py` 会按「**环境变量 → PATH → 常见安装位置**」
+> 的顺序自动找。上面的命令行按"**指向安装根目录**"给出（`$env:` 变量只对**当前 PowerShell 会话**有效，
+> 新开窗口要重设）。
+> ⚠️ **填错比不填更糟**（环境变量优先，会盖掉自动查找）；如果 Quartus 已经在 PATH 里，这段可以整段跳过。
+> （上面示例里的 `C:\altera\91` 只是**占位**，照抄等于填错。）
 
 > ⭐ **`probe_nodes.py` 为什么存在**：`sim.py` 的 `OBSERVE` 是硬契约（名字不在网表里就报错），
 > 但旧办法只有"把整个仿真跑完再看"（整机一轮 40~60 分钟）。

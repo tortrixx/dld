@@ -11,7 +11,9 @@
 即各零片在其目标位置上的并集（这样画面与零片永远不会
 彼此脱节）。
 """
-import itertools, json
+import itertools, json, pathlib
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 ROWS, COLS = 8, 8
 
@@ -107,5 +109,5 @@ json.dump({
     "anchors": {"P1": a1, "P2": a2, "P3": a3},
     "target_mask": vhdl_lit(q1 | q2 | q3),
     "placed": {"Q1": vhdl_lit(q1), "Q2": vhdl_lit(q2), "Q3": vhdl_lit(q3)},
-}, open(r"C:\Users\sznnn\Desktop\dld\.ref\l1_geometry.json", "w"), indent=2)
+}, open(ROOT / ".ref" / "l1_geometry.json", "w"), indent=2)
 print("\nwrote .ref/l1_geometry.json")

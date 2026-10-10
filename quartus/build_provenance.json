@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-10-10 21:51:30",
-  "git_head": "3f17a8aa3773f7f05630b6311bbd6607daf8e5f6",
+  "timestamp": "2026-10-10 22:56:56",
+  "git_head": "6718a6e05ad681627f4bf0ed51d98a7125201956",
   "git_dirty": true,
   "sources": {
     "rtl/board_test_top.vhd": "46eaf36f3120",
@@ -21,12 +21,12 @@
     "rtl/seg_scan.vhd": "89ea0f1ec6f8"
   },
   "pof": {
-    "mtime": "2026-10-10 21:51:26",
+    "mtime": "2026-10-10 22:56:39",
     "sha256": "d5e16d980daed7cc92575ecec893dd14c2c9e7e65ab7ecc4c91ff7f359748c21",
     "bytes": 27312
   },
   "fit": {
-    "status": "Successful - Sat Oct 10 21:51:25 2026",
+    "status": "Successful - Sat Oct 10 22:56:38 2026",
     "le": "1,268 / 1,270 ( 100 % )",
     "lab": "127 / 127 ( 100 % )",
     "pins": "52 / 116 ( 45 % )"

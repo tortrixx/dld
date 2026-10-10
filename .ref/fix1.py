@@ -16,7 +16,9 @@
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "keypad_scan.vhd"
 s = p.read_text(encoding="utf-8")
 
 old = """                if (state = ST_IDLE) then

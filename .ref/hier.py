@@ -7,7 +7,9 @@ Quartus 写的层次表每个节点一行；模块行就是那些层级较浅的
 """
 import pathlib, re, sys
 
-rpt = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\quartus\output_files\puzzle.map.rpt")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+rpt = ROOT / "quartus" / "output_files" / "puzzle.map.rpt"
 lines = rpt.read_text(errors="replace").splitlines()
 
 start = None

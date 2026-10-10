@@ -10,7 +10,7 @@
 """
 import pathlib, re, sys
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 PKG = (ROOT / "rtl" / "puzzle_pkg.vhd").read_text(encoding="utf-8")
 
 def const_bits(name):

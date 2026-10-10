@@ -3,7 +3,9 @@
 并让引擎直接输出它们。"""
 import pathlib, re
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 
 # 1. 删掉多余的 o_rowr/o_rowg 影子写入（帧寄存器**就是**输出）

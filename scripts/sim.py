@@ -53,7 +53,12 @@ if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-QUARTUS_BIN = pathlib.Path(r"C:\QuartusII91\QuartusII91\quartus\bin")
+# ⚠️ Quartus 的安装位置**不在这里写死** —— 统一交给 `scripts/qenv.py` 探测
+#    （环境变量 QUARTUS_ROOT / QUARTUS_BIN → PATH → 常见安装位置）。
+#    以前这里写死 `C:\QuartusII91\QuartusII91\quartus\bin`，别人换个安装位置就跑不了。
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import qenv  # noqa: E402  （必须在 ROOT 之后才能 import，见上面的 sys.path）
+
 PROJ_NAME = "puzzle"
 QUARTUS_DIR = ROOT / "quartus"
 SRC_QSF = QUARTUS_DIR / (PROJ_NAME + ".qsf")
@@ -541,9 +546,10 @@ def _make_isolated_project(module, patches):
 
 
 def _quartus(cwd, tool, *args):
-    exe = QUARTUS_BIN / (tool + ".exe")
-    if not exe.exists():
-        raise SystemExit("✗ 找不到 %s" % exe)
+    # ⚠️ 惰性解析：导入 sim.py 的脚本（audit_evidence / record_build）**不需要 Quartus**，
+    #    所以"找不到 Quartus"这件事必须等到真的要跑工具时才报错。
+    #    报错文案由 qenv 给出（含三种解决办法），不要在这里另写一套。
+    exe = qenv.tool(tool)
     print("  $ %s %s" % (tool, " ".join(args)))
     return subprocess.call([str(exe)] + list(args), cwd=str(cwd))
 

@@ -15,7 +15,9 @@
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\game_fsm.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "game_fsm.vhd"
 s = p.read_text(encoding="utf-8")
 
 old = '''    --      index  0 = (row0,col0)  -> UP

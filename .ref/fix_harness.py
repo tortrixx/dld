@@ -2,7 +2,9 @@
 """为 puzzle_ctrl 新增的行扫描端口列表更新 scratch 测试框架。"""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.tmp\scratch\pc_only\scratch_top.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / ".tmp" / "scratch" / "pc_only" / "scratch_top.vhd"
 s = p.read_text(encoding="ascii")
 s = s.replace(
     "            o_sel_idx : out std_logic_vector(1 downto 0);\n"

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 """测量行扫描渲染所占的面积份额，并测试一个静态移位变体。"""
-import pathlib, shutil, subprocess
+import os, pathlib, shutil, subprocess
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
-QUARTUS = pathlib.Path(r"C:\QuartusII91\QuartusII91\quartus\bin")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+# Quartus 安装目录：可用环境变量 QUARTUS_ROOT 覆盖，未设置时用常见安装路径兜底
+QUARTUS = pathlib.Path(os.environ.get("QUARTUS_ROOT", r"C:\QuartusII91\QuartusII91\quartus\bin"))
 SRC = (ROOT / "rtl" / "puzzle_ctrl.vhd").read_text(encoding="utf-8")
 
 def measure(name, text, pkg=None):

@@ -13,7 +13,9 @@ col_drv 是**寄存**的，而 phase 在同一时钟里更新。于是 tick 之�
 """
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\keypad_scan.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "keypad_scan.vhd"
 s = p.read_text(encoding="utf-8")
 
 # --- 序列器：不再驱动列 -------------------------------------

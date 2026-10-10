@@ -3,7 +3,9 @@
 hold the output blank during the first frame so no garbage is ever drawn."""
 import pathlib
 
-p = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\rtl\puzzle_ctrl.vhd")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+
+p = ROOT / "rtl" / "puzzle_ctrl.vhd"
 s = p.read_text(encoding="utf-8")
 
 # 启动空白计数器 + 已发布行的寄存器

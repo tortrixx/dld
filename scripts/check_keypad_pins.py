@@ -4,7 +4,11 @@
 键盘故障有没有可能是本项目的引脚分配错误。"""
 import pathlib, re, sys
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+
+# 仓库根 = 本脚本所在目录的上一级（**不写死绝对路径**）
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 import gen_project as g
 

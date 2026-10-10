@@ -3,7 +3,8 @@
 import pathlib
 from PIL import Image
 
-FIG = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.ref\topics_figs")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+FIG = ROOT / ".ref" / "topics_figs"
 GRID = {  # 每张图各自标定的原点，由色块质心推得
     "p09_0_IM76.jpg": (15.5, 17.0),
     "p09_4_IM80.jpg": (14.5, 17.0),

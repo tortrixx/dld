@@ -93,6 +93,3 @@ set_location_assignment PIN_70 -to cat[5]
 set_location_assignment PIN_30 -to cat[6]
 set_location_assignment PIN_31 -to cat[7]
 
-
-set_global_assignment -name LAST_QUARTUS_VERSION 9.1
-set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"

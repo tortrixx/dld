@@ -2,10 +2,11 @@
 """单独测量 puzzle_ctrl，输入接**活**信号（以免任何东西被优化掉）。
 报告逻辑单元/寄存器数，以便把面积归因到具体构造，而不是
 靠猜哪个写法贵。"""
-import pathlib, shutil, subprocess
+import os, pathlib, shutil, subprocess
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld")
-QUARTUS = pathlib.Path(r"C:\QuartusII91\QuartusII91\quartus\bin")
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+# Quartus 安装目录：可用环境变量 QUARTUS_ROOT 覆盖，未设置时用常见安装路径兜底
+QUARTUS = pathlib.Path(os.environ.get("QUARTUS_ROOT", r"C:\QuartusII91\QuartusII91\quartus\bin"))
 
 TOP = """
 library IEEE;

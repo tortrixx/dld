@@ -1,14 +1,17 @@
 # -*- coding: utf-8 -*-
 """提取实验板手册里的数码管模块图片（附图9／附图10），以读取板上印制的
 实际段命名与排列顺序。"""
+import os
 import pathlib
 from pypdf import PdfReader
 
-ROOT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld-lab")
-OUT = pathlib.Path(r"C:\Users\sznnn\Desktop\dld\.ref") / "board_figs"
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+# dld-lab 仓库（题目／手册 PDF 所在处）：可用环境变量 DLD_LAB_DIR 覆盖
+SRC = pathlib.Path(os.environ.get("DLD_LAB_DIR", str(ROOT.parent / "dld-lab")))
+OUT = ROOT / ".ref" / "board_figs"
 OUT.mkdir(parents=True, exist_ok=True)
 
-r = PdfReader(str(ROOT / "MAXII数字实验板（LCM12864液晶版）.pdf"))
+r = PdfReader(str(SRC / "MAXII数字实验板（LCM12864液晶版）.pdf"))
 for pno in range(len(r.pages)):
     page = r.pages[pno]
     try:
