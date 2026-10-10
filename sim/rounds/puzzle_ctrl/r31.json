@@ -166,5 +166,25 @@
       "ok": true,
       "detail": "计划 19 条：按计划走 被拒 0 次、并集 12 格 == 目标 = True、终点朝向 [2, 2, 2]（初始 [1, 1, 2]）；删掉旋转后 被拒 3 次、并集 12 格 == 目标 = False、终点朝向 [1, 1, 2]、终点锚点 [(2, 2), (3, 3), (3, 0)]"
     }
-  ]
+  ],
+  "sources_logic": {
+    "rtl/board_test_top.vhd": "8041d4dfc42f",
+    "rtl/buzzer_ctrl.vhd": "0a04aac3fc70",
+    "rtl/clk_gen.vhd": "f0244017372b",
+    "rtl/disp_format.vhd": "bf05d032bdfd",
+    "rtl/dot_matrix_scan.vhd": "4c5e119844ca",
+    "rtl/game_fsm.vhd": "7fbaa620e52b",
+    "rtl/keypad_diag_top.vhd": "b4aa6bdd1fac",
+    "rtl/keypad_raw_top.vhd": "8aad5e0c0580",
+    "rtl/keypad_scan.vhd": "5b76940a8d9c",
+    "rtl/pattern_rom.vhd": "cea49bfa76b2",
+    "rtl/piece_rom.vhd": "0421731c0d94",
+    "rtl/puzzle_ctrl.vhd": "40efa82e51d0",
+    "rtl/puzzle_pkg.vhd": "a2c60c2c3281",
+    "rtl/puzzle_top.vhd": "4ee3356fa319",
+    "rtl/rng_lfsr.vhd": "c394a1957138",
+    "rtl/seg_scan.vhd": "aa8642b3a503",
+    "sim/tb_puzzle_ctrl.py": "54d460c1b86b"
+  },
+  "sources_logic_note": "按第 20 工作阶段的归一化算法（去注释/去函数 docstring/统一行尾）由记录时的字节重算；见 scripts/srcnorm.py"
 }

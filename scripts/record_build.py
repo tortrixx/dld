@@ -90,6 +90,19 @@ def rtl_sources():
             for f in sorted((ROOT / "rtl").glob("*.vhd"))}
 
 
+def rtl_logic():
+    """同一批 RTL 的**逻辑**指纹（去注释/docstring/行尾）。
+
+    ⭐ 为什么两个都记（2026-10-10 第 20 工作阶段）：
+       `sources` 是"原始字节"，所以**只改注释**或**只换 CRLF/LF** 都会让
+       "固件落后于 RTL"误报 —— 而这两种改动都不可能改变综合结果
+       （本项目实测：只改注释后 `puzzle.pof` 的 sha256 逐字节相同）。
+       审计先比 `sources`，不中再比 `sources_logic`，并如实报出"差异只在注释/行尾"。
+    """
+    return {"rtl/" + f.name: sim.srcnorm.logic_file_hash(f)
+            for f in sorted((ROOT / "rtl").glob("*.vhd"))}
+
+
 def pof_identity():
     p = OUT / "puzzle.pof"
     if not p.exists():
@@ -107,6 +120,7 @@ def build_record():
         "git_head": sim._git("rev-parse", "HEAD"),
         "git_dirty": bool(sim._git("status", "--porcelain")),
         "sources": rtl_sources(),
+        "sources_logic": rtl_logic(),
         "pof": pof_identity(),
         "fit": read_fit(),
         "sta": read_sta(),

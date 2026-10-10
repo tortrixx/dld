@@ -109,7 +109,12 @@ rtl/          16 个 VHDL 文件 = **11 个功能实体**（clk_gen、keypad_sca
 sim/          12 个 Python 测试台（tb_*.py）+ .vwf 向量 + rounds/（每轮断言记录 rNN.md/json）
 scripts/      gen_project.py（生成 Quartus 工程，**含 `set_global_assignment -name SEED 5`**）、
               build.tcl 的入口、
+              ⭐ **开箱即用三件套**：`qenv.py`（Quartus 探测：`QUARTUS_ROOT`/`QUARTUS_BIN` → PATH →
+              常见安装位置；两种 `QUARTUS_ROOT` 填法都认）、`check_env.py`（环境自检，退出码 0/1）、
+              `bootstrap.ps1` / `bootstrap.sh`（一键 = 找 Python + 跑 gen_project）、
               sim.py（跑仿真/校验/出图）、vwf.py（波形解析）、sim_summary.py（汇总）、
+              ⭐ `srcnorm.py`（**源码归一化**：去注释/去函数 docstring/统一行尾 ⇒ 供"逻辑指纹"用）、
+              ⭐ `check_comments.py`（**注释守卫**：`scan` 列英文注释 + `diff` 证明"只改了注释"）、
               check_geometry.py（图案/结算画面几何 + 逐图案可铺性穷举 + **A4 旋转必需性穷举** +
               旋转几何证明 + 功耗）、check_plans.py（四份**由带旋转的 A* 从零重新解出**的走法计划
               离线复核 + 朝向感知可达性抽样）、

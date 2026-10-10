@@ -58,6 +58,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 #    以前这里写死 `C:\QuartusII91\QuartusII91\quartus\bin`，别人换个安装位置就跑不了。
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
 import qenv  # noqa: E402  （必须在 ROOT 之后才能 import，见上面的 sys.path）
+import srcnorm  # noqa: E402  （同上：源码归一化，供"逻辑指纹"用）
 
 PROJ_NAME = "puzzle"
 QUARTUS_DIR = ROOT / "quartus"
@@ -297,6 +298,11 @@ def _file_blob_hash(p):
     return _git_blob_hash(pathlib.Path(p).read_bytes())
 
 
+def _file_blob_hash_bytes(data):
+    """同一套哈希，但直接吃字节（给"找回记录时的字节"这类工具用）。"""
+    return _git_blob_hash(data)
+
+
 def _git(*args):
     """跑一条 git 命令；无 git / 非仓库时返回 None —— 绝不能让仿真因为记证据而挂掉。"""
     try:
@@ -310,13 +316,38 @@ def _git(*args):
 
 
 def source_fingerprint(module):
-    """这一轮"被测源码"的指纹：**全部** rtl/*.vhd + 本模块的 tb（12 位短哈希）。"""
+    """这一轮"被测源码"的**严格**指纹：**全部** rtl/*.vhd + 本模块的 tb（12 位短哈希）。
+
+    ⚠️ 这是**工作树原始字节**的哈希 ⇒ 注释改动、CRLF/LF 改动都会让它变。
+       它回答"当时到底跑了哪一版字节"（如实记录），但**不适合**用来判"逻辑还在不在"。
+       后者请看 `logic_fingerprint()`。
+    """
     files = {}
     for f in sorted((ROOT / "rtl").glob("*.vhd")):
         files["rtl/" + f.name] = _file_blob_hash(f)[:12]
     tbp = tb_path(module)
     if tbp.exists():
         files["sim/" + tbp.name] = _file_blob_hash(tbp)[:12]
+    return files
+
+
+def logic_fingerprint(module):
+    """同一批文件的**逻辑**指纹：先把注释/docstring/行尾抹掉再算哈希。
+
+    ⭐ 为什么要两个指纹（2026-10-10 第 20 工作阶段）：
+       严格指纹是"原始字节"，于是**只改注释**或**只换行尾**（CRLF↔LF）都会把
+       所有轮次记录打翻成"过期" —— 本项目这两种假警报各踩过一次：
+         · 只改注释：`puzzle.pof` 的 sha256 逐字节相同，却要**全量重跑 2 小时**去刷新；
+         · CRLF↔LF：内容一字未变、blob 完全相同，指纹却全变（ERR-054 的同族问题）。
+       逻辑指纹回答的是真正重要的那个问题：**产生这条证据的逻辑还在不在。**
+       审计先比严格指纹，不中再比逻辑指纹，并把"差异只在注释/行尾"如实报出来。
+    """
+    files = {}
+    for f in sorted((ROOT / "rtl").glob("*.vhd")):
+        files["rtl/" + f.name] = srcnorm.logic_file_hash(f)
+    tbp = tb_path(module)
+    if tbp.exists():
+        files["sim/" + tbp.name] = srcnorm.logic_file_hash(tbp)
     return files
 
 
@@ -355,6 +386,7 @@ def _write_round(module, round_no, results, fingerprint=None):
 
     # ⚠️ 指纹由 `cmd_run` 在**仿真开始前**算好传进来；`check --record` 没有上下文才现算。
     fp = fingerprint or {"sources": source_fingerprint(module),
+                         "sources_logic": logic_fingerprint(module),
                          "stimulus": stimulus_fingerprint(module),
                          "captured": "record-time"}
 
@@ -364,8 +396,11 @@ def _write_round(module, round_no, results, fingerprint=None):
         "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
         "duration_ns": getattr(tb, "DURATION", None),
         "rtl_patches": [list(x) for x in getattr(tb, "RTL_PATCHES", [])],
-        # ⭐ 证据溯源（见文件里 `source_fingerprint` 的说明）：这一轮跑的是哪一版源码
+        # ⭐ 证据溯源（见文件里 `source_fingerprint` / `logic_fingerprint` 的说明）：
+        #   `sources`        = 严格指纹（原始字节）—— "当时跑的是哪一版字节"
+        #   `sources_logic`  = 逻辑指纹（去注释/docstring/行尾）—— "逻辑还在不在"
         "sources": fp["sources"],
+        "sources_logic": fp.get("sources_logic"),
         "stimulus_vwf": fp.get("stimulus"),
         "fingerprint_captured": fp.get("captured", "run-start"),
         "git_head": _git("rev-parse", "HEAD"),
@@ -564,6 +599,7 @@ def cmd_run(module, round_no=None):
     #    `rtl/` 也还没被任何人动过。之后（map/仿真可能要几十分钟）谁改了文件都不影响
     #    这一轮记录的真实性：记录里写的是"真正跑的那一版"。
     fp = {"sources": source_fingerprint(module),
+          "sources_logic": logic_fingerprint(module),
           "stimulus": stimulus_fingerprint(module),
           "captured": "run-start"}
 

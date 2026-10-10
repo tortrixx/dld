@@ -1,13 +1,30 @@
 # HANDOFF — 会话交接单
 
 > ⭐ **克隆后第一步** = `python scripts/gen_project.py puzzle_top`（生成 `quartus/puzzle.qpf` + `quartus/puzzle.qsf`；**`.qpf` 故意不入库**，缺它就打不开工程）。
-> ⭐⭐ **第 19 工作阶段（2026-10-10 晚）已把仓库做成"换机器/换目录也能用"**：
-> 全仓库**不再有任何作者本机绝对路径**；Quartus 位置统一由 `scripts/qenv.py` 探测
-> （`QUARTUS_ROOT` → `QUARTUS_BIN` → `PATH` → 常见安装位置，**两种 `QUARTUS_ROOT` 填法都认**）；
-> 新增 `scripts/check_env.py`（环境自检）与 `scripts/bootstrap.ps1` / `.sh`（一键生成工程）；
-> README 顶部新增**「同学：克隆后如何编译烧录」六步**。详见 `PROGRESS.md` §25 / `AI_LOG.md` §25。
-> ⚠️ **纪律**：会重写 `quartus/puzzle.qsf` / `.qpf` 的动作（`gen_project.py`、`bootstrap.*`）
-> **与编译互斥** —— 本轮实测过一次"边重写 .qsf 边编译"导致编译失败。
+> 不确定环境齐不齐？先跑 `python scripts/check_env.py`（Python 版本 / 必需文件 / Quartus / 第三方依赖 /
+> 行尾一致性，退出码 0-1）。嫌麻烦就用 `scripts/bootstrap.ps1`（Windows）或 `scripts/bootstrap.sh`。
+>
+> ⭐⭐ **今日收尾（2026-10-10 晚，第 19~20 工作阶段）—— 两条线，都已入库并推送：**
+> **第 19 工作阶段（可移植性）**：全仓库**不再有任何作者本机绝对路径**（`git grep` 0 命中）；
+> Quartus 位置统一由 `scripts/qenv.py` 探测（`QUARTUS_ROOT` → `QUARTUS_BIN` → PATH → 常见安装位置，
+> **两种 `QUARTUS_ROOT` 填法都认**）；新增 `check_env.py` + `bootstrap.ps1/.sh`；
+> README 顶部新增**「同学：克隆后如何编译烧录」六步**。
+> ⭐ **端到端验收 16/16 通过**：clone 到**另一个目录** → `check_env` → `gen_project` → **完整编译**
+> → **`puzzle.pof` 与原仓库逐字节相同**。
+> **第 20 工作阶段（证据链）**：源码指纹分成 **`sources`（严格字节）+ `sources_logic`（逻辑）** 两个
+> —— 只改注释、或只换 CRLF/LF，不再把 12 条轮次记录打翻成"过期"（这两种假警报本项目各踩过一次）；
+> 新增 `srcnorm.py`（归一化）与 `check_comments.py`（`scan`/`diff` 两条注释守卫）；
+> 605 个文件的工作区行尾归一成 LF。**一轮对抗审查抓出 6 类真缺陷**（含 3 类会给"假的 OK"），
+> 全部已修并回归。详见 `PROGRESS.md` §25/§26、`AI_LOG.md` §25/§26。
+>
+> ⚠️ **两条纪律**（本轮实测踩出来的）：
+> ① **会重写 `quartus/puzzle.qsf` / `.qpf` 的动作（`gen_project.py`、`bootstrap.*`）与编译互斥**
+>    —— 实测过"边重写 .qsf 边编译"导致编译失败；
+> ② **`scripts/bootstrap.ps1` 必须保留 UTF-8 BOM**（PowerShell 5.1 会把无 BOM 的 `.ps1` 按 GBK 解码、
+>    中文注释直接让脚本语法报错）；用 `write`/`edit` 工具改它会把 BOM 剥掉，改完务必确认。
+>
+> ⚠️ **仍未上板**：`puzzle.pof` 是 2026-10-10 22:56:39 生成的、**没烧进板子**
+> （网表自那之后未变：第 20 工作阶段只动脚本与注释）。
 >
 > **给下一个会话：开工按此顺序读 —— 本文件 → `PROGRESS.md` → `docs/03-仿真验证方案.md`（仿真结果）→ `docs/06-硬件调试记录.md`（故障分析）**
 > 本文件是**自包含**的：原始 PDF 要求、板子信息、引脚、构建/烧录命令、

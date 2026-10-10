@@ -82,6 +82,46 @@ def _worktree_blob(rel):
 # ============================================================================
 # A + B：仿真证据时效性与断言统计
 # ============================================================================
+def _explain_only_comments(module, rec, src, changed):
+    """尽量**独立验证**"严格指纹的差异只是注释/行尾"，而不是只信记录里的 `sources_logic`。
+
+    ⚠️ 为什么需要它：`sources_logic` 与 `sources` 存在同一个（可被改写的）JSON 里。
+       如果有人在改完逻辑之后**顺手把 `sources_logic` 按改后的文件重算**，
+       光比 `sources_logic` 是看不出问题的（对抗审查已复现过这条路径）。
+       能独立验证的两种情形：
+         (a) **只差行尾**：记录里的严格哈希 == "当前字节的 LF/CRLF 变体"的哈希；
+         (b) **只是提交之后的注释改动**：记录里的严格哈希 == 该文件在记录所记
+             `git_head` 处的 blob（说明记录之后确实只发生过"逻辑没变"的改动）。
+       两种都对不上时，不假装验证过 —— 明确说"仅按记录值判定"。
+    """
+    head = rec.get("git_head")
+    hits, unknown = [], []
+    for rel in changed:
+        sh = (src or {}).get(rel)
+        if not sh:
+            continue
+        p = ROOT / rel
+        found = None
+        if p.is_file():
+            cur = p.read_bytes()
+            for v in (cur, cur.replace(b"\r\n", b"\n"), cur.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")):
+                if sim._file_blob_hash_bytes(v)[:12] == sh:
+                    found = "行尾"
+                    break
+        if not found and head:
+            blob = sim._git("rev-parse", "%s:%s" % (head, rel))
+            if blob and blob[:12] == sh:
+                found = "提交 %s 处的版本" % head[:8]
+        (hits if found else unknown).append((rel, found))
+    if not unknown:
+        return "**已独立验证**：%s 都与「行尾变体」或「记录所记提交处的版本」逐字节对得上。" \
+               % "、".join(rel for rel, _ in hits)
+    return ("⚠️ 其中 %s 的差异**无法独立验证**（记录里的严格哈希既不是当前字节的行尾变体，"
+            "也不是 %s 处的版本）⇒ 这一条 OK **仅按记录里的 `sources_logic` 判定**，"
+            "若该字段被事后改写则失真。"
+            % ("、".join(rel for rel, _ in unknown), (head or "记录所记提交")[:8]))
+
+
 def audit_rounds():
     if not ROUNDS.exists():
         add("FAIL", "A", "找不到 sim/rounds —— 没有任何仿真证据")
@@ -108,17 +148,46 @@ def audit_rounds():
 
         # ---- 陈旧绿判定：首选"轮次记录里的源码指纹"（精确）
         src = last.get("sources")
-        if src:
+        srcl = last.get("sources_logic")
+        if not isinstance(srcl, dict):          # ⚠️ 类型守卫：非 dict 会让整份审计崩掉
+            srcl = None
+        if not isinstance(src, dict):
+            src = None
+        if src or srcl:
             cur = sim.source_fingerprint(module)
-            changed = sorted(k for k in set(src) | set(cur) if src.get(k) != cur.get(k))
-            if changed:
-                add("FAIL", "A", "%s 的绿证 %s **已过期**：以下文件在那一轮之后被改过"
-                    % (module, js[-1].stem),
-                    "、".join("%s（%s → %s）" % (k, src.get(k, "无"), cur.get(k, "无"))
-                              for k in changed))
-            else:
+            curl = sim.logic_fingerprint(module)
+            changed = sorted(k for k in set(src or {}) | set(cur) if (src or {}).get(k) != cur.get(k))
+            if src and not changed:
                 add("OK", "A", "%s 绿证 %s 覆盖当前 RTL/tb（%d 个文件指纹一致）"
                     % (module, js[-1].stem, len(src)))
+                continue
+            # ⭐ 严格指纹不中时，退一步比"**逻辑**指纹"（去注释/函数 docstring/行尾）。
+            #    理由见 sim.logic_fingerprint 的说明：只改注释、或只换 CRLF/LF，
+            #    都不可能改变行为（本项目实测：只改注释后 puzzle.pof 逐字节相同）。
+            #    ⚠️ 但**不静默放过** —— 如实报出"差异只在注释/行尾"，并尽量**独立验证**
+            #       这一点（见 _explain_only_comments），验证不了就明确说"仅按记录值判定"。
+            if srcl:
+                still = sorted(k for k in set(srcl) | set(curl) if srcl.get(k) != curl.get(k))
+                if not still:
+                    why = _explain_only_comments(module, last, src, changed)
+                    add("OK", "A", "%s 绿证 %s 的**逻辑**仍覆盖当前 RTL/tb"
+                        % (module, js[-1].stem),
+                        "严格指纹有 %d 个文件不同（%s），但**逻辑指纹全部一致** ⇒ 差异只在"
+                        "注释/docstring/行尾，行为不可能变。%s"
+                        % (len(changed), "、".join(changed), why))
+                    continue
+                add("FAIL", "A", "%s 的绿证 %s **已过期**：连逻辑都变了" % (module, js[-1].stem),
+                    "逻辑指纹不同的文件：%s；严格指纹不同的：%s"
+                    % ("、".join("%s（%s → %s）" % (k, srcl.get(k, "无"), curl.get(k, "无"))
+                                 for k in still),
+                       "、".join(changed)))
+                continue
+            add("FAIL", "A", "%s 的绿证 %s **已过期**：以下文件在那一轮之后被改过"
+                % (module, js[-1].stem),
+                "、".join("%s（%s → %s）" % (k, (src or {}).get(k, "无"), cur.get(k, "无"))
+                          for k in changed)
+                + "（该轮次记录没有 `sources_logic`，无法判定「差异是否只在注释」 —— "
+                  "重跑一次该模块即可补上）")
             continue
 
         # ---- 老记录（无哈希）：**仍然按内容判** —— 找出"最后一次改动该轮次记录的提交"，
@@ -131,7 +200,11 @@ def audit_rounds():
                 % (module, js[-1].stem))
             continue
         dirty = sim._git("status", "--porcelain", "--", rel_round)
-        targets = ["rtl/%s.vhd" % module, "sim/tb_%s.py" % module]
+        # ⚠️ 对抗审查抓出：老记录分支原来**只查两个文件**（rtl/<模块>.vhd 与 tb），
+        #    于是"改在别处的真逻辑改动"（例如 rtl/puzzle_pkg.vhd）会被判成未过期。
+        #    现在把 **全部 rtl/*.vhd** 都纳入，与精确分支的口径一致。
+        targets = ["rtl/" + f.name for f in sorted((ROOT / "rtl").glob("*.vhd"))]
+        targets.append("sim/tb_%s.py" % module)
         changed = []
         for rel in targets:
             old = _blob_at(commit, rel)
@@ -143,8 +216,8 @@ def audit_rounds():
                 % (module, js[-1].stem, "、".join(changed), commit[:8]),
                 "重跑该模块（新记录会带上源码指纹，之后就能精确比对）")
         else:
-            add("OK", "A", "%s 绿证 %s（老记录：按 git 内容判定未过期，%s）"
-                % (module, js[-1].stem, commit[:8]),
+            add("OK", "A", "%s 绿证 %s（老记录：按 git 内容判定未过期，%s；已核对全部 %d 个 rtl/*.vhd + tb）"
+                % (module, js[-1].stem, commit[:8], len(targets)),
                 "⚠️ 该记录没有源码指纹，只能按'最后一次改动该记录的提交'判；"
                 "重跑一次即可升级为精确判据" + ("；轮次记录本身有未提交改动" if dirty else ""))
     add("INFO", "B", "断言合计：**%d / %d**（%d 个模块/场景）" % (tot_pass, tot_all, n_mod))
@@ -364,17 +437,38 @@ def audit_firmware():
     rec = json.loads(prov_path.read_text(encoding="utf-8"))
     cur = sim.source_fingerprint("puzzle_top")
     cur_rtl = {k: v for k, v in cur.items() if k.startswith("rtl/")}
-    old_rtl = rec.get("sources", {})
+    # ⚠️ 对抗审查抓出的口径不对称：原来 `old_rtl` **没有**按 rtl/ 过滤，而 `cur_rtl` 过滤了。
+    #    后果：只要编译记录里出现任何非 rtl/ 键，`changed` 就永远非空，
+    #    下面那条干净的"固件覆盖当前 RTL"分支再也到不了。
+    old_rtl = {k: v for k, v in (rec.get("sources") or {}).items() if k.startswith("rtl/")}
     changed = sorted(k for k in set(old_rtl) | set(cur_rtl) if old_rtl.get(k) != cur_rtl.get(k))
-    if changed:
-        add("FAIL", "E", "**固件落后于 RTL**：以下文件在 %s 那次编译记录之后被改过"
-            % rec.get("timestamp"),
-            "、".join("%s（%s → %s）" % (k, old_rtl.get(k, "无"), cur_rtl.get(k, "无"))
-                      for k in changed)
-            + " —— 板上跑的不是仓库里的逻辑，需要重新编译 + 烧录 + 重记 provenance")
-    else:
+    if not changed:
         add("OK", "E", "固件覆盖当前 RTL：%d 个 rtl/*.vhd 指纹与 %s 的编译记录一致"
             % (len(cur_rtl), rec.get("timestamp")))
+    else:
+        # ⭐ 同 A 段：严格指纹不中时退一步比**逻辑**指纹（去注释/docstring/行尾）。
+        #    只改注释不可能改变综合结果（实测：只改注释后 pof 逐字节相同）。
+        #    ⚠️ 两边都**只取 rtl/**：编译记录里只有 RTL（`sim.logic_fingerprint`
+        #       还会带上 tb，这里必须过滤掉，否则会凭空多出一个"逻辑变了"的文件）。
+        old_logic = {k: v for k, v in (rec.get("sources_logic") or {}).items()
+                     if k.startswith("rtl/")}
+        cur_logic = {k: v for k, v in sim.logic_fingerprint("puzzle_top").items()
+                     if k.startswith("rtl/")}
+        still = sorted(k for k in set(old_logic) | set(cur_logic)
+                       if old_logic.get(k) != cur_logic.get(k)) if old_logic else None
+        if old_logic and not still:
+            add("OK", "E", "固件的**逻辑**仍覆盖当前 RTL",
+                "严格指纹有 %d 个文件不同（%s），但逻辑指纹一致 ⇒ 差异只在注释/行尾；"
+                "⚠️ 不过 pof 是**按当时的字节**编出来的，若要在板上严格对应，"
+                "仍建议重编译 + 重烧 + 重记 provenance" % (len(changed), "、".join(changed)))
+        else:
+            add("FAIL", "E", "**固件落后于 RTL**：以下文件在 %s 那次编译记录之后被改过"
+                % rec.get("timestamp"),
+                "、".join("%s（%s → %s）" % (k, old_rtl.get(k, "无"), cur_rtl.get(k, "无"))
+                          for k in changed)
+                + ("；连逻辑都变了：%s" % "、".join(still) if still
+                   else "（该编译记录没有 `sources_logic`，无法判定差异是否只在注释）")
+                + " —— 板上跑的不是仓库里的逻辑，需要重新编译 + 烧录 + 重记 provenance")
 
     pof_rec = rec.get("pof")
     if pof_rec and pof.exists():

@@ -88,6 +88,39 @@ if third:
 else:
     ok.append("无第三方 Python 依赖（只用标准库；不需要 venv / requirements.txt）")
 
+# ---- 6. 行尾一致性（仓库卫生；对应改进清单的 P2「编码与换行一致性检查」）------
+#   ⚠️ 为什么值得查：`.gitattributes` 规定文本一律 `eol=lf`，但 Windows 上用
+#      `pathlib.write_text()` 落盘会把 `\n` 写成 CRLF —— 而 `git add` 时会归一化，
+#      于是 **`git diff` 完全看不出来**，只有 `git ls-files --eol` 才露馅。
+#      工作区行尾不一致本身不影响提交内容，但会让 `git status` 时不时报"需要更新"，
+#      也会让"按字节算的指纹"在换机器后对不上。所以这里如实报出来（不阻塞）。
+try:
+    import subprocess
+    eol = subprocess.run(["git", "-c", "core.quotepath=false", "ls-files", "--eol"],
+                         cwd=str(ROOT), capture_output=True, text=True,
+                         encoding="utf-8", errors="replace").stdout
+    if not eol.strip():
+        warn.append("拿不到 `git ls-files --eol`（不是 git 仓库？）—— 跳过行尾一致性检查")
+    else:
+        bad_eol = []
+        for ln in eol.splitlines():
+            parts = ln.split("\t")
+            if len(parts) < 2:
+                continue
+            meta, rel = parts[0], parts[1]
+            if "i/lf" in meta and "w/crlf" in meta:
+                bad_eol.append(rel)
+        if bad_eol:
+            warn.append("有 %d 个文件**工作区是 CRLF、仓库里是 LF**（提交内容不受影响）：%s%s"
+                        % (len(bad_eol), "、".join(bad_eol[:5]),
+                           " 等" if len(bad_eol) > 5 else "")
+                        + "\n      想一次性归一：把它们按字节换成 LF 即可"
+                          "（`git diff` 会显示无变化，属正常）")
+        else:
+            ok.append("行尾一致：所有 tracked 文本文件的 工作区 与 仓库 都是 LF")
+except Exception as e:                                        # noqa: BLE001
+    warn.append("行尾一致性检查失败（%s）—— 已跳过" % e)
+
 # ---- 6. 输出 ---------------------------------------------------------------
 quiet = "--quiet" in sys.argv
 if not quiet:
