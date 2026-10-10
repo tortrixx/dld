@@ -312,13 +312,14 @@ python scripts/audit_evidence.py                  # ★ 上板前跑一遍：0 F
 
 ## 0) 先推送（本地可能有未推提交）
 
-> ⚠️ **2026-10-10 13:3x 实测**：本轮结束时有 **9 个提交未推**（`4f7e2f6 → HEAD`），
+> ⚠️ **2026-10-10 13:3x 实测**：本轮结束时**有一批提交未推**（`4f7e2f6` 之后的所有提交；
+> **确切条数以命令输出为准，不要在文档里抄数字** —— 这条注释自己也是提交，抄一个数就会立刻过时）。
 > 原因是**网络不通**：`git push` 反复报
-> `Failed to connect to github.com port 443` / `Recv failure: Connection was reset`（试了 5 次）。
-> **提交本身全部安全地落在本地** —— 网络恢复后按下面两步推即可：
+> `Failed to connect to github.com port 443` / `Recv failure: Connection was reset`（连试 5 次）。
+> **提交本身全部安全地落在本地** —— 网络恢复后推即可：
 >
 > ```bash
-> git log --oneline refs/remotes/origin/main..HEAD   # 应列出 9 个提交
+> git log --oneline refs/remotes/origin/main..HEAD   # 列出待推提交
 > git push origin main                                # 网络时通时断 → 失败就重试
 > ```
 >
