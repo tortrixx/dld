@@ -1226,3 +1226,36 @@ AI 的做法分四步，**每一步都留可执行证据**：
 2. ⭐ **生成类脚本与编译不能并行。** 本轮我在跑清洁重编译的同时，另一个 agent 正在跑
    `bootstrap.ps1`（它会**重写 `quartus/puzzle.qsf`**）⇒ 编译读到半截文件直接失败。
    教训：**任何会重写工程文件（`.qsf`/`.qpf`）的动作，与编译是互斥的**。
+
+### ④ 第三条教训：**临时脚本不要用标准库模块名命名**（收尾时抓到的"幽灵输出"）
+
+**现象**：跑验收脚本 `python .tmp/repro_test.py` 时，输出**最前面多出 8 行**，
+内容是**几个月前那个 buzzer 调试脚本**的打印（`2026-10-10 18:05:33 13/16` + 一串断言失败）。
+验收本身 16/16 全过，但这 8 行来路不明 —— 如果不查清楚，就等于"证据里混进了不知道哪来的东西"。
+
+**根因**（已实测复现）：那个调试脚本当初被我命名为 **`.tmp/_bz2.py`**，
+而 **`_bz2` 正好是 CPython 的内置 C 扩展名**（`C:\Python314\DLLs\_bz2.pyd`）。
+`repro_test.py` 里 `import shutil` → `shutil` 会 `import bz2` → `bz2` 会 `from _bz2 import ...`
+→ 因为 `python .tmp/xxx.py` 把 **`.tmp` 放进了 `sys.path[0]`**，
+Python 优先找到 `.tmp/_bz2.py`，于是**在导入 `shutil` 的那一刻把它整个执行了一遍**。
+
+复现一行命令：
+```
+python -c "import sys; sys.path.insert(0, r'.tmp'); import shutil"   # 会打出那 8 行
+```
+
+**修法**：改名成 `.tmp/scratch__bz2.py`；并扫了一遍 `.tmp/*.py` 确认再无与标准库/内置扩展
+（`_bz2`/`_lzma`/`_json`/`json`/`re`/`types`/`code`/`copy` …）撞名的脚本。
+
+> ⭐ **教训**：**临时脚本不要用标准库模块名命名**，尤其 `_xxx` 这种 C 扩展名。
+> 它的表现形式是"别人的脚本莫名其妙多打了几行"，几乎不可能靠读那个脚本本身想到；
+> 只有把"多出来的输出"当成**必须解释的异常**去追，才会查到 import 机制上去。
+
+### ⑤ 顺带修掉的一处仓库卫生问题（行尾）
+
+写文件时若用 `pathlib.write_text()`（Windows 默认把 `\n` 写成 CRLF），
+工作区就会变成 CRLF —— 而 `.gitattributes` 规定 `*.py text eol=lf`，
+`git add` 时会被归一化，于是 **`git diff` 完全看不出来**，只有 `git ls-files --eol` 才露馅。
+本轮有 4 个 `scripts/*.py` 中招（`gen_project.py` 282 行、`check_geometry.py` 478、
+`check_keypad_pins.py` 62、`gen_sim_doc.py` 243），已按字节还原成 LF
+（`i/lf w/lf`，与 HEAD blob 逐字节相同）。**提交内容本来就没错**，这一步只是让工作区干净。
