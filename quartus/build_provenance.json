@@ -1,38 +1,38 @@
 {
-  "timestamp": "2026-10-10 11:27:17",
-  "git_head": "ee6de4e8478a3ddbb9bd55166b6435cc03194e82",
+  "timestamp": "2026-10-10 18:20:46",
+  "git_head": "17e1ff57f71e6b860742ed6703b015c20884460c",
   "git_dirty": true,
   "sources": {
     "rtl/board_test_top.vhd": "0339869e6822",
-    "rtl/buzzer_ctrl.vhd": "1f9c1c2f45eb",
+    "rtl/buzzer_ctrl.vhd": "09bcff3a52bb",
     "rtl/clk_gen.vhd": "2df2e50a2a8d",
     "rtl/disp_format.vhd": "33b5e23a5734",
     "rtl/dot_matrix_scan.vhd": "4f5d42b83f60",
-    "rtl/game_fsm.vhd": "07abb67dfc83",
+    "rtl/game_fsm.vhd": "74c9f8dafee0",
     "rtl/keypad_diag_top.vhd": "1e5168860dc0",
     "rtl/keypad_raw_top.vhd": "2789e990daba",
     "rtl/keypad_scan.vhd": "983f93069b84",
     "rtl/pattern_rom.vhd": "22b2ecc2cd66",
     "rtl/piece_rom.vhd": "2125aa737c2d",
     "rtl/puzzle_ctrl.vhd": "e21f95ffe461",
-    "rtl/puzzle_pkg.vhd": "2a4e51e4176d",
-    "rtl/puzzle_top.vhd": "c0a80b3bb078",
+    "rtl/puzzle_pkg.vhd": "6d8464b1563d",
+    "rtl/puzzle_top.vhd": "0070db432079",
     "rtl/rng_lfsr.vhd": "390b323dd78f",
     "rtl/seg_scan.vhd": "57ffbdf78b0c"
   },
   "pof": {
-    "mtime": "2026-10-10 11:26:37",
-    "sha256": "f72ac8e2fa1d0571294463f0aa7cf016b098626b523d8f86d44e2c92e55631ad",
+    "mtime": "2026-10-10 18:20:33",
+    "sha256": "d5e16d980daed7cc92575ecec893dd14c2c9e7e65ab7ecc4c91ff7f359748c21",
     "bytes": 27312
   },
   "fit": {
-    "status": "Successful - Sat Oct 10 11:26:35 2026",
-    "le": "1,263 / 1,270 ( 99 % )",
+    "status": "Successful - Sat Oct 10 18:20:32 2026",
+    "le": "1,268 / 1,270 ( 100 % )",
     "lab": "127 / 127 ( 100 % )",
     "pins": "52 / 116 ( 45 % )"
   },
   "sta": {
-    "setup_slack": 1.399,
+    "setup_slack": 0.861,
     "hold_slack": 1.078
   }
 }

@@ -1,0 +1,80 @@
+{
+  "module": "rng_lfsr",
+  "round": 13,
+  "timestamp": "2026-10-10 14:17:44",
+  "duration_ns": 5600.0,
+  "rtl_patches": [],
+  "sources": {
+    "rtl/board_test_top.vhd": "0339869e6822",
+    "rtl/buzzer_ctrl.vhd": "ecb9fc91291a",
+    "rtl/clk_gen.vhd": "2df2e50a2a8d",
+    "rtl/disp_format.vhd": "33b5e23a5734",
+    "rtl/dot_matrix_scan.vhd": "4f5d42b83f60",
+    "rtl/game_fsm.vhd": "74c9f8dafee0",
+    "rtl/keypad_diag_top.vhd": "1e5168860dc0",
+    "rtl/keypad_raw_top.vhd": "2789e990daba",
+    "rtl/keypad_scan.vhd": "983f93069b84",
+    "rtl/pattern_rom.vhd": "22b2ecc2cd66",
+    "rtl/piece_rom.vhd": "2125aa737c2d",
+    "rtl/puzzle_ctrl.vhd": "e21f95ffe461",
+    "rtl/puzzle_pkg.vhd": "6d8464b1563d",
+    "rtl/puzzle_top.vhd": "0070db432079",
+    "rtl/rng_lfsr.vhd": "390b323dd78f",
+    "rtl/seg_scan.vhd": "57ffbdf78b0c",
+    "sim/tb_rng_lfsr.py": "23e2a424c4bd"
+  },
+  "stimulus_vwf": "e18dc8cd167d",
+  "fingerprint_captured": "run-start",
+  "git_head": "17e1ff57f71e6b860742ed6703b015c20884460c",
+  "git_dirty": true,
+  "passed": 9,
+  "total": 9,
+  "all_pass": true,
+  "assertions": [
+    {
+      "name": "① 复位后 o_val == puzzle_pkg 的 SEED_DEFAULT(0x5A) 且 ≠ 0（未落在全零吸收态）",
+      "ok": true,
+      "detail": "实测 0x5A；pkg 的 SEED_DEFAULT = 0x5A；是否为零 = False"
+    },
+    {
+      "name": "② 实测 255 拍状态序列与【tb 独立推演】的 x^8+x^6+x^5+x^4+1（抽头 bit7/5/4/3）逐拍完全一致",
+      "ok": true,
+      "detail": "逐拍比对 256 个状态：全部一致"
+    },
+    {
+      "name": "③ 周期恰为 255：第 255 拍回到初值，且第 1~254 拍都没有回到初值",
+      "ok": true,
+      "detail": "第 255 拍 = 0x5A（期望 0x5A）；1~254 拍中提前回到初值的次数 = 0"
+    },
+    {
+      "name": "④ 最大长度序列性质：255 个状态两两不同、全程不出现 0、每个 bit 恰 128 个 1",
+      "ok": true,
+      "detail": "不同状态数 = 255/255；出现 0 的拍号 = 无；各 bit 的 1 计数(bit7→bit0) = [128, 128, 128, 128, 128, 128, 128, 128]"
+    },
+    {
+      "name": "⑤ i_step='0' 时状态**保持**（255 拍跑完后 3 个时钟沿不动；单拍脉冲后再 2 个沿不动）",
+      "ok": true,
+      "detail": "跑完后 3 点 = ['0x5A', '0x5A', '0x5A']（应保持 0x5A）；脉冲后 2 点 = ['0xB4', '0xB4']（应保持 0xB4）"
+    },
+    {
+      "name": "⑥ 单拍 i_step='1'（恰好覆盖 1 个上升沿）→ 恰好推进 1 步：0x5A → 0xB4",
+      "ok": true,
+      "detail": "实测 0xB4，期望 next(0x5A) = 0xB4（若没推进会是 0x5A）"
+    },
+    {
+      "name": "⑦ 中间信号 sr（8 位状态寄存器）与端口 o_val 逐拍相同（o_val 是它的组合拷贝）",
+      "ok": true,
+      "detail": "256 拍全部一致（sr == o_val）"
+    },
+    {
+      "name": "⑧ ⭐ 中间信号 fb~0 在全部 256 个采样点上都 == sr(7) ^ sr(5)（反馈异或树第一级；对应关系由波形穷举抽头组合实测得到，不是照抄 RTL 表达式）",
+      "ok": true,
+      "detail": "256 点全部满足；fb~0 出现过的电平 = ['0', '1']（两种，说明反馈位真的在变）"
+    },
+    {
+      "name": "⑨ 复位后 256 个采样点 o_val 全部为确定值（无 X/Z）—— 复位真的把状态拉出来了",
+      "ok": true,
+      "detail": "含 X 的采样点 = 无"
+    }
+  ]
+}

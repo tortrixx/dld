@@ -37,7 +37,7 @@ set_global_assignment -name DEVICE_FILTER_PIN_COUNT 144
 # unused pins: keep them high-Z so the LCD / PS2 / VGA pins do not fight
 set_global_assignment -name RESERVE_ALL_UNUSED_PINS "AS INPUT TRI-STATED"
 set_global_assignment -name AUTO_RESOURCE_SHARING ON
-set_global_assignment -name SEED 1
+set_global_assignment -name SEED 6
 
 # ---------------- pins ----------------
 set_location_assignment PIN_18 -to clk

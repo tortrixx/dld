@@ -217,20 +217,28 @@ def audit_sound():
         add("FAIL", "C", "tb_buzzer_ctrl 的 MEL 表键不是 0..15（实测 %s）" % keys)
     else:
         add("OK", "C", "tb_buzzer_ctrl 的 MEL 表覆盖 0..15 全部 16 个码")
-    m = re.search(r"EMITTED\s*=\s*list\(range\((\d+)\)\)", tb)
-    if m and int(m.group(1)) != len(arms):
-        add("WARN", "C", "tb_buzzer_ctrl 的 EMITTED=range(%s) 与 buzzer_ctrl 的 %d 个分支不一致"
-            % (m.group(1), len(arms)))
-    elif m:
-        add("OK", "C", "tb_buzzer_ctrl 的 EMITTED 与 buzzer_ctrl 的分支数一致（%d）" % len(arms))
+    m = re.search(r"EMITTED\s*=\s*\[([^\]]*)\]", tb)
+    n_emitted = None
+    if m:
+        n_emitted = len([x for x in re.split(r"[,\s]+", m.group(1)) if x.strip()])
+        if n_emitted != len(arms):
+            add("WARN", "C", "tb_buzzer_ctrl 的 EMITTED（%d 个）与 buzzer_ctrl 的查表臂（%d 个）不一致"
+                % (n_emitted, len(arms)))
+        else:
+            add("OK", "C", "tb_buzzer_ctrl 的 EMITTED 与 buzzer_ctrl 的查表臂数一致（%d）" % len(arms))
 
     # ---- 预留码必须真的静音（没有 case 分支）
-    reserved = [c for c in ("1101", "1110", "1111")]
+    #   ⚠️ 第 18 工作阶段起，"无查表臂"的码从 3 个变成 5 个：
+    #      1101/1110/1111（一直预留）+ **1010（旋转）/1100（确认）**
+    #      —— 用户要求"确认、旋转不要打扰背景音乐"，`game_fsm` 不再生成这两个码，
+    #      查表臂也一并删掉（净省逻辑）。
+    reserved = ["1010", "1100", "1101", "1110", "1111"]
     bad = [c for c in reserved if c in arms]
     if bad:
-        add("FAIL", "C", "预留码 %s 竟然有查表分支（应落入 when others 静音）" % bad)
+        add("FAIL", "C", "下列码本应无查表臂（静音），实测却有分支：%s" % bad)
     else:
-        add("OK", "C", "预留码 1101/1110/1111 均无分支 → 整句静音（符合设计）")
+        add("OK", "C", "无查表臂的 5 个码 1010/1100/1101/1110/1111 均落入 when others → 整句静音"
+                       "（含第 18 工作阶段删掉的【旋转】【确认】）")
 
     # ---- 文档口径：发出的码只有 12 个（历史上曾误写"九个瞬时短语"）
     add("INFO", "C", "game_fsm 实际可发出的码 = %d 个：%s"

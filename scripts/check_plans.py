@@ -611,10 +611,14 @@ def main():
     for n in ("T_PREVIEW", "T_LEVEL1", "T_LEVEL2", "T_LEVEL3"):
         m = re.search(r"constant\s+%s\s*:\s*integer\s*:=\s*(\d+)" % n, SRC)
         pkg_t[n] = int(m.group(1)) if m else None
-    want_t = {"T_PREVIEW": 5, "T_LEVEL1": 30, "T_LEVEL2": 40, "T_LEVEL3": 40}
+    # ⚠️ 第 18 工作阶段：**第三关自拟限时由 40 s 改成 60 s**（用户："第三关应该是比前面
+    #    要难一点，那么倒计时也可以设置的长一点"）。前两关是课程要求（B5 的 30 s、B10 的 40 s）
+    #    **不能改**，所以这里把它们分开写：前三个是题目值、第四个是自拟值。
+    want_t = {"T_PREVIEW": 5, "T_LEVEL1": 30, "T_LEVEL2": 40, "T_LEVEL3": 60}
     ok &= (pkg_t == want_t)
-    print("  %s pkg: T_PREVIEW/LEVEL1/2/3 = %s（B4 预览 5 s、B5 30 s、B10 40 s；"
-          "第三关 40 s 为自拟）" % ("[OK]  " if pkg_t == want_t else "[FAIL]", pkg_t))
+    print("  %s pkg: T_PREVIEW/LEVEL1/2/3 = %s（B4 预览 5 s、B5 30 s、B10 40 s 都是**题目值**；"
+          "第三关 **60 s** 为自拟 —— 第 18 工作阶段由 40 s 加长）"
+          % ("[OK]  " if pkg_t == want_t else "[FAIL]", pkg_t))
 
     # ---- 守卫：本文件里的计划必须与 sim/tb_puzzle_top.py 里的**逐字一致** ----
     print("\n-- 计划一致性守卫（本文件 vs sim/tb_puzzle_top.py）")
