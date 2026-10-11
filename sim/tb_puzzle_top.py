@@ -150,14 +150,10 @@ S0 = 24000.0
 ROUND = 16000.0                    # 一轮扫描 = 2 个 tick_200
 
 # ---- 各阶段时间点（ns）----
-T_SELFTEST = (300_000.0, 3_100_000.0)
-T_IDLE = (3_225_000.0, 3_385_000.0)        # 进待机(3.20 ms)之后、按开始生效之前
-T_PREVIEW = (4_500_000.0, 10_800_000.0)
-T_PLAY = (11_900_000.0, 15_000_000.0)      # 散落完成后的对局（sel = 0）
-T_PLAY_SEL = (15_800_000.0, 17_300_000.0)  # 按过"选择"之后
-T_DIR = (17_600_000.0, 19_900_000.0)       # ★ 按方向键的时段（ERR-020 的回归窗口）
-T_OFF = (21_800_000.0, 22_600_000.0)       # SW7=0 之后
-T_SW_OFF = 21_200_000.0
+# WARN 2026-10-11 review: this first block used to be silently shadowed by the
+#      second block further down (T_SW_OFF 21.2 ms vs 23.0 ms; the latter wins),
+#      while the RTL_PATCHES note in the file header still argued with the 21.2 ms
+#      timeline.  Removed: the timeline is defined in exactly one place below.
 
 # ---------------------------------------------------------------------------
 # ⚠️ ERR-031：keypad_scan 的消抖由 **16 轮缩到 4 轮**（DEBOUNCE_MAX 15 → 3，
@@ -985,6 +981,12 @@ def check(vf):
     #     ⚠️ 不假设"一定被接受"：散落是随机的，贴边的零片转过去可能越界 —— 那正是
     #        stage 2b 的边界判据在起作用，所以判据写成"不变 或 +1"。
     rot_ok, rot_notes = True, []
+    # ⚠️ 2026-10-11 对抗式审查发现：原来判据是「朝向不变**或**恰好 +1」——
+    #    贴边/会撞时被拒是合法的（朝向不变），但**三次全不变**就等于「旋转通路整个断了」。
+    #    把 rtl/puzzle_top.vhd 的 `i_rot => mv_rot` 改成 `i_rot => '0'`，
+    #    三次按键全都「朝向不变」⇒ 原来那条判据仍然全过（假通过）。
+    #    ⇒ 补一条：三次里**至少要有一次真的转过去**。
+    rot_chg = 0
     t_first = S0 + ROT_KEYS[0][0] * ROUND
     # 取多位数用本文件的 vf.bus_value_at（_bus 是 tb_puzzle_ctrl 的辅助，这里没有）
     def _rd(nm, tt):
@@ -1009,6 +1011,8 @@ def check(vf):
         n_cells = cells(rrr, ggg)
         if cells_ref is None:
             cells_ref = n_cells
+        if ka != kb:
+            rot_chg += 1
         rot_ok = rot_ok and good and (pos_a == pos_ref) and (n_cells == cells_ref)
         rot_notes.append("第%d次 sel=%d ori %d->%d(%s) pos%s 格数%d"
                          % (i + 1, sel_a, kb, ka, "OK" if good else "非法",
@@ -1017,7 +1021,7 @@ def check(vf):
     res.append((
         "⑰ ★【A4 旋转 · 整机】按 KEY8 三次：朝向每次要么不变、要么恰好 +1（mod 4）；"
         "锚点 o_pos 全程不变；点亮格数守恒",
-        rot_ok,
+            rot_ok and (rot_chg >= 1),   # ★ 三次里至少真转过一次（否则旋转通路断了也全过）
         "；".join(rot_notes) + "（参考格数 %s）" % cells_ref,
     ))
 
@@ -1266,7 +1270,13 @@ def check(vf):
                         "在 t ∈ [16.0, %.1f] ms 内没找到『对局中且倒计时 = 11』的采样点 —— 断言无法执行"
                         % (T_SW_OFF / 1e6)))
         else:
-            _s11, _ = scan_panel_states(vf, cnt11_t, cnt11_t + 200_000.0, step=400.0)
+            # ⚠️⚠️ 2026-10-11 对抗式审查发现：这里原来的观察窗只有 **0.2 ms**，
+            #    而 2 Hz 闪烁的半周期是 **0.4 ms**（仿真时间，见上面的 625×）——
+            #    ⇒ 若幽灵阈值被放宽到 ≤11，幽灵的"亮"相位**可能整段落在窗外**，
+            #      本条就会**假通过**。⇒ 窗口加宽到 0.9 ms（cnt=11 持续约 1.6 ms，放得下），
+            #      并把"窗口够宽"并进判据。
+            _W11 = 900_000.0
+            _s11, _ = scan_panel_states(vf, cnt11_t, cnt11_t + _W11, step=400.0)
             lit11 = [(r, c) for r in range(8) for c in range(8)
                      if (L1_ROWS[r] >> c) & 1
                      and any(x != (0, 0) for x in _s11.get((r, c), {(0, 0)}))]
@@ -1274,9 +1284,12 @@ def check(vf):
                 "㉕ ★【第 22 工作阶段】**「只在倒计时 ≤10 s 才画」的阈值本身**："
                 "倒计时 = **11** 时（幽灵还没使能）目标图案的格子必须**全灭** —— "
                 "阈值若被改成 ≤11~14，本条立刻挂（原来这条只由 ④ 在 cnt=15~17 上弱覆盖）",
-                not lit11,
-                "采样 t=%.2f ms（对局中、倒计时=%s）：目标 %d 格里**亮过的** = %s"
-                % (cnt11_t / 1e6, _rd("u_fsm|cnt", cnt11_t),
+                (not lit11) and (_W11 >= _BLINK_HALF),
+                "采样 t=%.2f ms、窗口宽 %.3f ms（要求 ≥ %.3f ms，否则若阈值被放宽、"
+                "幽灵的亮相位可能整段落在窗外而**假通过**；对局中、倒计时=%s）："
+                "目标 %d 格里**亮过的** = %s"
+                % (cnt11_t / 1e6, _W11 / 1e6, _BLINK_HALF / 1e6,
+                   _rd("u_fsm|cnt", cnt11_t),
                    sum(bin(x).count("1") for x in L1_ROWS),
                    lit11 or "无（阈值正确：11 s 时还不画）"),
             ))

@@ -129,10 +129,22 @@ def build_record():
 
 def main():
     rec = build_record()
-    if not rec["fit"]:
-        print("  ⚠️ 读不到 quartus/output_files/puzzle.fit.rpt —— 先编译再记录")
-    if not rec["pof"]:
-        print("  ⚠️ 读不到 quartus/output_files/puzzle.pof —— 还没有生成固件")
+    # ⚠️⚠️ 2026-10-11 对抗式审查发现：原来这里读不到产物只**打印一句警告**，
+    #    却仍然无条件覆盖 `quartus/build_provenance.json` —— 而那是**入库**的、
+    #    唯一记录 `pof.sha256` / LE / LAB / setup·hold slack 的地方
+    #    （`quartus/output_files/` 本身是 .gitignore 的）。
+    #    也就是说：在**没编译过**的干净 clone 上跑一次本脚本，就会把这份证据**清空**，
+    #    而且返回 0（成功）—— 与 `gen_sim_doc.py` 把 docs/03 截断是同一类事故。
+    #    ⇒ 缺任一关键产物就**拒绝写盘**并返回 1；确实要写空记录请显式 `--force`。
+    _missing = [k for k in ("fit", "pof") if not rec[k]]
+    if _missing and "--force" not in sys.argv:
+        print("  ✗ 拒绝覆盖 %s：读不到 %s。"
+              % (PROVENANCE.relative_to(ROOT), "、".join(_missing)))
+        print("    先在仓库根跑一次完整编译（scripts/build.tcl），再记录。")
+        print("    确实要写入不完整记录请显式加 `--force`。")
+        return 1
+    if _missing:
+        print("  ⚠️ 读不到 %s（--force 已指定，仍写入）" % "、".join(_missing))
     # LF 落盘（理由见 `scripts/sim.py` 里同一处注释：write_text 在 Windows 上写 CRLF）
     with open(PROVENANCE, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(json.dumps(rec, ensure_ascii=False, indent=2) + "\n")
