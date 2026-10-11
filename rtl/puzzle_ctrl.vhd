@@ -61,9 +61,10 @@ entity puzzle_ctrl is
     port (
         i_clk     : in  std_logic;
         i_rst     : in  std_logic;
-        i_tick    : in  std_logic;                      -- 行渲染节拍：顶层给 **200 Hz**
-                                                        -- （画面内容 25 Hz 更新；**扫描**在
-                                                        -- 顶层另走 1 kHz → 125 Hz，见下）
+        i_tick    : in  std_logic;                      -- 行渲染节拍：顶层给 **1 kHz**
+                                                        -- （与点阵扫描**同源同速**，见
+                                                        -- `puzzle_top` 的 `i_tick => t_1k`；
+                                                        -- 一行 npc+2 拍 → 内容 25/21 Hz）
         rnd_step  : out std_logic;
         rnd_val   : in  std_logic_vector(7 downto 0);
         i_level   : in  std_logic;                      -- '0' 第一关，'1' 第二/三关
@@ -253,8 +254,10 @@ architecture rtl of puzzle_ctrl is
     --    现在改成**一拍只算一块**（ph = 0..npc-1），把数据累加到 cov_a/kc_a/sl_a，
     --    最后一块算完才发布这一行（ERR-033 的第一拍）。取到的效果：
     --      · 只剩**一份** row_mask，而且它还能被 AUTO_RESOURCE_SHARING 与重叠引擎共用；
-    --      · 一帧 8 行 × npc 拍（第一关 24 拍、第二/三关 32 拍）；i_tick = 1 kHz
-    --        → 24~32 ms 一帧（**31~42 Hz**，比原来 200 Hz/8 = 25 Hz 还快）；
+    --      · 一帧 = 8 行 × (npc+2) 拍（第一关 8×5 = 40 拍、第二/三关 8×6 = 48 拍）；
+    --        i_tick = 1 kHz → **40 / 48 ms 一帧 = 内容 25 / 21 Hz**
+    --        （⚠️ 旧注释写"8 行 × npc 拍 = 24~32 拍 / 31~42 Hz"是**漏掉了流水两拍**，
+    --         已按上面的相位定义改正：ph = 0..npc+1 共 npc+2 拍）；
     --      · 判定语义**逐位不变**：cov/kc/selrow 仍是"四块零片的并集/锁定集/选中集"。
     signal ph      : unsigned(2 downto 0) := (others => '0');   -- 相位：
                                                 --   0        = 准备第 0 块的行掩码
