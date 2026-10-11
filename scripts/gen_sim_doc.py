@@ -235,7 +235,9 @@ python scripts/sim_summary.py
 > 需要清理时显式跑 `python scripts/sim.py clean`。
 """
 
-    OUT.write_text(head, encoding="utf-8")
+    # LF 落盘（理由见 `scripts/sim.py` 里同一处注释：write_text 在 Windows 上写 CRLF）
+    with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(head)
     print("wrote %s  (%d 字节)" % (OUT, len(head.encode("utf-8"))))
 
 

@@ -260,7 +260,14 @@ def do_check(module, round_no=None, quiet=False, record=False, fingerprint=None)
     if record:
         FIG_DIR.mkdir(parents=True, exist_ok=True)
         fig = FIG_DIR / ("SIM-%s.svg" % module)
-        fig.write_text(render_svg(vf, getattr(tb, "OBSERVE", []), module), encoding="utf-8")
+        # ⚠️ 必须用 `open(..., newline="\n")` 落盘：`Path.write_text` 在 Windows 上会把
+        #    `\n` 翻译成 **CRLF**，而本仓库 `.gitattributes` 规定文本一律 **LF**
+        #    —— `check_env.py` 会当场报"工作区 CRLF / 仓库 LF"（第 20 工作阶段加的那条检查
+        #    就是为了抓这个；当时是手工归一了 605 个文件，**根因在写文件这一侧**）。
+        # ⚠️ 不用 `write_text(..., newline="\n")`：`newline` 参数是 **Python 3.10+** 才有的，
+        #    而 `check_env.py` 声明本仓库支持 **≥3.8**。
+        with open(fig, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(render_svg(vf, getattr(tb, "OBSERVE", []), module))
         if not quiet:
             print("  ✓ 波形图已存 %s" % fig.relative_to(ROOT))
 
@@ -411,8 +418,8 @@ def _write_round(module, round_no, results, fingerprint=None):
         "assertions": [{"name": nm, "ok": bool(ok), "detail": (dt or "")}
                        for (nm, ok, dt) in results],
     }
-    (d / ("r%02d.json" % n)).write_text(
-        json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+    with open(d / ("r%02d.json" % n), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(json.dumps(manifest, ensure_ascii=False, indent=2))
 
     src = manifest["sources"]
     head = manifest["git_head"] or "（非 git 工作树）"
@@ -438,7 +445,8 @@ def _write_round(module, round_no, results, fingerprint=None):
         md.append("| %d | %s | %s | %s |" % (
             i, nm, "✅" if ok else "❌", (dt or "").replace("\n", "<br>")))
     md.append("")
-    (d / ("r%02d.md" % n)).write_text("\n".join(md), encoding="utf-8")
+    with open(d / ("r%02d.md" % n), "w", encoding="utf-8", newline="\n") as fh:
+        fh.write("\n".join(md))
     print("  ✓ 轮次记录已写 sim/rounds/%s/r%02d.{md,json}" % (module, n))
 
 
@@ -572,7 +580,8 @@ def _make_isolated_project(module, patches):
             if not re.match(r"^\s*set_location_assignment\s+PIN_\d+\s+-to\s+ld\[", l)) + "\n"
     text = re.sub(r"\.\./rtl/(\S+)",
                   lambda m: (d / "rtl" / m.group(1)).resolve().as_posix(), text)
-    (d / "puzzle.qsf").write_text(text, encoding="utf-8")
+    with open(d / "puzzle.qsf", "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(text)
     for extra in ("puzzle.qpf", "puzzle.sdc"):
         src = QUARTUS_DIR / extra
         if src.exists():

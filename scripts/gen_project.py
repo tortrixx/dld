@@ -153,7 +153,18 @@ def qsf(top: str) -> str:
     #    ⚠️ 另有一个"`cnt` 换步清零写成**独立 elsif**"的版本：面积 **1270 LE（零余量）**、
     #       最好 53.35 MHz。**最终取"并进外层条件"的 1268 LE / 52.25 MHz** ——
     #       宁可少 1.1 MHz，也要留 **2 个 LE 的余量**（1270/1270 时任何改动都装不下）。
-    L.append("set_global_assignment -name SEED 6")
+    #
+    # ⭐⭐ **第七次重扫 1~16**（`.tmp/opt/seed_scan_v21.py`，判据同样是"装得进 127 LAB
+    #    **且** ≥ 50 MHz"）—— 触发：2026-10-11 上板复测后**重做三个一次性提示音的旋律表**
+    #    （预览/失败/通关，见 `docs/06` §21）。**只改了旋律常量**，但结论又变了：
+    #      装得下：**2 / 5 / 6 / 8 / 12 / 15 / 16**（1/3/4/7/9/10/11/13/14 装不下）；
+    #      同时达标：**16 → 53.61**、12 → 53.40、6 → 52.85、5 → 51.76、8 → 51.42、2 → 50.73
+    #      （15 = 48.93：装得下但过不了 50 MHz）
+    #    ⇒ 取 **SEED 16（53.61 MHz）**（同一份 RTL 下按"两个判据都过 + Fmax 最高"选）。
+    #    ⚠️ 面积仍是 **1268 LE / 127 LAB**（只改常量，面积没动）。
+    #    ⚠️ 顺带印证：**同一个 `SEED 6`** 在旧旋律下是 52.25 MHz、在新旋律下是 **52.85 MHz**
+    #       —— 只改旋律常量**真的会改变布局与时序**，所以"改常量也要重扫 seed"不是形式主义。
+    L.append("set_global_assignment -name SEED 16")
     L.append("")
     L.append("# ---------------- pins ----------------")
 
@@ -267,11 +278,16 @@ if __name__ == "__main__":
     print("将写入（仓库根 = %s）：" % ROOT)
     print("  · %s" % (PROJ / "puzzle.qpf"))
     print("  · %s" % (PROJ / "puzzle.qsf"))
-    # ⚠️ newline="\n" 是必须的：Windows 上 write_text 默认写 CRLF，而
-    #    .gitattributes 规定仓库内文本一律 LF —— 不统一的话每台机器上
+    # ⚠️ 必须以 **LF** 落盘：Windows 上文本模式默认把 `\n` 写成 CRLF，而
+    #    `.gitattributes` 规定仓库内文本一律 LF —— 不统一的话每台机器上
     #    `git status` 都会因为换行符抖动而显示"文件被修改"（假 diff）。
-    (PROJ / "puzzle.qpf").write_text(qpf(top), encoding="ascii", newline="\n")
-    (PROJ / "puzzle.qsf").write_text(qsf(top), encoding="ascii", newline="\n")
+    # ⚠️ 用 `open(..., newline="\n")` 而不是 `write_text(..., newline="\n")`：
+    #    `newline` 参数是 **Python 3.10+** 才有的，而 `check_env.py` 声明支持 **≥3.8**
+    #    （第 21 工作阶段发现：这里原来用的是 `write_text(newline=)`，
+    #     也就是说"声明 ≥3.8"与"实际代码"不一致 —— 现已改正）。
+    for _name, _text in (("puzzle.qpf", qpf(top)), ("puzzle.qsf", qsf(top))):
+        with open(PROJ / _name, "w", encoding="ascii", newline="\n") as _fh:
+            _fh.write(_text)
     n = sum(len(PINS[g]) if isinstance(PINS[g], list) else 1
             for g in TOP_PORTS[top])
     print("wrote quartus/puzzle.qpf and quartus/puzzle.qsf  (top=%s, %d pins)" % (top, n))

@@ -133,8 +133,9 @@ def main():
         print("  ⚠️ 读不到 quartus/output_files/puzzle.fit.rpt —— 先编译再记录")
     if not rec["pof"]:
         print("  ⚠️ 读不到 quartus/output_files/puzzle.pof —— 还没有生成固件")
-    PROVENANCE.write_text(json.dumps(rec, ensure_ascii=False, indent=2) + "\n",
-                          encoding="utf-8")
+    # LF 落盘（理由见 `scripts/sim.py` 里同一处注释：write_text 在 Windows 上写 CRLF）
+    with open(PROVENANCE, "w", encoding="utf-8", newline="\n") as fh:
+        fh.write(json.dumps(rec, ensure_ascii=False, indent=2) + "\n")
     print("  ✓ 已写 %s" % PROVENANCE.relative_to(ROOT))
     print("     git HEAD %s（%s）" % ((rec["git_head"] or "-")[:12],
                                     "工作树脏" if rec["git_dirty"] else "工作树干净"))

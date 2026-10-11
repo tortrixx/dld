@@ -481,21 +481,11 @@ TRANSITION_LIST("i_sel[0]")
 		LEVEL 0 FOR 320000.0;
 		LEVEL 1 FOR 980000.0;
 		LEVEL 0 FOR 40000.0;
-		LEVEL 1 FOR 120000.0;
-		LEVEL 0 FOR 60000.0;
-		LEVEL 1 FOR 80000.0;
+		LEVEL 1 FOR 260000.0;
 		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 40000.0;
+		LEVEL 1 FOR 320000.0;
 		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 100000.0;
-		LEVEL 0 FOR 60000.0;
-		LEVEL 1 FOR 100000.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 100000.0;
-		LEVEL 0 FOR 60000.0;
-		LEVEL 1 FOR 80000.0;
+		LEVEL 1 FOR 280000.0;
 		LEVEL 0 FOR 310.0;
 	}
 }
@@ -515,14 +505,16 @@ TRANSITION_LIST("i_sel[1]")
 		LEVEL 1 FOR 960000.0;
 		LEVEL 0 FOR 60000.0;
 		LEVEL 1 FOR 260000.0;
-		LEVEL 0 FOR 60000.0;
-		LEVEL 1 FOR 100000.0;
+		LEVEL 0 FOR 40000.0;
+		LEVEL 1 FOR 120000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 160000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 120000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 160000.0;
 		LEVEL 0 FOR 40000.0;
 		LEVEL 1 FOR 100000.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 300000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 140000.0;
 		LEVEL 0 FOR 310.0;
@@ -539,14 +531,10 @@ TRANSITION_LIST("i_sel[2]")
 		LEVEL 0 FOR 1280000.0;
 		LEVEL 1 FOR 1280000.0;
 		LEVEL 0 FOR 660000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 260000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 300000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 280310.0;
+		LEVEL 1 FOR 40000.0;
+		LEVEL 0 FOR 280000.0;
+		LEVEL 1 FOR 40000.0;
+		LEVEL 0 FOR 580310.0;
 	}
 }
 
@@ -557,12 +545,10 @@ TRANSITION_LIST("i_sel[3]")
 		REPEAT = 1;
 		LEVEL 0 FOR 2570000.0;
 		LEVEL 1 FOR 2560000.0;
-		LEVEL 0 FOR 680000.0;
+		LEVEL 0 FOR 700000.0;
 		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 300000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 300000.0;
-		LEVEL 1 FOR 20000.0;
+		LEVEL 0 FOR 580000.0;
+		LEVEL 1 FOR 40000.0;
 		LEVEL 0 FOR 260310.0;
 	}
 }
@@ -1274,62 +1260,22 @@ TRANSITION_LIST("o_buzz")
 			LEVEL 1 FOR 2280.0;
 		}
 		LEVEL 0 FOR 2280.0;
-		LEVEL 1 FOR 3880.0;
+		LEVEL 1 FOR 3280.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2120.0;
-			LEVEL 1 FOR 2120.0;
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
 		}
-		LEVEL 0 FOR 2960.0;
+		LEVEL 0 FOR 1760.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 1 FOR 3520.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 1880.0;
-			LEVEL 1 FOR 1880.0;
-		}
-		LEVEL 0 FOR 1880.0;
-		LEVEL 1 FOR 1240.0;
-		LEVEL 0 FOR 80000.0;
-		LEVEL 1 FOR 2240.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 2280.0;
-			LEVEL 1 FOR 2280.0;
-		}
-		LEVEL 0 FOR 2280.0;
-		LEVEL 1 FOR 3880.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2120.0;
-			LEVEL 1 FOR 2120.0;
-		}
-		LEVEL 0 FOR 2960.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
-		}
-		LEVEL 1 FOR 3520.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 1880.0;
-			LEVEL 1 FOR 1880.0;
-		}
-		LEVEL 0 FOR 1880.0;
-		LEVEL 1 FOR 1240.0;
-		LEVEL 0 FOR 79980.0;
+		LEVEL 1 FOR 280.0;
+		LEVEL 0 FOR 259980.0;
 		LEVEL 1 FOR 1860.0;
 		NODE
 		{
@@ -1567,7 +1513,7 @@ TRANSITION_LIST("o_buzz")
 		LEVEL 1 FOR 3640.0;
 		NODE
 		{
-			REPEAT = 6;
+			REPEAT = 8;
 			NODE
 			{
 				REPEAT = 7;
@@ -1589,7 +1535,23 @@ TRANSITION_LIST("o_buzz")
 			LEVEL 0 FOR 1280.0;
 			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 0 FOR 2080.0;
+		LEVEL 0 FOR 22080.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 840.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 1240.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
+		}
+		LEVEL 0 FOR 22080.0;
 		NODE
 		{
 			REPEAT = 7;
@@ -1610,59 +1572,55 @@ TRANSITION_LIST("o_buzz")
 			LEVEL 1 FOR 1280.0;
 			LEVEL 0 FOR 1280.0;
 		}
-		LEVEL 1 FOR 820.0;
-		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 2000.0;
+		LEVEL 1 FOR 840.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 1480.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
 		}
-		LEVEL 0 FOR 3680.0;
+		LEVEL 0 FOR 1760.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 1 FOR 3680.0;
+		LEVEL 1 FOR 280.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 1240.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 0 FOR 3680.0;
+		LEVEL 0 FOR 2080.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 7;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1280.0;
 		}
-		LEVEL 1 FOR 4160.0;
+		LEVEL 1 FOR 2080.0;
 		NODE
 		{
-			REPEAT = 3;
-			LEVEL 0 FOR 2520.0;
-			LEVEL 1 FOR 2520.0;
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 0 FOR 4640.0;
+		LEVEL 0 FOR 2320.0;
 		NODE
 		{
-			REPEAT = 3;
-			LEVEL 1 FOR 2280.0;
-			LEVEL 0 FOR 2280.0;
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 1 FOR 2280.0;
-		LEVEL 0 FOR 3800.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
-		}
-		LEVEL 1 FOR 3920.0;
+		LEVEL 1 FOR 280.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 2240.0;
 		NODE
 		{
 			REPEAT = 3;
@@ -1670,64 +1628,8 @@ TRANSITION_LIST("o_buzz")
 			LEVEL 1 FOR 2280.0;
 		}
 		LEVEL 0 FOR 2280.0;
-		LEVEL 1 FOR 3800.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 2040.0;
-				LEVEL 1 FOR 2040.0;
-			}
-			LEVEL 0 FOR 3680.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 2040.0;
-				LEVEL 0 FOR 2040.0;
-			}
-			LEVEL 1 FOR 3680.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
-		}
-		LEVEL 0 FOR 3680.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
-		}
-		LEVEL 1 FOR 1680.0;
-		LEVEL 0 FOR 40000.0;
-		LEVEL 1 FOR 2080.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2120.0;
-			LEVEL 1 FOR 2120.0;
-		}
-		LEVEL 0 FOR 43200.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 2280.0;
-			LEVEL 0 FOR 2280.0;
-		}
-		LEVEL 1 FOR 2280.0;
-		LEVEL 0 FOR 44280.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 2520.0;
-			LEVEL 0 FOR 2520.0;
-		}
-		LEVEL 1 FOR 2400.0;
-		LEVEL 0 FOR 40000.0;
+		LEVEL 1 FOR 1800.0;
+		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 2960.0;
 		NODE
 		{
@@ -1736,8 +1638,16 @@ TRANSITION_LIST("o_buzz")
 			LEVEL 1 FOR 3000.0;
 		}
 		LEVEL 0 FOR 3000.0;
+		LEVEL 1 FOR 5000.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 3000.0;
+			LEVEL 1 FOR 3000.0;
+		}
+		LEVEL 0 FOR 3000.0;
 		LEVEL 1 FOR 2040.0;
-		LEVEL 0 FOR 119980.0;
+		LEVEL 0 FOR 199980.0;
 		LEVEL 1 FOR 1500.0;
 		NODE
 		{
@@ -2406,81 +2316,13 @@ TRANSITION_LIST("cnt[0]")
 		}
 		NODE
 		{
-			REPEAT = 20;
+			REPEAT = 531;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 25;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 24;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 10;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 51;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 6;
@@ -2499,168 +2341,6 @@ TRANSITION_LIST("cnt[0]")
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 25;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 16;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 27;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 25;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 24;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 10;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 51;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 80.0;
-				NODE
-				{
-					REPEAT = 36;
-					LEVEL 1 FOR 40.0;
-					LEVEL 0 FOR 40.0;
-				}
-			}
-			NODE
-			{
-				REPEAT = 25;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 25;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
@@ -3012,241 +2692,31 @@ TRANSITION_LIST("cnt[0]")
 		LEVEL 0 FOR 20.0;
 		NODE
 		{
-			REPEAT = 4024;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 20;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 20.0;
-			LEVEL 0 FOR 20.0;
-			NODE
-			{
-				REPEAT = 8;
-				NODE
-				{
-					REPEAT = 24;
-					LEVEL 1 FOR 40.0;
-					LEVEL 0 FOR 40.0;
-				}
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 80.0;
-			}
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 24;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 6;
-			NODE
-			{
-				REPEAT = 30;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 30;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 29;
+			REPEAT = 4286;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
 			REPEAT = 2;
-			LEVEL 1 FOR 20.0;
-			LEVEL 0 FOR 20.0;
 			NODE
 			{
-				REPEAT = 8;
-				NODE
-				{
-					REPEAT = 27;
-					LEVEL 1 FOR 40.0;
-					LEVEL 0 FOR 40.0;
-				}
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 80.0;
-			}
-			NODE
-			{
-				REPEAT = 46;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			NODE
-			{
-				REPEAT = 8;
+				REPEAT = 6;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 80.0;
 				NODE
 				{
-					REPEAT = 24;
+					REPEAT = 36;
 					LEVEL 1 FOR 40.0;
 					LEVEL 0 FOR 40.0;
 				}
 			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
 			NODE
 			{
-				REPEAT = 20;
+				REPEAT = 275;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 20.0;
-			LEVEL 0 FOR 20.0;
-			NODE
-			{
-				REPEAT = 8;
-				NODE
-				{
-					REPEAT = 24;
-					LEVEL 1 FOR 40.0;
-					LEVEL 0 FOR 40.0;
-				}
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 80.0;
-			}
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 20;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 24;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 6;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 61;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
@@ -3262,47 +2732,35 @@ TRANSITION_LIST("cnt[0]")
 		}
 		NODE
 		{
-			REPEAT = 14;
+			REPEAT = 775;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
+			REPEAT = 2;
 			NODE
 			{
-				REPEAT = 25;
+				REPEAT = 6;
+				LEVEL 1 FOR 40.0;
+				LEVEL 0 FOR 80.0;
+				NODE
+				{
+					REPEAT = 36;
+					LEVEL 1 FOR 40.0;
+					LEVEL 0 FOR 40.0;
+				}
+			}
+			NODE
+			{
+				REPEAT = 525;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
 		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
 		NODE
 		{
-			REPEAT = 11;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 6;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 61;
+			REPEAT = 500;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
@@ -3344,83 +2802,7 @@ TRANSITION_LIST("cnt[0]")
 		}
 		NODE
 		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 25;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 19;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 30;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 29;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 6;
-			NODE
-			{
-				REPEAT = 36;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 61;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 6;
@@ -3442,7 +2824,19 @@ TRANSITION_LIST("cnt[0]")
 		}
 		NODE
 		{
-			REPEAT = 986;
+			REPEAT = 6;
+			LEVEL 1 FOR 40.0;
+			LEVEL 0 FOR 80.0;
+			NODE
+			{
+				REPEAT = 36;
+				LEVEL 1 FOR 40.0;
+				LEVEL 0 FOR 40.0;
+			}
+		}
+		NODE
+		{
+			REPEAT = 1011;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
@@ -4270,131 +3664,31 @@ TRANSITION_LIST("cnt[0]")
 		}
 		NODE
 		{
-			REPEAT = 255;
+			REPEAT = 500;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
+			REPEAT = 2;
 			NODE
 			{
-				REPEAT = 27;
+				REPEAT = 10;
+				LEVEL 1 FOR 40.0;
+				LEVEL 0 FOR 80.0;
+				NODE
+				{
+					REPEAT = 22;
+					LEVEL 1 FOR 40.0;
+					LEVEL 0 FOR 40.0;
+				}
+			}
+			NODE
+			{
+				REPEAT = 765;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
-		}
-		NODE
-		{
-			REPEAT = 17;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 765;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 25;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 24;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 10;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 37;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
@@ -4428,25 +3722,25 @@ TRANSITION_LIST("cnt[0]")
 		}
 		NODE
 		{
-			REPEAT = 281;
+			REPEAT = 272;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
-			REPEAT = 6;
+			REPEAT = 8;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 80.0;
 			NODE
 			{
-				REPEAT = 36;
+				REPEAT = 27;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
 		}
 		NODE
 		{
-			REPEAT = 11;
+			REPEAT = 267;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
@@ -4467,102 +3761,10 @@ TRANSITION_LIST("cnt[0]")
 			}
 			NODE
 			{
-				REPEAT = 15;
+				REPEAT = 765;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
-		}
-		NODE
-		{
-			REPEAT = 750;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 25;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 24;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 10;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 37;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
@@ -4596,47 +3798,25 @@ TRANSITION_LIST("cnt[0]")
 		}
 		NODE
 		{
-			REPEAT = 17;
+			REPEAT = 279;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
+			REPEAT = 6;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 80.0;
 			NODE
 			{
-				REPEAT = 24;
+				REPEAT = 36;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
 		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
 		NODE
 		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 10;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 37;
+			REPEAT = 261;
 			LEVEL 1 FOR 40.0;
 			LEVEL 0 FOR 40.0;
 		}
@@ -4657,102 +3837,10 @@ TRANSITION_LIST("cnt[0]")
 			}
 			NODE
 			{
-				REPEAT = 15;
+				REPEAT = 765;
 				LEVEL 1 FOR 40.0;
 				LEVEL 0 FOR 40.0;
 			}
-		}
-		NODE
-		{
-			REPEAT = 750;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-			NODE
-			{
-				REPEAT = 25;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 24;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 24;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 40.0;
-		LEVEL 0 FOR 80.0;
-		NODE
-		{
-			REPEAT = 20;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20.0;
-		NODE
-		{
-			REPEAT = 10;
-			NODE
-			{
-				REPEAT = 22;
-				LEVEL 1 FOR 40.0;
-				LEVEL 0 FOR 40.0;
-			}
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 37;
-			LEVEL 1 FOR 40.0;
-			LEVEL 0 FOR 40.0;
 		}
 		NODE
 		{
@@ -5940,291 +5028,65 @@ TRANSITION_LIST("cnt[1]")
 		}
 		NODE
 		{
-			REPEAT = 23;
+			REPEAT = 19;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
+			REPEAT = 12;
 			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
+			LEVEL 0 FOR 160.0;
 			NODE
 			{
-				REPEAT = 12;
+				REPEAT = 8;
 				LEVEL 1 FOR 80.0;
 				LEVEL 0 FOR 80.0;
 			}
 		}
 		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 80.0;
 		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 18;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 18;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
 			REPEAT = 12;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 40.0;
 			NODE
 			{
-				REPEAT = 18;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 18;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 18;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 13;
+				REPEAT = 8;
 				LEVEL 1 FOR 80.0;
 				LEVEL 0 FOR 80.0;
 			}
 			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
-		}
-		NODE
-		{
-			REPEAT = 23;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
+			LEVEL 0 FOR 160.0;
 		}
 		NODE
 		{
 			REPEAT = 8;
 			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
+			LEVEL 0 FOR 80.0;
 		}
 		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 60.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 12;
+			REPEAT = 18;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
+			REPEAT = 4;
 			LEVEL 1 FOR 40.0;
 			NODE
 			{
-				REPEAT = 12;
+				REPEAT = 18;
 				LEVEL 0 FOR 80.0;
 				LEVEL 1 FOR 80.0;
 			}
@@ -6233,33 +5095,7 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 1 FOR 40.0;
 		NODE
 		{
-			REPEAT = 10;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
+			REPEAT = 18;
 			LEVEL 0 FOR 80.0;
 			LEVEL 1 FOR 80.0;
 		}
@@ -6267,7 +5103,295 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 1 FOR 40.0;
 		NODE
 		{
-			REPEAT = 7;
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
 			LEVEL 0 FOR 80.0;
 			LEVEL 1 FOR 80.0;
 		}
@@ -7192,157 +6316,7 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 2012;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 8;
-				LEVEL 1 FOR 40.0;
-				NODE
-				{
-					REPEAT = 12;
-					LEVEL 0 FOR 80.0;
-					LEVEL 1 FOR 80.0;
-				}
-				LEVEL 0 FOR 80.0;
-			}
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 10;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 120.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 15;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 14;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 13;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
-		}
-		NODE
-		{
-			REPEAT = 23;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 0 FOR 120.0;
-			NODE
-			{
-				REPEAT = 13;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 23;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			NODE
-			{
-				REPEAT = 8;
-				LEVEL 1 FOR 40.0;
-				NODE
-				{
-					REPEAT = 12;
-					LEVEL 0 FOR 80.0;
-					LEVEL 1 FOR 80.0;
-				}
-				LEVEL 0 FOR 80.0;
-			}
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 10;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 120.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-		}
-		NODE
-		{
-			REPEAT = 6;
+			REPEAT = 2143;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
@@ -7371,6 +6345,142 @@ TRANSITION_LIST("cnt[1]")
 		{
 			REPEAT = 12;
 			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 143;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 143;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 393;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 20.0;
+			LEVEL 0 FOR 60.0;
+			NODE
+			{
+				REPEAT = 12;
+				NODE
+				{
+					REPEAT = 8;
+					LEVEL 1 FOR 80.0;
+					LEVEL 0 FOR 80.0;
+				}
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 160.0;
+			}
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
 			LEVEL 1 FOR 80.0;
 		}
 		LEVEL 0 FOR 80.0;
@@ -7414,65 +6524,25 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
+			REPEAT = 383;
 			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
+			LEVEL 0 FOR 80.0;
 		}
 		NODE
 		{
 			REPEAT = 12;
 			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
 		}
 		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 18;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 18;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 80.0;
 		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 60.0;
@@ -7598,17 +6668,17 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 15;
+			REPEAT = 18;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
 		NODE
 		{
-			REPEAT = 6;
+			REPEAT = 4;
 			LEVEL 1 FOR 40.0;
 			NODE
 			{
-				REPEAT = 15;
+				REPEAT = 18;
 				LEVEL 0 FOR 80.0;
 				LEVEL 1 FOR 80.0;
 			}
@@ -7617,12 +6687,56 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 1 FOR 40.0;
 		NODE
 		{
-			REPEAT = 14;
+			REPEAT = 18;
 			LEVEL 0 FOR 80.0;
 			LEVEL 1 FOR 80.0;
 		}
 		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 60.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 18;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 18;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
@@ -12624,21 +11738,21 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
+			REPEAT = 133;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
 			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
 			NODE
 			{
 				REPEAT = 8;
 				LEVEL 1 FOR 80.0;
 				LEVEL 0 FOR 80.0;
 			}
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
 		}
 		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
@@ -12648,19 +11762,7 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 13;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
-		}
-		NODE
-		{
-			REPEAT = 22;
+			REPEAT = 11;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
@@ -12780,91 +11882,49 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 8;
+			REPEAT = 12;
 			NODE
 			{
-				REPEAT = 12;
+				REPEAT = 8;
 				LEVEL 1 FOR 80.0;
 				LEVEL 0 FOR 80.0;
 			}
 			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
+			LEVEL 0 FOR 160.0;
 		}
 		NODE
 		{
-			REPEAT = 12;
+			REPEAT = 8;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
 		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 120.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 5;
+			REPEAT = 133;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 60.0;
 		NODE
 		{
 			REPEAT = 12;
 			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
+			LEVEL 0 FOR 160.0;
 			NODE
 			{
-				REPEAT = 12;
-				LEVEL 0 FOR 80.0;
+				REPEAT = 8;
 				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
 				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
 			}
-			LEVEL 0 FOR 80.0;
 		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 80.0;
 		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 60.0;
@@ -12966,7 +12026,361 @@ TRANSITION_LIST("cnt[1]")
 		}
 		NODE
 		{
-			REPEAT = 154;
+			REPEAT = 149;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 120.0;
+			NODE
+			{
+				REPEAT = 13;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+		}
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 11;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 12;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 133;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 11;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 12;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 133;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 11;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 12;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 133;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 11;
+				LEVEL 0 FOR 80.0;
+				LEVEL 1 FOR 80.0;
+			}
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 11;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 0 FOR 80.0;
+			LEVEL 1 FOR 80.0;
+		}
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 12;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 80.0;
+				LEVEL 0 FOR 80.0;
+			}
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 80.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 80.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 60.0;
+		NODE
+		{
+			REPEAT = 18;
 			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 80.0;
 		}
@@ -13002,78 +12416,6 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 0 FOR 60.0;
 		NODE
 		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
 			REPEAT = 12;
 			NODE
 			{
@@ -13093,156 +12435,6 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
 		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 133;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 160.0;
-			NODE
-			{
-				REPEAT = 8;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-		}
-		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
 		LEVEL 0 FOR 80.0;
 		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 60.0;
@@ -13369,140 +12561,6 @@ TRANSITION_LIST("cnt[1]")
 		NODE
 		{
 			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 8;
@@ -13545,132 +12603,6 @@ TRANSITION_LIST("cnt[1]")
 		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
 		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 1 FOR 80.0;
-				LEVEL 0 FOR 80.0;
-			}
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 120.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 60.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 12;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 120.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 1 FOR 80.0;
-			LEVEL 0 FOR 80.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 11;
-				LEVEL 0 FOR 80.0;
-				LEVEL 1 FOR 80.0;
-			}
-			LEVEL 0 FOR 80.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 11;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
-		LEVEL 0 FOR 80.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 80.0;
-			LEVEL 1 FOR 80.0;
-		}
 		LEVEL 0 FOR 80.0;
 		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 60.0;
@@ -14020,102 +12952,36 @@ TRANSITION_LIST("cnt[2]")
 			LEVEL 0 FOR 160.0;
 		}
 		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 40.0;
 		NODE
 		{
 			REPEAT = 2;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 140.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 8;
+			LEVEL 0 FOR 140.0;
 			NODE
 			{
-				REPEAT = 5;
+				REPEAT = 4;
 				LEVEL 1 FOR 160.0;
 				LEVEL 0 FOR 160.0;
 			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 200.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
 			NODE
 			{
-				REPEAT = 5;
+				REPEAT = 12;
+				LEVEL 1 FOR 80.0;
+				NODE
+				{
+					REPEAT = 4;
+					LEVEL 0 FOR 160.0;
+					LEVEL 1 FOR 160.0;
+				}
 				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
 			}
+			LEVEL 1 FOR 80.0;
 			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 100.0;
 		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
-			REPEAT = 4;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 6;
@@ -14139,58 +13005,10 @@ TRANSITION_LIST("cnt[2]")
 		}
 		NODE
 		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 200.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
 			REPEAT = 6;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
 			NODE
 			{
-				REPEAT = 6;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 140.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 5;
+				REPEAT = 8;
 				LEVEL 1 FOR 160.0;
 				LEVEL 0 FOR 160.0;
 			}
@@ -14204,75 +13022,7 @@ TRANSITION_LIST("cnt[2]")
 			LEVEL 0 FOR 160.0;
 		}
 		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 200.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 6;
-				NODE
-				{
-					REPEAT = 8;
-					LEVEL 1 FOR 160.0;
-					LEVEL 0 FOR 160.0;
-				}
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 280.0;
-			}
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 240.0;
-		}
+		LEVEL 0 FOR 240.0;
 		NODE
 		{
 			REPEAT = 5;
@@ -15033,165 +13783,15 @@ TRANSITION_LIST("cnt[2]")
 		}
 		NODE
 		{
-			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 8;
-				NODE
-				{
-					REPEAT = 5;
-					LEVEL 1 FOR 160.0;
-					LEVEL 0 FOR 160.0;
-				}
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 280.0;
-			}
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 200.0;
-		}
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 7;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 200.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 200.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 200.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 6;
-			NODE
-			{
-				REPEAT = 8;
-				NODE
-				{
-					REPEAT = 5;
-					LEVEL 1 FOR 160.0;
-					LEVEL 0 FOR 160.0;
-				}
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 280.0;
-			}
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 200.0;
-		}
-		NODE
-		{
 			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 62;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 20.0;
+			LEVEL 0 FOR 140.0;
 			NODE
 			{
 				REPEAT = 6;
@@ -15215,56 +13815,180 @@ TRANSITION_LIST("cnt[2]")
 		}
 		NODE
 		{
+			REPEAT = 62;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
 			REPEAT = 6;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 280.0;
+		}
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 160.0;
+		LEVEL 0 FOR 240.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 62;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 20.0;
+			LEVEL 0 FOR 140.0;
+		}
+		NODE
+		{
+			REPEAT = 62;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 6;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 280.0;
+		}
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 160.0;
+		LEVEL 0 FOR 240.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 80.0;
+				NODE
+				{
+					REPEAT = 4;
+					LEVEL 0 FOR 160.0;
+					LEVEL 1 FOR 160.0;
+				}
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 80.0;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 100.0;
+			LEVEL 0 FOR 140.0;
+		}
+		NODE
+		{
+			REPEAT = 6;
+			NODE
+			{
+				REPEAT = 8;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 280.0;
+		}
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 160.0;
+		LEVEL 0 FOR 240.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 62;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 20.0;
+			LEVEL 0 FOR 140.0;
+		}
+		NODE
+		{
+			REPEAT = 62;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
 			LEVEL 1 FOR 160.0;
 			LEVEL 0 FOR 160.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
 			NODE
 			{
-				REPEAT = 6;
+				REPEAT = 4;
 				LEVEL 0 FOR 160.0;
 				LEVEL 1 FOR 160.0;
 			}
 			LEVEL 0 FOR 160.0;
 		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
+		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 140.0;
+		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
-			REPEAT = 2;
+			REPEAT = 6;
 			NODE
 			{
-				REPEAT = 6;
-				NODE
-				{
-					REPEAT = 8;
-					LEVEL 1 FOR 160.0;
-					LEVEL 0 FOR 160.0;
-				}
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 280.0;
-			}
-			NODE
-			{
-				REPEAT = 5;
+				REPEAT = 8;
 				LEVEL 1 FOR 160.0;
 				LEVEL 0 FOR 160.0;
 			}
 			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 240.0;
+			LEVEL 0 FOR 280.0;
 		}
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 160.0;
+		LEVEL 0 FOR 240.0;
 		NODE
 		{
 			REPEAT = 8;
@@ -15287,7 +14011,7 @@ TRANSITION_LIST("cnt[2]")
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
-			REPEAT = 2;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 6;
@@ -15311,33 +14035,7 @@ TRANSITION_LIST("cnt[2]")
 		}
 		NODE
 		{
-			REPEAT = 7;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
 			REPEAT = 6;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 7;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 0 FOR 280.0;
 			NODE
 			{
 				REPEAT = 8;
@@ -15345,31 +14043,7 @@ TRANSITION_LIST("cnt[2]")
 				LEVEL 0 FOR 160.0;
 			}
 			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 240.0;
-			NODE
-			{
-				REPEAT = 6;
-				NODE
-				{
-					REPEAT = 8;
-					LEVEL 1 FOR 160.0;
-					LEVEL 0 FOR 160.0;
-				}
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 280.0;
-			}
+			LEVEL 0 FOR 280.0;
 		}
 		NODE
 		{
@@ -16951,6 +15625,14 @@ TRANSITION_LIST("cnt[2]")
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
+			REPEAT = 62;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
 			REPEAT = 4;
 			LEVEL 1 FOR 160.0;
 			LEVEL 0 FOR 160.0;
@@ -16970,26 +15652,6 @@ TRANSITION_LIST("cnt[2]")
 		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
 		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 200.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
@@ -17117,93 +15779,53 @@ TRANSITION_LIST("cnt[2]")
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
-			REPEAT = 6;
+			REPEAT = 4;
 			LEVEL 1 FOR 160.0;
 			LEVEL 0 FOR 160.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
 			NODE
 			{
-				REPEAT = 6;
+				REPEAT = 4;
 				LEVEL 0 FOR 160.0;
 				LEVEL 1 FOR 160.0;
 			}
 			LEVEL 0 FOR 160.0;
 		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
+		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 140.0;
+		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
+			REPEAT = 62;
 			LEVEL 1 FOR 160.0;
 			LEVEL 0 FOR 160.0;
 		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 280.0;
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
 		NODE
 		{
 			REPEAT = 4;
 			LEVEL 1 FOR 160.0;
 			LEVEL 0 FOR 160.0;
 		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 200.0;
 		NODE
 		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
 			NODE
 			{
-				REPEAT = 5;
+				REPEAT = 4;
 				LEVEL 0 FOR 160.0;
 				LEVEL 1 FOR 160.0;
 			}
 			LEVEL 0 FOR 160.0;
 		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
+		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
 		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 140.0;
@@ -17322,6 +15944,370 @@ TRANSITION_LIST("cnt[2]")
 			LEVEL 0 FOR 160.0;
 		}
 		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 8;
+			NODE
+			{
+				REPEAT = 6;
+				LEVEL 1 FOR 160.0;
+				LEVEL 0 FOR 160.0;
+			}
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 200.0;
+		}
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 5;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 62;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 5;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 62;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 5;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 62;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 5;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 160.0;
+			LEVEL 1 FOR 160.0;
+		}
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
+		LEVEL 0 FOR 140.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 160.0;
+			LEVEL 0 FOR 160.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 160.0;
+				LEVEL 1 FOR 160.0;
+			}
+			LEVEL 0 FOR 160.0;
+		}
+		LEVEL 1 FOR 80.0;
+		LEVEL 0 FOR 160.0;
+		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
@@ -17345,37 +16331,23 @@ TRANSITION_LIST("cnt[2]")
 		LEVEL 0 FOR 240.0;
 		NODE
 		{
-			REPEAT = 5;
+			REPEAT = 4;
 			LEVEL 1 FOR 160.0;
 			LEVEL 0 FOR 160.0;
 		}
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
+			REPEAT = 12;
+			LEVEL 1 FOR 80.0;
 			NODE
 			{
-				REPEAT = 5;
+				REPEAT = 4;
 				LEVEL 0 FOR 160.0;
 				LEVEL 1 FOR 160.0;
 			}
 			LEVEL 0 FOR 160.0;
 		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
+		LEVEL 1 FOR 80.0;
 		LEVEL 0 FOR 160.0;
 		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 140.0;
@@ -17505,134 +16477,6 @@ TRANSITION_LIST("cnt[2]")
 		LEVEL 0 FOR 140.0;
 		NODE
 		{
-			REPEAT = 6;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 140.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 200.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
 			REPEAT = 4;
 			LEVEL 1 FOR 160.0;
 			LEVEL 0 FOR 160.0;
@@ -17680,358 +16524,6 @@ TRANSITION_LIST("cnt[2]")
 			LEVEL 0 FOR 160.0;
 		}
 		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 200.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 62;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 80.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 80.0;
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 100.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 140.0;
-		LEVEL 0 FOR 140.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 160.0;
-				LEVEL 0 FOR 160.0;
-			}
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 280.0;
-		}
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 280.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 160.0;
-		LEVEL 0 FOR 200.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 1 FOR 160.0;
-			LEVEL 0 FOR 160.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 0 FOR 160.0;
-				LEVEL 1 FOR 160.0;
-			}
-			LEVEL 0 FOR 160.0;
-		}
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 5;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
-		LEVEL 0 FOR 160.0;
-		LEVEL 1 FOR 120.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 160.0;
-			LEVEL 1 FOR 160.0;
-		}
 		LEVEL 0 FOR 160.0;
 		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 140.0;
@@ -18477,89 +16969,23 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 300.0;
 		NODE
 		{
-			REPEAT = 8;
+			REPEAT = 2;
 			NODE
 			{
-				REPEAT = 2;
+				REPEAT = 12;
 				LEVEL 1 FOR 320.0;
 				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 520.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 520.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 600.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
 				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
+				LEVEL 0 FOR 560.0;
 			}
 			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 440.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
 			LEVEL 0 FOR 320.0;
 			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 800.0;
 		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
 		NODE
 		{
-			REPEAT = 4;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 4;
@@ -18597,143 +17023,13 @@ TRANSITION_LIST("cnt[3]")
 		}
 		NODE
 		{
-			REPEAT = 3;
+			REPEAT = 4;
 			LEVEL 1 FOR 320.0;
 			LEVEL 0 FOR 320.0;
 		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 180.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 520.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 520.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 600.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 440.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
 		NODE
 		{
 			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 120.0;
-				NODE
-				{
-					REPEAT = 4;
-					LEVEL 0 FOR 320.0;
-					LEVEL 1 FOR 320.0;
-				}
-				LEVEL 0 FOR 320.0;
-			}
 			LEVEL 1 FOR 120.0;
 			NODE
 			{
@@ -18742,15 +17038,23 @@ TRANSITION_LIST("cnt[3]")
 				LEVEL 1 FOR 320.0;
 			}
 			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 400.0;
 		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 400.0;
 		NODE
 		{
 			REPEAT = 2;
@@ -19453,64 +17757,300 @@ TRANSITION_LIST("cnt[3]")
 		}
 		NODE
 		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
 			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 8;
-				NODE
-				{
-					REPEAT = 2;
-					LEVEL 1 FOR 320.0;
-					LEVEL 0 FOR 320.0;
-				}
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 440.0;
-			}
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 60.0;
-			LEVEL 0 FOR 300.0;
-		}
-		NODE
-		{
-			REPEAT = 3;
 			LEVEL 1 FOR 320.0;
 			LEVEL 0 FOR 320.0;
 		}
 		NODE
 		{
-			REPEAT = 6;
-			LEVEL 1 FOR 280.0;
+			REPEAT = 4;
+			LEVEL 1 FOR 120.0;
 			NODE
 			{
-				REPEAT = 3;
+				REPEAT = 4;
 				LEVEL 0 FOR 320.0;
 				LEVEL 1 FOR 320.0;
 			}
 			LEVEL 0 FOR 320.0;
 		}
-		LEVEL 1 FOR 280.0;
+		LEVEL 1 FOR 120.0;
 		NODE
 		{
-			REPEAT = 3;
+			REPEAT = 4;
 			LEVEL 0 FOR 320.0;
 			LEVEL 1 FOR 320.0;
 		}
 		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 140.0;
-		LEVEL 0 FOR 300.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 400.0;
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 400.0;
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 400.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 30;
+				LEVEL 1 FOR 320.0;
+				LEVEL 0 FOR 320.0;
+			}
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 480.0;
+		}
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 400.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 320.0;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+				LEVEL 0 FOR 560.0;
+			}
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 800.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 400.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 30;
+				LEVEL 1 FOR 320.0;
+				LEVEL 0 FOR 320.0;
+			}
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 480.0;
+		}
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 120.0;
+			NODE
+			{
+				REPEAT = 4;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 120.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 400.0;
 		NODE
 		{
 			REPEAT = 3;
@@ -19549,303 +18089,7 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 300.0;
 		NODE
 		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 440.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 180.0;
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 0 FOR 300.0;
-			NODE
-			{
-				REPEAT = 8;
-				NODE
-				{
-					REPEAT = 2;
-					LEVEL 1 FOR 320.0;
-					LEVEL 0 FOR 320.0;
-				}
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 440.0;
-			}
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 60.0;
-		}
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 120.0;
-				NODE
-				{
-					REPEAT = 4;
-					LEVEL 0 FOR 320.0;
-					LEVEL 1 FOR 320.0;
-				}
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 400.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 520.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 520.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 600.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 120.0;
-				NODE
-				{
-					REPEAT = 4;
-					LEVEL 0 FOR 320.0;
-					LEVEL 1 FOR 320.0;
-				}
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 400.0;
-		}
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 180.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 120.0;
-				NODE
-				{
-					REPEAT = 4;
-					LEVEL 0 FOR 320.0;
-					LEVEL 1 FOR 320.0;
-				}
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 120.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 400.0;
-		}
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 140.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 8;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 4;
@@ -21377,6 +19621,14 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 300.0;
 		NODE
 		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
 			REPEAT = 12;
 			LEVEL 1 FOR 320.0;
 			LEVEL 0 FOR 320.0;
@@ -21387,42 +19639,6 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 320.0;
 		LEVEL 1 FOR 320.0;
 		LEVEL 0 FOR 800.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 6;
-			LEVEL 1 FOR 40.0;
-			NODE
-			{
-				REPEAT = 3;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 40.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 180.0;
-		LEVEL 0 FOR 300.0;
 		NODE
 		{
 			REPEAT = 2;
@@ -21521,86 +19737,36 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 300.0;
 		NODE
 		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 520.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
+			REPEAT = 12;
 			LEVEL 1 FOR 320.0;
 			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 520.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 600.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
 			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
+			LEVEL 0 FOR 560.0;
 		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 440.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
 		LEVEL 1 FOR 320.0;
 		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
 		NODE
 		{
 			REPEAT = 2;
@@ -21709,6 +19875,290 @@ TRANSITION_LIST("cnt[3]")
 		}
 		LEVEL 1 FOR 320.0;
 		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 40.0;
+			NODE
+			{
+				REPEAT = 3;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 3;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 40.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 300.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 280.0;
+			NODE
+			{
+				REPEAT = 2;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 280.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 280.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 260.0;
+		LEVEL 0 FOR 300.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 280.0;
+			NODE
+			{
+				REPEAT = 2;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 280.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 280.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 260.0;
+		LEVEL 0 FOR 300.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 280.0;
+			NODE
+			{
+				REPEAT = 2;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 280.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 280.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 260.0;
+		LEVEL 0 FOR 300.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 30;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 480.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+		}
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 280.0;
+			NODE
+			{
+				REPEAT = 2;
+				LEVEL 0 FOR 320.0;
+				LEVEL 1 FOR 320.0;
+			}
+			LEVEL 0 FOR 320.0;
+		}
+		LEVEL 1 FOR 280.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+		}
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 280.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 260.0;
+		LEVEL 0 FOR 300.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 320.0;
+			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
+		}
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 320.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
 		NODE
 		{
 			REPEAT = 4;
@@ -21745,36 +20195,16 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 400.0;
 		NODE
 		{
-			REPEAT = 2;
+			REPEAT = 12;
 			LEVEL 1 FOR 320.0;
 			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
 			LEVEL 1 FOR 320.0;
+			LEVEL 0 FOR 560.0;
 		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
 		LEVEL 1 FOR 320.0;
 		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
+		LEVEL 1 FOR 320.0;
+		LEVEL 0 FOR 800.0;
 		NODE
 		{
 			REPEAT = 2;
@@ -21873,120 +20303,6 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 300.0;
 		NODE
 		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 520.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 520.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 600.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 440.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
 			REPEAT = 12;
 			LEVEL 1 FOR 320.0;
 			LEVEL 0 FOR 320.0;
@@ -22017,308 +20333,6 @@ TRANSITION_LIST("cnt[3]")
 		LEVEL 0 FOR 320.0;
 		LEVEL 1 FOR 320.0;
 		LEVEL 0 FOR 800.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 440.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 560.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 800.0;
-		NODE
-		{
-			REPEAT = 30;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 480.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 560.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 800.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 520.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 520.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 600.0;
-		NODE
-		{
-			REPEAT = 8;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 1 FOR 320.0;
-				LEVEL 0 FOR 320.0;
-			}
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 440.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 440.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 60.0;
-		LEVEL 0 FOR 300.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 320.0;
-			LEVEL 0 FOR 320.0;
-		}
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 280.0;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 320.0;
-				LEVEL 1 FOR 320.0;
-			}
-			LEVEL 0 FOR 320.0;
-		}
-		LEVEL 1 FOR 280.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 320.0;
-			LEVEL 1 FOR 320.0;
-		}
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 280.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 320.0;
-		LEVEL 0 FOR 320.0;
-		LEVEL 1 FOR 260.0;
-		LEVEL 0 FOR 300.0;
 		NODE
 		{
 			REPEAT = 2;
@@ -22477,39 +20491,23 @@ TRANSITION_LIST("cnt[4]")
 			LEVEL 1 FOR 360.0;
 			LEVEL 0 FOR 640.0;
 		}
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1120.0;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 640.0;
+				LEVEL 0 FOR 880.0;
+			}
+		}
 		LEVEL 1 FOR 640.0;
 		LEVEL 0 FOR 1120.0;
 		NODE
 		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 200.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 300.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 120.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1000.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 1240.0;
-		}
-		LEVEL 1 FOR 580.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 620.0;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 6;
@@ -22521,61 +20519,19 @@ TRANSITION_LIST("cnt[4]")
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 640.0;
 			LEVEL 1 FOR 100.0;
-		}
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 360.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1120.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 200.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 300.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 120.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1000.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 1240.0;
-		}
-		LEVEL 1 FOR 580.0;
-		NODE
-		{
-			REPEAT = 4;
 			LEVEL 0 FOR 620.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1080.0;
-			}
+		}
+		NODE
+		{
+			REPEAT = 6;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 100.0;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1080.0;
 		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 640.0;
+		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
@@ -22876,122 +20832,146 @@ TRANSITION_LIST("cnt[4]")
 			}
 			LEVEL 1 FOR 180.0;
 		}
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 620.0;
+			NODE
+			{
+				REPEAT = 15;
+				LEVEL 1 FOR 640.0;
+				LEVEL 0 FOR 640.0;
+			}
+			LEVEL 1 FOR 180.0;
+			LEVEL 0 FOR 620.0;
+			NODE
+			{
+				REPEAT = 6;
+				LEVEL 1 FOR 640.0;
+				LEVEL 0 FOR 640.0;
+				LEVEL 1 FOR 640.0;
+				LEVEL 0 FOR 1080.0;
+			}
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+			LEVEL 1 FOR 100.0;
+		}
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
-			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 120.0;
-				LEVEL 0 FOR 640.0;
-			}
+			REPEAT = 15;
 			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 1000.0;
+			LEVEL 0 FOR 640.0;
 		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
 		NODE
 		{
-			REPEAT = 7;
+			REPEAT = 6;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 640.0;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1080.0;
 		}
 		LEVEL 1 FOR 640.0;
 		LEVEL 0 FOR 640.0;
-		LEVEL 1 FOR 460.0;
+		LEVEL 1 FOR 100.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 620.0;
+			NODE
+			{
+				REPEAT = 15;
+				LEVEL 1 FOR 640.0;
+				LEVEL 0 FOR 640.0;
+			}
+			LEVEL 1 FOR 180.0;
+		}
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 15;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1080.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 640.0;
+		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
 			REPEAT = 2;
 			NODE
 			{
-				REPEAT = 8;
+				REPEAT = 12;
 				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 360.0;
-				LEVEL 0 FOR 640.0;
+				LEVEL 0 FOR 880.0;
 			}
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 1120.0;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 120.0;
-				LEVEL 0 FOR 640.0;
-			}
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 1000.0;
 		}
 		NODE
 		{
-			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 120.0;
-				LEVEL 0 FOR 640.0;
-			}
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 1000.0;
-		}
-		NODE
-		{
-			REPEAT = 9;
+			REPEAT = 6;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 120.0;
-			LEVEL 0 FOR 640.0;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1080.0;
 		}
 		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1000.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1080.0;
-			}
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 100.0;
-			LEVEL 0 FOR 620.0;
-		}
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 200.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 300.0;
+		LEVEL 0 FOR 640.0;
+		LEVEL 1 FOR 100.0;
 		NODE
 		{
 			REPEAT = 2;
 			LEVEL 0 FOR 620.0;
 			NODE
 			{
-				REPEAT = 6;
+				REPEAT = 15;
 				LEVEL 1 FOR 640.0;
 				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1080.0;
 			}
+			LEVEL 1 FOR 180.0;
+		}
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 15;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 100.0;
 		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1080.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 640.0;
+		LEVEL 1 FOR 100.0;
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
@@ -23005,7 +20985,7 @@ TRANSITION_LIST("cnt[4]")
 		LEVEL 0 FOR 1120.0;
 		NODE
 		{
-			REPEAT = 2;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 6;
@@ -23019,34 +20999,6 @@ TRANSITION_LIST("cnt[4]")
 			LEVEL 1 FOR 100.0;
 			LEVEL 0 FOR 620.0;
 		}
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 640.0;
-		LEVEL 1 FOR 460.0;
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 0 FOR 620.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 640.0;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1080.0;
-			}
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 100.0;
-		}
-		LEVEL 0 FOR 620.0;
 		NODE
 		{
 			REPEAT = 6;
@@ -23625,6 +21577,14 @@ TRANSITION_LIST("cnt[4]")
 		}
 		NODE
 		{
+			REPEAT = 15;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
 			REPEAT = 12;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 880.0;
@@ -23633,11 +21593,33 @@ TRANSITION_LIST("cnt[4]")
 		LEVEL 0 FOR 1120.0;
 		NODE
 		{
-			REPEAT = 8;
+			REPEAT = 10;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1240.0;
+		}
+		LEVEL 1 FOR 580.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 15;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 360.0;
-			LEVEL 0 FOR 640.0;
+		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
 		}
 		LEVEL 1 FOR 640.0;
 		LEVEL 0 FOR 1120.0;
@@ -23683,38 +21665,6 @@ TRANSITION_LIST("cnt[4]")
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 200.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 300.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 120.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1000.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 10;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1240.0;
-			}
-			LEVEL 1 FOR 580.0;
-			LEVEL 0 FOR 620.0;
-		}
-		NODE
-		{
 			REPEAT = 12;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 880.0;
@@ -23755,6 +21705,136 @@ TRANSITION_LIST("cnt[4]")
 		}
 		LEVEL 1 FOR 180.0;
 		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 8;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+			LEVEL 1 FOR 360.0;
+			LEVEL 0 FOR 640.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 10;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1240.0;
+		}
+		LEVEL 1 FOR 580.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 15;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 10;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1240.0;
+		}
+		LEVEL 1 FOR 580.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 15;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 10;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1240.0;
+		}
+		LEVEL 1 FOR 580.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 15;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 640.0;
+		}
+		LEVEL 1 FOR 180.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 10;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1240.0;
+		}
+		LEVEL 1 FOR 580.0;
+		LEVEL 0 FOR 620.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
 		NODE
 		{
 			REPEAT = 6;
@@ -23766,18 +21846,6 @@ TRANSITION_LIST("cnt[4]")
 		LEVEL 1 FOR 640.0;
 		LEVEL 0 FOR 640.0;
 		LEVEL 1 FOR 100.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 620.0;
-			NODE
-			{
-				REPEAT = 10;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1240.0;
-			}
-			LEVEL 1 FOR 580.0;
-		}
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
@@ -23787,116 +21855,6 @@ TRANSITION_LIST("cnt[4]")
 		}
 		LEVEL 1 FOR 640.0;
 		LEVEL 0 FOR 1120.0;
-		NODE
-		{
-			REPEAT = 15;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 180.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 880.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1120.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 1240.0;
-		}
-		LEVEL 1 FOR 580.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 200.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 300.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 120.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1000.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 10;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1240.0;
-			}
-			LEVEL 1 FOR 580.0;
-			LEVEL 0 FOR 620.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 880.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1120.0;
-		NODE
-		{
-			REPEAT = 15;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 180.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 880.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1120.0;
-		NODE
-		{
-			REPEAT = 10;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 1240.0;
-		}
-		LEVEL 1 FOR 580.0;
-		LEVEL 0 FOR 620.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 120.0;
-			LEVEL 0 FOR 640.0;
-		}
-		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1000.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 10;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1240.0;
-			}
-			LEVEL 1 FOR 580.0;
-			LEVEL 0 FOR 620.0;
-		}
 		NODE
 		{
 			REPEAT = 10;
@@ -23939,36 +21897,36 @@ TRANSITION_LIST("cnt[4]")
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
-			REPEAT = 9;
+			REPEAT = 12;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 880.0;
+		}
+		LEVEL 1 FOR 640.0;
+		LEVEL 0 FOR 1120.0;
+		NODE
+		{
+			REPEAT = 15;
 			LEVEL 1 FOR 640.0;
 			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 200.0;
-			LEVEL 0 FOR 640.0;
 		}
-		LEVEL 1 FOR 300.0;
+		LEVEL 1 FOR 180.0;
 		LEVEL 0 FOR 620.0;
 		NODE
 		{
-			REPEAT = 9;
+			REPEAT = 12;
 			LEVEL 1 FOR 640.0;
-			LEVEL 0 FOR 640.0;
-			LEVEL 1 FOR 120.0;
-			LEVEL 0 FOR 640.0;
+			LEVEL 0 FOR 880.0;
 		}
 		LEVEL 1 FOR 640.0;
-		LEVEL 0 FOR 1000.0;
+		LEVEL 0 FOR 1120.0;
 		NODE
 		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 10;
-				LEVEL 1 FOR 640.0;
-				LEVEL 0 FOR 1240.0;
-			}
-			LEVEL 1 FOR 580.0;
-			LEVEL 0 FOR 620.0;
+			REPEAT = 10;
+			LEVEL 1 FOR 640.0;
+			LEVEL 0 FOR 1240.0;
 		}
+		LEVEL 1 FOR 580.0;
+		LEVEL 0 FOR 620.0;
 		NODE
 		{
 			REPEAT = 12;
@@ -24072,31 +22030,19 @@ TRANSITION_LIST("cnt[5]")
 		LEVEL 0 FOR 1260.0;
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 840.0;
-			LEVEL 0 FOR 1280.0;
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 1 FOR 840.0;
-		LEVEL 0 FOR 2200.0;
 		NODE
 		{
-			REPEAT = 9;
-			LEVEL 1 FOR 760.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 380.0;
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 600.0;
-		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 4;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 6;
@@ -24108,48 +22054,12 @@ TRANSITION_LIST("cnt[5]")
 		}
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 1000.0;
-			LEVEL 0 FOR 1280.0;
+			REPEAT = 6;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1720.0;
 		}
-		LEVEL 1 FOR 500.0;
+		LEVEL 1 FOR 740.0;
 		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 840.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 840.0;
-		LEVEL 0 FOR 2200.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 760.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 380.0;
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 600.0;
-		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 1280.0;
-				LEVEL 0 FOR 1720.0;
-			}
-			LEVEL 1 FOR 740.0;
-			LEVEL 0 FOR 1260.0;
-		}
 		NODE
 		{
 			REPEAT = 4;
@@ -24305,87 +22215,7 @@ TRANSITION_LIST("cnt[5]")
 			LEVEL 0 FOR 1280.0;
 		}
 		LEVEL 1 FOR 1100.0;
-		LEVEL 0 FOR 321260.0;
-		NODE
-		{
-			REPEAT = 4;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 760.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 380.0;
-			LEVEL 0 FOR 1260.0;
-		}
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 1 FOR 1240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 1100.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 1260.0;
-			NODE
-			{
-				REPEAT = 8;
-				LEVEL 1 FOR 1000.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 500.0;
-			LEVEL 0 FOR 1260.0;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 760.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 380.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 1260.0;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 760.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 380.0;
-		}
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 760.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 380.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 1260.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 1280.0;
-				LEVEL 0 FOR 1720.0;
-			}
-			LEVEL 1 FOR 740.0;
-		}
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 840.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 840.0;
-		LEVEL 0 FOR 2200.0;
+		LEVEL 0 FOR 341260.0;
 		NODE
 		{
 			REPEAT = 2;
@@ -24396,8 +22226,60 @@ TRANSITION_LIST("cnt[5]")
 				LEVEL 0 FOR 1720.0;
 			}
 			LEVEL 1 FOR 740.0;
-			LEVEL 0 FOR 1260.0;
+			LEVEL 0 FOR 21260.0;
 		}
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1720.0;
+		}
+		LEVEL 1 FOR 740.0;
+		LEVEL 0 FOR 61260.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1720.0;
+		}
+		LEVEL 1 FOR 740.0;
+		LEVEL 0 FOR 1260.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1520.0;
+		}
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1720.0;
+		}
+		LEVEL 1 FOR 740.0;
+		LEVEL 0 FOR 61260.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 240.0;
+		LEVEL 0 FOR 1520.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1720.0;
+		}
+		LEVEL 1 FOR 740.0;
+		LEVEL 0 FOR 1260.0;
 		NODE
 		{
 			REPEAT = 8;
@@ -24407,27 +22289,7 @@ TRANSITION_LIST("cnt[5]")
 		LEVEL 1 FOR 500.0;
 		NODE
 		{
-			REPEAT = 2;
-			LEVEL 0 FOR 1260.0;
-			NODE
-			{
-				REPEAT = 6;
-				LEVEL 1 FOR 1280.0;
-				LEVEL 0 FOR 1720.0;
-			}
-			LEVEL 1 FOR 740.0;
-		}
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 7;
-			LEVEL 1 FOR 1240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 1100.0;
-		NODE
-		{
-			REPEAT = 8;
+			REPEAT = 12;
 			LEVEL 0 FOR 1260.0;
 			NODE
 			{
@@ -24792,7 +22654,31 @@ TRANSITION_LIST("cnt[5]")
 		LEVEL 0 FOR 1520.0;
 		NODE
 		{
+			REPEAT = 9;
+			LEVEL 1 FOR 600.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 600.0;
+		LEVEL 0 FOR 2480.0;
+		NODE
+		{
+			REPEAT = 9;
+			LEVEL 1 FOR 600.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 600.0;
+		LEVEL 0 FOR 22480.0;
+		NODE
+		{
 			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1520.0;
 			NODE
 			{
 				REPEAT = 9;
@@ -24801,6 +22687,14 @@ TRANSITION_LIST("cnt[5]")
 			}
 			LEVEL 1 FOR 600.0;
 			LEVEL 0 FOR 2480.0;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 21520.0;
 		}
 		NODE
 		{
@@ -24812,72 +22706,12 @@ TRANSITION_LIST("cnt[5]")
 		LEVEL 0 FOR 1520.0;
 		NODE
 		{
-			REPEAT = 8;
-			LEVEL 1 FOR 1000.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 500.0;
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
 			REPEAT = 9;
 			LEVEL 1 FOR 600.0;
 			LEVEL 0 FOR 1280.0;
 		}
 		LEVEL 1 FOR 600.0;
 		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 240.0;
-		LEVEL 0 FOR 21520.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 240.0;
-		LEVEL 0 FOR 1520.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 600.0;
-		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 840.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 840.0;
-		LEVEL 0 FOR 2200.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 760.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 380.0;
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 600.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 2480.0;
-		}
 		NODE
 		{
 			REPEAT = 12;
@@ -24904,6 +22738,90 @@ TRANSITION_LIST("cnt[5]")
 		LEVEL 0 FOR 21260.0;
 		NODE
 		{
+			REPEAT = 8;
+			LEVEL 1 FOR 1000.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 500.0;
+		LEVEL 0 FOR 1260.0;
+		NODE
+		{
+			REPEAT = 2;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1520.0;
+			NODE
+			{
+				REPEAT = 9;
+				LEVEL 1 FOR 600.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 600.0;
+			LEVEL 0 FOR 2480.0;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 21520.0;
+		}
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 240.0;
+		LEVEL 0 FOR 1520.0;
+		NODE
+		{
+			REPEAT = 9;
+			LEVEL 1 FOR 600.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 600.0;
+		LEVEL 0 FOR 2480.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 240.0;
+		LEVEL 0 FOR 21520.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 240.0;
+		LEVEL 0 FOR 1520.0;
+		NODE
+		{
+			REPEAT = 9;
+			LEVEL 1 FOR 600.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 600.0;
+		LEVEL 0 FOR 2480.0;
+		NODE
+		{
+			REPEAT = 12;
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 240.0;
+		LEVEL 0 FOR 1520.0;
+		NODE
+		{
 			REPEAT = 6;
 			LEVEL 1 FOR 1280.0;
 			LEVEL 0 FOR 1720.0;
@@ -24915,21 +22833,29 @@ TRANSITION_LIST("cnt[5]")
 			REPEAT = 2;
 			NODE
 			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
+			LEVEL 1 FOR 240.0;
+			LEVEL 0 FOR 1520.0;
+			NODE
+			{
 				REPEAT = 9;
 				LEVEL 1 FOR 600.0;
 				LEVEL 0 FOR 1280.0;
 			}
 			LEVEL 1 FOR 600.0;
 			LEVEL 0 FOR 2480.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
+			NODE
+			{
+				REPEAT = 12;
+				LEVEL 1 FOR 240.0;
+				LEVEL 0 FOR 1280.0;
+			}
 			LEVEL 1 FOR 240.0;
-			LEVEL 0 FOR 1280.0;
+			LEVEL 0 FOR 21520.0;
 		}
-		LEVEL 1 FOR 240.0;
-		LEVEL 0 FOR 21520.0;
 		NODE
 		{
 			REPEAT = 12;
@@ -24946,138 +22872,6 @@ TRANSITION_LIST("cnt[5]")
 		}
 		LEVEL 1 FOR 600.0;
 		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 840.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 840.0;
-		LEVEL 0 FOR 2200.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 760.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 380.0;
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 600.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 2480.0;
-		}
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 240.0;
-		LEVEL 0 FOR 21520.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 240.0;
-		LEVEL 0 FOR 1520.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 600.0;
-		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 760.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 380.0;
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 600.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 2480.0;
-		}
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 600.0;
-		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 240.0;
-		LEVEL 0 FOR 21520.0;
-		NODE
-		{
-			REPEAT = 12;
-			LEVEL 1 FOR 240.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 240.0;
-		LEVEL 0 FOR 1520.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 600.0;
-		LEVEL 0 FOR 2480.0;
-		NODE
-		{
-			REPEAT = 8;
-			LEVEL 1 FOR 840.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 840.0;
-		LEVEL 0 FOR 2200.0;
-		NODE
-		{
-			REPEAT = 9;
-			LEVEL 1 FOR 760.0;
-			LEVEL 0 FOR 1280.0;
-		}
-		LEVEL 1 FOR 380.0;
-		LEVEL 0 FOR 1260.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 9;
-				LEVEL 1 FOR 600.0;
-				LEVEL 0 FOR 1280.0;
-			}
-			LEVEL 1 FOR 600.0;
-			LEVEL 0 FOR 2480.0;
-		}
 		NODE
 		{
 			REPEAT = 12;
@@ -25149,27 +22943,15 @@ TRANSITION_LIST("cnt[6]")
 		}
 		NODE
 		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 440.0;
-				LEVEL 0 FOR 2560.0;
-			}
+			REPEAT = 5;
 			LEVEL 1 FOR 440.0;
-			LEVEL 0 FOR 84560.0;
-			NODE
-			{
-				REPEAT = 2;
-				NODE
-				{
-					REPEAT = 5;
-					LEVEL 1 FOR 440.0;
-					LEVEL 0 FOR 2560.0;
-				}
-				LEVEL 1 FOR 440.0;
-				LEVEL 0 FOR 4560.0;
-			}
+			LEVEL 0 FOR 2560.0;
+		}
+		LEVEL 1 FOR 440.0;
+		LEVEL 0 FOR 64560.0;
+		NODE
+		{
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 5;
@@ -25202,18 +22984,10 @@ TRANSITION_LIST("cnt[6]")
 			LEVEL 0 FOR 2560.0;
 		}
 		LEVEL 1 FOR 440.0;
-		LEVEL 0 FOR 624560.0;
+		LEVEL 0 FOR 364560.0;
 		NODE
 		{
 			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 5;
-				LEVEL 1 FOR 440.0;
-				LEVEL 0 FOR 2560.0;
-			}
-			LEVEL 1 FOR 440.0;
-			LEVEL 0 FOR 4560.0;
 			NODE
 			{
 				REPEAT = 5;
@@ -25230,7 +23004,23 @@ TRANSITION_LIST("cnt[6]")
 			LEVEL 0 FOR 2560.0;
 		}
 		LEVEL 1 FOR 440.0;
-		LEVEL 0 FOR 4560.0;
+		LEVEL 0 FOR 64560.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 440.0;
+			LEVEL 0 FOR 2560.0;
+		}
+		LEVEL 1 FOR 440.0;
+		LEVEL 0 FOR 44560.0;
+		NODE
+		{
+			REPEAT = 5;
+			LEVEL 1 FOR 440.0;
+			LEVEL 0 FOR 2560.0;
+		}
+		LEVEL 1 FOR 440.0;
+		LEVEL 0 FOR 84560.0;
 		NODE
 		{
 			REPEAT = 5;
@@ -25241,7 +23031,7 @@ TRANSITION_LIST("cnt[6]")
 		LEVEL 0 FOR 24560.0;
 		NODE
 		{
-			REPEAT = 8;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 5;
@@ -25358,7 +23148,7 @@ TRANSITION_LIST("cnt[6]")
 			LEVEL 0 FOR 2560.0;
 		}
 		LEVEL 1 FOR 440.0;
-		LEVEL 0 FOR 624560.0;
+		LEVEL 0 FOR 944560.0;
 		NODE
 		{
 			REPEAT = 5;
@@ -25366,7 +23156,7 @@ TRANSITION_LIST("cnt[6]")
 			LEVEL 0 FOR 2560.0;
 		}
 		LEVEL 1 FOR 440.0;
-		LEVEL 0 FOR 582320.0;
+		LEVEL 0 FOR 262320.0;
 	}
 }
 
@@ -25451,32 +23241,24 @@ TRANSITION_LIST("wave")
 			LEVEL 1 FOR 2280.0;
 		}
 		LEVEL 0 FOR 2280.0;
-		LEVEL 1 FOR 3880.0;
+		LEVEL 1 FOR 3280.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2120.0;
-			LEVEL 1 FOR 2120.0;
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
 		}
-		LEVEL 0 FOR 2960.0;
+		LEVEL 0 FOR 1760.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 1 FOR 3520.0;
+		LEVEL 1 FOR 3240.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 1880.0;
-			LEVEL 1 FOR 1880.0;
-		}
-		LEVEL 0 FOR 1880.0;
-		LEVEL 1 FOR 4200.0;
-		NODE
-		{
-			REPEAT = 2;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 2;
@@ -25486,72 +23268,6 @@ TRANSITION_LIST("wave")
 			LEVEL 0 FOR 3000.0;
 			LEVEL 1 FOR 5000.0;
 		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 3000.0;
-			LEVEL 1 FOR 3000.0;
-		}
-		LEVEL 0 FOR 3000.0;
-		LEVEL 1 FOR 5000.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 3000.0;
-			LEVEL 1 FOR 3000.0;
-		}
-		LEVEL 0 FOR 3000.0;
-		LEVEL 1 FOR 4280.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 0 FOR 2280.0;
-			LEVEL 1 FOR 2280.0;
-		}
-		LEVEL 0 FOR 2280.0;
-		LEVEL 1 FOR 3880.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2120.0;
-			LEVEL 1 FOR 2120.0;
-		}
-		LEVEL 0 FOR 2960.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
-		}
-		LEVEL 1 FOR 3520.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 1880.0;
-			LEVEL 1 FOR 1880.0;
-		}
-		LEVEL 0 FOR 1880.0;
-		LEVEL 1 FOR 4200.0;
-		NODE
-		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 2;
-				LEVEL 0 FOR 3000.0;
-				LEVEL 1 FOR 3000.0;
-			}
-			LEVEL 0 FOR 3000.0;
-			LEVEL 1 FOR 5000.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 3000.0;
-			LEVEL 1 FOR 3000.0;
-		}
-		LEVEL 0 FOR 3000.0;
-		LEVEL 1 FOR 5000.0;
 		NODE
 		{
 			REPEAT = 2;
@@ -25796,7 +23512,7 @@ TRANSITION_LIST("wave")
 		LEVEL 1 FOR 3640.0;
 		NODE
 		{
-			REPEAT = 6;
+			REPEAT = 8;
 			NODE
 			{
 				REPEAT = 7;
@@ -25818,7 +23534,45 @@ TRANSITION_LIST("wave")
 			LEVEL 0 FOR 1280.0;
 			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 0 FOR 2080.0;
+		LEVEL 0 FOR 3800.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 3000.0;
+			LEVEL 0 FOR 3000.0;
+		}
+		LEVEL 1 FOR 3000.0;
+		LEVEL 0 FOR 3280.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 3800.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 3000.0;
+			LEVEL 1 FOR 3000.0;
+		}
+		LEVEL 0 FOR 3000.0;
+		LEVEL 1 FOR 3280.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
+		}
+		LEVEL 0 FOR 3800.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 3000.0;
+			LEVEL 0 FOR 3000.0;
+		}
+		LEVEL 1 FOR 3000.0;
+		LEVEL 0 FOR 3280.0;
 		NODE
 		{
 			REPEAT = 7;
@@ -25839,57 +23593,73 @@ TRANSITION_LIST("wave")
 			LEVEL 1 FOR 1280.0;
 			LEVEL 0 FOR 1280.0;
 		}
-		LEVEL 1 FOR 2840.0;
+		LEVEL 1 FOR 3800.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
+			REPEAT = 2;
+			LEVEL 0 FOR 3000.0;
+			LEVEL 1 FOR 3000.0;
 		}
-		LEVEL 0 FOR 3680.0;
+		LEVEL 0 FOR 3000.0;
+		LEVEL 1 FOR 3520.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
 		}
-		LEVEL 1 FOR 3680.0;
+		LEVEL 0 FOR 1760.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 0 FOR 3680.0;
+		LEVEL 1 FOR 3240.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 2;
+			LEVEL 0 FOR 3000.0;
+			LEVEL 1 FOR 3000.0;
 		}
-		LEVEL 1 FOR 4160.0;
+		LEVEL 0 FOR 3000.0;
+		LEVEL 1 FOR 3280.0;
 		NODE
 		{
-			REPEAT = 3;
-			LEVEL 0 FOR 2520.0;
-			LEVEL 1 FOR 2520.0;
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 0 FOR 4640.0;
+		LEVEL 0 FOR 2080.0;
 		NODE
 		{
-			REPEAT = 3;
-			LEVEL 1 FOR 2280.0;
-			LEVEL 0 FOR 2280.0;
+			REPEAT = 7;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1280.0;
 		}
-		LEVEL 1 FOR 2280.0;
-		LEVEL 0 FOR 3800.0;
+		LEVEL 1 FOR 2080.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 1 FOR 3920.0;
+		LEVEL 0 FOR 2320.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
+		}
+		LEVEL 1 FOR 3240.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 3000.0;
+			LEVEL 1 FOR 3000.0;
+		}
+		LEVEL 0 FOR 3000.0;
+		LEVEL 1 FOR 4280.0;
 		NODE
 		{
 			REPEAT = 3;
@@ -25897,112 +23667,10 @@ TRANSITION_LIST("wave")
 			LEVEL 1 FOR 2280.0;
 		}
 		LEVEL 0 FOR 2280.0;
-		LEVEL 1 FOR 3800.0;
+		LEVEL 1 FOR 4760.0;
 		NODE
 		{
-			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 2040.0;
-				LEVEL 1 FOR 2040.0;
-			}
-			LEVEL 0 FOR 3680.0;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 1 FOR 2040.0;
-				LEVEL 0 FOR 2040.0;
-			}
-			LEVEL 1 FOR 3680.0;
-		}
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
-		}
-		LEVEL 0 FOR 3680.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
-		}
-		LEVEL 1 FOR 4640.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 3000.0;
-			LEVEL 1 FOR 3000.0;
-		}
-		LEVEL 0 FOR 3000.0;
-		LEVEL 1 FOR 5000.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 3000.0;
-			LEVEL 1 FOR 3000.0;
-		}
-		LEVEL 0 FOR 3000.0;
-		LEVEL 1 FOR 4120.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2120.0;
-			LEVEL 1 FOR 2120.0;
-		}
-		LEVEL 0 FOR 3920.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 3000.0;
-			LEVEL 0 FOR 3000.0;
-		}
-		LEVEL 1 FOR 3000.0;
-		LEVEL 0 FOR 5000.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 3000.0;
-			LEVEL 0 FOR 3000.0;
-		}
-		LEVEL 1 FOR 3000.0;
-		LEVEL 0 FOR 4280.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 2280.0;
-			LEVEL 0 FOR 2280.0;
-		}
-		LEVEL 1 FOR 2280.0;
-		LEVEL 0 FOR 4760.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 3000.0;
-			LEVEL 0 FOR 3000.0;
-		}
-		LEVEL 1 FOR 3000.0;
-		LEVEL 0 FOR 5000.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 3000.0;
-			LEVEL 0 FOR 3000.0;
-		}
-		LEVEL 1 FOR 3000.0;
-		LEVEL 0 FOR 4520.0;
-		NODE
-		{
-			REPEAT = 3;
-			LEVEL 1 FOR 2520.0;
-			LEVEL 0 FOR 2520.0;
-		}
-		LEVEL 1 FOR 5360.0;
-		NODE
-		{
-			REPEAT = 8;
+			REPEAT = 12;
 			NODE
 			{
 				REPEAT = 2;
@@ -26630,6 +24298,28 @@ TRANSITION_LIST("wave")
 			LEVEL 0 FOR 1880.0;
 		}
 		LEVEL 1 FOR 1880.0;
+		LEVEL 0 FOR 2480.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 2320.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
+		}
+		LEVEL 0 FOR 2120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 1880.0;
+			LEVEL 0 FOR 1880.0;
+		}
+		LEVEL 1 FOR 1880.0;
 		LEVEL 0 FOR 2720.0;
 		NODE
 		{
@@ -26637,15 +24327,21 @@ TRANSITION_LIST("wave")
 			LEVEL 1 FOR 1520.0;
 			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 1 FOR 2520.0;
+		LEVEL 1 FOR 1520.0;
 		NODE
 		{
-			REPEAT = 3;
-			LEVEL 0 FOR 2280.0;
-			LEVEL 1 FOR 2280.0;
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 0 FOR 2280.0;
-		LEVEL 1 FOR 3640.0;
+		LEVEL 0 FOR 2320.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
+		}
+		LEVEL 1 FOR 2120.0;
 		NODE
 		{
 			REPEAT = 4;
@@ -26675,36 +24371,6 @@ TRANSITION_LIST("wave")
 			LEVEL 1 FOR 1520.0;
 		}
 		LEVEL 0 FOR 2120.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 1880.0;
-			LEVEL 0 FOR 1880.0;
-		}
-		LEVEL 1 FOR 1880.0;
-		LEVEL 0 FOR 3320.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2120.0;
-			LEVEL 0 FOR 2120.0;
-		}
-		LEVEL 1 FOR 2960.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
-		}
-		LEVEL 0 FOR 3520.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 1880.0;
-			LEVEL 0 FOR 1880.0;
-		}
-		LEVEL 1 FOR 1880.0;
-		LEVEL 0 FOR 3080.0;
 		NODE
 		{
 			REPEAT = 4;
@@ -26748,23 +24414,51 @@ TRANSITION_LIST("wave")
 			LEVEL 0 FOR 1280.0;
 			LEVEL 1 FOR 1280.0;
 		}
-		LEVEL 0 FOR 3800.0;
+		LEVEL 0 FOR 3080.0;
 		NODE
 		{
-			REPEAT = 2;
-			LEVEL 1 FOR 3000.0;
-			LEVEL 0 FOR 3000.0;
+			REPEAT = 3;
+			LEVEL 1 FOR 2280.0;
+			LEVEL 0 FOR 2280.0;
 		}
-		LEVEL 1 FOR 3000.0;
-		LEVEL 0 FOR 3880.0;
+		LEVEL 1 FOR 2280.0;
+		LEVEL 0 FOR 3280.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
+		}
+		LEVEL 1 FOR 2120.0;
 		NODE
 		{
 			REPEAT = 4;
-			LEVEL 1 FOR 1880.0;
 			LEVEL 0 FOR 1880.0;
+			LEVEL 1 FOR 1880.0;
 		}
-		LEVEL 1 FOR 1880.0;
-		LEVEL 0 FOR 3080.0;
+		LEVEL 0 FOR 1880.0;
+		LEVEL 1 FOR 2720.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
+		}
+		LEVEL 0 FOR 1520.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 1 FOR 1280.0;
+			LEVEL 0 FOR 1280.0;
+		}
+		LEVEL 1 FOR 2320.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
+		}
+		LEVEL 0 FOR 2120.0;
 		NODE
 		{
 			REPEAT = 4;
@@ -26801,36 +24495,6 @@ TRANSITION_LIST("wave")
 			LEVEL 1 FOR 1880.0;
 		}
 		LEVEL 0 FOR 1880.0;
-		LEVEL 1 FOR 3320.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2120.0;
-			LEVEL 1 FOR 2120.0;
-		}
-		LEVEL 0 FOR 2960.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
-		}
-		LEVEL 1 FOR 3520.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 1880.0;
-			LEVEL 1 FOR 1880.0;
-		}
-		LEVEL 0 FOR 1880.0;
-		LEVEL 1 FOR 3080.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 1880.0;
-			LEVEL 1 FOR 1880.0;
-		}
-		LEVEL 0 FOR 1880.0;
 		LEVEL 1 FOR 2720.0;
 		NODE
 		{
@@ -26860,26 +24524,58 @@ TRANSITION_LIST("wave")
 			LEVEL 0 FOR 1880.0;
 		}
 		LEVEL 1 FOR 1880.0;
-		LEVEL 0 FOR 3240.0;
+		LEVEL 0 FOR 2720.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2040.0;
-			LEVEL 0 FOR 2040.0;
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
 		}
-		LEVEL 1 FOR 3520.0;
+		LEVEL 1 FOR 3240.0;
 		NODE
 		{
 			REPEAT = 2;
-			NODE
-			{
-				REPEAT = 4;
-				LEVEL 0 FOR 1880.0;
-				LEVEL 1 FOR 1880.0;
-			}
-			LEVEL 0 FOR 1880.0;
-			LEVEL 1 FOR 3080.0;
+			LEVEL 0 FOR 3000.0;
+			LEVEL 1 FOR 3000.0;
 		}
+		LEVEL 0 FOR 3000.0;
+		LEVEL 1 FOR 3520.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 0 FOR 1520.0;
+			LEVEL 1 FOR 1520.0;
+		}
+		LEVEL 0 FOR 2120.0;
+		NODE
+		{
+			REPEAT = 4;
+			LEVEL 1 FOR 1880.0;
+			LEVEL 0 FOR 1880.0;
+		}
+		LEVEL 1 FOR 1880.0;
+		LEVEL 0 FOR 2720.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
+		}
+		LEVEL 1 FOR 1520.0;
+		NODE
+		{
+			REPEAT = 7;
+			LEVEL 0 FOR 1280.0;
+			LEVEL 1 FOR 1280.0;
+		}
+		LEVEL 0 FOR 2320.0;
+		NODE
+		{
+			REPEAT = 6;
+			LEVEL 1 FOR 1520.0;
+			LEVEL 0 FOR 1520.0;
+		}
+		LEVEL 1 FOR 2120.0;
 		NODE
 		{
 			REPEAT = 4;
@@ -26909,36 +24605,6 @@ TRANSITION_LIST("wave")
 			LEVEL 1 FOR 1520.0;
 		}
 		LEVEL 0 FOR 2120.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 1880.0;
-			LEVEL 0 FOR 1880.0;
-		}
-		LEVEL 1 FOR 1880.0;
-		LEVEL 0 FOR 3320.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 2120.0;
-			LEVEL 0 FOR 2120.0;
-		}
-		LEVEL 1 FOR 2960.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 0 FOR 2040.0;
-			LEVEL 1 FOR 2040.0;
-		}
-		LEVEL 0 FOR 3520.0;
-		NODE
-		{
-			REPEAT = 4;
-			LEVEL 1 FOR 1880.0;
-			LEVEL 0 FOR 1880.0;
-		}
-		LEVEL 1 FOR 1880.0;
-		LEVEL 0 FOR 3080.0;
 		NODE
 		{
 			REPEAT = 4;
@@ -27044,15 +24710,7 @@ TRANSITION_LIST("tone_sel[0]")
 		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 140000.0;
 		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 160000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 100000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 80000.0;
+		LEVEL 0 FOR 460000.0;
 		NODE
 		{
 			REPEAT = 7;
@@ -27069,14 +24727,18 @@ TRANSITION_LIST("tone_sel[0]")
 			LEVEL 1 FOR 20000.0;
 		}
 		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 339980.0;
-		LEVEL 0 FOR 80020.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 220000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 100000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 179980.0;
+		LEVEL 1 FOR 360000.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 20000.0;
+			LEVEL 1 FOR 20000.0;
+		}
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 60000.0;
+		LEVEL 0 FOR 80000.0;
+		LEVEL 1 FOR 59980.0;
+		LEVEL 0 FOR 320000.0;
 		LEVEL 1 FOR 20.0;
 		LEVEL 0 FOR 80000.0;
 		LEVEL 1 FOR 40000.0;
@@ -27117,69 +24779,39 @@ TRANSITION_LIST("tone_sel[0]")
 			LEVEL 1 FOR 20000.0;
 		}
 		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 19980.0;
-		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 19980.0;
-		LEVEL 0 FOR 40020.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 20000.0;
-			LEVEL 0 FOR 20000.0;
-		}
 		NODE
 		{
 			REPEAT = 2;
 			LEVEL 1 FOR 19980.0;
 			LEVEL 0 FOR 20.0;
+		}
+		NODE
+		{
+			REPEAT = 6;
 			LEVEL 1 FOR 20000.0;
 			LEVEL 0 FOR 20000.0;
 		}
 		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 39980.0;
 		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 20020.0;
-		LEVEL 1 FOR 19980.0;
-		LEVEL 0 FOR 20.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 20.0;
 		NODE
 		{
-			REPEAT = 2;
-			LEVEL 1 FOR 20000.0;
+			REPEAT = 6;
 			LEVEL 0 FOR 20000.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 19980.0;
-			LEVEL 0 FOR 20.0;
 			LEVEL 1 FOR 20000.0;
-			LEVEL 0 FOR 20000.0;
 		}
-		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 19980.0;
-		LEVEL 0 FOR 20020.0;
+		LEVEL 0 FOR 40000.0;
+		LEVEL 1 FOR 20.0;
 		NODE
 		{
-			REPEAT = 2;
-			LEVEL 1 FOR 19980.0;
-			LEVEL 0 FOR 20.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 20000.0;
+			REPEAT = 6;
 			LEVEL 0 FOR 20000.0;
-		}
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 1 FOR 19980.0;
-			LEVEL 0 FOR 20.0;
 			LEVEL 1 FOR 20000.0;
-			LEVEL 0 FOR 20000.0;
 		}
-		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 20280.0;
 	}
 }
@@ -27190,10 +24822,8 @@ TRANSITION_LIST("tone_sel[1]")
 	{
 		REPEAT = 1;
 		LEVEL 0 FOR 650030.0;
-		LEVEL 1 FOR 40000.0;
-		LEVEL 0 FOR 120000.0;
-		LEVEL 1 FOR 40000.0;
-		LEVEL 0 FOR 119980.0;
+		LEVEL 1 FOR 60000.0;
+		LEVEL 0 FOR 259980.0;
 		LEVEL 1 FOR 20.0;
 		NODE
 		{
@@ -27212,16 +24842,24 @@ TRANSITION_LIST("tone_sel[1]")
 		LEVEL 0 FOR 40000.0;
 		LEVEL 1 FOR 40000.0;
 		LEVEL 0 FOR 59980.0;
-		LEVEL 1 FOR 320000.0;
-		LEVEL 0 FOR 100020.0;
+		LEVEL 1 FOR 340020.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 20000.0;
+			LEVEL 1 FOR 20000.0;
+		}
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 60000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 40000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 59980.0;
+		LEVEL 0 FOR 20.0;
 		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 160000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 40000.0;
-		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 240000.0;
+		LEVEL 0 FOR 260000.0;
 		LEVEL 1 FOR 80000.0;
 		LEVEL 0 FOR 40000.0;
 		LEVEL 1 FOR 60000.0;
@@ -27253,38 +24891,34 @@ TRANSITION_LIST("tone_sel[1]")
 		LEVEL 1 FOR 59980.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 19980.0;
-		LEVEL 1 FOR 20000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 19980.0;
 		LEVEL 0 FOR 20.0;
 		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 59980.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 20020.0;
-		LEVEL 0 FOR 39980.0;
-		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 20020.0;
+		LEVEL 1 FOR 60000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 59980.0;
 		LEVEL 0 FOR 20.0;
 		LEVEL 1 FOR 39980.0;
-		LEVEL 0 FOR 40000.0;
-		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 20.0;
+		LEVEL 1 FOR 40000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 59980.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 20020.0;
-		LEVEL 0 FOR 39980.0;
-		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 20020.0;
+		LEVEL 1 FOR 60000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 60000.0;
-		LEVEL 0 FOR 79980.0;
-		LEVEL 1 FOR 20.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 59980.0;
+		LEVEL 0 FOR 19980.0;
+		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 20020.0;
-		LEVEL 0 FOR 39980.0;
-		LEVEL 1 FOR 20.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 59980.0;
+		LEVEL 0 FOR 20020.0;
+		LEVEL 1 FOR 60000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 59980.0;
 		LEVEL 0 FOR 300.0;
@@ -27300,25 +24934,31 @@ TRANSITION_LIST("tone_sel[2]")
 		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 140000.0;
 		LEVEL 1 FOR 20000.0;
-		LEVEL 0 FOR 180000.0;
+		LEVEL 0 FOR 160000.0;
 		LEVEL 1 FOR 40000.0;
-		LEVEL 0 FOR 120000.0;
-		LEVEL 1 FOR 40000.0;
-		LEVEL 0 FOR 79980.0;
+		LEVEL 0 FOR 259980.0;
 		LEVEL 1 FOR 320000.0;
 		LEVEL 0 FOR 20.0;
 		LEVEL 1 FOR 60000.0;
 		LEVEL 0 FOR 100000.0;
 		LEVEL 1 FOR 60000.0;
 		LEVEL 0 FOR 99980.0;
-		LEVEL 1 FOR 320000.0;
-		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 80000.0;
-		LEVEL 0 FOR 40000.0;
-		LEVEL 1 FOR 20000.0;
+		LEVEL 1 FOR 340020.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 0 FOR 20000.0;
+			LEVEL 1 FOR 20000.0;
+		}
 		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 120000.0;
-		LEVEL 0 FOR 360000.0;
+		LEVEL 1 FOR 60000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 40000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 59980.0;
+		LEVEL 0 FOR 20.0;
+		LEVEL 1 FOR 20000.0;
+		LEVEL 0 FOR 300000.0;
 		LEVEL 1 FOR 180000.0;
 		LEVEL 0 FOR 779980.0;
 		LEVEL 1 FOR 20.0;
@@ -27335,25 +24975,21 @@ TRANSITION_LIST("tone_sel[2]")
 		LEVEL 0 FOR 39980.0;
 		LEVEL 1 FOR 260000.0;
 		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 59980.0;
-		LEVEL 0 FOR 20000.0;
-		LEVEL 1 FOR 80000.0;
+		LEVEL 1 FOR 39980.0;
 		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 19980.0;
-		LEVEL 0 FOR 20020.0;
 		LEVEL 1 FOR 119980.0;
+		LEVEL 0 FOR 20.0;
+		LEVEL 1 FOR 159980.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 20000.0;
 		LEVEL 0 FOR 20000.0;
 		LEVEL 1 FOR 100000.0;
 		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 19980.0;
-		LEVEL 0 FOR 20020.0;
-		LEVEL 1 FOR 279980.0;
+		LEVEL 1 FOR 199980.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 100000.0;
 		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 19980.0;
-		LEVEL 0 FOR 20020.0;
-		LEVEL 1 FOR 119980.0;
+		LEVEL 1 FOR 159980.0;
 		LEVEL 0 FOR 300.0;
 	}
 }
@@ -27370,20 +25006,30 @@ TRANSITION_LIST("on_now")
 			LEVEL 1 FOR 20000.0;
 			LEVEL 0 FOR 140000.0;
 		}
-		LEVEL 1 FOR 80000.0;
-		LEVEL 0 FOR 80000.0;
-		LEVEL 1 FOR 80000.0;
-		LEVEL 0 FOR 79980.0;
-		LEVEL 1 FOR 960000.0;
-		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 280000.0;
+		LEVEL 1 FOR 60000.0;
+		LEVEL 0 FOR 259980.0;
+		LEVEL 1 FOR 980020.0;
 		NODE
 		{
-			REPEAT = 4;
-			LEVEL 0 FOR 40000.0;
+			REPEAT = 2;
+			LEVEL 0 FOR 20000.0;
 			LEVEL 1 FOR 20000.0;
 		}
-		LEVEL 0 FOR 119980.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 60000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 40000.0;
+		LEVEL 0 FOR 20000.0;
+		LEVEL 1 FOR 59980.0;
+		LEVEL 0 FOR 20.0;
+		NODE
+		{
+			REPEAT = 2;
+			LEVEL 1 FOR 20000.0;
+			LEVEL 0 FOR 20000.0;
+		}
+		LEVEL 1 FOR 40000.0;
+		LEVEL 0 FOR 199980.0;
 		LEVEL 1 FOR 640000.0;
 		LEVEL 0 FOR 320000.0;
 		LEVEL 1 FOR 320000.0;
@@ -27394,15 +25040,15 @@ TRANSITION_LIST("on_now")
 		LEVEL 0 FOR 39980.0;
 		LEVEL 1 FOR 260000.0;
 		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 59980.0;
+		LEVEL 1 FOR 39980.0;
 		LEVEL 0 FOR 20.0;
-		LEVEL 1 FOR 99980.0;
-		NODE
-		{
-			REPEAT = 2;
-			LEVEL 0 FOR 20.0;
-			LEVEL 1 FOR 159980.0;
-		}
+		LEVEL 1 FOR 119980.0;
+		LEVEL 0 FOR 20.0;
+		LEVEL 1 FOR 159980.0;
+		LEVEL 0 FOR 20.0;
+		LEVEL 1 FOR 39980.0;
+		LEVEL 0 FOR 20.0;
+		LEVEL 1 FOR 119980.0;
 		LEVEL 0 FOR 20.0;
 		LEVEL 1 FOR 319980.0;
 		LEVEL 0 FOR 20.0;
