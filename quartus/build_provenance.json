@@ -1,6 +1,6 @@
 {
-  "timestamp": "2026-10-11 09:54:50",
-  "git_head": "9303c56d8e199f319e8c2ee8149881106538ec5c",
+  "timestamp": "2026-10-11 13:46:19",
+  "git_head": "a5cbe8ba53388bcee22b132658f4bfed03bee965",
   "git_dirty": true,
   "sources": {
     "rtl/board_test_top.vhd": "46eaf36f3120",
@@ -16,7 +16,7 @@
     "rtl/piece_rom.vhd": "3ccd01f494de",
     "rtl/puzzle_ctrl.vhd": "a1771094e927",
     "rtl/puzzle_pkg.vhd": "218e4eaea6ff",
-    "rtl/puzzle_top.vhd": "e2665b1572ed",
+    "rtl/puzzle_top.vhd": "bf318835ae44",
     "rtl/rng_lfsr.vhd": "17e3ea9932c6",
     "rtl/seg_scan.vhd": "89ea0f1ec6f8"
   },
@@ -34,23 +34,23 @@
     "rtl/piece_rom.vhd": "0421731c0d94",
     "rtl/puzzle_ctrl.vhd": "40efa82e51d0",
     "rtl/puzzle_pkg.vhd": "a2c60c2c3281",
-    "rtl/puzzle_top.vhd": "4ee3356fa319",
+    "rtl/puzzle_top.vhd": "19ad7396e424",
     "rtl/rng_lfsr.vhd": "c394a1957138",
     "rtl/seg_scan.vhd": "aa8642b3a503"
   },
   "pof": {
-    "mtime": "2026-10-11 09:13:43",
-    "sha256": "0379f4dbf89f03cc3656eddf9b9150f87bda71bd01aa114f1362d1d447fbcc85",
+    "mtime": "2026-10-11 13:46:15",
+    "sha256": "ed5fdf006526d310634d14c1302f18c1141d784ed96d271eb0d7fbcb6a40d5a4",
     "bytes": 27312
   },
   "fit": {
-    "status": "Successful - Sun Oct 11 09:13:42 2026",
+    "status": "Successful - Sun Oct 11 13:46:14 2026",
     "le": "1,268 / 1,270 ( 100 % )",
     "lab": "127 / 127 ( 100 % )",
     "pins": "52 / 116 ( 45 % )"
   },
   "sta": {
-    "setup_slack": 1.348,
+    "setup_slack": 1.599,
     "hold_slack": 1.078
   }
 }

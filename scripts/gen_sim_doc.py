@@ -235,6 +235,20 @@ python scripts/sim_summary.py
 > 需要清理时显式跑 `python scripts/sim.py clean`。
 """
 
+    # ⚠️⚠️ 2026-10-11（第 22 工作阶段**真的踩了一次**）：本脚本目前只生成
+    #   "模板 + 表格"，而 `docs/03` 里还有大量**手写正文**（"已知覆盖不足"、
+    #   各阶段的设计说明等）。⇒ 直接跑会把这 1054 行的交付文档**缩成 432 行、
+    #   静默丢掉手写部分**（本轮跑完才发现，已从备份恢复）。
+    #   加一道"**拒绝缩水覆盖**"的闸门：确认要覆盖就显式 `--force`。
+    if OUT.exists() and "--force" not in sys.argv:
+        old = OUT.read_text(encoding="utf-8")
+        if len(head) < len(old):
+            print("✗ 拒绝覆盖 %s：新生成的内容 %d 字节 < 现有 %d 字节。"
+                  % (OUT.relative_to(ROOT), len(head.encode("utf-8")), len(old.encode("utf-8"))))
+            print("  原因：本脚本只生成「模板 + 表格」，`docs/03` 里另有**手写正文**，")
+            print("        直接覆盖会把这些内容静默丢掉。")
+            print("  确实要覆盖请显式加 `--force`（或先把手写正文挪进模板）。")
+            return 2
     # LF 落盘（理由见 `scripts/sim.py` 里同一处注释：write_text 在 Windows 上写 CRLF）
     with open(OUT, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(head)
@@ -242,4 +256,6 @@ python scripts/sim_summary.py
 
 
 if __name__ == "__main__":
-    main()
+    # ⚠️ 必须把 main() 的返回码传出去：否则上面那道"拒绝缩水覆盖"的闸门
+    #    虽然挡住了写入，进程退出码却是 0 —— 自动化里会被当成"生成成功"。
+    sys.exit(main())
