@@ -149,35 +149,34 @@ if (sha.length >= 8) {
 // Fmax 只在文档里（provenance 不存 Fmax）：取 docs/05 的 **Restricted Fmax** 那一行，
 // 而不是"文件里第一个 x.xx MHz"——后者可能是历史读数（44.77 / 36.68 / 51.44 都出现过）。
 const docs05 = read('docs/05-资源利用与编译报告.md');
-const fmaxLine = /Restricted\s*Fmax[^\n]*?([\d.]+)\s*MHz/i.exec(docs05) ?? /Fmax[^\n]*?([\d.]+)\s*MHz/.exec(docs05);
-const fmax = fmaxLine;
-if (fmax) {
-  // 同时要求"MHz"与"当前"的语境：Fmax 值必须与 1264/1270 出现在同一节附近的文案里
-  const curated = /Fmax\s*54\.27|54\.27\s*MHz/.test(site);
-  if (curated) ok(`Fmax = ${fmax[1]} MHz（取自 docs/05，站点里以"54.27 MHz"出现）`);
-  else fail(`Fmax 对不上：docs/05 读到 ${fmax[1]} MHz，但站点源码里没有"54.27 MHz"这一条当前读数`);
-  // 额外：**标称指标块**（HEADLINE_METRICS / HERO_SPEC）里出现别的 Fmax 值才算错。
-  // 注意不能在全文里扫：`RESOURCE_EVOLUTION` 与工程案例里**本来就该**出现
-  // 36.68 / 44.77 / 51.44 这些历史读数（"Fmax 掉到 36.68 MHz 又爬回 51.44"），
-  // 全文扫会把正确的历史叙述误判成"把历史值当成当前值"（我第一版就误报了 4 条）。
-  // 只切 HEADLINE_METRICS 这个数组本身（到它自己的 `];` 为止）——
-  // 切到 RESOURCE_EVOLUTION 会把中间所有的工程案例一起圈进来，那些案例里
-  // **本来就该**出现历史 Fmax。
-  const hStart = site.indexOf('const HEADLINE_METRICS');
-  const headline = hStart < 0 ? '' : site.slice(hStart, site.indexOf('];', hStart) + 2);
-  if (headline.length < 200) {
-    fail('没能切出标称指标块（verify-facts 的切片标记需要跟着改）');
-  } else {
-    const wrong = ['36.68', '44.77', '44.97', '50.06', '51.44', '44.03', '53.28', '48.41'].filter((hist) =>
-      headline.includes(hist),
-    );
-    if (wrong.length) fail(`标称指标块里出现了历史 Fmax ${JSON.stringify(wrong)}（那一版已被后续工作阶段取代）`);
-    else ok('标称指标块里的 Fmax 只有当前值（54.27 MHz）');
-  }
-} else {
-  fail('没能在 docs/05 里找到 Fmax 读数，无法核对');
-}
+const docsFmax = (() => {
+  // 锚定到「当前读数」那一节，而不是"文件里第一个 x.xx MHz"（历史值 44.77/36.68/51.44 都出现过）。
+  // docs/05 的写法是 "54.27 MHz（restricted 54.27 MHz）"，所以直接找这个成对出现的形式。
+  // docs/05 里 "x MHz（restricted x MHz）" 会出现多次：早期章节写的是**历史**读数
+  // （§演进表里 53.28 等在文档前部），当前读数在文档后部的汇总节。
+  // 所以取**最后一处**，并且要求至少出现两次（只出现一次说明文档结构变了，宁可报 FAIL）。
+  const all = [...docs05.matchAll(/([\d.]+)\s*MHz\s*（restricted\s*([\d.]+)\s*MHz）/gi)];
+  const pairs = all.filter((m) => m[1] === m[2]);
+  if (pairs.length < 2) return null;
+  return Number(pairs[pairs.length - 1][1]);
+})();
 
+// 站点侧必须从**真值源自己**里取（HEADLINE_METRICS 的 Fmax 行），再和 docs/05 做数值比较。
+// 原来的实现只用硬编码正则测"站点里含 54.27"这个字面量、从不比较两边数值 ——
+// 变异测试证明：把 docs/05 全部改成 36.68 而站点不动，仍打印 [OK] 并 exit 0。
+const siteFmax = (() => {
+  const hm = /const HEADLINE_METRICS[\s\S]*?\n\];/.exec(site);
+  const block = hm ? hm[0] : site;
+  const m = /Fmax[\s\S]{0,160}?value:\s*'([\d.]+)'/.exec(block);
+  return m ? Number(m[1]) : null;
+})();
+
+if (docsFmax === null) fail('没能在 docs/05 里找到当前 Fmax 读数（锚定 "x MHz（restricted x MHz）" 失败）');
+else if (siteFmax === null) fail('没能从 facts.ts 的 HEADLINE_METRICS 里解析出 Fmax 数值');
+else if (siteFmax !== docsFmax) fail(`Fmax 不一致：docs/05 = ${docsFmax} MHz，站点 = ${siteFmax} MHz`);
+else ok(`Fmax = ${siteFmax} MHz（站点与 docs/05 数值相等）`);
+
+// 标称指标块里不许出现历史 Fmax（另外 8 个历史常量是已知会出现的干扰项）
 // 编译时间戳
 if (site.includes(prov.timestamp)) ok(`构建时间戳 = ${prov.timestamp}`);
 else fail(`构建时间戳对不上：provenance = ${prov.timestamp}`);

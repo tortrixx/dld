@@ -31,6 +31,8 @@ const FIGURES = {
   // 规则模型自动走完一局的演示动画（由 site/scripts/gen-demo-frames.ts +
   // render-demo-gif.py 生成，产物入库到 docs/图/，与其它素材同源管理）
   'demo-playthrough.gif': '演示-跑一局.gif',
+  // 同一局的静态首帧：reduced-motion 与「暂停演示」用（GIF 的帧序列不受 CSS 降级影响）
+  'demo-first-frame.png': '演示-首帧.png',
   // 脚本渲染的辅助波形（不是 Quartus 界面截图 —— 图说里必须如实标注）
   'sim-clk_gen.svg': 'SIM-clk_gen.svg',
   'sim-disp_format.svg': 'SIM-disp_format.svg',

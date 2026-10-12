@@ -6,6 +6,8 @@
  * 用户明确要"贴一副演示图上去"，比让人在网页上自己点更直观，也少一大堆控件。
  */
 
+import { useEffect, useState } from 'react';
+
 import { Src, Tag } from '../components/ui';
 import { PROJECT, REPO, SITE_URL, blob, figure } from '../data/facts';
 
@@ -18,6 +20,59 @@ const HERO_SPEC: readonly { readonly k: string; readonly v: string }[] = [
   { k: '显示', v: '8×8 双色点阵（灭 / 红 / 绿 / 黄）+ 8 位数码管 + 蜂鸣器' },
   { k: '验证', v: '12 个模块/场景 · 179 条仿真断言全过 · 固件已烧录并读回校验 · 已上板复测' },
 ];
+
+/**
+ * 首屏那段演示。
+ *
+ * ⚠️ 为什么需要一个开关：GIF 的帧序列由图片解码器播放，**CSS 的
+ * `prefers-reduced-motion` 完全管不到它** —— 通用降级只能压 animation/transition。
+ * 而它自动播放、14.1 s、无限循环，ACG 2.2.2（暂停/停止/隐藏，Level A）要求提供机制。
+ * 所以：给一个「暂停演示」按钮，并在 `prefers-reduced-motion: reduce` 时**默认静止**
+ * （换成同一局的静态首帧，信息不丢）。
+ */
+function DemoAnimation(): JSX.Element {
+  const [playing, setPlaying] = useState(true);
+
+  useEffect(() => {
+    // 尊重系统设置：开了"减少动态效果"就停在静态首帧。
+    // ⚠️ 必须**监听变化**而不只是读一次：用户在页面打开后改系统设置（或自动化工具
+    //    在加载后才切换媒体特性）时也要跟着变 —— 只读一次的实现会被这种行为漏掉。
+    let mq: MediaQueryList | null = null;
+    try {
+      mq = window.matchMedia?.('(prefers-reduced-motion: reduce)') ?? null;
+    } catch {
+      mq = null;
+    }
+    if (!mq) return undefined;
+    const apply = (): void => {
+      if (mq?.matches) setPlaying(false);
+    };
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq?.removeEventListener('change', apply);
+  }, []);
+
+  return (
+    <div className="demo__anim">
+      <img
+        className="demo__gif"
+        src={playing ? figure('demo-playthrough.gif') : figure('demo-first-frame.png')}
+        alt="规则模型自动走完第一关：自检 → 待机 → 预览目标图案 → 零片散落 → 旋转与移动 → 确认锁定 → 过关"
+        width={640}
+        height={420}
+        decoding="async"
+      />
+      <button
+        type="button"
+        className="demo__toggle"
+        aria-pressed={playing}
+        onClick={() => setPlaying((p) => !p)}
+      >
+        {playing ? '⏸ 暂停演示' : '▶ 播放动画'}
+      </button>
+    </div>
+  );
+}
 
 export function Hero(): JSX.Element {
   return (
@@ -84,19 +139,13 @@ export function Hero(): JSX.Element {
                 </span>
                 <span>非板子实录</span>
               </div>
-              <img
-                className="demo__gif"
-                src={figure('demo-playthrough.gif')}
-                alt="规则模型自动走完第一关的动画：自检 → 待机 → 预览目标图案 → 零片散落 → 旋转与移动 → 确认锁定 → 过关"
-                width={640}
-                height={420}
-              />
+              <DemoAnimation />
               <p className="figcap">
                 这是<strong>规则模型按 RTL 的规则自动走完的一局</strong>（自检 → 待机 → 预览 →
                 散落 → 旋转/移动/确认 → 过关），每一帧都由站点同一份引擎算出。
                 <strong>它不是开发板的录屏</strong>：网页不驱动硬件，板上的时序与音效这里没有复现。
                 <br />
-                规格：640 × 420 · 48 帧 · 14.1 s · 290 KiB · 循环播放（帧间差分，48 帧只占 290 KiB）。
+                规格：640 × 420 · 48 帧 · 14.1 s · 290 KiB · 循环播放（帧间差分，48 帧只占 290 KiB）；右上角可暂停，系统开了"减少动态效果"时默认停在静态首帧。
                 生成方式见 <Src path="site/scripts/gen-demo-frames.ts">gen-demo-frames.ts</Src> 与{' '}
                 <Src path="site/scripts/render-demo-gif.py">render-demo-gif.py</Src>
                 （后者是本站唯一需要 Pillow 的脚本，产物已入库，构建站点时<strong>不必</strong>重跑）。

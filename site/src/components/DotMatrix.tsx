@@ -98,7 +98,7 @@ export function DotMatrix({
   return (
     <div
       className="matrix"
-      role="grid"
+      role="img"
       aria-label={label}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
@@ -123,7 +123,7 @@ export function DotMatrix({
               key={key}
               data-cell={key}
               className={cls}
-              role="gridcell"
+              role="presentation" aria-hidden="true"
               aria-label={`第 ${r + 1} 行第 ${c + 1} 列 · ${
                 { off: '灭', red: '红', green: '绿', yellow: '黄' }[color]
               }${isGhost ? '（告急幽灵，2 Hz 闪）' : ''}${isSel ? ' · 当前选中' : ''}`}

@@ -446,6 +446,9 @@ samp {
 }
 
 .btn:hover {
+  /* ⚠️ 两套主题不能共用 #fff：深色下 --acc 已提亮到 #ff6a45，白字只有 2.84:1（实测），
+     而 tokens.css 明确要求两套都过 AA。用背景色当文字色：深色 6.98:1、浅色 5.24:1。 */
+  color: hsl(var(--background));
   background: var(--acc);
   border-color: var(--acc);
   color: #fff;
@@ -2258,4 +2261,28 @@ samp {
 .seg-readout {
   white-space: pre;
   font-family: var(--font-mono);
+}
+
+/* 演示动画的暂停开关：GIF 的帧序列不受 CSS 降级影响，必须给用户一个机制（WCAG 2.2.2） */
+.demo__anim {
+  position: relative;
+}
+
+.demo__toggle {
+  position: absolute;
+  top: var(--s2);
+  right: var(--s2);
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  padding: 4px 8px;
+  border: 1px solid hsl(var(--border-strong));
+  border-radius: var(--radius);
+  background: color-mix(in srgb, hsl(var(--card)) 86%, transparent);
+  color: hsl(var(--foreground));
+  cursor: pointer;
+}
+
+.demo__toggle:hover {
+  border-color: var(--acc);
+  color: var(--acc-ink);
 }

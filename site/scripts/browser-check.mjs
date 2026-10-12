@@ -602,6 +602,18 @@ async function main() {
   if (rm.pulseDisplay !== 'none' && rm.pulseDisplay !== 'absent') {
     problems.push('reduced-motion 下脉冲点没有隐藏（会静止停在箭头左端，看着像坏了）');
   }
+  // GIF 的帧序列不受 CSS 降级影响 ⇒ 必须靠"换成静态首帧"来降级（WCAG 2.2.2）。
+  // 这条以前只在注释里承诺过，没有实现也没有断言。
+  const gifRm = await evaluate(`(() => {
+    const img = document.querySelector('img.demo__gif');
+    const btn = document.querySelector('.demo__toggle');
+    return { src: img ? img.getAttribute('src') : null, hasToggle: !!btn, pressed: btn ? btn.getAttribute('aria-pressed') : null };
+  })()`);
+  console.log(`  reduced-motion 下的演示图: ${JSON.stringify(gifRm)}`);
+  if (!gifRm.hasToggle) problems.push('演示 GIF 没有暂停控件（WCAG 2.2.2 要求提供暂停/停止机制）');
+  if (gifRm.src && gifRm.src.endsWith('.gif')) {
+    problems.push('reduced-motion 下演示图仍是 GIF（应当换成静态首帧，CSS 降级管不到 GIF 帧序列）');
+  }
   await shot('11-reduced-motion.png');
   await cdp.send('Emulation.setEmulatedMedia', { features: [] });
 

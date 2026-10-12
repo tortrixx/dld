@@ -268,7 +268,20 @@ npm run gen:drawio      # 重新生成 docs/图/dld-架构.drawio
   `fill-mode: both` 会让内容最多 0.56 s 不可见（比不动画更糟）；(d) `scroll-behavior: smooth` 没关。
   四条都已在 reduced-motion 块里处理，并由 `browser-check.mjs` **实测断言**（opacity=1、scroll-behavior=auto、脉冲 display=none）。
 * `aria-live` 原来挂在整段叙述上，播放时每 ~1 s 刷 90–200 字（屏幕阅读器会被不断打断）⇒
-  改成只播报一行短状态；`role="grid"` 的直接子元素是 `gridcell`（缺 `row`）已改为图语义。
+  改成只播报一行短状态。
+* ⚠️ **一处谎报已纠正**：上一版这里写着"`role="grid"`（缺 `row`）已改为图语义"，
+  但修复提交里**根本没有** `DotMatrix.tsx`（改到了邻近的 `SegDisplay.tsx`），代码里仍是
+  `role="grid"` + 64 个 `gridcell`。这一轮才真正改成 `role="img"` + 格子 `role="presentation"`。
+  **教训：提交信息里写"已修 X"时，要用 `git show --stat` 核对 X 真的在改动清单里。**
+* 深色主题下 `.btn:hover` 把白字压在提亮后的强调色上（实测 2.84:1，AA 要求 4.5:1）
+  ⇒ hover 文字改用背景色（深色 6.98:1 / 浅色 5.24:1）。原来的对比度抽样只测静态选择器、
+  不模拟 `:hover`，所以一直没发现。
+* 位选时序措辞写反了（"每 8 拍一位 ⇒ 8 ms/位"）：RTL 是**每拍推一位（1 ms/位）**、
+  8 位一轮 = 8 ms ⇒ 125 Hz/位。数值本身没错，错的是机制描述，读者会得到"每位点亮 8 ms"的错误模型。
+* 首屏 GIF 自动播放 14.1 s 无限循环且**没有任何暂停手段**、reduced-motion 对它无效
+  （CSS 只能压 animation/transition，管不了 GIF 帧序列）—— 实测确认仍在动。
+  已加「暂停演示」按钮（`aria-pressed`），并在 `prefers-reduced-motion: reduce` 时
+  默认切到静态首帧（`docs/图/演示-首帧.png`，由同一渲染脚本产出）。
 
 ### 9.4 脚本与门禁（最值得记的一类）
 * `verify-facts.mjs` 的断言原来是**全文 `includes`**，可以假通过：`'127'` 在站点文本里出现 68 次
