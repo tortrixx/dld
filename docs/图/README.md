@@ -63,14 +63,14 @@ quartus_sim <工程> --mode=functional --overwrite_waveform=on
 
 | # | 目标文件名 | 打开的源文件 | 这张图在报告里证明什么 | 状态 |
 |---|---|---|---|---|
-| 1 | `GUI-clk_gen.png` | `sim/clk_gen.vwf` | 分频链（1 kHz → 200 Hz → 4 Hz / 2 Hz / 1 Hz / 40 Hz）与按键消抖计数 | ✅ 已有样例 |
+| 1 | `GUI-clk_gen.png` | `sim/clk_gen.vwf` | 分频链（1 kHz → 200 Hz → 100 Hz → 4 Hz / 2 Hz / 1 Hz / 40 Hz）与按键消抖计数 | ✅ 已有样例 |
 | 2 | `GUI-keypad_scan.png` | `sim/keypad_scan.vwf` | 4×4 键盘扫描四状态机 + 消抖 + 按键按下/释放 | ⬜ 待拍 |
 | 3 | `GUI-seg_scan.png` | `sim/seg_scan.vwf` | 数码管位选/段选扫描与 5 个字母的段形 | ⬜ 待拍 |
 | 4 | `GUI-dot_matrix_scan.png` | `sim/dot_matrix_scan.vwf` | 8×8 点阵行扫描（125 Hz）与行序 | ⬜ 待拍 |
 | 5 | `GUI-rng_lfsr.png` | `sim/rng_lfsr.vwf` | LFSR 伪随机序列（x⁸+x⁶+x⁵+x⁴+1，周期 255） | ⬜ 待拍 |
 | 6 | `GUI-pattern_rom.png` | `sim/pattern_rom.vwf` | 图案库按 `i_pat` 查表输出 | ⬜ 待拍 |
 | 7 | `GUI-piece_rom.png` | `sim/piece_rom.vwf` | 零片形状库按（形状/朝向）查表输出 | ⬜ 待拍 |
-| 8 | `GUI-disp_format.png` | `sim/disp_format.vwf` | 显示格式转换（十进制/十六进制、倒计时编码） | ⬜ 待拍 |
+| 8 | `GUI-disp_format.png` | `sim/disp_format.vwf` | 状态 → 8 位数码管内容 + **熄灭掩码**（`o_data`/`o_blank`）：待机/预览/对局/结算各态、倒计时两位拆分，以及 ⭐ **口径 C：`DISP2` 在所有窗口都熄灭（断言 ⑥c）**；**同一条波形也覆盖自检态的八位全 8** | ⬜ 待拍 |
 | 9 | `GUI-game_fsm.png` | `sim/game_fsm.vwf` | 主状态机 S_IDLE→预览→对局→胜负 的迁移与计时 | ⬜ 待拍 |
 | 10 | `GUI-puzzle_ctrl.png` | `sim/puzzle_ctrl.vwf` | 拼图引擎：重叠判定 / 选中锁定 / 旋转 / 整帧判据 | ⬜ 待拍 |
 | 11 | `GUI-buzzer_ctrl.png` | `sim/buzzer_ctrl.vwf` | 音效：音高表查表 + 方波计数 + 三关 BGM 乐句 | ⬜ 待拍 |
@@ -78,6 +78,41 @@ quartus_sim <工程> --mode=functional --overwrite_waveform=on
 
 > 每张图对应的**断言明细**在 `sim/rounds/<模块>/rNN.json`（机读）与 `rNN.md`（人看），
 > 逐模块的"当前轮次 + 条数"总表在 `docs/03-仿真验证方案.md` §2 / §4。
+
+### 2.1 拍图前自检：12 个 `.vwf` 里都真的有波形吗？
+
+⭐ **本仓库里的 12 个 `.vwf` 都是 2026-10-12 那一轮全量重跑时由 Quartus 回写的**
+（对应当前固件：口径 C / `SEED 8` / 1264 LE），**打开就是最新波形**，不需要重新仿真。
+`.vwf` 的回写格式是嵌套的 `TRANSITION_LIST { NODE { REPEAT=n; LEVEL … FOR …; } }`，
+所以"内容很多"会体现为**段数（`TRANSITION_LIST` 块）**，而不是行数。实测：
+
+| 模块 | `.vwf` 大小 | `TRANSITION_LIST` 段数 | 模块 | `.vwf` 大小 | `TRANSITION_LIST` 段数 |
+|---|---|---|---|---|---|
+| `clk_gen` | 20 737 B | 40 | `disp_format` | 31 899 B | 60 |
+| `keypad_scan` | 42 842 B | 47 | `game_fsm` | 66 611 B | 54 |
+| `seg_scan` | 64 890 B | 88 | `puzzle_ctrl` | 1 029 641 B | 584 |
+| `dot_matrix_scan` | 28 079 B | 51 | `buzzer_ctrl` | 388 246 B | 34 |
+| `rng_lfsr` | 54 254 B | 20 | `puzzle_top` | 646 571 B | 1271 |
+| `pattern_rom` | 29 540 B | 67 | `piece_rom` | 123 855 B | 284 |
+
+> 一个 `TRANSITION_LIST` 段就是一个被观察节点的完整波形（`REPEAT` 会把重复段压紧，
+> 所以段数不多不代表内容少 —— 例如 `i_clk` 只有 1 段，但里面是 `REPEAT = 23000` 的 10 ns 翻转）。
+> 想自己复核：`Select-String -Path sim\*.vwf -Pattern "TRANSITION_LIST" | Group-Object Filename`。
+
+### 2.2 ⭐ 评分项④「资源利用」要的**编译报告截图**（1~3 张，另一类图）
+
+评分项 ④ 原文是"实际实现功能说明及**资源利用情况（编译报告截图）**"——它要的不是仿真波形，
+而是 **Quartus 编译报告**的截图。建议拍 **2 张**（文件名自定，别和 `GUI-*.png` 混）：
+
+| 建议文件名 | 在哪拍 | 要截到的关键行 |
+|---|---|---|
+| `GUI-编译-面积.png` | Quartus `Processing → Compilation Report` → `Fitter → Summary`（或直接打开 `quartus/output_files/puzzle.fit.rpt` 的 `Fitter Summary` 段） | **Total logic elements 1,264 / 1,270 ( 100 % )**、**Total LABs 127 / 127 ( 100 % )**、Total pins 52 / 116 |
+| `GUI-编译-时序.png` | `Compilation Report → Timing Analyzer → Summary`（TimeQuest；或 `quartus/output_files/puzzle.sta.rpt` 的 Fmax Summary 段） | **Fmax Summary = 54.27 MHz**、**Clock Setup 'clk' 的 slack +1.572 ns**（hold +1.078 ns）、违例 **0 条** |
+
+> ⚠️ 截图同样**要裁掉标题栏**（含本机用户名，见 §0.1）。
+> ⚠️ **浏览器/文本编辑器里截 `.rpt` 也能用，但 Quartus 界面里的更稳**（报告名、工程名都在图里）。
+> ⭐ 数字的唯一真值源是 `quartus/build_provenance.json` 与 `docs/05` §1A'''''（**1264 LE / 54.27 MHz / +1.572 ns**）；
+> 截图前先扫一眼那两个地方，避免拍到旧报告（`output_files` 里只会有一份当前的 `fit.rpt` / `sta.rpt`）。
 
 ---
 
