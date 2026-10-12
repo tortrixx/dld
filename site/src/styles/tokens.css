@@ -1,0 +1,112 @@
+/* ==========================================================================
+   tokens.css —— 设计变量（唯一真值源）
+   方向：Swiss Editorial × Digital Hardware × Engineering Notebook
+   --------------------------------------------------------------------------
+   三条原则，动手写样式前先读一遍：
+     1. **网格与排版纪律优先于装饰**。层级靠字号、字重、字距、留白和细线建立，
+        不靠圆角卡片、阴影和渐变。
+     2. **唯一强调色**。整站只有一支「信号红」（--acc），只用在编号、强调线、
+        焦点态与关键数字上。硬件的红/绿/黄只允许出现在点阵面板内部，
+        不参与页面配色。
+     3. **注释即图注**。所有技术注释、单位、来源都用等宽字体 + 小字号 +
+        次级色 —— 这是"工程实验记录"的视觉语言，也让页面自带证据感。
+   ========================================================================== */
+
+:root {
+  /* ---- 纸与墨 ---- */
+  --paper: #f4f1ea;
+  --paper-2: #ebe7dd;
+  --paper-3: #e2ddd0;
+  --ink: #131311;
+  --ink-2: #474540;
+  /* 次级文字（图注/注释）：11px 的等宽小字也要过 WCAG AA 的 4.5:1，
+     所以这个值比"看起来舒服的灰"更深一点 —— 实测 5.9:1。 */
+  --ink-3: #5f5c55;
+  --rule: #cec8ba;
+  --rule-strong: #a9a294;
+
+  /* ---- 唯一强调色（LED 信号红偏橙） ---- */
+  --acc: #c8370a;
+  --acc-ink: #8f2706;
+  --acc-wash: #f2e0d6;
+
+  /* ---- 仪器面板（点阵/数码管所在的深色面） ---- */
+  --panel: #121214;
+  --panel-2: #1b1b1f;
+  --panel-rule: #33333a;
+  --panel-ink: #d8d6d0;
+  --panel-ink-2: #8d8b86;
+
+  /* ---- 硬件可用的四种 LED 状态（双色点阵的物理事实） ---- */
+  --led-off: #232329;
+  --led-red: #ff3b20;
+  --led-green: #17d96a;
+  --led-yellow: #ffbe0b;
+
+  /* ---- 字体 ---- */
+  --font-sans: "Helvetica Neue", Helvetica, "Inter", "Segoe UI", Roboto,
+    "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", "JetBrains Mono",
+    "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+
+  /* ---- 字号阶（fluid，clamp 保证 320px 不溢出） ---- */
+  --fs-display: clamp(2.1rem, 5.6vw, 4.6rem);
+  --fs-h2: clamp(1.35rem, 2.6vw, 2rem);
+  --fs-h3: clamp(1.02rem, 1.35vw, 1.18rem);
+  --fs-body: clamp(0.95rem, 1.02vw, 1.02rem);
+  --fs-note: 0.8125rem;
+  --fs-mono: 0.75rem;
+  --fs-mono-xs: 0.6875rem;
+  --fs-num: clamp(1.9rem, 3.6vw, 2.9rem);
+
+  /* ---- 行高与字距 ---- */
+  --lh-tight: 1.06;
+  --lh-body: 1.72;
+  --track-tight: -0.022em;
+  --track-label: 0.14em;
+  --track-label-wide: 0.22em;
+
+  /* ---- 间距阶（8px 基准） ---- */
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+  --s7: 48px;
+  --s8: 64px;
+  --s9: 96px;
+  --s10: 128px;
+
+  /* ---- 版心 ---- */
+  --shell: 1320px;
+  --gutter: clamp(16px, 2.6vw, 32px);
+  --measure: 68ch;
+
+  /* ---- 细线（Swiss 结构线） ---- */
+  --hair: 1px solid var(--rule);
+  --hair-strong: 1px solid var(--rule-strong);
+
+  /* ---- 动效（克制：只表达状态变化） ---- */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --dur-fast: 90ms;
+  --dur: 160ms;
+}
+
+/* 尊重系统「减少动态效果」偏好：整站所有动画/过渡一律关掉。
+   本站的动效本来就是"目的性"的（闪烁相位、焦点反馈），不是叙事动画，
+   所以关掉之后信息一点都不丢。 */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

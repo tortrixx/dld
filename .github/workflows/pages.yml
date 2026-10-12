@@ -1,0 +1,104 @@
+# ============================================================================
+#  .github/workflows/pages.yml —— 把 site/ 构建成静态站点并发布到 GitHub Pages
+# ----------------------------------------------------------------------------
+#  设计原则（与仓库既有纪律一致）：
+#    · **只碰 site/**：不编译 RTL、不跑仿真、不调用 Quartus，也不改动
+#      rtl/ / sim/ / quartus/ 下的任何文件。硬件工程的流程完全不受影响。
+#    · **不动既有流程**：本仓库此前没有任何 CI / Pages 配置（无 .github/、
+#      无 *.yml、无 gh-pages 分支），所以这是一条**新增**的独立流程，
+#      不存在"覆盖原有流程"的问题。
+#    · **base 由环境变量传**：项目级 Pages 的站点挂在 /dld/ 下，
+#      vite.config.ts 的默认值就是 '/dld/'；这里显式传一次，
+#      换成用户级 Pages 或改仓库名时只需改这一行的值，不用动代码。
+#
+#  使用前提（人类操作，workflow 无法代劳）：
+#    仓库 Settings → Pages → Source 选 **GitHub Actions**。
+#    在此之前本 workflow 不会真正发布成功。
+# ============================================================================
+
+name: Deploy showcase site to Pages
+
+on:
+  # 只在站点自身、它引用的素材、以及**被对账的数据源**变化时触发 ——
+  # 改 RTL 或 Quartus 工程不会白白跑一遍站点构建。
+  # ⚠️ 最后三项是 `npm run verify:facts` 的真值源：它们一变，"网页上的数字是否过期"
+  #    这件事就需要重新判定，所以必须跟着触发（否则网页会悄悄落后于仓库）。
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'docs/图/**'
+      - 'quartus/build_provenance.json'
+      - 'docs/05-资源利用与编译报告.md'
+      - 'sim/rounds/**'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 同一时刻只允许一个发布；新的推送取消排队中的旧任务，但**不取消正在进行的发布**
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build site/ (Vite + React)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: site
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: site/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests (规则模型)
+        run: npm test
+
+      # 把网页上写的数字与仓库里的机读真值源机械对一遍
+      # （LE/LAB/引脚/slack/POF 对 build_provenance.json；各模块最新轮次与断言数对
+      #   sim/rounds/*.json；被引用的路径是否已入库对 git ls-files）。
+      # 放在 build 之前：数字过期就不该发布，而不是先上线再发现。
+      - name: Verify facts against repository
+        run: npm run verify:facts
+
+      - name: Build
+        env:
+          # 项目级 Pages：https://<user>.github.io/dld/
+          VITE_BASE: /dld/
+        run: npm run build
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          # ⚠️ 注意：upload-pages-artifact 的默认路径也是仓库根，
+          #    这里必须显式指向 site/dist，否则会把整个硬件工程当站点传上去。
+          path: site/dist
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4
