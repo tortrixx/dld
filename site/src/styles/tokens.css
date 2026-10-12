@@ -1,73 +1,86 @@
 /* ==========================================================================
    tokens.css —— 设计变量（唯一真值源）
    方向：Swiss Editorial × Digital Hardware × Engineering Notebook
+   语言参照：tortrixx/slides 的站点设计（等宽优先、shadcn neutral 色阶、
+             虚线网格底纹、两级分隔线、深浅双主题、入场淡入 + 全降级）
    --------------------------------------------------------------------------
-   三条原则，动手写样式前先读一遍：
-     1. **网格与排版纪律优先于装饰**。层级靠字号、字重、字距、留白和细线建立，
-        不靠圆角卡片、阴影和渐变。
-     2. **唯一强调色**。整站只有一支「信号红」（--acc），只用在编号、强调线、
-        焦点态与关键数字上。硬件的红/绿/黄只允许出现在点阵面板内部，
-        不参与页面配色。
-     3. **注释即图注**。所有技术注释、单位、来源都用等宽字体 + 小字号 +
-        次级色 —— 这是"工程实验记录"的视觉语言，也让页面自带证据感。
+   动手改样式前先读这四条：
+     1. **网格与排版优先于装饰**。层级靠字号、字重、字距、留白和**细线**建立，
+        不用圆角卡片、阴影和渐变背景。全站只有一类"盒子"（描边 + 圆角 2px）。
+     2. **唯一强调色**：`--acc`（LED 信号红橙）。只用在章节编号、强调线、焦点态、
+        关键数字与数据流脉冲上。硬件的红/绿/黄**只允许出现在点阵内部**。
+     3. **等宽字体承担技术信息**：所有标识符、数值、单位、图注、来源都用 mono，
+        正文叙述用 sans。这条沿用 slides 的语言，也是"工程记录"的视觉语法。
+     4. **深浅双主题同等对待**：两套都要过 WCAG AA（正文 ≥4.5:1），
+        不是"深色为主、浅色凑合"。切换见 `ThemeToggle`。
    ========================================================================== */
 
-:root {
-  /* ---- 纸与墨 ---- */
-  --paper: #f4f1ea;
-  --paper-2: #ebe7dd;
-  --paper-3: #e2ddd0;
-  --ink: #131311;
-  --ink-2: #474540;
-  /* 次级文字（图注/注释）：11px 的等宽小字也要过 WCAG AA 的 4.5:1，
-     所以这个值比"看起来舒服的灰"更深一点 —— 实测 5.9:1。 */
-  --ink-3: #5f5c55;
-  --rule: #cec8ba;
-  --rule-strong: #a9a294;
+/* ---------- 字体：自持 latin 子集，中文走系统栈 ---------- */
+/* 为什么要自持：外部 CDN（Google Fonts）在国内网络下经常不可达，
+   而"字体挂了"表现为静默回落到默认字体 —— 版式全变但没人会报错。
+   为什么只做 latin：CJK 网络字体代价在另一个量级（`@fontsource/noto-sans-sc`
+   解包 71.2 MB），而系统里的苹方 / 微软雅黑 / Noto CJK 质量已经很好。
+   参照项目 slides 也是这个口径：Noto CJK 只用在 **PDF 渲染**（无下载成本），
+   它的**网页**同样走系统字体栈。
+   实测载荷：Inter latin 48 KB + JetBrains Mono latin 40 KB（woff2，按 unicode-range 按需下载）。 */
+@import '@fontsource-variable/inter/wght.css';
+@import '@fontsource-variable/jetbrains-mono/wght.css';
 
-  /* ---- 唯一强调色（LED 信号红偏橙） ---- */
+:root {
+  /* ---- 字体栈 ---- */
+  --font-sans: 'Inter Variable', 'Inter', -apple-system, BlinkMacSystemFont,
+    'Segoe UI', 'Noto Sans SC', 'Source Han Sans SC', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace,
+    'SFMono-Regular', 'SF Mono', Menlo, Consolas, 'Noto Sans SC',
+    'Microsoft YaHei', monospace;
+
+  /* ---- shadcn neutral 色阶（与参照站同一套口径）---- */
+  --background: 0 0% 100%;
+  --foreground: 0 0% 3.9%;
+  --card: 0 0% 100%;
+  --muted: 0 0% 96.1%;
+  --muted-foreground: 0 0% 42%; /* #6b6b6b → 对白底 5.4:1，比参照站的 45.1% 再深一档 */
+  --border: 0 0% 89.8%;
+  --border-strong: 0 0% 79%;
+  --ring: 0 0% 3.9%;
+
+  /* ---- 唯一强调色（LED 信号红橙，浅色主题下压深以保证对比度）---- */
   --acc: #c8370a;
   --acc-ink: #8f2706;
-  --acc-wash: #f2e0d6;
+  --acc-wash: #f6e4da;
+  --acc-soft: rgb(200 55 10 / 0.1);
 
-  /* ---- 仪器面板（点阵/数码管所在的深色面） ---- */
-  --panel: #121214;
-  --panel-2: #1b1b1f;
-  --panel-rule: #33333a;
-  --panel-ink: #d8d6d0;
-  --panel-ink-2: #8d8b86;
+  /* ---- 数据流脉冲（时序播放器专用；与强调色同族但更亮）---- */
+  --pulse: #e2622c;
 
-  /* ---- 硬件可用的四种 LED 状态（双色点阵的物理事实） ---- */
-  --led-off: #232329;
+  /* ---- 硬件可用的四种 LED 状态（双色点阵的物理事实）---- */
+  --led-off: #1d1d22;
   --led-red: #ff3b20;
   --led-green: #17d96a;
   --led-yellow: #ffbe0b;
 
-  /* ---- 字体 ---- */
-  --font-sans: "Helvetica Neue", Helvetica, "Inter", "Segoe UI", Roboto,
-    "Noto Sans SC", "Source Han Sans SC", "PingFang SC", "Hiragino Sans GB",
-    "Microsoft YaHei", sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", "SF Mono", "JetBrains Mono",
-    "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+  /* ---- 网格底纹 ---- */
+  --grid-line: rgb(100 116 139 / 0.22);
+  --grid-size: 24px;
 
-  /* ---- 字号阶（fluid，clamp 保证 320px 不溢出） ---- */
-  --fs-display: clamp(2.1rem, 5.6vw, 4.6rem);
-  --fs-h2: clamp(1.35rem, 2.6vw, 2rem);
-  --fs-h3: clamp(1.02rem, 1.35vw, 1.18rem);
-  --fs-body: clamp(0.95rem, 1.02vw, 1.02rem);
+  /* ---- 字号阶 ---- */
+  --fs-display: clamp(2.05rem, 5.2vw, 4.1rem);
+  --fs-h2: clamp(1.3rem, 2.4vw, 1.85rem);
+  --fs-h3: clamp(1rem, 1.3vw, 1.12rem);
+  --fs-body: clamp(0.95rem, 1vw, 1rem);
   --fs-note: 0.8125rem;
   --fs-mono: 0.75rem;
   --fs-mono-xs: 0.6875rem;
-  --fs-num: clamp(1.9rem, 3.6vw, 2.9rem);
+  --fs-num: clamp(1.75rem, 3.2vw, 2.6rem);
 
   /* ---- 行高与字距 ---- */
-  --lh-tight: 1.06;
-  --lh-body: 1.72;
-  --track-tight: -0.022em;
-  --track-label: 0.14em;
-  --track-label-wide: 0.22em;
+  --lh-tight: 1.1;
+  --lh-body: 1.7;
+  --track-tight: -0.02em;
+  --track-label: 0.12em;
 
-  /* ---- 间距阶（8px 基准） ---- */
+  /* ---- 间距阶（4px 基准）---- */
   --s1: 4px;
   --s2: 8px;
   --s3: 12px;
@@ -77,26 +90,65 @@
   --s7: 48px;
   --s8: 64px;
   --s9: 96px;
-  --s10: 128px;
 
   /* ---- 版心 ---- */
-  --shell: 1320px;
-  --gutter: clamp(16px, 2.6vw, 32px);
-  --measure: 68ch;
+  --shell: 1240px;
+  --gutter: clamp(16px, 2.4vw, 32px);
+  --measure: 70ch;
+  --radius: 4px;
 
-  /* ---- 细线（Swiss 结构线） ---- */
-  --hair: 1px solid var(--rule);
-  --hair-strong: 1px solid var(--rule-strong);
+  /* ---- 线：两级（区块边界 2px / 条目分隔 1px 渐隐）---- */
+  --hair: 1px solid hsl(var(--border));
+  --hair-strong: 2px solid hsl(var(--border));
 
-  /* ---- 动效（克制：只表达状态变化） ---- */
-  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
-  --dur-fast: 90ms;
-  --dur: 160ms;
+  /* ---- 动效 ---- */
+  --ease: cubic-bezier(0.22, 0.68, 0.24, 1);
+  --dur-fast: 120ms;
+  --dur: 240ms;
 }
 
-/* 尊重系统「减少动态效果」偏好：整站所有动画/过渡一律关掉。
-   本站的动效本来就是"目的性"的（闪烁相位、焦点反馈），不是叙事动画，
-   所以关掉之后信息一点都不丢。 */
+/* 深色主题：跟随系统，或由主题按钮显式指定。
+   两套都是完整设计，不是"反色"——深色下网格更亮、强调色提亮、边框提对比。 */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --background: 0 0% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 0 0% 6.5%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 66%; /* #a8a8a8 → 对近黑底 9.5:1 */
+    --border: 0 0% 20%;
+    --border-strong: 0 0% 32%;
+    --ring: 0 0% 98%;
+    --acc: #ff6a45;
+    --acc-ink: #ff8f70;
+    --acc-wash: rgb(255 106 69 / 0.12);
+    --acc-soft: rgb(255 106 69 / 0.14);
+    --pulse: #ffb048;
+    --led-off: #16161a;
+    --grid-line: rgb(148 163 184 / 0.16);
+  }
+}
+
+:root[data-theme='dark'] {
+  --background: 0 0% 3.9%;
+  --foreground: 0 0% 98%;
+  --card: 0 0% 6.5%;
+  --muted: 0 0% 12%;
+  --muted-foreground: 0 0% 66%;
+  --border: 0 0% 20%;
+  --border-strong: 0 0% 32%;
+  --ring: 0 0% 98%;
+  --acc: #ff6a45;
+  --acc-ink: #ff8f70;
+  --acc-wash: rgb(255 106 69 / 0.12);
+  --acc-soft: rgb(255 106 69 / 0.14);
+  --pulse: #ffb048;
+  --led-off: #16161a;
+  --grid-line: rgb(148 163 184 / 0.16);
+}
+
+/* 尊重系统「减少动态效果」：关掉全部入场与脉冲动画。
+   本站动效本来就是"表达状态变化"，不是叙事动画，关掉不丢信息。 */
 @media (prefers-reduced-motion: reduce) {
   :root {
     --dur-fast: 0ms;

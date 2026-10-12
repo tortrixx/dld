@@ -13,6 +13,10 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify:facts": "node scripts/verify-facts.mjs",
+    "gen:drawio": "node scripts/gen-architecture-drawio.mjs",
+    "gen:frames": "vite-node scripts/gen-demo-frames.ts",
+    "gen:gif": "npm run gen:frames && npm run gen:gif:render",
+    "gen:gif:render": "python scripts/render-demo-gif.py",
     "check": "tsc --noEmit && vitest run && node scripts/verify-facts.mjs && npm run build",
     "shots": "node scripts/browser-check.mjs"
   },
@@ -26,6 +30,8 @@
     "vitest": "^2.1.8"
   },
   "dependencies": {
+    "@fontsource-variable/inter": "^5.3.0",
+    "@fontsource-variable/jetbrains-mono": "^5.3.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   }

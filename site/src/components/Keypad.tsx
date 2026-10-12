@@ -12,10 +12,12 @@
 import type { GameKey } from '../engine/engine';
 
 export interface KeypadProps {
-  readonly onPress: (key: GameKey) => void;
+  readonly onPress?: (key: GameKey) => void;
   /** 最近按下的动作（用于 220 ms 的高亮反馈）。 */
-  readonly activeKey: GameKey | null;
+  readonly activeKey?: GameKey | null;
   readonly disabled?: boolean;
+  /** 只读模式：渲染成不可点的键帽（用于"玩法说明"里的键位图示）。 */
+  readonly readonly?: boolean;
 }
 
 interface KeyCell {
@@ -45,29 +47,35 @@ const GRID: readonly (readonly KeyCell[])[] = [
   ],
 ];
 
-export function Keypad({ onPress, activeKey, disabled = false }: KeypadProps): JSX.Element {
+export function Keypad({ onPress, activeKey = null, disabled = false, readonly = false }: KeypadProps): JSX.Element {
   return (
     <div className="keypad" role="group" aria-label="4×4 矩阵键盘的右下 3×3 功能区块">
       {GRID.flat().map((cell) => {
-        if (!cell.key) {
+        const on = activeKey === cell.key;
+        if (!cell.key || readonly) {
           return (
             <span
               key={cell.silk}
-              className="keypad__key keypad__key--dead"
-              aria-label={`${cell.silk}（键号 ${cell.code}）不可用：扫描器用键号 0 表示没有按键`}
+              className={`keypad__key keypad__key--static${cell.dead ? ' keypad__key--dead' : ''}${on ? ' keypad__key--on' : ''}`}
+              aria-label={
+                cell.key
+                  ? `${cell.label}（${cell.silk}，键号 ${cell.code}）`
+                  : `${cell.silk}（键号 ${cell.code}）不可用：扫描器用键号 0 表示没有按键`
+              }
             >
-              <b>{cell.silk}</b>
-              <span>{cell.label} · 键号 {cell.code}</span>
+              <b>{cell.label}</b>
+              <span>
+                {cell.silk} · {cell.code}
+              </span>
             </span>
           );
         }
-        const on = activeKey === cell.key;
         return (
           <button
             key={cell.silk}
             type="button"
             className={`keypad__key${on ? ' keypad__key--on' : ''}`}
-            onClick={() => onPress(cell.key as GameKey)}
+            onClick={() => onPress?.(cell.key as GameKey)}
             disabled={disabled}
             aria-label={`${cell.label}（${cell.silk}，键号 ${cell.code}）`}
           >

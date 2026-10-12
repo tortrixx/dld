@@ -1,37 +1,47 @@
 /**
- * Evidence.tsx —— 实验结果与工程证据
+ * Evidence.tsx —— 数据与证据（这一版以**图表**为主，不再堆表格）
  *
- * 这一节的原则：**每个数字都带单位和出处**，而且要区分"当前读数"与"历史演进对照"。
- * 资源与时序的唯一真值源是入库的 `quartus/build_provenance.json` 与 `docs/05`；
- * 本站**不引用** `quartus/output_files/*.rpt` —— 那些文件被 .gitignore 挡掉了，
- * 克隆下来根本不存在，链过去就是死链。
+ * 用户的原话是"表格数据太多"。所以这一节把四件事都画出来：
+ *   ① 利用率细线条（LE / LAB / 引脚 / UFM）—— 一眼看出瓶颈是 LAB
+ *   ② 时序预算尺：一根 20 ns 的尺子上摆"数据路径 18.095 ns + 余量 1.572 ns"
+ *   ③ 逐模块断言数（12 根条，合计 179）—— 验证覆盖一眼可见
+ *   ④ 资源与时序的**演进**折线（历史读数，标清楚不是当前值）
+ * 剩下的文字只保留"每个数字的出处"和"口径差异"这两件必须写清的事。
  */
 
-import { Figure, Bar, RichText, Section, Src, TableWrap, Tag } from '../components/ui';
+import { BarChart, EvolutionChart, TimingBudget, UtilizationBars } from '../components/charts';
+import { Figure, RichText, Section, Src, Tag } from '../components/ui';
 import {
   BUILD_PROVENANCE,
   EXTRA_CHECKS,
-  HEADLINE_METRICS,
+  RESOURCE_EVOLUTION,
   SIM_COVERAGE,
   SIM_TOTAL_ASSERTIONS,
   blob,
   figure,
 } from '../data/facts';
 
+/** 逐模块断言数：直接由 SIM_COVERAGE 派生，避免出现第二份真值源。 */
+const ASSERTION_BARS = SIM_COVERAGE.map((r) => ({
+  label: r.module,
+  value: r.assertions,
+  note: `第 ${r.round} 轮 · ${r.note}`,
+}));
+
 export function Evidence(): JSX.Element {
   return (
     <Section
       id="evidence"
       num="04"
-      kicker="Verified Data · 唯一真值源指向入库文件"
-      title="实验结果与工程证据"
+      kicker="Verified Data · 每个数字都带出处"
+      title="数据与证据"
       lede={
         <>
           <p>
-            下面每一个数字都能指到仓库里一个<strong>已入库</strong>的文件。
-            资源与时序的真值源只有两处：机读的 <Src path="quartus/build_provenance.json" />{' '}
-            与报告的 <Src path="docs/05-资源利用与编译报告.md" />。
-            断言的分布由 <Src path="docs/03-仿真验证方案.md" /> 拥有。
+            下面每个数字都能指到仓库里一个<strong>已入库</strong>的文件。
+            资源与时序的真值源只有两处：机读的 <Src path="quartus/build_provenance.json" /> 与报告的{' '}
+            <Src path="docs/05-资源利用与编译报告.md" />；断言的分布由{' '}
+            <Src path="docs/03-仿真验证方案.md" /> 拥有。
           </p>
           <p className="note" style={{ marginTop: 'var(--s3)' }}>
             口径提示：Quartus 在 Fitter 报告里把 1264/1270 打成 <code>( 100 % )</code>，
@@ -41,262 +51,230 @@ export function Evidence(): JSX.Element {
         </>
       }
     >
-      {/* ---------------- 关键读数 ---------------- */}
-      <div className="figures">
-        {HEADLINE_METRICS.map((m) => (
-          <div className="figure-cell" key={m.label}>
-            <span className="figure-cell__k">{m.label}</span>
-            <span className="figure-cell__v">
-              {m.value}
-              {m.unit ? <span>{m.unit}</span> : null}
-            </span>
-            <span className="figure-cell__n"><RichText text={m.note} /></span>
-            <span className="figure-cell__src">
-              来源：
-              <a
-                href={blob(m.source.path, m.source.line)}
-                target="_blank"
-                rel="noreferrer noopener"
-                title={`仓库路径：${m.source.path}${m.source.line ? `:${m.source.line}` : ''}`}
-              >
-                {m.source.path.split('/').pop()}
-                {m.source.line ? `:${m.source.line}` : ''}
-              </a>
-              <br />
-              <RichText text={m.source.note} />
-            </span>
-          </div>
-        ))}
-      </div>
-
-      {/* ---------------- 利用率 ---------------- */}
-      <div className="grid12" style={{ marginTop: 'var(--s8)' }}>
-        <div className="col-6">
-          <h3 className="case__title" style={{ marginBottom: 'var(--s3)' }}>
-            资源利用率：真正的瓶颈是 <Tag accent>LAB 127 / 127</Tag>
-          </h3>
-          <Bar label="LE" used={1264} total={1270} unit="LE" />
-          <Bar label="LAB" used={127} total={127} unit="LAB" critical />
-          <Bar label="引脚" used={52} total={116} unit="PIN" />
-          <Bar label="UFM" used={0} total={1} unit="块" />
-          <p className="note" style={{ marginTop: 'var(--s4)' }}>
-            <strong>为什么"余 6 个 LE"约等于 0：</strong>
-            MAX II 的 LE 只能按<strong>每个 LAB 10 个 LE 成组分配</strong>，
-            所以剩下 3~6 个 LE 凑不出一个 LAB。这不是估算，是实测撞出来的：
-            有一次真编译 <strong>1267 / 1270 LE（99.8%）却装不下</strong>，
-            报错是"需要 128~129 个 LAB、器件只有 127"。所以判断"装不装得下"要看 LAB，不能只看 LE。
-            出处：<Src path="docs/06-硬件调试记录.md" /> 的 ERR-046（§16.3）。
-          </p>
-        </div>
-        <div className="col-6">
-          <div className="frame">
-            <TableWrap label="构建溯源">
-            <table className="tbl">
-              <caption>构建溯源（机读，入库）</caption>
-              <tbody>
-                <tr>
-                  <th scope="row">编译时间</th>
-                  <td>{BUILD_PROVENANCE.timestamp}</td>
-                </tr>
-                <tr>
-                  <th scope="row">Quartus</th>
-                  <td>{BUILD_PROVENANCE.quartus}</td>
-                </tr>
-                <tr>
-                  <th scope="row">git HEAD</th>
-                  <td>
-                    {BUILD_PROVENANCE.gitHead}（编译时工作树有未提交改动，provenance 里如实记着）
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">综合 LE（map）</th>
-                  <td>{BUILD_PROVENANCE.syntheticLe} logic cells（fitter 装箱后 1264）</td>
-                </tr>
-                <tr>
-                  <th scope="row">寄存器</th>
-                  <td>{BUILD_PROVENANCE.registers}</td>
-                </tr>
-                <tr>
-                  <th scope="row">时钟约束</th>
-                  <td>{BUILD_PROVENANCE.clockConstraint}</td>
-                </tr>
-                <tr>
-                  <th scope="row">I/O 延时</th>
-                  <td>{BUILD_PROVENANCE.ioDelay}</td>
-                </tr>
-                <tr>
-                  <th scope="row">固件</th>
-                  <td>
-                    puzzle.pof · {BUILD_PROVENANCE.pofBytes.toLocaleString('en-US')} B ·{' '}
-                    {BUILD_PROVENANCE.pofMtime}
-                    <br />
-                    <span className="note" style={{ wordBreak: 'break-all' }}>
-                      sha256 {BUILD_PROVENANCE.pofSha256}
-                    </span>
-                    <br />
-                    已烧入板子并读回校验通过（Erase / Program / Verify 全过）
-                  </td>
-                </tr>
-                <tr>
-                  <th scope="row">RTL 指纹</th>
-                  <td>
-                    16 个源文件各带两种指纹（字节哈希 + <strong>逻辑指纹</strong>）：
-                    后者对注释与行尾不敏感，所以"只改注释"不会被误判成功能变更。
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-            </TableWrap>
-            <p className="figcap">
-              本表全部来自 <Src path="quartus/build_provenance.json" />（由{' '}
-              <Src path="scripts/record_build.py" /> 在编译后写入，属于入库交付物）。
-              <code>.rpt</code> 一类编译产物被 <code>.gitignore</code> 挡掉、克隆后不存在，
-              所以本站一律不链接它们。
+      {/* ---------------- 利用率 + 时序预算 ---------------- */}
+      <div className="grid12">
+        <div className="col-5">
+          <div className="chart" style={{ height: '100%' }}>
+            <div className="chart__head">
+              <p className="chart__title">
+                资源利用率：瓶颈是 <Tag accent>LAB 127 / 127</Tag>
+              </p>
+            </div>
+            <UtilizationBars
+              data={[
+                { label: 'LE', used: 1264, total: 1270, unit: 'LE' },
+                { label: 'LAB', used: 127, total: 127, unit: 'LAB', critical: true },
+                { label: '引脚', used: 52, total: 116, unit: 'PIN' },
+                { label: 'UFM', used: 0, total: 1, unit: '块' },
+              ]}
+            />
+            <p className="chart__cap">
+              <strong>为什么"余 6 个 LE"约等于 0：</strong>
+              MAX II 的 LE 只能按<strong>每个 LAB 10 个 LE 成组分配</strong>，所以剩下 3~6 个 LE 凑不出一个
+              LAB。这不是估算，是实测撞出来的：有一次真编译 <strong>1267 / 1270 LE（99.8%）却装不下</strong>，
+              报错是"需要 128~129 个 LAB、器件只有 127"。判断"装不装得下"要看 LAB，不能只看 LE。
+              出处：<Src path="docs/06-硬件调试记录.md">docs/06 · ERR-046</Src>。
             </p>
           </div>
         </div>
-      </div>
-
-      {/* ---------------- 仿真覆盖 ---------------- */}
-      <div className="grid12" style={{ marginTop: 'var(--s8)' }}>
-        <div className="col-12">
-          <h3 className="case__title">
-            仿真覆盖：12 个模块 / 场景、<Tag accent>{SIM_TOTAL_ASSERTIONS} 条断言全过</Tag>
-          </h3>
-          <p className="note" style={{ marginTop: 'var(--s2)' }}>
-            测试台是 Python 写的（<code>sim/tb_*.py</code>），驱动 Quartus II 的内置仿真器：
-            在 <code>.tmp/</code> 里建隔离工程，把功能网表跑一遍，再解析回写进 <code>.vwf</code> 的波形、
-            与独立的参考模型逐点比对。每一轮的机读结论在{' '}
-            <Src path="sim/rounds/" /> 下的 <code>rNN.json</code>。
-            <strong>179 = 下表 12 行逐项相加</strong>（整机两种场景合计 56 条，但按"整机算一个模块"只计 28）。
-          </p>
-        </div>
-        <div className="col-12">
-          <TableWrap label="仿真覆盖">
-          <table className="tbl" style={{ marginTop: 'var(--s4)' }}>
-            <caption>
-              当前全绿的轮次（第 25 工作阶段全量重跑）· 逐行都能在{' '}
-              sim/rounds/&lt;模块&gt;/rNN.json 里核到
-            </caption>
-            <thead>
-              <tr>
-                <th>模块 / 场景</th>
-                <th className="num">轮次</th>
-                <th className="num">断言</th>
-                <th>这一轮在验什么</th>
-              </tr>
-            </thead>
-            <tbody>
-              {SIM_COVERAGE.map((row) => (
-                <tr key={row.module}>
-                  <td>
-                    <Src path={`sim/rounds/${row.module}/${row.round.split(' / ')[0]}.md`}>{row.module}</Src>
-                  </td>
-                  <td className="num">{row.round}</td>
-                  <td className="num">{row.assertions}</td>
-                  <td style={{ whiteSpace: 'normal' }}><RichText text={row.note} /></td>
-                </tr>
-              ))}
-              <tr>
-                <td colSpan={2}>
-                  <strong>合计</strong>
-                </td>
-                <td className="num">
-                  <strong>{SIM_TOTAL_ASSERTIONS}</strong>
-                </td>
-                <td>
-                  <strong>全部通过</strong>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          </TableWrap>
+        <div className="col-7">
+          <TimingBudget
+            periodNs={20}
+            dataPathNs={18.095}
+            slackNs={1.572}
+            title="时序预算：18.095 ns 数据路径 + 1.572 ns 余量（约束 20 ns）"
+            caption={
+              <>
+                时钟约束 <code>create_clock -name clk -period 20.000</code>（50 MHz）。
+                最差路径是 <code>u_puzzle|chk_slot[0] → chk_hit</code>，数据路径 18.095 ns，
+                余量 <strong>+1.572 ns</strong>、End Point TNS 0.000、<strong>0 条违例</strong>；
+                hold 余量 +1.078 ns、最小脉宽 +9.734 ns。Fmax 54.27 MHz。
+                <br />
+                出处：<Src path="quartus/build_provenance.json" line={52}>build_provenance.json（sta 段）</Src>
+                {' · '}
+                <Src path="docs/05-资源利用与编译报告.md" />。
+              </>
+            }
+          />
         </div>
       </div>
 
-      {/* ---------------- 三项离线检查 ---------------- */}
+      {/* ---------------- 断言分布 + 演进 ---------------- */}
+      <div className="grid12" style={{ marginTop: 'var(--s6)' }}>
+        <div className="col-7">
+          <BarChart
+            title={`仿真覆盖：12 个模块/场景，${SIM_TOTAL_ASSERTIONS} 条断言全过`}
+            data={ASSERTION_BARS}
+            unit=" 条"
+            right={
+              <Tag accent>
+                {SIM_TOTAL_ASSERTIONS} / {SIM_TOTAL_ASSERTIONS}
+              </Tag>
+            }
+            caption={
+              <>
+                测试台是 Python 写的（<code>sim/tb_*.py</code>），驱动 Quartus II 的<strong>内置</strong>仿真器：
+                在 <code>.tmp/</code> 里建隔离工程，跑功能网表，再把波形回写进 <code>.vwf</code>，与独立参考模型逐点比对。
+                每一轮的机读结论在 <Src path="sim/rounds/" /> 的 <code>rNN.json</code>。
+                <strong>{SIM_TOTAL_ASSERTIONS} = 这 12 行逐项相加</strong>
+                （整机两种场景各 28 条，按"整机算一个模块"只计一次）。
+              </>
+            }
+          />
+        </div>
+        <div className="col-5">
+          <EvolutionChart
+            points={RESOURCE_EVOLUTION}
+            title="资源与时序的演进（历史读数 → 当前）"
+            caption={
+              <>
+                <strong>注意：这张图是演进对照，不是当前值。</strong>
+                每个点都能在 <Src path="docs/05-资源利用与编译报告.md" /> 里查到（行号见每点的悬停说明）。
+                想说明的是：面积是反复撞上限撞出来的 —— 中间 Fmax 掉到 36.68 MHz 又爬回 51.44，
+                LE 从 958 一路加到 1268 再回落到 1264。当前值：1264 / 1270 LE、54.27 MHz。
+              </>
+            }
+          />
+        </div>
+      </div>
+
+      {/* ---------------- 构建溯源（精简成键值行，不用表格） ---------------- */}
       <div className="grid12" style={{ marginTop: 'var(--s7)' }}>
-        <div className="col-12">
-          <h3 className="case__title">除了仿真，还有三项离线检查</h3>
+        <div className="col-6">
+          <div className="frame" style={{ height: '100%' }}>
+            <p className="figcap" style={{ marginTop: 0, marginBottom: 'var(--s3)' }}>
+              <b>构建溯源</b>（机读，入库）
+            </p>
+            <div className="rows">
+              {(
+                [
+                  ['编译时间', BUILD_PROVENANCE.timestamp],
+                  ['Quartus', BUILD_PROVENANCE.quartus],
+                  ['git HEAD', `${BUILD_PROVENANCE.gitHead}（编译时工作树有未提交改动，provenance 里如实记着）`],
+                  ['综合 LE（map）', `${BUILD_PROVENANCE.syntheticLe} logic cells（fitter 装箱后 1264）`],
+                  ['寄存器', BUILD_PROVENANCE.registers],
+                  ['时钟约束', BUILD_PROVENANCE.clockConstraint],
+                  ['I/O 延时', BUILD_PROVENANCE.ioDelay],
+                  [
+                    '固件',
+                    `puzzle.pof · ${BUILD_PROVENANCE.pofBytes.toLocaleString('en-US')} B · ${BUILD_PROVENANCE.pofMtime} · 已烧录并读回校验通过`,
+                  ],
+                ] as const
+              ).map(([k, v]) => (
+                <div className="spec__row" key={k} style={{ borderBottom: 'none' }}>
+                  <span className="spec__k">{k}</span>
+                  <span className="spec__v" style={{ fontSize: '0.86rem' }}>
+                    {v}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="figcap" style={{ marginTop: 'var(--s3)', wordBreak: 'break-all' }}>
+              POF sha256：<code>{BUILD_PROVENANCE.pofSha256}</code>
+              <br />
+              RTL 指纹：16 个源文件各带两种指纹（字节哈希 + <strong>逻辑指纹</strong>）——
+              后者对注释与行尾不敏感，所以"只改注释"不会被误判成功能变更。
+              <br />
+              来源：<Src path="quartus/build_provenance.json" />（由 <Src path="scripts/record_build.py" />{' '}
+              在编译后写入，属于入库交付物）。<code>.rpt</code> 一类编译产物被 <code>.gitignore</code>{' '}
+              挡掉、克隆后不存在，所以本站一律不链接它们。
+            </p>
+          </div>
         </div>
-        {EXTRA_CHECKS.map((c) => (
-          <div className="col-4" key={c.name}>
-            <div className="frame" style={{ height: '100%' }}>
-              <p className="figcap" style={{ marginTop: 0 }}>
-                <b>
-                  <Src path={c.path}>{c.name}</Src>
-                </b>
-              </p>
-              <p className="note" style={{ marginTop: 'var(--s2)' }}>
-                <b>运行结论：</b>
-                <RichText text={c.result} />
-              </p>
-              <p style={{ marginTop: 'var(--s3)', fontSize: '0.87rem', color: 'var(--ink-2)' }}><RichText text={c.what} /></p>
+        <div className="col-6">
+          <div className="frame" style={{ height: '100%' }}>
+            <p className="figcap" style={{ marginTop: 0, marginBottom: 'var(--s3)' }}>
+              <b>除了仿真，还有三项离线检查</b>
+            </p>
+            <div className="rows">
+              {EXTRA_CHECKS.map((c) => (
+                <div key={c.name} style={{ paddingBlock: 'var(--s3)' }}>
+                  <p className="figcap" style={{ marginTop: 0 }}>
+                    <b>
+                      <Src path={c.path}>{c.name}</Src>
+                    </b>
+                  </p>
+                  <p className="note" style={{ marginTop: 'var(--s2)' }}>
+                    运行结论：{c.result}
+                  </p>
+                  <p style={{ marginTop: 'var(--s2)', fontSize: '0.85rem', color: 'hsl(var(--muted-foreground))' }}><RichText text={c.what} /></p>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+        </div>
       </div>
 
       {/* ---------------- 图素材 ---------------- */}
-      <div className="grid12" style={{ marginTop: 'var(--s8)' }}>
-        <div className="col-12">
-          <h3 className="case__title">图素材：分清"Quartus 实测截图"与"脚本渲染的辅助波形"</h3>
-          <p className="note" style={{ marginTop: 'var(--s2)' }}>
-            这条区分来自 <Src path="docs/图/README.md" /> §0：
-            <strong>只有 Quartus 图形界面里的截图才算"实测仿真图"</strong>
-            （图里带着菜单栏、工程名、节点表与时间刻度，是软件本身渲染的，别人能核）；
-            脚本画出来的矢量波形<strong>不能当实测截图用</strong>，只能当逐点对照的辅助证据。
-            本站的图说严格照此标注。目前入库的实测截图只有 1 张，另外 11 张在清单里标着"待拍"——
-            这一点在下面的局限一节也如实列着。
-          </p>
-        </div>
-        <div className="col-12">
-          <div className="figgrid" style={{ marginTop: 'var(--s4)' }}>
-            <Figure
-              src={figure('gui-clk_gen.png')}
-              caption="Quartus GUI 实测仿真截图 · clk_gen 分频链"
-              source={
-                <>
-                  来源：<code>docs/图/GUI-clk_gen.png</code>（在 Quartus II 波形编辑器里打开{' '}
-                  <code>sim/clk_gen.vwf</code> 后截屏，标题栏已裁掉 —— 那条里含本机用户名）。
-                  图里能看到 Project Navigator 的工程名、节点名列表与时间刻度。
-                </>
-              }
-            />
-            <Figure
-              src={figure('sim-disp_format.svg')}
-              caption="脚本渲染的辅助波形（不是 Quartus 界面截图）"
-              source={
-                <>
-                  来源：<code>docs/图/SIM-disp_format.svg</code>，由 <code>scripts/sim.py</code>{' '}
-                  解析 <code>sim/disp_format.vwf</code> 后自己画的。
-                  <strong>不能当"实测仿真图"交</strong>，只能用于逐点比对 —— 本站按这个口径标注。
-                </>
-              }
-            />
-            <Figure
-              src={figure('sim-clk_gen.svg')}
-              caption="脚本渲染的辅助波形（不是 Quartus 界面截图）"
-              source={
-                <>
-                  来源：<code>docs/图/SIM-clk_gen.svg</code>。
-                  与上面那张 GUI 截图看的是同一份仿真，但渲染者不同 —— 这正好演示了为什么两者不能互换。
-                </>
-              }
-            />
-            <Figure
-              src={figure('sim-dot_matrix_scan.svg')}
-              caption="脚本渲染的辅助波形 · 点阵行扫描"
-              source={
-                <>
-                  来源：<code>docs/图/SIM-dot_matrix_scan.svg</code>。
-                  8 行 × 1 ms = 8 ms ⇒ 帧扫描 125 Hz、占空比 1/8。
-                </>
-              }
-            />
-          </div>
+      <div style={{ marginTop: 'var(--s8)' }}>
+        <h3 className="sec__title" style={{ fontSize: 'var(--fs-h3)' }}>
+          图素材：分清"Quartus 实测截图"与"脚本渲染的辅助波形"
+        </h3>
+        <p className="note" style={{ marginTop: 'var(--s2)', marginBottom: 'var(--s5)' }}>
+          这条区分来自 <Src path="docs/图/README.md" /> §0：
+          <strong>只有 Quartus 图形界面里的截图才算"实测仿真图"</strong>
+          （图里带着菜单栏、工程名、节点表与时间刻度，是软件本身渲染的，别人能核）；
+          脚本画出来的矢量波形<strong>不能当实测截图用</strong>，只能当逐点对照的辅助证据。
+          目前入库的实测截图只有 1 张（见上一节），另外 11 张在清单里标着"待拍"——
+          这一点在「工程取舍」的局限里也如实列着。
+        </p>
+        <div className="figgrid">
+          <Figure
+            src={figure('sim-disp_format.svg')}
+            caption="脚本渲染的辅助波形（不是 Quartus 界面截图）"
+            source={
+              <>
+                <code>docs/图/SIM-disp_format.svg</code>，由 <code>scripts/sim.py</code> 解析{' '}
+                <code>sim/disp_format.vwf</code> 后自己画的。只能用于逐点比对 —— 本站按这个口径标注。
+              </>
+            }
+          />
+          <Figure
+            src={figure('sim-dot_matrix_scan.svg')}
+            caption="脚本渲染的辅助波形 · 点阵行扫描"
+            source={
+              <>
+                <code>docs/图/SIM-dot_matrix_scan.svg</code>。8 行 × 1 ms = 8 ms ⇒ 帧扫描 125 Hz、占空比 1/8
+                （推导见「节拍链」场景）。
+              </>
+            }
+          />
+          <Figure
+            src={figure('sim-keypad_scan.svg')}
+            caption="脚本渲染的辅助波形 · 键盘四相扫描与消抖"
+            source={
+              <>
+                <code>docs/图/SIM-keypad_scan.svg</code>。一轮扫描 = 2 个 t_200 = 10 ms；
+                4 轮消抖 = 40 ms（见「一次按键」场景）。
+              </>
+            }
+          />
+          <Figure
+            src={figure('sim-seg_scan.svg')}
+            caption="脚本渲染的辅助波形 · 数码管位选"
+            source={
+              <>
+                <code>docs/图/SIM-seg_scan.svg</code>。8 位轮一遍 = 8 ms ⇒ 每位 125 Hz。
+              </>
+            }
+          />
         </div>
       </div>
+
+      <p className="note" style={{ marginTop: 'var(--s6)' }}>
+        完整报告入口：
+        <a href={blob('docs/05-资源利用与编译报告.md')} target="_blank" rel="noreferrer noopener">
+          docs/05 · 资源利用与编译报告
+        </a>
+        {' · '}
+        <a href={blob('docs/03-仿真验证方案.md')} target="_blank" rel="noreferrer noopener">
+          docs/03 · 仿真验证方案
+        </a>
+        {' · '}
+        <a href={blob('quartus/build_provenance.json')} target="_blank" rel="noreferrer noopener">
+          quartus/build_provenance.json
+        </a>
+      </p>
     </Section>
   );
 }

@@ -1,67 +1,51 @@
 /**
  * Hero.tsx —— 首屏
  *
- * 首屏要回答四个问题（30 秒内）：这是什么、跑在什么硬件上、解决了什么任务、
- * 源码与文档在哪。
- *
- * 右侧那张点阵**不是装饰画**：它是规则模型在"复位后第一局"跑出来的真实散落帧
- * （`PIECE_ORI_INIT` = 1/1/2，见下方图注）。用真图而不是示意图，
- * 是因为本站的纪律是"不把合成图伪装成实验结果"—— 反过来也成立：能拿真数据就不用画的。
+ * 30 秒内回答四个问题：这是什么、跑在什么硬件上、解决了什么任务、源码与文档在哪。
+ * 右侧是**演示 GIF**（规则模型跑出来的一局，标注清楚不是板子实录）——
+ * 用户明确要"贴一副演示图上去"，比让人在网页上自己点更直观，也少一大堆控件。
  */
 
-import { createInitialState, frame, reducer, type GameState } from '../engine/engine';
-import { DotMatrix } from '../components/DotMatrix';
-import { RichText, Src, Tag } from '../components/ui';
-import { PROJECT, REPO, blob } from '../data/facts';
-import { LEVELS } from '../engine/geometry';
-
-/** 复位后第一局的散落帧：LFSR 种子固定，所以这一帧**是可复现的**。 */
-function heroFrame(): GameState {
-  let s: GameState = { ...createInitialState(), phase: 'idle' };
-  s = reducer(s, { type: 'press', key: 'start' });
-  for (let i = 0; i < LEVELS[0].previewSeconds * 4; i += 1) s = reducer(s, { type: 'tick' });
-  return s;
-}
+import { Src, Tag } from '../components/ui';
+import { PROJECT, REPO, SITE_URL, blob, figure } from '../data/facts';
 
 const HERO_SPEC: readonly { readonly k: string; readonly v: string }[] = [
-  { k: '器件', v: PROJECT.device },
-  { k: '资源', v: '1264 / 1270 LE · LAB 127 / 127（已满）' },
-  { k: '时序', v: 'Fmax 54.27 MHz · setup +1.572 ns · 0 违例' },
-  { k: 'RTL', v: 'VHDL-93 · 12 个设计模块 + 1 个包 · 纯 RTL（无 CPU / 无 IP 核）' },
+  { k: '器件', v: 'MAX II EPM1270T144C5（1270 LE / 127 LAB / 144 脚 TQFP）' },
+  { k: '资源', v: '1264 / 1270 LE · LAB 127 / 127（已满，真正的瓶颈）' },
+  { k: '时序', v: 'Fmax 54.27 MHz · setup +1.572 ns · hold +1.078 ns · 0 条违例' },
+  { k: 'RTL', v: 'VHDL-93 · 12 个设计模块 + 1 个包 · 纯 RTL（无 CPU、无 IP 核、无软核）' },
   { k: '输入', v: '4×4 矩阵键盘（8 个功能键，右下 3×3 标准十字）' },
-  { k: '显示', v: '8×8 双色点阵（灭 / 红 / 绿 / 黄）+ 8 位数码管' },
-  { k: '音频', v: '蜂鸣器方波 · 8 音高 · 16 步乐句（三关各一首背景曲）' },
-  { k: '验证', v: '12 个模块/场景 · 179 条仿真断言全过 · 已上板复测通过' },
+  { k: '显示', v: '8×8 双色点阵（灭 / 红 / 绿 / 黄）+ 8 位数码管 + 蜂鸣器' },
+  { k: '验证', v: '12 个模块/场景 · 179 条仿真断言全过 · 固件已烧录并读回校验 · 已上板复测' },
 ];
 
 export function Hero(): JSX.Element {
-  const s = heroFrame();
-  const f = frame(s);
-
   return (
     <header className="hero" id="top">
       <div className="shell">
         <div className="hero__grid">
           <div>
-            <p className="hero__eyebrow">
+            <p className="hero__eyebrow fade">
               <span>FPGA / CPLD 课程设计</span>
               <span>{PROJECT.course}</span>
               <span>tortrixx/dld</span>
             </p>
 
-            <h1 className="hero__title">
+            <h1 className="hero__title fade" style={{ ['--i' as string]: 1 } as React.CSSProperties}>
               {PROJECT.title}
               <em>{PROJECT.subtitle}</em>
             </h1>
 
-            <p className="hero__lede">{PROJECT.oneLiner}</p>
+            <p className="hero__lede fade" style={{ ['--i' as string]: 2 } as React.CSSProperties}>
+              {PROJECT.oneLiner}
+            </p>
 
-            <div className="hero__cta">
+            <div className="hero__cta fade" style={{ ['--i' as string]: 3 } as React.CSSProperties}>
               <a className="btn" href={REPO} target="_blank" rel="noreferrer noopener">
                 源码仓库 GitHub →
               </a>
-              <a className="btn btn--ghost" href="#sim">
-                直接玩点阵模拟器
+              <a className="btn btn--ghost" href="#flow">
+                看数据怎么流
               </a>
               <a className="btn btn--ghost" href={blob('docs/03-仿真验证方案.md')} target="_blank" rel="noreferrer noopener">
                 仿真验证方案
@@ -71,72 +55,68 @@ export function Hero(): JSX.Element {
               </a>
             </div>
 
-            <div style={{ marginTop: 'var(--s6)', display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap' }}>
+            <div
+              className="fade"
+              style={{ marginTop: 'var(--s6)', display: 'flex', gap: 'var(--s2)', flexWrap: 'wrap', ['--i' as string]: 4 } as React.CSSProperties}
+            >
               <Tag accent>纯 RTL · 无 CPU</Tag>
               <Tag>VHDL-93</Tag>
               <Tag>Quartus II 9.1</Tag>
-              <Tag>MAX II EPM1270T144C5</Tag>
               <Tag>179 条断言全过</Tag>
+              <Tag>已上板复测</Tag>
             </div>
 
-            {/* 硬件与实测规格：放在左栏而不是右栏，是为了让两栏高度接近 ——
-                首版把这张表放在右侧，左栏下面留了一大片空白（版式上很难看）。 */}
-            <table className="spec" style={{ marginTop: 'var(--s7)' }}>
-              <caption className="sr">项目硬件与实测规格</caption>
-              <tbody>
-                {HERO_SPEC.map((row) => (
-                  <tr className="spec__row" key={row.k}>
-                    <th className="spec__k" scope="row">
-                      {row.k}
-                    </th>
-                    <td className="spec__v"><RichText text={row.v} /></td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <p className="note" style={{ marginTop: 'var(--s4)' }}>
-              上面每个数字都指得到仓库里一个<strong>已入库</strong>的文件：
-              资源与时序的真值源是 <Src path="quartus/build_provenance.json" /> 与{' '}
-              <Src path="docs/05-资源利用与编译报告.md" />；断言的分布见{' '}
-              <Src path="docs/03-仿真验证方案.md" />。本站不复述没有出处的数字。
-            </p>
+            <div className="spec fade" style={{ ['--i' as string]: 5 } as React.CSSProperties}>
+              {HERO_SPEC.map((row) => (
+                <div className="spec__row" key={row.k}>
+                  <span className="spec__k">{row.k}</span>
+                  <span className="spec__v">{row.v}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div>
+          <div className="fade" style={{ ['--i' as string]: 2 } as React.CSSProperties}>
             <div className="panel">
               <div className="panel__label">
                 <span>
-                  <b>第 1 关散落帧</b> · 规则模型实跑
+                  <b>跑一局</b> · 规则模型自动演示
                 </span>
-                <span>复位后第一局 · 可复现</span>
+                <span>非板子实录</span>
               </div>
-              <DotMatrix
-                cells={f.cells}
-                hintActive={false}
-                disabled
-                label="第 1 关散落后的点阵画面（未锁定的零片为红色）"
+              <img
+                className="demo__gif"
+                src={figure('demo-playthrough.gif')}
+                alt="规则模型自动走完第一关的动画：自检 → 待机 → 预览目标图案 → 零片散落 → 旋转与移动 → 确认锁定 → 过关"
+                width={640}
+                height={420}
               />
-              <p className="figcap" style={{ color: 'var(--panel-ink-2)' }}>
-                <b style={{ color: 'var(--panel-ink)' }}>图 00 · 第 1 关散落帧</b>
+              <p className="figcap">
+                这是<strong>规则模型按 RTL 的规则自动走完的一局</strong>（自检 → 待机 → 预览 →
+                散落 → 旋转/移动/确认 → 过关），每一帧都由站点同一份引擎算出。
+                <strong>它不是开发板的录屏</strong>：网页不驱动硬件，板上的时序与音效这里没有复现。
                 <br />
-                三块零片（1×3 横条 3 格 / 3-2-1 阶梯 6 格 / L 形 3 格，共 12 格），
-                初始朝向 <b style={{ color: 'var(--panel-ink)' }}>1 / 1 / 2</b>
-                （<code style={{ color: 'var(--led-yellow)' }}>PIECE_ORI_INIT</code> 的前三位）。
-                正因为这个初始朝向，<b style={{ color: 'var(--panel-ink)' }}>不旋转就拼不出来</b>
-                —— 该性质由 <Src path="scripts/check_geometry.py" /> 穷举证明，
-                并在本站的单元测试里复算。
+                规格：640 × 420 · 48 帧 · 14.1 s · 1.53 MiB · 循环播放。
+                生成方式见 <Src path="site/scripts/gen-demo-frames.ts">gen-demo-frames.ts</Src> 与{' '}
+                <Src path="site/scripts/render-demo-gif.py">render-demo-gif.py</Src>
+                （后者是本站唯一需要 Pillow 的脚本，产物已入库，构建站点时<strong>不必</strong>重跑）。
               </p>
             </div>
 
-            <div className="note" style={{ marginTop: 'var(--s5)' }}>
-              <p>
-                <strong>这一帧是真的跑出来的</strong>，不是画出来的示意图：
-                它与页面里那个可操作模拟器共用同一份规则模型
-                （<code>site/src/engine/</code>），而模型的几何与判定又逐条对应{' '}
-                <Src path="rtl/puzzle_ctrl.vhd" />、<Src path="rtl/puzzle_pkg.vhd" />。
-                复位后 LFSR 种子固定为 <code>0x5A</code>，所以这一局是<strong>可复现</strong>的。
-              </p>
+            <div className="caveat caveat--ok" role="note" style={{ marginTop: 'var(--s5)' }}>
+              <span className="caveat__mark" aria-hidden="true">
+                ✓
+              </span>
+              <div className="caveat__body">
+                <b>本站是工程展示，不是可玩游戏</b>，也不驱动任何 FPGA 硬件。
+                想看每一拍到底发生了什么，去下一节的<strong>时序播放器</strong>；
+                想核对数据，去「数据与证据」一节 —— 每个数字都带出处。
+                <br />
+                线上地址：
+                <a href={SITE_URL} target="_blank" rel="noreferrer noopener">
+                  {SITE_URL}
+                </a>
+              </div>
             </div>
           </div>
         </div>

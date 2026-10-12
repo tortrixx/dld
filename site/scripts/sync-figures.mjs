@@ -28,6 +28,9 @@ const dstDir = join(siteRoot, 'public', 'figures');
 const FIGURES = {
   // Quartus GUI 实测仿真截图（12 张清单里的第 1 张；其余见 docs/图/README.md §2）
   'gui-clk_gen.png': 'GUI-clk_gen.png',
+  // 规则模型自动走完一局的演示动画（由 site/scripts/gen-demo-frames.ts +
+  // render-demo-gif.py 生成，产物入库到 docs/图/，与其它素材同源管理）
+  'demo-playthrough.gif': '演示-跑一局.gif',
   // 脚本渲染的辅助波形（不是 Quartus 界面截图 —— 图说里必须如实标注）
   'sim-clk_gen.svg': 'SIM-clk_gen.svg',
   'sim-disp_format.svg': 'SIM-disp_format.svg',

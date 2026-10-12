@@ -4,6 +4,8 @@
 与硬件工程**完全隔离**：这里只是 `rtl/` / `sim/` / `quartus/` 的**读者**，
 不参与、也不影响编译、仿真与烧录。
 
+线上地址：<https://tortrixx.github.io/dld/>
+
 ---
 
 ## 1. 本地运行
@@ -15,73 +17,71 @@ npm run dev        # http://localhost:5173/dld/
 npm run test       # 规则模型的单元测试（45 条）
 npm run build      # 产物在 site/dist/
 npm run preview    # http://localhost:4173/dld/
+npm run check      # 类型 + 测试 + 事实对账 + 构建（提交前跑这个）
 ```
 
 > ⚠️ **dev / preview / build 三个命令都挂在 `/dld/` 子路径下**，这不是笔误。
-> 早先 `vite.config.ts` 写成"只有 build 用 `/dld/`、dev 用 `/`"，
-> 结果 `vite preview` 走到 `command === 'serve'` 分支拿到 `base = '/'`：
-> 它一边吐出一个引用 `/dld/assets/...` 的 `index.html`、一边在 `/` 下找文件，
-> **构建产物的 JS/CSS 全部 404、页面白屏**。
+> 早先写成"只有 build 用 `/dld/`、dev 用 `/`"，结果 `vite preview` 走
+> `command === 'serve'` 分支拿到 `base = '/'`：它一边吐出一个引用 `/dld/assets/...`
+> 的 `index.html`、一边在 `/` 下找文件，**构建产物的 JS/CSS 全部 404、页面白屏**。
 > 现在三个命令共用同一个 base，好处不止是修 bug —— 本地开发走的就是线上那条子路径，
 > 这类"子路径 404"从此在开发阶段就会暴露。
 
 ## 2. 部署到 GitHub Pages
 
-仓库用的是**项目级** Pages，所以线上地址是 `https://tortrixx.github.io/dld/`，
-`base` 默认就是 `/dld/`。
+仓库用的是**项目级** Pages，所以线上地址是 `https://tortrixx.github.io/dld/`，`base` 默认就是 `/dld/`。
 
 1. 仓库 `Settings → Pages → Source` 选 **GitHub Actions**；
 2. 推送到 `main` 后 `.github/workflows/pages.yml` 自动构建并发布 `site/`；
-3. 换成**用户级** Pages 或改仓库名时**不用改代码**：
-   workflow 里通过 `VITE_BASE` 环境变量传 `base`，本地也可以
-   `VITE_BASE=/ npm run build` 覆盖。
+3. 换成**用户级** Pages 或改仓库名时**不用改代码**：workflow 里通过 `VITE_BASE` 传 base，
+   本地也可以 `VITE_BASE=/ npm run build` 覆盖。
 
-> **当前状态：已上线并通过线上实测（2026-10-12）。** 线上地址 <https://tortrixx.github.io/dld/>
->
-> * workflow 每一步（安装依赖 → 单元测试 → **事实对账** → 构建 → 上传 → 发布）全部 `success`；
-> * `index.html` 的标题与资源路径均为 `/dld/` 前缀，CSS / JS / 图素材逐个抓到 200 且内容类型正确；
-> * **用 `scripts/browser-check.mjs` 对线上地址跑过一遍完整检查** ——
->   交互全部生效、无控制台报错、无横向溢出、锚点全命中、对比度达标；
-> * 线上的 JS/CSS 文件名哈希与本地验证过的构建**逐字节同源**，
->   即"线上跑的就是测过的那一版"。
+> **当前状态：已上线并通过线上实测（2026-10-12）。**
+> workflow 每一步（安装依赖 → 单元测试 → **事实对账** → 构建 → 上传 → 发布）全部 `success`；
+> `index.html` 的标题与资源路径均为 `/dld/` 前缀，CSS / JS / 图素材逐个抓到 200；
+> **用 `scripts/browser-check.mjs` 对线上地址跑过完整检查**（字体已加载、GIF 已解码、
+> 主题/播放器/图表/切换器都实测生效、无控制台报错、无横向溢出、对比度达标）；
+> 线上 JS/CSS 的文件名哈希与本地验证过的构建**逐字节同源**。
 
 ## 3. 目录结构
 
 ```
 site/
-  index.html              入口（唯一一个 HTML）
+  index.html              入口（唯一一个 HTML；含"首帧前定主题"的内联脚本，防深色下白屏闪烁）
   vite.config.ts          base / 构建 / 测试配置（base 的口径见 §1 的警告）
   scripts/
-    sync-figures.mjs      每次 dev/build 前把 docs/图/ 里**已入库**的真实图同步进 public/figures/
-    browser-check.mjs     用无头 Chrome 打开页面做检查与截图（零依赖，见 §5）
+    sync-figures.mjs            dev/build 前把 docs/图/ 里**已入库**的真实图同步进 public/figures/
+    browser-check.mjs           零依赖的真实浏览器检查 + 截图（见 §5）
+    verify-facts.mjs            网页上的数字 ↔ 仓库真值源 机械对账（见 §6）
+    gen-architecture-drawio.mjs 生成可编辑的 docs/图/dld-架构.drawio（见 §7）
+    gen-demo-frames.ts          用规则模型模拟一局、导出帧数据（vite-node 跑）
+    render-demo-gif.py          把帧数据画成演示 GIF（唯一需要 Pillow 的脚本）
   src/
-    main.tsx / App.tsx    入口与页面骨架
-    engine/
-      geometry.ts         几何真值表（形状/图案/胜负画面/关卡/键位）
-      engine.ts           规则模型（纯函数 + reducer）
-      engine.test.ts      45 条单元测试
-    state/useGame.ts      把规则模型接到 React（250 ms 心跳、SW7 开关、键盘）
-    components/           点阵 / 数码管 / 键盘 / 框图 / 共用结构件
-    sections/             首屏 / 模拟器 / 架构 / 证据 / 工程取舍 / 文档导航 / 页脚
-    data/facts.ts         全部事实、数字、案例与链接的**唯一真值源**
+    main.tsx / App.tsx    入口与页面骨架（含背景虚线网格）
+    engine/               规则模型：geometry.ts（几何真值表）+ engine.ts（状态机与渲染）+ 45 条测试
+    components/           DotMatrix / SegDisplay / Keypad / charts / DataFlow / ModuleMap /
+                          BlockDiagram / ThemeToggle / ui
+    sections/             Hero / Demo / Flow / Architecture / Evidence / Tradeoffs / DocsNav / Footer
+    data/                 facts.ts（全部事实、数字、案例、链接的**唯一真值源**）+ timeline.ts（时序场景）
     styles/               tokens.css（设计变量）+ app.css（版式与全部组件）
   public/figures/         构建时同步进来的图（**不入库**，见 site/.gitignore）
 ```
 
-## 4. 为什么图不入库，而是每次构建前同步
+## 4. 字体：为什么自持 latin、中文走系统栈
 
-`docs/图/` 是图素材的**唯一真值源**，清单所有者是 `docs/图/README.md`。
-如果把图复制进 `site/public/` 并入库，同一张图就有两份，早晚会不同步
-（这个项目最忌讳的一类错误就是"同一个读数/素材有两份真值源"）。
-所以 `scripts/sync-figures.mjs` 在 `predev` / `prebuild` 自动跑一次，
-副本放在被 gitignore 的 `public/figures/` 里。
+| 用途 | 选择 | 理由 |
+|---|---|---|
+| 西文 / 数字 | **Inter Variable**（自持，latin woff2 48 KB） | 业界产品 UI 的事实标准（Linear / Figma / Notion 一类都在用），字重轴 100–900，数字是等宽表格数字 |
+| 等宽 / 标识符 | **JetBrains Mono Variable**（自持，latin woff2 40 KB） | JetBrains 出品、为读代码而设计；`0/O`、`1/l/I` 可分辨 —— 这个站满屏 `t_1k`、`o_rowr`、`L1_TARGET_MASK`，这条很实用 |
+| 中文 | **系统栈**：Noto Sans SC → PingFang SC → Hiragino Sans GB → Microsoft YaHei | CJK 网络字体的代价在另一个量级（`@fontsource/noto-sans-sc` 解包 **71.2 MB**），而系统里的中文字体质量已经很好。参照项目 `tortrixx/slides` 也是这个口径：Noto CJK 只用在 **PDF 渲染**（无下载成本），它的**网页**同样走系统字体栈 |
 
-图源缺失时页面会显示"素材缺失"占位而不是留白，日志里也会警告 ——
-免得"图挂了"被当成"图没问题"。
+刻意不做的事：不加 Google Fonts / 任何外部 CDN（国内网络下经常不可达，而"字体挂了"
+表现为静默回落到默认字体 —— 版式全变但没人会报错）。`browser-check.mjs` 里有一条
+`document.fonts.check(...)` 断言，**字体没加载进会直接红**。
 
 ## 5. `browser-check.mjs`：真实浏览器检查
 
-静态检查看不出布局溢出、对比度、焦点态、闪烁相位与控制台报错，
+静态检查看不出布局溢出、对比度、字体有没有真的加载、GIF 有没有 404、播放器点了动没动。
 所以这个脚本用 CDP（Chrome DevTools Protocol）直接驱动无头 Chrome/Edge：
 
 ```powershell
@@ -90,26 +90,30 @@ npm run preview -- --port 4195        # 另一个终端
 node scripts/browser-check.mjs http://localhost:4195/dld/
 ```
 
-它**零依赖**（靠 Node 22+ 内置的全局 `WebSocket` 直接说 CDP，不装 puppeteer/playwright），
-并且真的会失败退出（非 0）当出现下面任何一项时：
+**零依赖**（靠 Node 22+ 内置的全局 `WebSocket` 直接说 CDP，不装 puppeteer/playwright），
+并且任一条不满足就非 0 退出：
 
-* 控制台报错 / 未捕获异常；
-* React 没挂载、`h1` 缺失；
-* 实测交互失效：自检后没进待机、待机点阵没全灭、按【开始】没进预览、预览 5 s 后没进对局、
-  对局点亮格数 ≠ 12、点一下零片没被选中、按【旋转】没生效、按方向键没生效、
-  三块直接确认没判负、失败时数码管不是 `FAIL`；
-* SW7 关掉后点阵/数码管没有全部熄灭；
-* 390px / 320px 出现横向溢出，或有触控目标小于 44px；
-* 页内锚点指向不存在的元素、出现无法分类的链接；
-* 正文对比度低于 4.5:1（沿祖先链取**真实背景色**再算，不是拿 body 的颜色糊一遍）。
+* 控制台报错 / 未捕获异常 / React 未挂载 / 缺少 `h1`；
+* **字体真的加载**（`document.fonts.check`）；
+* **演示 GIF 真的解码**（`naturalWidth > 0`）—— 防 404 静默失败；
+* **主题切换**：属性真的变、真的写 localStorage、**浅色与深色各量一遍对比度**；
+* **时序播放器**：场景切换、播放推进、仪表点阵真的亮；
+* **模块地图 / 案例切换器**：点一下详情真的换；
+* 图表画出来了（条形 / 折线 / 利用率行数）；
+* 390 / 320px 无横向溢出；可点元素不小于 32px；
+* 页内锚点全部命中；不出现无法分类的外链；
+* 正文对比度 ≥4.5:1（**浅色与深色分别测**）；正文没有裸露的 Markdown 记号。
 
-截图输出到 `site/.shots/`（已 gitignore）。
+截图输出到 `site/.shots/`（已 gitignore）。这个脚本抓出过 8 个真 bug，记在这里给后来人：
 
-> 这个脚本抓出来过 4 个真 bug，记在这里给后来人：
-> ① 指针捕获把 `pointerup` 重定向到容器，导致**点零片完全没反应**；
-> ② 12 栅格在窄屏没有塌成单栏（390px 下两栏卡片只有约 126px 宽）；
-> ③ `.tag` 上的 `white-space: nowrap` 被长文案撑出 358px，把整页顶宽；
-> ④ 对比度抽样第一版拿 `body` 的背景去量深色面板里的小字，报了**假阳性**。
+1. 指针捕获把 `pointerup` 重定向到容器 ⇒ **点零片完全没反应**；
+2. 12 栅格在窄屏没塌成单栏（390px 下两栏卡片只有约 126px 宽）；
+3. `.tag` 上的 `white-space: nowrap` 被长文案撑出 358px，把整页顶宽；
+4. 对比度抽样拿 `body` 的背景去量深色面板里的小字 ⇒ **假阳性**；
+5. 页面开了 `scroll-behavior: smooth`，`scrollIntoView` 还在动画中就去取坐标 ⇒ **点击丢失**（播放器/模块卡/案例都点不动）；
+6. `--muted`（**背景**令牌）被当成文字色用 ⇒ 次级文字几乎不可见（1.04:1）；
+7. 对比度的"有效背景"没走到 `<html>` ⇒ 深色主题下报一堆假不合格（背景设在 html 上）；
+8. GIF 里数码管的"熄灭段"画得太亮 ⇒ 每一位都像 `8`，"其余全灭"这条信息被吃掉。
 
 ## 6. 内容维护约定
 
@@ -124,113 +128,95 @@ node scripts/browser-check.mjs http://localhost:4195/dld/
   npm run verify:facts
   ```
 
-  它会把**网页上写的数字**和**仓库里的机读真值源**机械地对一遍（当前 0 FAIL / 39 OK）：
-
-  | 对什么 | 拿谁当真值源 |
-  |---|---|
-  | LE / LAB / 引脚 / setup·hold slack / POF sha256 / 构建时间戳 / git HEAD | `quartus/build_provenance.json` |
-  | Fmax | `docs/05-资源利用与编译报告.md` |
-  | 每个模块的**最新轮次**与断言条数、断言合计 | `sim/rounds/<模块>/rNN.json` |
-  | 所有被引用的仓库路径是否存在、是否**已入库** | 工作区 + `git ls-files` |
-
-  第三项专治两类事故：网页上的数字悄悄过期（页面照样好看，没人会发现）、
-  以及链到了 `.gitignore` 挡掉的编译产物（克隆下来 404）。
-
+  它把**网页上写的数字**和**仓库里的机读真值源**机械地对一遍（当前 0 FAIL / 39 OK）：
+  LE/LAB/引脚/slack/POF sha256/时间戳 对 `quartus/build_provenance.json`；Fmax 对 `docs/05`；
+  各模块的**最新轮次**与断言数对 `sim/rounds/<模块>/rNN.json`；
+  被引用的路径是否存在、是否**已入库**（对 `git ls-files`，专治链到被 gitignore 挡掉的编译产物）。
+* 时序播放器的每一个刻度与信号名写在 `src/data/timeline.ts`，每条都带 `cite` 出处。
+  **改之前先回源码核**：这个文件里就抓到过一处流传很广的错说法 ——
+  "引擎 `i_tick` 接 `tick_200`、所以内容刷新 25/21 Hz"，而源码是
+  `u_puzzle.i_tick => t_1k`（`rtl/puzzle_top.vhd:520`），25/21 Hz 的真正来源是
+  "一行 `npc+2` 拍 × 8 行 = 40/48 拍"（`docs/02-模块详细设计.md:240`）。
 * 单元测试会把 `scripts/check_geometry.py` 的穷举结论**在浏览器模型里重算一遍**
   （PAT0/PAT1/PAT2 各 1 种铺法、PAT3 两种；保持初始朝向只许平移时全部无解），
-  所以几何一旦抄错，`npm test` 会当场失败。
+  几何一旦抄错，`npm test` 会当场失败。
 
-* 改了 `rtl/puzzle_pkg.vhd` 的几何常量，必须重新解码几何真值表：
+## 7. 演示 GIF 与 draw.io 图：怎么重新生成
 
-  ```powershell
-  # 在仓库根执行：把 64 位常量解码成"每行一个字节"的掩码（与 scripts/check_geometry.py 同口径）
-  python -c "import re,pathlib;s=pathlib.Path('rtl/puzzle_pkg.vhd').read_text(encoding='utf-8');f=lambda n:re.search(r'constant\s+'+n+r'\s*:\s*std_logic_vector\(63 downto 0\)\s*:=\s*\"([01]{64})\"',s,re.S).group(1);[print(n,[sum((int(f(n),2)>>(8*r+c))&1<<c for c in range(8)) for r in range(8)]) for n in ['L1_TARGET_MASK','L2_PAT0','L2_PAT1','L2_PAT2','L2_PAT3','WIN_MASK','FAIL_MASK']]"
-  ```
+```powershell
+# ① 演示 GIF（改了规则模型或想换演示内容时才需要）
+npm run gen:frames      # vite-node 跑规则模型、导出一局 48 帧到 .shots/demo-frames.json
+npm run gen:gif:render  # 画成 docs/图/演示-跑一局.gif（需要带 Pillow 的 Python）
+npm run gen:drawio      # 重新生成 docs/图/dld-架构.drawio
+```
 
----
+* `npm run gen:frames` 会**自动求解**这一局：精确覆盖搜索求出每块的
+  (锚点, 朝向)，再对每种处理顺序做单块 BFS（动作 = 上下左右 + 顺时针旋转，
+  约束 = 不越界 / 不压别的块），取按键最少的一版；每一步都经真实 `reducer` 重放
+  **并断言被受理**（被拒绝就抛错）。当前结果：16 次按键（含 **2 次旋转**）——
+  这是"不旋转就拼不出来"的正面证据。
+* `gen:gif:render` 是**本站唯一需要第三方 Python 包（Pillow）的脚本**。
+  仓库自身的 `scripts/*.py` 全是标准库。**只想构建/部署站点时不必跑它** ——
+  GIF 产物已入库（`docs/图/演示-跑一局.gif`）。
+* `docs/图/dld-架构.drawio` 是纯文本 XML，可直接在
+  <https://app.diagrams.net/> 或 VS Code 的 draw.io 插件里改。
+  **它由脚本生成**（改 RTL 之后改 `gen-architecture-drawio.mjs`、重跑一次即可，别手改）——
+  与 `quartus/puzzle.qsf` 由 `gen_project.py` 生成同一个道理。
 
-## 7. 设计方向（视觉系统与页面结构）
+## 8. 设计方向（视觉系统与页面结构）
 
 **关键词：Swiss Editorial × Digital Hardware × Engineering Notebook。**
-要同时体现瑞士国际主义的网格与排版纪律、数字硬件的精确与秩序、
-以及工程实验记录的真实感与可追溯性。
+视觉语言参照本仓库姊妹项目 `tortrixx/slides` 的站点：等宽优先、neutral 色阶、
+虚线网格底纹、两级分隔线、深浅双主题、克制的入场动效且全部可降级。
 
-### 7.1 三条设计原则（写样式前先读）
+### 8.1 三条设计原则
 
-1. **网格与排版优先于装饰。** 层级靠字号、字重、字距、留白和**细线**建立，
-   不用圆角卡片、阴影、渐变和发光边框。全站只有一种"卡片"（`.figure-cell` /
-   `.case__step` / `.navlist__item`），而且都是**直角 + 细线**的表格化块。
-2. **只有一支强调色。** `--acc`（信号红偏橙 `#c8370a`）只用在章节编号、强调线、
-   焦点态与关键数字上；硬件的红/绿/黄**只允许出现在点阵面板内部**，不参与页面配色。
-   点阵里的 4 种状态（灭/红/绿/黄）不是设计选择，是双色点阵的物理事实。
-3. **注释即图注。** 所有技术注释、单位、来源一律等宽字体 + 小字号 + 次级色，
-   并带可点的仓库路径 —— 这是"工程实验记录"的视觉语言，也让页面自带证据感。
+1. **网格与排版优先于装饰。** 层级靠字号、字重、字距、留白和**细线**建立，不用阴影和渐变背景。
+   全站只有一类"盒子"（1px 描边 + 4px 圆角）。
+2. **唯一强调色。** `--acc`（LED 信号红橙）只用在章节编号、强调线、焦点态、关键数字与数据流脉冲上。
+   硬件的红/绿/黄**只允许出现在点阵内部** —— 那不是设计选择，是双色点阵的物理事实。
+3. **等宽字体承担技术信息。** 标识符、数值、单位、图注、来源一律 mono；正文叙述用 sans。
+   这条沿用参照站的语言，也是"工程记录"的视觉语法。
 
-### 7.2 色彩 / 字体 / 间距
+### 8.2 色彩 / 字体 / 间距
 
 | 类别 | 取值 | 说明 |
 |---|---|---|
-| 纸白 | `#f4f1ea` / `#ebe7dd` / `#e2ddd0` | 暖灰纸底，像工程图纸而不是纯白屏 |
-| 墨黑 | `#131311` / `#474540` / `#5f5c55` | 三级文字；`--ink-3` 特意压深到 5.9:1，保证 11px 等宽小字也过 AA |
-| 强调 | `#c8370a` / `#8f2706` / `#f2e0d6` | 唯一强调色 + 深色变体 + 极浅底（只用于声明块） |
-| 仪器面 | `#121214` / `#1b1b1f` / `#33333a` | 点阵、数码管、键盘、页脚所在的深色面 |
+| 色阶 | shadcn neutral（HSL 三元组） | 浅色 `0 0% 100%` / `0 0% 3.9%`；深色 `0 0% 3.9%` / `0 0% 98%` |
+| 文字 | `--foreground` / `--muted-foreground` | 深色 66%（9.5:1）、浅色 42%（5.4:1）；**两套主题都过 AA**（实测最低 5.24 / 6.65） |
+| 强调 | `#c8370a`（浅）/ `#ff6a45`（深） | 唯一强调色，按背景提亮以保对比度 |
 | LED | `#ff3b20` / `#17d96a` / `#ffbe0b` | 只出现在点阵内部 |
-| 字体 | 系统 sans 栈（含 Noto Sans SC / PingFang SC / 微软雅黑）+ 系统等宽栈 | **不加载任何外部字体**：性能与离线可用性优先，瑞士风格靠排版纪律而不是字体文件 |
-| 字号 | `clamp()` 流体阶：display 2.1→4.6rem、h2 1.35→2rem、正文 0.95→1.02rem、注释 0.8125rem、等宽 0.75rem | 320px 不溢出、1440px 不空旷 |
-| 间距 | 8px 基准的 10 级（4/8/12/16/24/32/48/64/96/128） | 章节之间用 96px，块之间 24–32px |
-| 版心 | 1320px，栅格 12 列（`minmax(0,1fr)`），栏宽工具类 `.col-*` | 窄屏塌成单栏（≤700px） |
+| 网格底纹 | 24px 虚线，`fixed` + 中心径向遮罩 | 背景设在 `html` 上（Safari 会提升 `body` 背景、深色下露底） |
+| 线 | 区块边界 2px、条目分隔 1px 两端渐隐 | 两条线"重量"不同，层级才分得出来 |
+| 字体 | Inter Variable + JetBrains Mono Variable + 系统中文栈 | 见 §4 |
+| 间距 | 4px 基准 9 级 | 章节间 96px、块间 24–32px |
+| 版心 | 1240px / 12 列 / 窄屏塌单栏 | |
 
-### 7.3 章节与阅读顺序
+### 8.3 章节与阅读顺序
 
 | # | 章节 | 为什么排在这里 |
 |---|---|---|
-| — | 报头（52px 固定） | 只放项目标识与 5 个章节锚点；不遮挡内容 |
-| 00 | 首屏 Hero | 30 秒内回答：这是什么、跑在什么硬件上、解决什么任务、源码与文档在哪 |
-| 01/02 | **可操作的 8×8 点阵模拟器** | 全站最重要的交互；紧跟首屏，因为"能玩"比"能读"更快建立可信度 |
-| 03 | 系统架构 | 玩过之后再看结构，读者已经有具体问题（谁管时间、谁管空间） |
-| 04 | 实验结果与工程证据 | 用真实读数回答"做得好不好"，每个数字带单位与出处 |
-| 05 | 工程设计与关键权衡 | 体现技术深度：问题→约束→方案→验证→结果→局限 |
-| 06 | 文档与源码导航 + 局限清单 | 让人能继续深挖，也把限制说在前面 |
+| 00 | 首屏 | 30 秒内回答：这是什么、跑在什么硬件上、解决什么任务、源码与文档在哪；右侧直接放**演示 GIF** |
+| 01 | 玩法 | 把一局拆成四步讲清；键位用键盘图而不是表格 |
+| 02 | **时序播放器** | 本次改版的核心：四个场景可逐步播放，看数据流随时间传播、每拍在动哪个模块 |
+| 03 | 架构 | 带图（相邻层主干）+ **可点模块地图**（点一个只看它）+ 时钟拓扑 |
+| 04 | 数据与证据 | 全部改成**图表**：利用率 / 时序预算尺 / 逐模块断言条 / 演进折线 |
+| 05 | 工程取舍 | 左侧列 7 个案例、右侧只渲染选中的那一个，六步做成竖向 stepper |
+| 06 | 文档与源码 | 文档、源码、部署说明 |
 | — | 页脚 | 仓库入口、技术栈、完成状态；不含任何个人简介/奖项/背书 |
 
-### 7.4 点阵模拟器的交互设计
+### 8.4 时序播放器的设计取舍
 
-* **数据模型**：纯函数 + `reducer`（`src/engine/engine.ts`），状态机
-  `selftest → idle → preview → playing → win/fail`，与 RTL 的状态编码一一对应。
-* **时间轴**：单一 **250 ms 心跳**（= RTL 的 `tick_4hz`），由它派生 2 Hz 闪烁与
-  1 Hz 秒计数 —— 与板子上"一条 4 Hz 节拍派生出闪烁与秒计数"的结构一致。
-* **三种操作方式**：鼠标点选/拖动、触屏点选/滑动（阈值 18px，防手抖误移动）、
-  键盘快捷键（挂在面板自己的 `keydown` 上，不抢 Tab 与页面滚动）。
-* **反馈**：选中零片加内描边（不只靠颜色）+ 点阵下方状态行 + 事件日志；
-  被拒绝的操作明说原因（越界/重叠/已锁定）—— 并注明"硬件上被拒是**没有**提示音的"。
-* **SW7 开关**：关掉即"所有显示器件不显示"（B1），重新合上走一次上电自检。
+一开始想做一张"所有模块 + 所有连线"的大图，再把脉冲跑在连线上。但那张图必然有 20 条交叉线，
+**而且会说错话**：一张"每层一根竖箭头"的图天生只能表达相邻层关系，硬画就会把
+"`clk_gen` 把 `t_4hz` 送给 `buzzer_ctrl`"画成"送给 `game_fsm`"。
+所以改成**每个场景一条线性流水线**：没有交叉、窄屏自动换行、每步只高亮"这一拍真正在动的部分"；
+想看完整互联关系就用 `docs/图/dld-架构.drawio`（那里把跨层连线也画全了，因为它可以缩放拖拽）。
 
-### 7.5 真实实验数据怎么呈现
+### 8.5 关于设计类 Skill（如实交代）
 
-* 大数字条（`.figures`，4 列 × 2 行，不秃边）+ 细线利用率条（LE / LAB / 引脚 / UFM）；
-* 每张数据卡自带"来源：文件名:行号"并链到仓库里的**已入库**文件；
-* 图素材严格分两类并分别标注：`GUI-*.png` = Quartus 图形界面实测截图，
-  `SIM-*.svg` = 脚本渲染的辅助波形（**不能当实测截图**，只能逐点对照）；
-* 缺失的素材显示"素材缺失"占位，而不是留白；
-* 数字的过期由 `npm run verify:facts` 机械拦截。
-
-### 7.6 技术栈与依赖
-
-Vite 5 + React 18 + TypeScript 5（strict）+ Vitest 2。**运行时零第三方依赖**
-（只有 react / react-dom）：没有 UI 库、没有 CSS 框架、没有动画库、
-没有图标库、没有字体请求、没有分析脚本。全部图形（点阵、数码管、框图、
-套准记号）都是手写的 SVG / CSS。开发期依赖只有 vite / vitest / typescript /
-@vitejs/plugin-react / 类型声明。
-
-### 7.7 关于设计类 Skill 的说明（如实交代）
-
-任务里点名的三个 Skill —— **`frontend-design`、`design-review`、`product-showcase`
-在本 DSH 会话里都不存在**。本会话实际可加载的 Skill 只有
-`diagnose-windows-sandbox-acl` 与 `office-docx / office-pptx / office-xlsx`，
-都与前端设计无关。
-
-因此：**本站没有"加载过"任何设计 Skill，也不声称调用过**。
-设计方向是照任务书给出的关键词（Swiss International Typographic Design、
-Dieter Rams 式功能主义、product-showcase 的叙事章节）**自行制定**的，
-并把三条设计原则、配色/字体/间距系统、章节顺序与交互设计写在上面
-（§7.1–7.6），以便任何人复核"设计是不是有立场的"而不是套模板。
+任务书点名的 `frontend-design`、`design-review`、`product-showcase` **在本 DSH 会话里都不存在**；
+本会话实际可加载的 Skill 只有 `diagnose-windows-sandbox-acl` 与 office 系列，都与前端设计无关。
+因此：**本站没有加载过任何设计 Skill，也不声称调用过**。设计方向是照任务书给的关键词
+自行制定的，并把原则、色阶、字体、间距与章节顺序写在本节，便于复核
+"设计是不是有立场的"，而不是套模板。
