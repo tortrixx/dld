@@ -10,7 +10,7 @@ import { Src, Tag } from '../components/ui';
 import { PROJECT, REPO, SITE_URL, blob, figure } from '../data/facts';
 
 const HERO_SPEC: readonly { readonly k: string; readonly v: string }[] = [
-  { k: '器件', v: 'MAX II EPM1270T144C5（1270 LE / 127 LAB / 144 脚 TQFP）' },
+  { k: '器件', v: 'MAX II EPM1270T144C5 (1270 LE / 127 LAB / 144 脚 TQFP)' },
   { k: '资源', v: '1264 / 1270 LE · LAB 127 / 127（已满，真正的瓶颈）' },
   { k: '时序', v: 'Fmax 54.27 MHz · setup +1.572 ns · hold +1.078 ns · 0 条违例' },
   { k: 'RTL', v: 'VHDL-93 · 12 个设计模块 + 1 个包 · 纯 RTL（无 CPU、无 IP 核、无软核）' },
@@ -96,7 +96,7 @@ export function Hero(): JSX.Element {
                 散落 → 旋转/移动/确认 → 过关），每一帧都由站点同一份引擎算出。
                 <strong>它不是开发板的录屏</strong>：网页不驱动硬件，板上的时序与音效这里没有复现。
                 <br />
-                规格：640 × 420 · 48 帧 · 14.1 s · 1.53 MiB · 循环播放。
+                规格：640 × 420 · 48 帧 · 14.1 s · 290 KiB · 循环播放（帧间差分，48 帧只占 290 KiB）。
                 生成方式见 <Src path="site/scripts/gen-demo-frames.ts">gen-demo-frames.ts</Src> 与{' '}
                 <Src path="site/scripts/render-demo-gif.py">render-demo-gif.py</Src>
                 （后者是本站唯一需要 Pillow 的脚本，产物已入库，构建站点时<strong>不必</strong>重跑）。

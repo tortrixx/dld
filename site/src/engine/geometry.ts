@@ -236,7 +236,8 @@ export interface KeyDef {
   readonly code: number;
   /** 游戏内功能。 */
   readonly fn: string;
-  /** 键盘快捷键（**这是网站的便利功能，真实硬件上没有**）。 */
+  /** 键盘快捷键：**当前站点没有实现**（交互模拟器已下线）。
+   *  保留字段是为了记录"板子上没有快捷键"这件事；`Demo.tsx` 不渲染它。 */
   readonly shortcut: string;
 }
 

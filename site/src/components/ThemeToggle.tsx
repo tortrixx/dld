@@ -22,9 +22,15 @@ function apply(theme: Theme): void {
 
 export function ThemeToggle(): JSX.Element {
   const [theme, setTheme] = useState<Theme>(() => {
-    if (typeof localStorage === 'undefined') return 'system';
-    const saved = localStorage.getItem(KEY);
-    return saved === 'light' || saved === 'dark' ? saved : 'system';
+    // ⚠️ 只判 `typeof localStorage` 不够：在"屏蔽所有站点数据"的浏览器里，
+    //    访问 window.localStorage **本身**就抛 SecurityError ⇒ 初始化器抛异常
+    //    ⇒ 报头里的这个组件会让**整页白屏**。所以整段包 try/catch。
+    try {
+      const saved = localStorage.getItem(KEY);
+      return saved === 'light' || saved === 'dark' ? saved : 'system';
+    } catch {
+      return 'system';
+    }
   });
 
   useEffect(() => {

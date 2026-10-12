@@ -229,7 +229,7 @@ export function BlockDiagram(): JSX.Element {
     >
       <defs>
         <marker id="bd-arrow" viewBox="0 0 8 8" refX="6.5" refY="4" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-          <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--ink-3)" />
+          <path d="M 0 0 L 8 4 L 0 8 z" style={{ fill: "hsl(var(--border-strong))" }} />
         </marker>
       </defs>
 
@@ -288,7 +288,7 @@ export function BlockDiagram(): JSX.Element {
       })}
 
       <text className="bd-foot" x={ROW.x} y={602}>
-        只画主干：顶层里没有读者的悬空调试网（kp_raw / release / t_100 / t_40 / piece_n / sel_idx / pos_dbg / lock_dbg / scanrow）与接 open 的 o_ori 均未画出。
+        只画主干：顶层里未画出的调试线（kp_raw / release / t_100 / t_40 / piece_n / sel_idx / pos_dbg / lock_dbg / scanrow）与接 open 的 o_ori 一并省略。
       </text>
     </svg>
   );

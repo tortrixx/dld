@@ -56,6 +56,8 @@
 
   /* ---- 硬件可用的四种 LED 状态（双色点阵的物理事实）---- */
   --led-off: #1d1d22;
+  /* 数码管熄灭段：与主题解耦（仪器两套主题都用深色外壳） */
+  --seg-off: #2a2a33;
   --led-red: #ff3b20;
   --led-green: #17d96a;
   --led-yellow: #ffbe0b;
@@ -158,7 +160,33 @@
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    /* ⚠️ 必须同时把 delay 归零：`.fade` 用了 `animation-fill-mode: both`，
+       只压 duration 的话，delay 期间仍会应用 from 帧（opacity:0 + blur(6px)）⇒
+       本该"取消出场动画"的降级变成"最多 0.56 s 的内容不可见"，比不动画更糟。 */
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
+    transition-delay: 0ms !important;
+  }
+  /* 平滑滚动也是"动效"，降级时一并关掉 */
+  html {
+    scroll-behavior: auto !important;
+  }
+  /* ⚠️ 告急幽灵靠"绿色闪烁"传达"≤10s 该拼哪几格"这条信息：
+     通用降级会把 animation 一压到底、动画结束后回落到 --led-off ⇒ **信息丢失**。
+     降级时改成常亮绿（静态但仍有信息）。 */
+  .matrix__cell--ghost {
+    animation: none !important;
+    background: var(--led-green);
+    opacity: 0.55;
+  }
+  /* 脉冲点在降级下会静止停在箭头左端、看着像坏了 ⇒ 直接隐藏，
+     改由"传输中"文字承担"这一拍在传什么"。 */
+  .pipe__pulse {
+    display: none !important;
+  }
+  .pipe__arrow--busy .pipe__arrow-label::after {
+    content: ' · 传输中';
+    color: var(--acc-ink);
   }
 }

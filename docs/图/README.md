@@ -227,3 +227,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\shoot_vwf.ps1 -Close
    git commit -m "docs(fig): 补 12 张 Quartus GUI 实测仿真波形截图"
    ```
    ⚠️ 图是二进制，`.gitattributes` 里已有 `*.png binary`，不会被行尾转换。
+
+---
+
+## 附录 A · 站点用的两个"非 Quartus"素材
+
+上面 §2 的 12 张 `GUI-*.png` 是**Quartus 界面实测截图**清单。展示站还用到两个不由 Quartus 产出的素材，
+它们的"清单所有者"也是本文件，所以在这里一并登记：
+
+| 文件 | 规格 | 怎么来的 | 性质 |
+|---|---|---|---|
+| `演示-跑一局.gif` | 640×420 · 48 帧 · 14.1 s · 290 KiB · 循环 | `site/scripts/gen-demo-frames.ts`（用站点规则模型自动求解并重放一局）→ `site/scripts/render-demo-gif.py`（Pillow 画图） | **规则模型渲染，不是板子实录** |
+| `dld-架构.drawio` | 纯文本 XML · 56 个元素（31 框 / 25 连线） | `site/scripts/gen-architecture-drawio.mjs` **生成**（改 RTL 后改脚本重跑，别手改） | 架构与数据通路图，可在 app.diagrams.net 打开编辑 |
+
+⚠️ 口径提醒（同 §0）：这两个素材都**不能**当作"Quartus 实测仿真图"引用。
+演示 GIF 的图注在站点上也明确写了"非板子实录"。

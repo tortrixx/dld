@@ -36,13 +36,13 @@ export function Footer(): JSX.Element {
           <div>
             <p className="foot__h">项目</p>
             <p style={{ fontSize: '1.05rem', fontWeight: 700, lineHeight: 1.4 }}>{PROJECT.title}</p>
-            <p style={{ fontSize: '0.86rem', color: 'var(--panel-ink-2)', marginTop: 'var(--s2)' }}>
+            <p style={{ fontSize: '0.86rem', color: 'hsl(var(--muted-foreground))', marginTop: 'var(--s2)' }}>
               {PROJECT.subtitle}
               <br />
               {PROJECT.course}
             </p>
             <p style={{ marginTop: 'var(--s4)' }}>
-              <a className="btn" href={REPO} target="_blank" rel="noreferrer noopener" style={{ background: 'var(--panel-ink)', color: 'var(--panel)' }}>
+              <a className="btn" href={REPO} target="_blank" rel="noreferrer noopener">
                 源码仓库 →
               </a>
             </p>
@@ -93,7 +93,7 @@ export function Footer(): JSX.Element {
               <span>
                 最后编译：{BUILD_PROVENANCE.timestamp}
                 <br />
-                <span style={{ color: 'var(--panel-ink-2)' }}>git {BUILD_PROVENANCE.gitHead}</span>
+                <span style={{ color: 'hsl(var(--muted-foreground))' }}>git {BUILD_PROVENANCE.gitHead}</span>
               </span>
             </div>
           </div>

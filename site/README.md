@@ -10,11 +10,14 @@
 
 ## 1. 本地运行
 
+**前提：Node ≥ 22**（`scripts/browser-check.mjs` 用内置全局 `WebSocket` 说 CDP；
+低版本会在启动时给出明确提示而不是 `WebSocket is not defined`）。
+
 ```powershell
 cd site
 npm install
 npm run dev        # http://localhost:5173/dld/
-npm run test       # 规则模型的单元测试（45 条）
+npm run test       # 74 条测试（45 条规则模型 + 15 条时序数据不变量 + 14 条整站渲染 smoke）
 npm run build      # 产物在 site/dist/
 npm run preview    # http://localhost:4173/dld/
 npm run check      # 类型 + 测试 + 事实对账 + 构建（提交前跑这个）
@@ -54,7 +57,7 @@ site/
     browser-check.mjs           零依赖的真实浏览器检查 + 截图（见 §5）
     verify-facts.mjs            网页上的数字 ↔ 仓库真值源 机械对账（见 §6）
     gen-architecture-drawio.mjs 生成可编辑的 docs/图/dld-架构.drawio（见 §7）
-    gen-demo-frames.ts          用规则模型模拟一局、导出帧数据（vite-node 跑）
+    gen-demo-frames.ts          用规则模型**自动求解并重放**一局、导出帧数据（vite-node 跑）
     render-demo-gif.py          把帧数据画成演示 GIF（唯一需要 Pillow 的脚本）
   src/
     main.tsx / App.tsx    入口与页面骨架（含背景虚线网格）
@@ -63,6 +66,8 @@ site/
                           BlockDiagram / ThemeToggle / ui
     sections/             Hero / Demo / Flow / Architecture / Evidence / Tradeoffs / DocsNav / Footer
     data/                 facts.ts（全部事实、数字、案例、链接的**唯一真值源**）+ timeline.ts（时序场景）
+                          + 两者的结构不变量测试（timeline.test.ts）
+    smoke.test.ts         整站渲染 smoke test（react-dom/server，不需要浏览器）
     styles/               tokens.css（设计变量）+ app.css（版式与全部组件）
   public/figures/         构建时同步进来的图（**不入库**，见 site/.gitignore）
 ```
@@ -128,7 +133,7 @@ node scripts/browser-check.mjs http://localhost:4195/dld/
   npm run verify:facts
   ```
 
-  它把**网页上写的数字**和**仓库里的机读真值源**机械地对一遍（当前 0 FAIL / 39 OK）：
+  它把**网页上写的数字**和**仓库里的机读真值源**机械地对一遍（当前 0 FAIL / 44 OK）：
   LE/LAB/引脚/slack/POF sha256/时间戳 对 `quartus/build_provenance.json`；Fmax 对 `docs/05`；
   各模块的**最新轮次**与断言数对 `sim/rounds/<模块>/rNN.json`；
   被引用的路径是否存在、是否**已入库**（对 `git ls-files`，专治链到被 gitignore 挡掉的编译产物）。
@@ -157,7 +162,9 @@ npm run gen:drawio      # 重新生成 docs/图/dld-架构.drawio
   这是"不旋转就拼不出来"的正面证据。
 * `gen:gif:render` 是**本站唯一需要第三方 Python 包（Pillow）的脚本**。
   仓库自身的 `scripts/*.py` 全是标准库。**只想构建/部署站点时不必跑它** ——
-  GIF 产物已入库（`docs/图/演示-跑一局.gif`）。
+  GIF 产物已入库（`docs/图/演示-跑一局.gif`，290 KiB）。
+  它**还依赖 Windows 系统字体**（`msyh.ttc` 微软雅黑 + `consola.ttf`）：换到没有这些字体的
+  机器上，中文会缺字（脚本会打印警告，但产物已经废了）—— 所以这个生成器只在 Windows 上维护。
 * `docs/图/dld-架构.drawio` 是纯文本 XML，可直接在
   <https://app.diagrams.net/> 或 VS Code 的 draw.io 插件里改。
   **它由脚本生成**（改 RTL 之后改 `gen-architecture-drawio.mjs`、重跑一次即可，别手改）——
@@ -220,3 +227,76 @@ npm run gen:drawio      # 重新生成 docs/图/dld-架构.drawio
 因此：**本站没有加载过任何设计 Skill，也不声称调用过**。设计方向是照任务书给的关键词
 自行制定的，并把原则、色阶、字体、间距与章节顺序写在本节，便于复核
 "设计是不是有立场的"，而不是套模板。
+
+
+## 9. 多轮独立评审与修复（本轮）
+
+改版完成后按"先独立评审、再收敛修复"的流程做了 4 个**互不重叠视角**的只读评审
+（数据严谨性 / 工程质量与安全 / 设计与可访问性 / 部署与维护性），共 66 条发现，
+逐条核实后修掉了其中可核实、有影响的部分。**这些是本轮真正学到的教训，不是流水账**：
+
+### 9.1 内容与数据（4 条 P1）
+* **18.095 ns、1,450 logic cells、528 registers 三个数字在仓库里查不到出处** ——
+  18.095 与"路径名 / End Point TNS"只存在于本页，`build_provenance.json` 只记 slack；
+  1,450 属于 `docs/06` 里 SEED 5 那一版（不是当前固件），528 全仓 0 命中。
+  已改成**可核的写法**：数据路径写 `18.428 ns = 20 − 1.572`（明确标注"反推值"），
+  删掉两个查不到出处的数。**教训：引用不下去的数字，宁可少说。**
+* 局限里"消除要 +76 LE"是 `docs/02` 已标注**"结论已被取代"**的第 11 阶段实验数字
+  （RTL 注释也写了"在本版是 ±0 LE"）。已改成真正的现状理由。
+* 时序预算的算术自相矛盾（20 − 1.572 = 18.428 ≠ 18.095）—— 同一条被修掉。
+* 别处还有 4 处小错：`RELEASE(4×65 拍)` 应为 193 拍、`1264/1270` 的百分比口径三处不一致、
+  时钟拓扑表少一路 `t_2hz`、`test_idx` 写成 0..9（RTL 是 0..13 回绕）；
+  演进折线的图注还点了图上不存在的两个值 —— 已把这两个点**补进图**（7 点，全部有出处）。
+* **"12 个设计模块"的自相矛盾**是我自己的 `smoke.test.ts` 抓出来的：模块地图只有 11 张卡、
+  还注明"顶层不在这 12 个里"，而仓库口径的 12 个**含 `puzzle_top`**。已把顶层列入。
+
+### 9.2 会让人看不到内容的缺陷
+* **P0**：`DocsNav` 用的 `.navlist*` 类**一个样式都没写**（改版时从 `.docs-item` 改名却没同步），
+  于是"文档与源码导航"整节在线上糊成一整段文字。已补三列 grid + `.case__title`。
+* 首屏 GIF **1.53 MiB → 290 KiB**：渲染脚本给每帧设了 `disposal=2`（每帧恢复背景），
+  帧间差分彻底失效。同一批帧去掉它只占 1/5.4，帧数/尺寸/时长/观感都不变。
+* 深色主题下数码管的"表壳"变成了近白色（`color-mix(foreground 92%)` 在深色下翻白）⇒
+  仪器外壳与主题解耦。
+* 图素材不能点开看原图，而这一节的主张正是"分清实测截图与脚本渲染" ⇒ 图片包一层链接。
+
+### 9.3 可访问性（实测出来的）
+* **跳过导航链接聚焦时仍被裁成 1×1**：`.sr` 没有 `:focus` 解除裁剪的规则 ⇒ 键盘用户
+  第一次 Tab 完全看不到焦点。已补。
+* **`prefers-reduced-motion` 下反而丢信息**：通用降级只压 `animation-duration`，
+  (a) 告急幽灵靠"绿色闪烁"承载"≤10 s 该拼哪几格"，动画结束就回落到熄灭 ⇒ **提示彻底消失**；
+  (b) 脉冲点静止钉在箭头左端，看着像坏了；(c) `.fade` 的 `animation-delay` 没归零，
+  `fill-mode: both` 会让内容最多 0.56 s 不可见（比不动画更糟）；(d) `scroll-behavior: smooth` 没关。
+  四条都已在 reduced-motion 块里处理，并由 `browser-check.mjs` **实测断言**（opacity=1、scroll-behavior=auto、脉冲 display=none）。
+* `aria-live` 原来挂在整段叙述上，播放时每 ~1 s 刷 90–200 字（屏幕阅读器会被不断打断）⇒
+  改成只播报一行短状态；`role="grid"` 的直接子元素是 `gridcell`（缺 `row`）已改为图语义。
+
+### 9.4 脚本与门禁（最值得记的一类）
+* `verify-facts.mjs` 的断言原来是**全文 `includes`**，可以假通过：`'127'` 在站点文本里出现 68 次
+  （多数来自 `1270`/`EPM1270T144C5`），`'52'` 来自 `padX = 52`、sha256 片段……评审实测
+  "把 LAB 用量那一行整句删掉，脚本照样 [OK]"。已改成**"标签与数值必须同现 + 带边界"**，
+  并新增"禁止出现无入库出处的数字（18.095 / 1,450 / 528）"与"标称指标块里不许出现历史 Fmax"。
+* 它还会**豁免 `site/` 与 `.github/`**（注释写"尚未提交"，其实早入库了）⇒ 本站自己的源码链接
+  不受检；已取消豁免，改按"是否被 git 跟踪"判断。
+* `browser-check.mjs` 的三处假绿：端口写死（端口被占时会**静默驱动另一个浏览器**，已改为自动选空闲端口 +
+  校验 target 路径）、素材缺失时 `Figure` 根本不渲染 `<img>` 所以 `brokenFigures` 恒为 0
+  （已同时断言 img 数量与"素材缺失"占位数量）、失败路径不清理临时 profile（已抽 `cleanup()` 两条路径都调用）。
+* **`tsconfig` 的 `include` 不含 `scripts/`**：22 KB 的 GIF 求解器从未被类型检查。
+  纳进去后立刻暴露 2 个真错误（一个是我误删了 `rawKeyCode` —— 其实 `scripts/` 在用，
+  另一个是断言处的类型收窄）。**教训：删"没人用"的导出之前，要连 `scripts/` 一起 grep。**
+* workflow 的 `paths:` 远小于 `verify:facts` 的输入集（只覆盖 39 个被引用路径里的 3 个）⇒
+  重命名 `rtl/*.vhd` 时流水线一次都不跑、线上留死链而 CI 全绿。已补齐触发路径。
+
+### 9.5 新增的自动化防线
+| 防线 | 抓什么 |
+|---|---|
+| `src/data/timeline.test.ts`（15 条） | 时序数据的结构不变量：`links.length === nodes.length-1`、`active`/`busyLinks` 下标在范围内、`holdMs > 0`、强调星号成对 |
+| `src/smoke.test.tsx`（14 条） | 用 `react-dom/server` 渲染整站：任何组件崩溃、关键内容缺失、SVG 出现 `NaN` 坐标、关键类名消失。"12 张模块卡"这条就是这样抓到内容矛盾的 |
+| `verify-facts.mjs`（0 FAIL / 44 OK） | 标签↔数值同现、禁用无出处数字、cite 出处存在、图素材映射完整、被引用路径已入库 |
+| `browser-check.mjs` | 字体真加载、GIF 真解码、主题两套对比度、播放器真的会动、图表元素数、图素材数量与占位、reduced-motion 实测、溢出、锚点 |
+
+### 9.6 已知未修（如实列出）
+* **中文正文里 ASCII 直引号 `"` 与「」混用**（约 40 处）：属排版打磨，本轮未做（改动面大、
+  易误伤代码里的字符串）。要修的话建议加一条 `scripts/check_punct.py` 式的机检，而不是手改。
+* 触屏真机手感、真实屏幕阅读器的朗读顺序与噪音量、Safari/Firefox 的 `color-mix()` 回退、
+  forced-colors 高对比模式 —— 都需要真机，本轮只在无头 Chrome 上验证。
+* 仓库 `docs/图/` 里 12 张 Quartus GUI 截图仍只有 1 张（既有欠账，站点已如实标注）。

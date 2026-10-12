@@ -41,6 +41,15 @@ const siteRoot = resolve(here, '..');
 const outDir = join(siteRoot, '.shots');
 const TARGET_URL = process.argv[2] ?? 'http://localhost:4173/dld/';
 
+// ⚠️ Node < 22 没有全局 WebSocket，脚本会直接 `WebSocket is not defined`。
+// CI 用的是 node 22；本地若版本过低，这里给一句人能看懂的提示。
+if (typeof WebSocket === 'undefined') {
+  console.error(
+    `需要 Node 22 以上（本脚本用内置全局 WebSocket 说 CDP）。当前版本：${process.version}`,
+  );
+  process.exit(2);
+}
+
 const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
   'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
@@ -60,7 +69,25 @@ if (!chromePath) {
 
 mkdirSync(outDir, { recursive: true });
 const profile = join(tmpdir(), `dld-browser-check-${Date.now()}`);
-const PORT = 9333 + (Number(process.env.CDP_PORT_OFFSET ?? 0) || 0);
+/**
+ * 调试端口不能写死：9333 被占（上次崩溃残留、别的调试实例）时新 Chrome 会绑定失败，
+ * 但 `stdio: 'ignore'` 把报错吞了，而 `json/list` 仍可能返回**另一个浏览器**的页面 —
+ * 断言就会对着一个无关页面跑（假绿/假红）。这里先探一次端口是否空闲。
+ */
+async function pickPort() {
+  const base = 9333 + (Number(process.env.CDP_PORT_OFFSET ?? 0) || 0);
+  for (let port = base; port < base + 25; port += 1) {
+    try {
+      await fetch(`http://127.0.0.1:${port}/json/version`, { signal: AbortSignal.timeout(400) });
+      // 有响应 ⇒ 已被占用，换下一个
+    } catch {
+      return port;
+    }
+  }
+  throw new Error(`从 ${base} 起的 25 个端口都被占用，请设 CDP_PORT_OFFSET 换一段`);
+}
+
+const PORT = await pickPort();
 
 const chrome = spawn(
   chromePath,
@@ -80,6 +107,18 @@ const chrome = spawn(
 );
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+let cleanedUp = false;
+let cdpRef = null;
+/** 关连接、杀浏览器、删临时 profile —— 成功与失败两条路径都要走一遍
+ *  （原来失败路径会每次残留一个数十 MB 的 Chrome profile）。 */
+function cleanup() {
+  if (cleanedUp) return;
+  cleanedUp = true;
+  try { cdpRef?.close(); } catch { /* 已关 */ }
+  try { chrome.kill(); } catch { /* 已退 */ }
+  try { rmSync(profile, { recursive: true, force: true }); } catch { /* Windows 上偶发占用 */ }
+}
 const problems = [];
 const notes = [];
 
@@ -127,6 +166,7 @@ function connect(wsUrl) {
 async function main() {
   const target = await pageTarget();
   const cdp = connect(target.webSocketDebuggerUrl);
+  cdpRef = cdp;
   await cdp.ready;
   await cdp.send('Page.enable');
   await cdp.send('Runtime.enable');
@@ -152,7 +192,13 @@ async function main() {
   };
 
   const evaluate = async (expression) => {
-    const r = await cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
+    // ⚠️ 加超时：CDP 连接一旦断掉（浏览器被杀 / 端口串台），await 会**永远不返回**，
+    //    而 Node 在事件循环空掉时会以 code 0 静默退出 —— 后半段检查全部被跳过却"看起来成功"。
+    //    这是最危险的一类假绿（实测踩过：移动端那一步之后整段消失、退出码还是 0）。
+    const r = await Promise.race([
+      cdp.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true }),
+      new Promise((_, rej) => setTimeout(() => rej(new Error('CDP evaluate 超时 15s（连接可能已断）')), 15000)),
+    ]);
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description ?? 'evaluate failed');
     return r.result.value;
   };
@@ -213,6 +259,14 @@ async function main() {
     await sleep(160);
     return true;
   };
+
+  // 拿到 target 后必须校验它就是我们导航的那个页面：否则端口串台时会对着别的页面断言。
+  await cdp.send('Page.navigate', { url: 'about:blank' });
+  const wantPath = new URL(TARGET_URL).pathname;
+  const localPath = new URL(target.url).pathname;
+  if (localPath !== 'blank' && localPath !== wantPath && target.url !== 'about:blank') {
+    throw new Error(`CDP 目标页面不是我们启动的那个（target=${target.url}，期望 path=${wantPath}）——可能端口串台`);
+  }
 
   console.log(`\nbrowser-check: ${TARGET_URL}`);
   console.log(`chrome: ${chromePath}\n`);
@@ -316,6 +370,13 @@ async function main() {
     const rows = await contrastOf();
     const min = rows.reduce((m, c) => Math.min(m, c.ratio), Infinity);
     console.log(`  主题=${theme}: html背景=${t.bg} · 对比度最低 ${min}:1（抽样 ${rows.length} 处）`);
+    // ⚠️ 必须钉住抽样条数：选择器一旦改名，rows 会变空 ⇒ reduce 初值 Infinity ⇒
+    //    "每一条都 ≥4.5"**静默成立**。这是检查脚本最典型的一类假通过。
+    if (rows.length < 12) {
+      problems.push(
+        `[${theme}] 对比度抽样只拿到 ${rows.length} 处（预期 ≥12）—— 可能是选择器改名导致检查空转，此时"全部合格"没有意义`,
+      );
+    }
     for (const c of rows) {
       if (c.ratio < 4.5) problems.push(`[${theme}] 对比度不足：${c.sel} = ${c.ratio}:1`);
     }
@@ -390,14 +451,20 @@ async function main() {
     dots: document.querySelectorAll('#evidence .chart__dot').length,
     utilRows: document.querySelectorAll('#evidence .bar-row').length,
     figures: document.querySelectorAll('#evidence .figbox img').length,
-    brokenFigures: [...document.querySelectorAll('figure img')].filter(i => i.complete && i.naturalWidth === 0).length
+    /* 注意：complete && naturalWidth===0 会漏掉"还没开始加载"的懒加载图；
+       更要紧的是素材缺失时 Figure 根本不渲染 img（改渲染 .figbox--missing 占位），
+       所以"图全挂了"时 brokenFigures 恒为 0，必须同时断言 img 数量与占位数量。 */
+    brokenFigures: [...document.querySelectorAll('figure img')].filter(i => !i.complete || i.naturalWidth === 0).length,
+    missingPlates: document.querySelectorAll('.figbox--missing').length
   })`);
   console.log(`  图表: ${JSON.stringify(charts)}`);
   if (charts.charts < 4) problems.push(`证据区应有 ≥4 张图，实测 ${charts.charts}`);
   if (charts.bars < 12) problems.push(`条形图的条数偏少（${charts.bars}）`);
   if (charts.lines < 2) problems.push('演进折线没画出来');
   if (charts.utilRows < 4) problems.push('利用率条不是 4 行');
-  if (charts.brokenFigures > 0) problems.push(`有 ${charts.brokenFigures} 张图加载失败（404）`);
+  if (charts.brokenFigures > 0) problems.push(`有 ${charts.brokenFigures} 张图没加载出来（404 或未解码）`);
+  if (charts.figures < 5) problems.push(`图素材只有 ${charts.figures} 张（预期 ≥5）—— 图没渲染或素材没同步`);
+  if (charts.missingPlates > 0) problems.push(`有 ${charts.missingPlates} 个"素材缺失"占位框——sync-figures 没跑或源文件被删`);
 
   /* ---- ⑧ 窄屏 ---- */
   for (const [name, w, h] of [
@@ -445,10 +512,13 @@ async function main() {
   await shot('09-mobile-hero.png');
   await shotElement('10-mobile-flow.png', '#flow');
 
+  console.log('  …⑨ 链接与锚点');
   /* ---- ⑨ 链接与锚点 ---- */
   const links = await evaluate("[...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href'))");
   const ALLOWED_PREFIXES = [
     '#',
+    // Figure 的"点开看原图"用的是站内相对路径（/dld/figures/...），同源静态资源
+    '/',
     'https://github.com/tortrixx/dld',
     'https://tortrixx.github.io/dld',
     'https://app.diagrams.net',
@@ -464,6 +534,7 @@ async function main() {
     `链接：总数 ${links.length}，仓库链接 ${links.filter((h) => h.startsWith('https://github.com')).length}，页内锚点 ${links.filter((h) => h.startsWith('#')).length}，无法分类 ${bad.length}`,
   );
 
+  console.log('  …⑩ 对比度 + 文本卫生');
   /* ---- ⑩ 对比度 + 文本卫生 ---- */
   const contrast = await evaluate(`(() => {
     const parse = (c) => { const m = c.match(/rgba?\\(([^)]+)\\)/); if (!m) return null;
@@ -496,6 +567,45 @@ async function main() {
   if (textHygiene.length) problems.push(`页面正文里出现裸露的 Markdown 记号：${JSON.stringify(textHygiene)}`);
   else notes.push('文本卫生：正文里没有裸露的 ** 记号');
 
+  // ⚠️ 这一段必须在 cdp.close()/chrome.kill() **之前**跑：
+  //    放在后面会让 await 永远不返回，而 Node 在事件循环空掉时
+  //    以 code 0 静默退出 —— 后半段检查全被跳过、退出码却是 0（最危险的假绿，实测踩过）。
+
+  /* ---- ⑪ prefers-reduced-motion 实测 ----
+     这是最容易"以为降级了、其实丢了信息"的地方：GIF 的降级、告急幽灵的绿色
+     （靠闪烁传达"该拼哪几格"）、脉冲点……都必须真的检查。 */
+  await cdp.send('Emulation.setEmulatedMedia', {
+    features: [{ name: 'prefers-reduced-motion', value: 'reduce' }],
+  });
+  await evaluate('window.scrollTo(0,0)');
+  await sleep(900);
+  const rm = await evaluate(`(() => {
+    const fade = document.querySelector('.fade');
+    const fadeStyle = fade ? getComputedStyle(fade) : null;
+    const pulse = document.querySelector('.pipe__pulse');
+    const ghost = document.querySelector('.matrix__cell--ghost');
+    return {
+      fadeOpacity: fadeStyle ? Number(fadeStyle.opacity) : null,
+      fadeAnimation: fadeStyle ? fadeStyle.animationName : null,
+      scrollBehavior: getComputedStyle(document.documentElement).scrollBehavior,
+      pulseDisplay: pulse ? getComputedStyle(pulse).display : 'absent',
+      ghost: ghost ? { bg: getComputedStyle(ghost).backgroundColor, anim: getComputedStyle(ghost).animationName } : 'absent',
+    };
+  })()`);
+  console.log(`  reduced-motion: ${JSON.stringify(rm)}`);
+  // 入场元素在"减少动效"下必须是**可见**的（早先只压 duration 不归零 delay，
+  // `.fade` 用了 fill-mode:both ⇒ 最多 0.56 s 内容不可见）
+  if (rm.fadeOpacity !== null && rm.fadeOpacity < 0.99) {
+    problems.push(`reduced-motion 下 .fade 的 opacity=${rm.fadeOpacity}（应当立即可见；很可能是 animation-delay 没归零）`);
+  }
+  if (rm.scrollBehavior === 'smooth') problems.push('reduced-motion 下 scroll-behavior 仍是 smooth（平滑滚动也是动效）');
+  if (rm.pulseDisplay !== 'none' && rm.pulseDisplay !== 'absent') {
+    problems.push('reduced-motion 下脉冲点没有隐藏（会静止停在箭头左端，看着像坏了）');
+  }
+  await shot('11-reduced-motion.png');
+  await cdp.send('Emulation.setEmulatedMedia', { features: [] });
+
+  console.log('  …汇总');
   /* ---- 汇总 ---- */
   drain();
   await sleep(200);
@@ -503,13 +613,7 @@ async function main() {
   if (consoleErrors.length) problems.push(`控制台报错 ${consoleErrors.length} 条：${consoleErrors.slice(0, 5).join(' | ')}`);
   for (const w of consoleWarns) notes.push(`控制台警告：${w}`);
 
-  cdp.close();
-  chrome.kill();
-  try {
-    rmSync(profile, { recursive: true, force: true });
-  } catch {
-    /* Windows 上偶发占用 */
-  }
+  cleanup();
 
   console.log('\n--- 记录 ---');
   for (const n of notes) console.log(`  · ${n}`);
@@ -533,6 +637,6 @@ async function main() {
 
 main().catch((err) => {
   console.error('browser-check 失败：', err);
-  chrome.kill();
+  cleanup();
   process.exit(1);
 });

@@ -81,7 +81,7 @@ export const HEADLINE_METRICS: readonly Metric[] = [
     label: '逻辑单元 LE',
     value: '1264',
     unit: '/ 1270',
-    note: 'Quartus 打印 100%，按两位小数记 99.5%，余 6 个 LE —— 但"余 6 个 LE"在装箱层面约等于 0',
+    note: 'Fitter 报告打印 100%；项目文档按整数百分比记 99%（1264/1270 = 99.53%），余 6 个 LE —— 但"余 6 个 LE"在装箱层面约等于 0',
     source: { path: 'quartus/build_provenance.json', line: 48, note: 'fit.le' },
   },
   {
@@ -102,7 +102,7 @@ export const HEADLINE_METRICS: readonly Metric[] = [
     label: 'Setup slack',
     value: '+1.572',
     unit: 'ns',
-    note: '最差路径 u_puzzle|chk_slot[0] → chk_hit，数据路径 18.095 ns；End Point TNS 0.000',
+    note: '数据路径 18.428 ns = 约束 20 ns − 余量 1.572 ns（**反推值**：入库文件只记 slack，没记路径长度与节点名，所以这里不写路径名）',
     source: { path: 'quartus/build_provenance.json', line: 53, note: 'sta.setup_slack' },
   },
   {
@@ -141,8 +141,6 @@ export const BUILD_PROVENANCE = {
   pofBytes: 27312,
   pofMtime: '2026-10-12 19:54:53',
   pofSha256: 'cc3c69b3419f40a20eaf310eb3259d25ff342b56f3b0d52ab270a6ca7e41aea3',
-  syntheticLe: 1450,
-  registers: '528 / 1270（42%）',
   clockConstraint: 'create_clock -name clk -period 20.000 → 50 MHz / 20 ns',
   ioDelay: 'set_input_delay / set_output_delay 各 5.000 ns（外设全是慢速人机接口器件）',
 } as const;
@@ -215,6 +213,24 @@ export interface ModuleRow {
 }
 
 export const MODULES: readonly ModuleRow[] = [
+  /**
+   * ⚠️ 顶层也要算在里面：仓库 README 的口径是
+   * "16 个 VHDL 源文件（**12 个设计模块** + 3 个诊断顶层 + 1 个包）"，
+   * 这 12 个**包含 puzzle_top 自己**。早先这张表只列了 11 个子模块、
+   * 还写着"整机顶层不在这 12 个里"，与全站"12 个设计模块"的说法自相矛盾 ——
+   * 被 `smoke.test.ts` 的"12 张卡"断言抓出来（11 ≠ 12）。
+   */
+  {
+    file: 'rtl/puzzle_top.vhd',
+    entity: 'puzzle_top',
+    role: '整机顶层',
+    job: '唯一做引脚绑定的层级；把 11 个子模块连成整机',
+    consumes: '板级时钟 / SW7 / 复位键 / 矩阵键盘行线',
+    produces: '键盘列驱动、点阵行与红绿列、数码管段选与位选、蜂鸣器',
+    mechanism:
+      '按状态决定点阵画什么（自检整屏黄 2 Hz、待机全灭、预览画目标图案、对局画引擎帧 + 告急幽灵、结算画绿对勾/红叉），并在**进入预览那一拍**锁存第三关的随机图案下标、按 mrow 把引擎的 64 位列平面切成一行',
+    tier: 'top',
+  },
   {
     file: 'rtl/clk_gen.vhd',
     entity: 'clk_gen',
@@ -351,7 +367,7 @@ export const DIAG_TOPS: readonly { entity: string; file: string; when: string; w
     entity: 'board_test_top',
     file: 'rtl/board_test_top.vhd',
     when: '上板第一步：烧进去先确认引脚级假设（位序 / 极性 / 键盘 / 时钟档位）',
-    what: '只实例化 clk_gen / keypad_scan / dot_matrix_scan / seg_scan；自带 1 kHz 蜂鸣器方波；测试序号每 3 s 自动前进、BTN0 边沿冻结（RTL 里实现 test_idx 0..9）',
+    what: '只实例化 clk_gen / keypad_scan / dot_matrix_scan / seg_scan；自带 1 kHz 蜂鸣器方波；测试序号每 3 s 自动前进、BTN0 边沿冻结（RTL 的 test_idx 是 0..13 回绕；其中 0~9 有定义）',
   },
   {
     entity: 'keypad_diag_top',
@@ -382,6 +398,7 @@ export const CLOCK_TICKS: readonly TickRow[] = [
   { name: 't_1k', freq: '1 kHz', period: '1 ms', used: '点阵行推进（8 行 = 8 ms ⇒ 125 Hz）、puzzle_ctrl 行渲染、seg_scan 位选' },
   { name: 't_200', freq: '200 Hz', period: '5 ms', used: '矩阵键盘扫描（一轮 = 2 个 tick = 10 ms）' },
   { name: 't_100', freq: '100 Hz', period: '10 ms', used: '中间级（整机顶层无读者，保留在分频链里）' },
+  { name: 't_2hz', freq: '2 Hz', period: '500 ms', used: '整机顶层接 open（无读者）；board_test_top 的自检画面用它' },
   { name: 't_4hz', freq: '4 Hz', period: '250 ms', used: '2 Hz 方波（自检整屏闪 / 告急幽灵 / 结算先闪后常亮）、自检窗口 8 拍、蜂鸣器换步' },
   { name: 't_1hz', freq: '1 Hz', period: '1 s', used: '倒计时秒递减（预览 5 s、对局 30/40/60 s）' },
   { name: 't_40', freq: '40 Hz', period: '25 ms', used: '仅供诊断顶层逐行推进点阵' },
@@ -463,7 +480,7 @@ export const CASES: readonly Case[] = [
     problem:
       '用户上板反馈"按键的防抖时间有点长了…是否可以缩短一点时间使其更灵敏"。而注释与两份文档都写"16 轮 = 80 ms"。',
     constraint:
-      '一轮扫描 = ALL_HIGH（等 1 个 tick_200）→ ALL_LOW（**再等 1 个**）→ SETTLE(64 拍) → RELEASE(4×65 拍) ⇒ 一轮 = **2 × 5 ms = 10 ms**，不是 5 ms。所以 16 轮真实是 160 ms：按下要 160 ms 才被接受、松开也要 160 ms，连按最快约 3 次/秒。改这个常量会平移整机测试台的**全部**按键计划窗口。',
+      '一轮扫描 = ALL_HIGH（等 1 个 tick_200）→ ALL_LOW（**再等 1 个**）→ SETTLE(64 拍) → RELEASE(相 0 一拍 + 相 1/2/3 各 64 拍 = 193 拍) ⇒ 一轮 = **2 × 5 ms = 10 ms**，不是 5 ms。所以 16 轮真实是 160 ms：按下要 160 ms 才被接受、松开也要 160 ms，连按最快约 3 次/秒。改这个常量会平移整机测试台的**全部**按键计划窗口。',
     solution:
       'DEBOUNCE_MAX 由 15 改成 3（4 轮 = 40 ms），注释改成实测结论；整机测试台引入 DB_ROUNDS = 4 / DB_SHIFT = 16 − 4 = 12，把每个按键按下起点整体后移 12 轮 ⇒ **接受时刻与改前逐轮一致**，其余时间常量一个都不用改；键盘测试台新增一条断言把时长本身钉死。',
     verification:
@@ -552,7 +569,7 @@ export const LIMITATIONS: readonly Limitation[] = [
   {
     title: '引擎内容更新率是 25 / 21 Hz（扫描是 125 Hz）',
     detail:
-      '显示**扫描**已经是 125 Hz（点阵 8 行 = 8 ms、数码管每位 8 ms）。引擎 `puzzle_ctrl.i_tick` 同样接 **t_1k（1 kHz）**，但一行要渲染 `npc+2` 拍（第一关 5 拍、二三关 6 拍）⇒ 一帧 40 / 48 拍 = **40 / 48 ms**，即内容刷新 25 / 21 Hz。所以移动零片后，画面是逐行重建、最多约 40 / 48 ms 后完全更新（观感上是轻微"滚过"）。消除要 +76 LE，当时装不下。这是面积与观感的取舍，不是缺陷。',
+      '显示**扫描**已经是 125 Hz（点阵 8 行 = 8 ms、数码管每位 8 ms）。引擎 `puzzle_ctrl.i_tick` 接 **t_1k（1 kHz）**，但一行要渲染 `npc+2` 拍（第一关 5 拍、二三关 6 拍）⇒ 一帧 40 / 48 拍 = **40 / 48 ms**，即内容刷新 25 / 21 Hz。所以移动零片后，画面逐行重建、最多约 40 / 48 ms 后完全更新（观感上是轻微"滚过"）。**把这 40/48 ms 再压下去要再加流水线，而收益只是"更快一点点"、面积却已到顶** —— 这是面积与观感的取舍，不是缺陷。（⚠️ 早先这里写过"消除要 +76 LE"：那是第 11 工作阶段的受控实验数字，`docs/02` 已明确标注**结论已被取代**，不应当作现状引用。）',
     source: 'docs/02-模块详细设计.md:237-248 · rtl/puzzle_top.vhd:520',
   },
   {
@@ -691,16 +708,34 @@ export const SOURCE_ENTRIES: readonly SourceEntry[] = [
  */
 export const RESOURCE_EVOLUTION = [
   {
+    label: 'v1 初始',
+    le: 958,
+    fmax: 42.24,
+    note: '早期版本：四块 2x2 方块的阶段（docs/05:600-603）',
+  },
+  {
     label: '修正移位方向',
     le: 1201,
     fmax: 41.39,
-    note: 'ERR-019：把 srl8 的方向改对之后，958 → 1201 LE；Fmax 42.24 → 41.39 MHz（docs/05:538/603）',
+    note: 'ERR-019：把 srl8 的方向改对之后 958 → 1201 LE；Fmax 42.24 → 41.39 MHz（docs/05:538/603）',
   },
   {
-    label: '省掉除法器',
+    label: '异形零片',
+    le: 1246,
+    fmax: 36.68,
+    note: 'ERR-032 之前：换成异形零片后真的实例化了两个变除数除法器，Fmax 掉到 36.68 MHz（docs/05:470）',
+  },
+  {
+    label: '条件相减',
+    le: 1254,
+    fmax: 50.06,
+    note: 'ERR-032：用"比较 + 条件相减"替掉取模 ⇒ 50.06 MHz，但余量只剩 +0.023 ns（docs/05:471）',
+  },
+  {
+    label: '两拍流水 + 资源复用',
     le: 1200,
     fmax: 51.44,
-    note: 'ERR-032/033：条件相减替掉变除数除法器 + 两拍流水 + 资源复用 ⇒ 首次满足 50 MHz（docs/05:473）',
+    note: 'ERR-033：先切两拍流水再打开 AUTO_RESOURCE_SHARING ⇒ 1200 LE / 51.44 MHz，净省 54 LE（docs/05:473）',
   },
   {
     label: '功能补齐',

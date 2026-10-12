@@ -77,10 +77,10 @@ export function ModuleMap(): JSX.Element {
       <Detail m={current} />
 
       <p className="note" style={{ marginTop: 'var(--s4)' }}>
-        整机顶层 <code>{TOP_LEVEL.entity}</code> 不在这 12 个设计模块里：它是唯一做引脚绑定的层级，
-        负责把这 11 个子模块连起来，并按状态决定点阵画什么。
-        完整互联关系见上一节的带图，或直接打开可编辑的{' '}
-        <Src path="docs/图/dld-架构.drawio">docs/图/dld-架构.drawio</Src>。
+        这张表按仓库 README 的口径数：<strong>16 个 VHDL 源文件 = 12 个设计模块 + 3 个诊断顶层 + 1 个包</strong>
+        （<code>docs/图/dld-架构.drawio</code> 是完整互联关系）。
+        其中 <code>puzzle_top</code> 是整机顶层 —— 唯一做引脚绑定的那个，也是唯一会碰到点阵/数码管/蜂鸣器的层级。
+        它把 {TOP_LEVEL.job.replace('唯一做引脚绑定的层级；', '')}
       </p>
     </div>
   );

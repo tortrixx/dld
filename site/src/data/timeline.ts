@@ -118,7 +118,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '第 4/5 级：闪烁与秒',
         detail:
           't_100 ÷25 ⇒ t_4hz（250 ms）：自检整屏闪、告急幽灵、结算"先闪后常亮"、以及蜂鸣器换步都借它；t_4hz ÷4 ⇒ t_1hz（1 s），倒计时每秒减 1。',
-        cite: 'rtl/puzzle_pkg.vhd:399 · rtl/puzzle_pkg.vhd:407',
+        cite: 'rtl/clk_gen.vhd:149 · docs/02-模块详细设计.md:117',
         active: [4],
         busyLinks: [3],
         holdMs: 1000,
@@ -183,11 +183,11 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
     links: [
       { label: 'kp_row' },
       { label: '干净采样' },
-      { label: 'o_key/o_press' },
+      { label: 'o_key / o_press' },
       { label: '键号' },
       { label: '脉冲' },
-      { label: 'i_up…/i_move' },
-      { label: 'cov/kc/sl' },
+      { label: 'i_up/i_move' },
+      { label: 'cov / kc / sl' },
     ],
     steps: [
       {

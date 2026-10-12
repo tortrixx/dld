@@ -113,8 +113,12 @@ function legend(id, text, x, y, color) {
 }
 
 const cells = [];
+const seenIds = new Set();
 let seq = 0;
 function cell(id, value, style, x, y, w, h, extra = {}) {
+  // 重复 id 会让 draw.io 静默丢元素：宁可在这里就报错
+  if (seenIds.has(id)) throw new Error(`drawio 元素 id 重复：${id}`);
+  seenIds.add(id);
   const attrs = [
     `id="${id}"`,
     `value="${escapeXml(value)}"`,
@@ -128,9 +132,7 @@ function cell(id, value, style, x, y, w, h, extra = {}) {
   const geom = extra.edge
     ? '        <mxGeometry relative="1" as="geometry" />\n'
     : `        <mxGeometry x="${x}" y="${y}" width="${w}" height="${h}" as="geometry" />\n`;
-  const src = extra.source ? `        <mxCell id="${id}_s" style="edgeLabel" parent="${id}" connectable="0" vertex="1"><mxGeometry relative="1" as="geometry" /></mxCell>\n` : '';
-  void src;
-  const body = extra.edge
+    const body = extra.edge
     ? `      <mxCell ${attrs}${extra.source ? ` source="${extra.source}" target="${extra.target}"` : ''}>\n${geom}      </mxCell>\n`
     : `      <mxCell ${attrs}>\n${geom}      </mxCell>\n`;
   seq += 1;
@@ -139,11 +141,16 @@ function cell(id, value, style, x, y, w, h, extra = {}) {
 }
 
 function escapeXml(s) {
-  return String(s)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
+  return (
+    String(s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      // ⚠️ 换行必须转成字符引用：XML 1.0 §3.3.3 规定属性值里的 #xA 在解析时被
+      //    替换成空格 ⇒ draw.io 打开时多行标签会塌成一行（中文串没有空格可折行）。
+      .replace(/\r\n|\r|\n/g, '&#10;')
+  );
 }
 
 /* ------------------------------------------------------------------ *

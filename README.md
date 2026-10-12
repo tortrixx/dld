@@ -72,7 +72,7 @@ refs/        课程原始资料（实验题目 / 课程说明 / 实验板手册 
 | **怎么编译 / 仿真 / 烧录**、开工清单、已知残余 | [`HANDOFF.md`](HANDOFF.md) |
 | 进度账本与阶段表 | [`PROGRESS.md`](PROGRESS.md) |
 | 课程原始资料（题目 / 课程说明 / 实验板手册 / 讲义）与**版权声明** | [`refs/README.md`](refs/README.md) |
-| **工程项目展示站**（可操作的 8×8 点阵模拟器、架构图、实测数据、工程案例） | [`site/`](site/README.md) —— `cd site && npm install && npm run dev` |
+| **工程项目展示站**（架构框图 · 可播放时序播放器 · 实测数据图表 · 工程案例 · 一局演示动画） | [`site/`](site/README.md) —— `cd site && npm install && npm run dev` |
 
 > 本 README 只保留"给第一次看到这个仓库的人"需要的信息；
 > **复现命令、进度记录、交接清单一律不放这里** —— 分别在 `HANDOFF.md`（操作）与 `PROGRESS.md`（进度）。

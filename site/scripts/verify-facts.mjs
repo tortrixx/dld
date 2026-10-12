@@ -30,10 +30,13 @@ const repoRoot = resolve(siteRoot, '..');
 const warnOnly = process.argv.includes('--warn');
 
 const problems = [];
+const informational = [];
 const checked = [];
 
 const fail = (msg) => problems.push(msg);
 const ok = (msg) => checked.push(msg);
+/** 只作记录、不算通过也不算失败（例如"登记了但没用到"）。 */
+const notes = (msg) => informational.push(msg);
 
 const read = (rel) => readFileSync(join(repoRoot, rel), 'utf8');
 const exists = (rel) => existsSync(join(repoRoot, rel));
@@ -61,35 +64,116 @@ const site = siteSource();
  * ================================================================== */
 
 const prov = JSON.parse(read('quartus/build_provenance.json'));
-const leMatch = /([\d,]+)\s*\/\s*([\d,]+)/.exec(prov.fit.le);
-const leUsed = Number(leMatch[1].replace(/,/g, ''));
-const leTotal = Number(leMatch[2].replace(/,/g, ''));
-const labMatch = /(\d+)\s*\/\s*(\d+)/.exec(prov.fit.lab);
-const pinMatch = /(\d+)\s*\/\s*(\d+)/.exec(prov.fit.pins);
 
-const expectNumbers = [
-  ['LE 用量', String(leUsed)],
-  ['LE 总量', String(leTotal)],
-  ['LAB 用量', labMatch[1]],
-  ['LAB 总量', labMatch[2]],
-  ['引脚用量', pinMatch[1]],
-  ['引脚总量', pinMatch[2]],
-  ['setup slack', prov.sta.setup_slack.toFixed(3)],
-  ['hold slack', prov.sta.hold_slack.toFixed(3)],
-  ['POF sha256 前缀', prov.pof.sha256.slice(0, 8)],
-];
-
-for (const [label, value] of expectNumbers) {
-  if (site.includes(value)) ok(`${label} = ${value}（出现在站点源码里）`);
-  else fail(`${label} 对不上：build_provenance.json = ${value}，但站点源码里找不到这个字符串`);
+/**
+ * 解析真值源里的 "a / b" 形式，**失败就报 FAIL 而不是抛崩栈**。
+ * 原来直接 `leMatch[1]`：`fit.le` 一旦不再带斜杠，CI 报的是
+ * `Cannot read properties of null`，维护者要自己猜是哪条断言炸了。
+ */
+function parsePair(text, what) {
+  const m = /([\d,]+)\s*\/\s*([\d,]+)/.exec(text ?? '');
+  if (!m) {
+    fail(`${what} 的格式无法解析（期望 "a / b"，实际是 ${JSON.stringify(text)}）`);
+    return null;
+  }
+  return [Number(m[1].replace(/,/g, '')), Number(m[2].replace(/,/g, ''))];
 }
 
-// Fmax 只在文档里（provenance 不存 Fmax），核对它是否与 docs/05 的口径一致
+function parseNum(value, what) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) {
+    fail(`${what} 不是数字（实际是 ${JSON.stringify(value)}）`);
+    return null;
+  }
+  return n;
+}
+
+/**
+ * ⚠️ 断言的**强度**直接决定这个脚本有没有意义。
+ *
+ * 早先的写法是 `site.includes(String(value))`（site = 全部站点源码的全文拼接），
+ * 这是**可以假通过**的：'127' 在站点文本里出现 68 次，绝大多数来自 `1270` /
+ * `EPM1270T144C5`；'52' 有 13 次，来自 `padR = 52`、`y: 522`、sha256 片段、`'r52 / r53'`。
+ * 也就是说：把"LAB 用量 127""引脚 52"整句从页面上删掉，`includes` 仍然成立、脚本照样 [OK]。
+ *
+ * 所以改成**"标签与数值必须同现、且有边界"**：在 `label` 之后 window 个字符内找
+ * **带边界**的数字（避免匹配到更长数字的前缀）。标签写在 facts.ts 的同一行/同一块里，
+ * 是真值源本身的结构，比"全文任意位置出现"强得多。
+ */
+function assertNearby(label, value, window = 220) {
+  const v = String(value);
+  const esc = v.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  // 数字左侧不能是数字/逗号/点（挡住 `1270` 里的 `127`、`1,264` 里的 `264`）
+  const bounded = new RegExp(`(?<![\\d,.])${esc}(?![\\d])`);
+  for (const m of site.matchAll(new RegExp(label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'))) {
+    const seg = site.slice(m.index, m.index + window);
+    if (bounded.test(seg)) {
+      ok(`${label} = ${v}（标签与数值同现，窗口 ${window} 字符）`);
+      return;
+    }
+  }
+  fail(`${label} 对不上：真值源 = ${v}，但在站点源码里找不到"${label}"附近（${window} 字符内）的该数值`);
+}
+
+const le = parsePair(prov.fit?.le, 'build_provenance.json 的 fit.le');
+const lab = parsePair(prov.fit?.lab, 'build_provenance.json 的 fit.lab');
+const pins = parsePair(prov.fit?.pins, 'build_provenance.json 的 fit.pins');
+const setupSlack = parseNum(prov.sta?.setup_slack, 'build_provenance.json 的 sta.setup_slack');
+const holdSlack = parseNum(prov.sta?.hold_slack, 'build_provenance.json 的 sta.hold_slack');
+
+if (le && lab && pins) {
+  assertNearby('LE', le[0]);
+  assertNearby('LE', le[1]);
+  assertNearby('LAB', lab[0]);
+  assertNearby('LAB', lab[1]);
+  assertNearby('引脚', pins[0]);
+  assertNearby('引脚', pins[1]);
+}
+if (setupSlack !== null) {
+  assertNearby('setup', setupSlack.toFixed(3));
+  // 数据路径必须是"由约束与 slack 反推"的值，不能凭空写一个数：
+  // 20 − 1.572 = 18.428。站点文案里必须出现这个反推值（或被明确标注为反推）。
+  assertNearby('数据路径', (20 - setupSlack).toFixed(3));
+}
+if (holdSlack !== null) assertNearby('hold', holdSlack.toFixed(3));
+
+// POF 指纹：sha256 只在前 8 位这一层做"同现"检查（哈希片段本身没有语义标签）
+const sha = prov.pof?.sha256 ?? '';
+if (sha.length >= 8) {
+  if (site.includes(sha.slice(0, 8))) ok(`POF sha256 前缀 = ${sha.slice(0, 8)}`);
+  else fail(`POF sha256 前缀对不上：provenance = ${sha.slice(0, 8)}`);
+} else {
+  fail('build_provenance.json 里没有可用的 pof.sha256');
+}
+
+// Fmax 只在文档里（provenance 不存 Fmax）：取 docs/05 的 **Restricted Fmax** 那一行，
+// 而不是"文件里第一个 x.xx MHz"——后者可能是历史读数（44.77 / 36.68 / 51.44 都出现过）。
 const docs05 = read('docs/05-资源利用与编译报告.md');
-const fmax = /(\d+\.\d+)\s*MHz/.exec(docs05);
+const fmaxLine = /Restricted\s*Fmax[^\n]*?([\d.]+)\s*MHz/i.exec(docs05) ?? /Fmax[^\n]*?([\d.]+)\s*MHz/.exec(docs05);
+const fmax = fmaxLine;
 if (fmax) {
-  if (site.includes(fmax[1])) ok(`Fmax = ${fmax[1]} MHz（出现在站点源码里，取自 docs/05）`);
-  else fail(`Fmax 对不上：docs/05 里读到 ${fmax[1]} MHz，站点源码里找不到`);
+  // 同时要求"MHz"与"当前"的语境：Fmax 值必须与 1264/1270 出现在同一节附近的文案里
+  const curated = /Fmax\s*54\.27|54\.27\s*MHz/.test(site);
+  if (curated) ok(`Fmax = ${fmax[1]} MHz（取自 docs/05，站点里以"54.27 MHz"出现）`);
+  else fail(`Fmax 对不上：docs/05 读到 ${fmax[1]} MHz，但站点源码里没有"54.27 MHz"这一条当前读数`);
+  // 额外：**标称指标块**（HEADLINE_METRICS / HERO_SPEC）里出现别的 Fmax 值才算错。
+  // 注意不能在全文里扫：`RESOURCE_EVOLUTION` 与工程案例里**本来就该**出现
+  // 36.68 / 44.77 / 51.44 这些历史读数（"Fmax 掉到 36.68 MHz 又爬回 51.44"），
+  // 全文扫会把正确的历史叙述误判成"把历史值当成当前值"（我第一版就误报了 4 条）。
+  // 只切 HEADLINE_METRICS 这个数组本身（到它自己的 `];` 为止）——
+  // 切到 RESOURCE_EVOLUTION 会把中间所有的工程案例一起圈进来，那些案例里
+  // **本来就该**出现历史 Fmax。
+  const hStart = site.indexOf('const HEADLINE_METRICS');
+  const headline = hStart < 0 ? '' : site.slice(hStart, site.indexOf('];', hStart) + 2);
+  if (headline.length < 200) {
+    fail('没能切出标称指标块（verify-facts 的切片标记需要跟着改）');
+  } else {
+    const wrong = ['36.68', '44.77', '44.97', '50.06', '51.44', '44.03', '53.28', '48.41'].filter((hist) =>
+      headline.includes(hist),
+    );
+    if (wrong.length) fail(`标称指标块里出现了历史 Fmax ${JSON.stringify(wrong)}（那一版已被后续工作阶段取代）`);
+    else ok('标称指标块里的 Fmax 只有当前值（54.27 MHz）');
+  }
 } else {
   fail('没能在 docs/05 里找到 Fmax 读数，无法核对');
 }
@@ -99,9 +183,21 @@ if (site.includes(prov.timestamp)) ok(`构建时间戳 = ${prov.timestamp}`);
 else fail(`构建时间戳对不上：provenance = ${prov.timestamp}`);
 
 // git HEAD 短号
-const head = prov.git_head.slice(0, 8);
-if (site.includes(head)) ok(`git HEAD 短号 = ${head}`);
-else fail(`git HEAD 短号对不上：provenance = ${head}`);
+const head = sha ? (prov.git_head ?? '').slice(0, 8) : '';
+if (head && site.includes(head)) ok(`git HEAD 短号 = ${head}`);
+else fail(`git HEAD 短号对不上或缺失：provenance = ${JSON.stringify(prov.git_head)}`);
+
+// 不允许出现"无入库出处"的时序读数（评审抓到过 18.095 ns 与 1450 logic cells / 528 registers）
+const forbidden = [
+  ['18.095', '路径长度 18.095 ns 不在任何入库文件里（反推值应为 20 − 1.572 = 18.428）'],
+  ['1,450', '1,450 logic cells 只对应 ERR-051 对照表里 SEED 5 那一版，不是当前固件'],
+  ['1450 logic', '1,450 logic cells 不是当前固件的读数'],
+  ['528 / 1270', '寄存器数 528 在仓库里查不到出处'],
+];
+for (const [needle, why] of forbidden) {
+  if (site.includes(needle)) fail(`站点里出现了无入库出处的数字 "${needle}"：${why}`);
+}
+ok('未出现 18.095 / 1,450 / 528 这三个"无入库出处"的历史或跨版本数字');
 
 /* ================================================================== *
  * ② 仿真：对 sim/rounds/<模块>/*.json 的最新一轮
@@ -242,11 +338,80 @@ if (untracked.length) {
 }
 
 /* ================================================================== *
+ * ④ 页面依赖的图素材：引用名 → docs/图/ 里的源文件必须真的存在
+ * ------------------------------------------------------------------
+ * 为什么单列一节：`figure('x')` 的引用**不**走 blob()/path: 那两条规则，
+ * 所以上面第 ③ 节扫不到它。而"GIF 被删了/改名了"这种事，`npm run build` 照样成功、
+ * 页面照样渲染（只是图破了），只有真实浏览器里才看得出来。
+ * 把映射关系（sync-figures.mjs 的 FIGURES）当契约对一遍，就能在构建前拦住。
+ * ================================================================== */
+
+const syncSrc = readFileSync(join(siteRoot, 'scripts', 'sync-figures.mjs'), 'utf8');
+const figuresBlock = /const FIGURES = \{([\s\S]*?)\n\};/.exec(syncSrc);
+if (!figuresBlock) {
+  fail('sync-figures.mjs 里没找到 FIGURES 映射（verify-facts 的解析规则需要跟着改）');
+} else {
+  /** 解析 `'目标名': '源文件名',` 形式的条目。 */
+  const mapping = new Map();
+  for (const m of figuresBlock[1].matchAll(/'([^']+)'\s*:\s*'([^']+)'/g)) mapping.set(m[1], m[2]);
+
+  const referenced = new Set([...site.matchAll(/figure\(\s*'([^']+)'/g)].map((m) => m[1]));
+
+  const missingRef = [...referenced].filter((name) => !mapping.has(name));
+  if (missingRef.length) {
+    fail(`页面引用了 figure('x') 但 sync-figures.mjs 没有登记：${JSON.stringify(missingRef)}`);
+  }
+
+  const missingSource = [];
+  for (const [dst, src] of mapping) {
+    if (!exists(`docs/图/${src}`)) missingSource.push(`docs/图/${src}（供 figure('${dst}') 用）`);
+  }
+  if (missingSource.length) {
+    fail(`图素材源文件不存在，页面会显示"素材缺失"：${JSON.stringify(missingSource)}`);
+  }
+
+  const unused = [...mapping.keys()].filter((k) => !referenced.has(k));
+  if (missingRef.length === 0 && missingSource.length === 0) {
+    ok(`图素材映射完整：${referenced.size} 个 figure() 引用都有源文件（共登记 ${mapping.size} 个）`);
+  }
+  if (unused.length) notes(`sync-figures.mjs 登记了但页面没用到的图：${JSON.stringify(unused)}`);
+}
+
+/* ================================================================== *
+ * ⑤ 时序播放器里每条 step 的 `cite` 出处必须真的存在
+ * ------------------------------------------------------------------
+ * `src/data/timeline.ts` 每个 step 都写了出处（"rtl/puzzle_top.vhd:520" 这类）。
+ * 出处写错、或写到一个不存在的文件上，页面不会有任何异常 —— 读者点进去才发现是死引用。
+ * 所以把 cite 里的路径抠出来逐个核对（存在 + 已入库）。
+ * ================================================================== */
+
+const timelineSrc = readFileSync(join(siteRoot, 'src', 'data', 'timeline.ts'), 'utf8');
+const citePaths = new Set();
+for (const m of timelineSrc.matchAll(/cite:\s*'([^']+)'/g)) {
+  for (const p of m[1].matchAll(/[A-Za-z0-9_./\u4e00-\u9fff-]+\.(?:vhd|md|json|py|ts|tsx|sdc|qsf|gif|drawio)/g)) {
+    citePaths.add(p[0]);
+  }
+}
+
+if (citePaths.size === 0) {
+  fail('timeline.ts 里一个 cite 出处都没解析出来（verify-facts 的解析规则需要跟着改）');
+} else {
+  const badCite = [];
+  for (const p of citePaths) {
+    if (!exists(p)) badCite.push(`${p}（文件不存在）`);
+    else if (tracked && !tracked.has(p) && !p.startsWith('site/')) badCite.push(`${p}（未入库，克隆后不存在）`);
+  }
+  if (badCite.length) fail(`timeline.ts 的 cite 出处有问题：${JSON.stringify(badCite)}`);
+  else ok(`timeline.ts 的 ${citePaths.size} 个 cite 出处全部存在且已入库`);
+}
+
+/* ================================================================== *
  * 输出
  * ================================================================== */
 
 console.log('\nverify-facts：把网页上的数字与仓库真值源对账\n');
 for (const c of checked) console.log(`  [OK]   ${c}`);
+for (const n of informational) console.log(`  [--]   ${n}`);
 for (const p of problems) console.log(`  [FAIL] ${p}`);
 console.log(
   `\n  合计：${problems.length} FAIL / ${checked.length} OK\n`,

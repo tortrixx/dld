@@ -445,7 +445,13 @@ function main(): void {
       );
     }
   }
-  if (s.phase !== 'playing') throw new Error(`预览 20 拍后没有进入对局，phase = ${s.phase}`);
+  // 经一个 string 型局部变量再做断言：直接写 `s.phase !== 'playing'` 会被 TS 的
+  // 控制流收窄判定为"与 'preview' 无交集"（等于它静态认为这个检查恒真/恒假）。
+  // 这条断言是**运行时**的地基检查（预览 20 拍后必须进入对局），必须留着。
+  const phaseAfterPreview: string = s.phase;
+  if (phaseAfterPreview !== 'playing') {
+    throw new Error(`预览 20 拍后没有进入对局，phase = ${phaseAfterPreview}`);
+  }
 
   const scatterDesc = s.pieces
     .map((p, i) => `第${i + 1}块 (${p.r},${p.c}) 朝向 ${p.ori}`)

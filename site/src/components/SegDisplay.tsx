@@ -12,7 +12,8 @@ export interface SegDisplayProps {
   /** 下标 = DISP 编号（0 = 最右）。 */
   readonly digits: readonly string[];
   readonly blank: readonly boolean[];
-  /** 自检态要求整屏 2 Hz 闪烁（B1）；其余态这里是 false。 */
+  /** 自检态要求整屏 2 Hz 闪烁（B1）。⚠️ 本站当前没有任何调用方传 true
+   *  （自检闪烁是**板子**的行为；网页上没有对应的 CSS 类），保留参数只为将来接回。 */
   readonly blink?: boolean;
   readonly label?: string;
 }
@@ -45,7 +46,7 @@ function Digit({ char, off, blink }: { readonly char: string; readonly off: bool
           <polygon
             key={seg.bit}
             points={seg.points}
-            fill={on ? (blink ? 'var(--led-yellow)' : 'var(--led-red)') : '#1c1c20'}
+            fill={on ? (blink ? 'var(--led-yellow)' : 'var(--led-red)') : 'var(--seg-off)'}
             opacity={on ? 1 : 0.85}
           />
         );

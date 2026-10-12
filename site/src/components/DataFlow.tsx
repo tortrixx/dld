@@ -145,10 +145,15 @@ export function DataFlow(): JSX.Element {
       </div>
 
       {/* ---------------- 播放控制 ---------------- */}
-      <div className="flow__controls">
+      {/* 播放时每 0.8–1.7 s 会整块换内容：aria-live 挂在这一行短状态上，
+          不能挂在整段叙述上 —— 否则屏幕阅读器每 ~1 s 就被 90–200 字顶掉一次。 */}
+      <p className="sr" aria-live="polite">{`第 ${step + 1} / ${steps.length} 步：${current.title}`}</p>
+
+      <div className="flow__controls" onFocus={() => setPlaying(false)}>
         <button
           type="button"
           className={`flow__play${playing ? '' : ' flow__play--primary'}`}
+          aria-pressed={playing}
           onClick={() => {
             if (step >= steps.length - 1) setStep(0);
             setPlaying((p) => !p);
@@ -201,7 +206,7 @@ export function DataFlow(): JSX.Element {
 
       {/* ---------------- 叙述 + 仪表 ---------------- */}
       <div className="flow__side">
-        <div className="flow__step" aria-live="polite">
+        <div className="flow__step">
           <p className="flow__step-t">
             <RichText text={current.title} />
           </p>
@@ -211,12 +216,12 @@ export function DataFlow(): JSX.Element {
           <div className="flow__chips">
             {current.active.map((i) => (
               <span className="flow__chip flow__chip--acc" key={`a${i}`}>
-                {scenario.nodes[i].name}
+                {scenario.nodes[i]?.name ?? ''}
               </span>
             ))}
             {(current.busyLinks ?? []).map((i) => (
               <span className="flow__chip" key={`l${i}`}>
-                → {scenario.links[i].label}
+                → {scenario.links[i]?.label ?? ''}
               </span>
             ))}
             {current.cite ? (
@@ -244,8 +249,8 @@ export function DataFlow(): JSX.Element {
             </div>
             <p className="figcap" style={{ marginTop: 'var(--s4)' }}>
               这两块显示的是<strong>规则模型按同一条时序跑出来的真实画面</strong>（不是示意图）：
-              点阵内容来自 <code>frame()</code>，数码管来自 <code>segments()</code>。 数码管读数：
-              <code>{readOut(seg.digits, seg.blank)}</code>
+              点阵内容来自 <code>frame()</code>，数码管来自 <code>segments()</code>。 数码管读数（DISP7 → DISP0，空格 = 消隐）：
+              <code className="seg-readout">{readOut(seg.digits, seg.blank)}</code>
             </p>
           </div>
         ) : null}

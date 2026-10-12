@@ -449,7 +449,10 @@ def main() -> int:
         duration=durations,
         loop=0,
         optimize=True,
-        disposal=2,
+        # ⚠️ 不要设 disposal=2（"每帧恢复背景"）：那会让 Pillow 每帧都写全画幅、
+        #    帧间差分彻底失效。实测同一批帧：disposal=2 → 1,608,890 B；
+        #    disposal=1 → 296,561 B（5.4 倍）。这是首屏唯一的大资源，必须吃下这个红利。
+        disposal=1,
         comment="tortrixx/dld 8x8 双色点阵拼图 · 演示一局（帧数据由 site/scripts/gen-demo-frames.ts 用规则模型 reducer 生成）",
     )
     size = OUT_GIF.stat().st_size

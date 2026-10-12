@@ -695,6 +695,8 @@ export function frame(state: GameState): Frame {
     return { cells, hintActive: false, hintOn: false };
   }
 
+  // ⚠️ 用显式枚举而不是"漏到最后就当对局"：非法 phase 若落到 S_PLAYING 分支，
+  //    会画出一幅"看起来正常但语义错误"的画面（例如整片绿色幽灵），比报错更难发现。
   if (state.phase === 'win' || state.phase === 'fail') {
     const mask = state.phase === 'win' ? WIN_MASK : FAIL_MASK;
     // S5：先按 2 Hz 闪 4 个半周期（1 s）再常亮 —— 远距离可读
@@ -703,6 +705,12 @@ export function frame(state: GameState): Frame {
     for (let r = 0; r < BOARD; r += 1) {
       for (let c = 0; c < BOARD; c += 1) if (hasBit(mask, r, c)) paint(r, c, ev ? color : 'off');
     }
+    return { cells, hintActive: false, hintOn: false };
+  }
+
+  if (state.phase !== 'playing') {
+    // 六个已知状态都在上面处理完了；走到这里说明传入了一个非法 phase。
+    // 返回全灭（而不是"当成对局画"）——宁可什么都不显示，也不显示错的东西。
     return { cells, hintActive: false, hintOn: false };
   }
 
@@ -850,41 +858,33 @@ export function phaseLabel(phase: Phase): string {
   }
 }
 
-/** 面板上用到的键位速查（只取游戏功能键）。 */
-export const ACTION_KEYS: readonly { key: GameKey; silk: string; label: string; shortcut: string }[] = [
-  { key: 'start', silk: 'KEY14', label: '开始', shortcut: KEY_MAP[0].shortcut },
-  { key: 'select', silk: 'KEY16', label: '选择', shortcut: KEY_MAP[1].shortcut },
-  { key: 'confirm', silk: 'KEY11', label: '确认', shortcut: KEY_MAP[2].shortcut },
-  { key: 'up', silk: 'KEY7', label: '上', shortcut: KEY_MAP[3].shortcut },
-  { key: 'left', silk: 'KEY10', label: '左', shortcut: KEY_MAP[5].shortcut },
-  { key: 'right', silk: 'KEY12', label: '右', shortcut: KEY_MAP[6].shortcut },
-  { key: 'down', silk: 'KEY15', label: '下', shortcut: KEY_MAP[4].shortcut },
-  { key: 'rotate', silk: 'KEY8', label: '旋转 90°', shortcut: KEY_MAP[7].shortcut },
-];
+/* ------------------------------------------------------------------ *
+ * 动作键 ↔ 板子键号
+ * ------------------------------------------------------------------ */
 
-/** 动作 → 原始矩阵键号（用于状态栏显示"这次按的是板子上的哪个键"）。 */
+/**
+ * 游戏动作键 → 板子上那个键的丝印名。
+ *
+ * ⚠️ 这里**必须**保留 `rawKeyCode`：它曾被当成死代码删掉过一次，
+ *    但 `scripts/gen-demo-frames.ts` 的 `silkOf()` 在用它 ——
+ *    演示 GIF 的图层要写"按【旋转】(KEY8)"，靠的就是这条映射。
+ *    教训：删"没人用"的导出之前要连 `scripts/` 一起 grep（当时只扫了 `src/`）。
+ * 映射与 `rtl/game_fsm.vhd` 的 `key_of()` 一致（8 个功能键）。
+ */
+const ACTION_KEY_SILK: Record<GameKey, string> = {
+  start: 'KEY14',
+  select: 'KEY16',
+  confirm: 'KEY11',
+  up: 'KEY7',
+  down: 'KEY15',
+  left: 'KEY10',
+  right: 'KEY12',
+  rotate: 'KEY8',
+};
+
+/** 游戏动作键 → 键号（= 4×ROW + COL）。 */
 export function rawKeyCode(key: GameKey): number {
-  const row = KEY_MAP.find((k) => {
-    switch (key) {
-      case 'start':
-        return k.silk === 'KEY14';
-      case 'select':
-        return k.silk === 'KEY16';
-      case 'confirm':
-        return k.silk === 'KEY11';
-      case 'up':
-        return k.silk === 'KEY7';
-      case 'down':
-        return k.silk === 'KEY15';
-      case 'left':
-        return k.silk === 'KEY10';
-      case 'right':
-        return k.silk === 'KEY12';
-      default:
-        return k.silk === 'KEY8';
-    }
-  });
-  return row?.code ?? -1;
+  return KEY_MAP.find((k) => k.silk === ACTION_KEY_SILK[key])?.code ?? 0;
 }
 
 export { LEVEL_KEY_RE, TICK_MS };

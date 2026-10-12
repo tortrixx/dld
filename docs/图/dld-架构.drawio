@@ -23,87 +23,58 @@
       <mxCell id="band5" value="板级输出 / Board Out" style="text;html=1;align=left;verticalAlign=middle;fontSize=11;fontColor=#6b7280;spacing=2;fontStyle=1" vertex="1" parent="1">
         <mxGeometry x="40" y="520" width="320" height="20" as="geometry" />
       </mxCell>
-      <mxCell id="in_clk" value="clk 50 MHz
-PIN_18 · 20 ns" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="in_clk" value="clk 50 MHz&#10;PIN_18 · 20 ns" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="40" y="40" width="365" height="52" as="geometry" />
       </mxCell>
-      <mxCell id="in_sw7" value="sw7 系统开关
-PIN_125 · i_en" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="in_sw7" value="sw7 系统开关&#10;PIN_125 · i_en" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="425" y="40" width="365" height="52" as="geometry" />
       </mxCell>
-      <mxCell id="in_btn" value="btn 复位键
-PIN_61 · 高有效" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="in_btn" value="btn 复位键&#10;PIN_61 · 高有效" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="810" y="40" width="365" height="52" as="geometry" />
       </mxCell>
-      <mxCell id="in_kp" value="4×4 矩阵键盘
-kp_row[3:0] · PIN_111..114" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="in_kp" value="4×4 矩阵键盘&#10;kp_row[3:0] · PIN_111..114" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="1195" y="40" width="365" height="52" as="geometry" />
       </mxCell>
-      <mxCell id="clk_gen" value="clk_gen
-级联分频链 + 上电/按键复位
-7 路 tick：1k / 200 / 100 / 4 / 1 / 2 / 40 Hz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fdeee8;strokeColor=#c8370a;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="clk_gen" value="clk_gen&#10;级联分频链 + 上电/按键复位&#10;7 路 tick：1k / 200 / 100 / 4 / 1 / 2 / 40 Hz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fdeee8;strokeColor=#c8370a;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="40" y="132" width="750" height="58" as="geometry" />
       </mxCell>
-      <mxCell id="keypad_scan" value="keypad_scan
-四相扫描 + 消抖（4 轮 = 40 ms）
-o_key / o_press / o_release" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="keypad_scan" value="keypad_scan&#10;四相扫描 + 消抖（4 轮 = 40 ms）&#10;o_key / o_press / o_release" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="810" y="132" width="750" height="58" as="geometry" />
       </mxCell>
-      <mxCell id="game_fsm" value="game_fsm　时间与决策
-3 位状态：SELF_TEST / IDLE / PREVIEW / PLAYING / WIN / FAIL
-倒计时 5 s 预览 · 30/40/60 s 限时 · 关卡 1/2/3 · 键号译码 · 4 位音效码" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fdeee8;strokeColor=#c8370a;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="game_fsm" value="game_fsm　时间与决策&#10;3 位状态：SELF_TEST / IDLE / PREVIEW / PLAYING / WIN / FAIL&#10;倒计时 5 s 预览 · 30/40/60 s 限时 · 关卡 1/2/3 · 键号译码 · 4 位音效码" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fdeee8;strokeColor=#c8370a;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="40" y="230" width="1520" height="58" as="geometry" />
       </mxCell>
-      <mxCell id="piece_rom" value="piece_rom
-零片形状库（常量折叠 ⇒ 0 LE）
-i_sh0..3 / i_h0..3 / i_w0..3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="piece_rom" value="piece_rom&#10;零片形状库（常量折叠 ⇒ 0 LE）&#10;i_sh0..3 / i_h0..3 / i_w0..3" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="40" y="328" width="493.3333333333333" height="58" as="geometry" />
       </mxCell>
-      <mxCell id="pattern_rom" value="pattern_rom
-图案库 4 幅（level=0 时忽略下标）
-i_target[63:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="pattern_rom" value="pattern_rom&#10;图案库 4 幅（level=0 时忽略下标）&#10;i_target[63:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="553.3333333333333" y="328" width="493.3333333333333" height="58" as="geometry" />
       </mxCell>
-      <mxCell id="rng_lfsr" value="rng_lfsr
-x⁸+x⁶+x⁵+x⁴+1 · 周期 255
-i_step → o_val[7:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="rng_lfsr" value="rng_lfsr&#10;x⁸+x⁶+x⁵+x⁴+1 · 周期 255&#10;i_step → o_val[7:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="1066.6666666666665" y="328" width="493.3333333333333" height="58" as="geometry" />
       </mxCell>
-      <mxCell id="puzzle_ctrl" value="puzzle_ctrl　空间引擎
-落位 · 移动 · 旋转 · 边界 · 精确重叠 · 锁定 · 着色
-o_rowr / o_rowg（64 位列平面）· o_solved / o_all_lock / o_busy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fdeee8;strokeColor=#c8370a;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="puzzle_ctrl" value="puzzle_ctrl　空间引擎&#10;落位 · 移动 · 旋转 · 边界 · 精确重叠 · 锁定 · 着色&#10;o_rowr / o_rowg（64 位列平面）· o_solved / o_all_lock / o_busy" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#fdeee8;strokeColor=#c8370a;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="40" y="426" width="288" height="72" as="geometry" />
       </mxCell>
-      <mxCell id="disp_format" value="disp_format
-状态 → 数码管内容（纯组合）
-o_data[31:0] / o_blank[7:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="disp_format" value="disp_format&#10;状态 → 数码管内容（纯组合）&#10;o_data[31:0] / o_blank[7:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="348" y="426" width="288" height="72" as="geometry" />
       </mxCell>
-      <mxCell id="seg_scan" value="seg_scan
-8 位动态扫描 + 7 段译码
-每位 125 Hz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="seg_scan" value="seg_scan&#10;8 位动态扫描 + 7 段译码&#10;每位 125 Hz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="656" y="426" width="288" height="72" as="geometry" />
       </mxCell>
-      <mxCell id="dot_matrix_scan" value="dot_matrix_scan
-8 行扫描译码 + 输出寄存
-125 Hz 帧 · 占空比 1/8" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="dot_matrix_scan" value="dot_matrix_scan&#10;8 行扫描译码 + 输出寄存&#10;125 Hz 帧 · 占空比 1/8" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="964" y="426" width="288" height="72" as="geometry" />
       </mxCell>
-      <mxCell id="buzzer_ctrl" value="buzzer_ctrl
-÷256 预分频 · 8 音高 · 16 步乐句
-i_sel[3:0] → o_buzz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="buzzer_ctrl" value="buzzer_ctrl&#10;÷256 预分频 · 8 音高 · 16 步乐句&#10;i_sel[3:0] → o_buzz" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="1272" y="426" width="288" height="72" as="geometry" />
       </mxCell>
-      <mxCell id="out_dot" value="点阵行 / 红列 / 绿列
-dot_row[7:0] · dot_colr[7:0] · dot_colg[7:0]（同亮 = 黄）" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="out_dot" value="点阵行 / 红列 / 绿列&#10;dot_row[7:0] · dot_colr[7:0] · dot_colg[7:0]（同亮 = 黄）" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="40" y="538" width="493.3333333333333" height="52" as="geometry" />
       </mxCell>
-      <mxCell id="out_seg" value="数码管段选 / 位选
-seg[7:0] · cat[7:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="out_seg" value="数码管段选 / 位选&#10;seg[7:0] · cat[7:0]" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="553.3333333333333" y="538" width="493.3333333333333" height="52" as="geometry" />
       </mxCell>
-      <mxCell id="out_buzz" value="蜂鸣器方波
-buzz · PIN_60" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
+      <mxCell id="out_buzz" value="蜂鸣器方波&#10;buzz · PIN_60" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#f6f7f9;strokeColor=#9ca3af;strokeWidth=1;align=left;verticalAlign=top;spacingLeft=8;spacingTop=6;fontSize=12;fontFamily=JetBrains Mono;fontColor=#131311" vertex="1" parent="1">
         <mxGeometry x="1066.6666666666665" y="538" width="493.3333333333333" height="52" as="geometry" />
       </mxCell>
       <mxCell id="e_clk" value="clk" style="edgeStyle=orthogonalEdgeStyle;rounded=1;html=1;endArrow=block;endFill=1;strokeColor=#6b7280;fontColor=#6b7280;fontSize=10;fontFamily=JetBrains Mono;labelBackgroundColor=#ffffff;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0" edge="1" parent="1" source="in_clk" target="clk_gen">

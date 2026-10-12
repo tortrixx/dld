@@ -91,13 +91,18 @@ export function Figure({ caption, source, src, alt, children, missing = false }:
   return (
     <figure className="figbox">
       {src && !unavailable ? (
-        <img
-          className="figbox__img"
-          src={src}
-          alt={alt ?? caption}
-          loading="lazy"
-          onError={() => setFailed(true)}
-        />
+        // 包一层链接：卡片里只有 330–470px，Quartus 实测截图与波形波形都读不清，
+        // 而这一节的主张正是"分清实测截图与脚本渲染" ⇒ 必须能点开核对原图。
+        <a className="figbox__link" href={src} target="_blank" rel="noreferrer noopener" title="查看原图">
+          <img
+            className="figbox__img"
+            src={src}
+            alt={alt ?? caption}
+            loading="lazy"
+            decoding="async"
+            onError={() => setFailed(true)}
+          />
+        </a>
       ) : null}
       {children}
       {unavailable ? (

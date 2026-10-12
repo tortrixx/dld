@@ -27,6 +27,22 @@ on:
     branches: [main]
     paths:
       - 'site/**'
+      # ⚠️ 下面这些是 verify:facts 会**逐个核对**的输入（39 个被引用路径）：
+      #    原触发集只覆盖 3 个，于是重命名/删除 rtl/*.vhd、docs/0*.md、scripts/*.py、
+      #    sim/*.vwf、根 md、puzzle.qsf 时这条流水线**一次都不跑** ⇒ 线上留死链而 CI 永不报警。
+      #    多跑一次 40 秒，远比"该跑不跑"便宜。
+      - 'rtl/**'
+      - 'docs/*.md'
+      - 'docs/图/**'
+      - 'scripts/**'
+      - 'sim/*.vwf'
+      - 'quartus/build_provenance.json'
+      - 'quartus/puzzle.qsf'
+      - 'quartus/puzzle.sdc'
+      - 'README.md'
+      - 'HANDOFF.md'
+      - 'PROGRESS.md'
+      - 'AI_LOG.md'
       - 'docs/图/**'
       - 'quartus/build_provenance.json'
       - 'docs/05-资源利用与编译报告.md'
@@ -58,7 +74,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: npm
           cache-dependency-path: site/package-lock.json
 

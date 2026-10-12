@@ -3,7 +3,7 @@
  *
  * 用户的原话是"表格数据太多"。所以这一节把四件事都画出来：
  *   ① 利用率细线条（LE / LAB / 引脚 / UFM）—— 一眼看出瓶颈是 LAB
- *   ② 时序预算尺：一根 20 ns 的尺子上摆"数据路径 18.095 ns + 余量 1.572 ns"
+ *   ② 时序预算尺：一根 20 ns 的尺子上摆"数据路径 18.428 ns + 余量 1.572 ns"
  *   ③ 逐模块断言数（12 根条，合计 179）—— 验证覆盖一眼可见
  *   ④ 资源与时序的**演进**折线（历史读数，标清楚不是当前值）
  * 剩下的文字只保留"每个数字的出处"和"口径差异"这两件必须写清的事。
@@ -44,9 +44,9 @@ export function Evidence(): JSX.Element {
             <Src path="docs/03-仿真验证方案.md" /> 拥有。
           </p>
           <p className="note" style={{ marginTop: 'var(--s3)' }}>
-            口径提示：Quartus 在 Fitter 报告里把 1264/1270 打成 <code>( 100 % )</code>，
-            而项目文档按两位小数记 <strong>99%、余 6</strong> —— 同一个数的两种取整口径，
-            两处都如实保留，本站不替它们统一。
+            口径提示：Fitter 报告把 1264/1270 打成 <code>( 100 % )</code>，
+            而项目文档按<strong>整数</strong>百分比记 <strong>99%（余 6）</strong> ——
+            1264/1270 实际是 99.53%，两种取整口径都如实保留，本站不替它们统一。
           </p>
         </>
       }
@@ -80,14 +80,16 @@ export function Evidence(): JSX.Element {
         <div className="col-7">
           <TimingBudget
             periodNs={20}
-            dataPathNs={18.095}
+            dataPathNs={18.428}
             slackNs={1.572}
-            title="时序预算：18.095 ns 数据路径 + 1.572 ns 余量（约束 20 ns）"
+            title="时序预算：20 ns 周期 = 18.428 ns 数据路径 + 1.572 ns 余量"
             caption={
               <>
                 时钟约束 <code>create_clock -name clk -period 20.000</code>（50 MHz）。
-                最差路径是 <code>u_puzzle|chk_slot[0] → chk_hit</code>，数据路径 18.095 ns，
-                余量 <strong>+1.572 ns</strong>、End Point TNS 0.000、<strong>0 条违例</strong>；
+                余量 <strong>+1.572 ns</strong>（入库的 <code>sta.setup_slack</code>）、
+                <strong>0 条时序违例</strong>；数据路径 <strong>18.428 ns = 20 − 1.572</strong>，
+                是<strong>反推值</strong> —— 入库文件只记 slack，不记路径长度与节点名，
+                所以这里不写路径名（宁可少说，也不写无法核对的数字）；
                 hold 余量 +1.078 ns、最小脉宽 +9.734 ns。Fmax 54.27 MHz。
                 <br />
                 出处：<Src path="quartus/build_provenance.json" line={52}>build_provenance.json（sta 段）</Src>
@@ -99,9 +101,9 @@ export function Evidence(): JSX.Element {
         </div>
       </div>
 
-      {/* ---------------- 断言分布 + 演进 ---------------- */}
+      {/* ---------------- 断言分布 + 演进（都整宽：图的 viewBox 需要 1:1 渲染才读得清） ---------------- */}
       <div className="grid12" style={{ marginTop: 'var(--s6)' }}>
-        <div className="col-7">
+        <div className="col-12">
           <BarChart
             title={`仿真覆盖：12 个模块/场景，${SIM_TOTAL_ASSERTIONS} 条断言全过`}
             data={ASSERTION_BARS}
@@ -122,16 +124,19 @@ export function Evidence(): JSX.Element {
             }
           />
         </div>
-        <div className="col-5">
+      </div>
+      <div className="grid12" style={{ marginTop: 'var(--s6)' }}>
+        <div className="col-12">
           <EvolutionChart
             points={RESOURCE_EVOLUTION}
             title="资源与时序的演进（历史读数 → 当前）"
             caption={
               <>
-                <strong>注意：这张图是演进对照，不是当前值。</strong>
-                每个点都能在 <Src path="docs/05-资源利用与编译报告.md" /> 里查到（行号见每点的悬停说明）。
+                <strong>注意：这张图是演进对照，不是当前值</strong> —— 最后一点才是当前固件
+                （图中已用竖虚线与实心圆单独标出）。7 个点每个都能在{' '}
+                <Src path="docs/05-资源利用与编译报告.md" /> 里查到（行号见每点悬停说明）。
                 想说明的是：面积是反复撞上限撞出来的 —— 中间 Fmax 掉到 36.68 MHz 又爬回 51.44，
-                LE 从 958 一路加到 1268 再回落到 1264。当前值：1264 / 1270 LE、54.27 MHz。
+                LE 从 958 一路加到 1268 再回落到 1264。
               </>
             }
           />
@@ -151,8 +156,6 @@ export function Evidence(): JSX.Element {
                   ['编译时间', BUILD_PROVENANCE.timestamp],
                   ['Quartus', BUILD_PROVENANCE.quartus],
                   ['git HEAD', `${BUILD_PROVENANCE.gitHead}（编译时工作树有未提交改动，provenance 里如实记着）`],
-                  ['综合 LE（map）', `${BUILD_PROVENANCE.syntheticLe} logic cells（fitter 装箱后 1264）`],
-                  ['寄存器', BUILD_PROVENANCE.registers],
                   ['时钟约束', BUILD_PROVENANCE.clockConstraint],
                   ['I/O 延时', BUILD_PROVENANCE.ioDelay],
                   [
@@ -219,6 +222,17 @@ export function Evidence(): JSX.Element {
           这一点在「工程取舍」的局限里也如实列着。
         </p>
         <div className="figgrid">
+          <Figure
+            src={figure('sim-clk_gen.svg')}
+            caption="脚本渲染的辅助波形 · clk_gen（与上一节那张 GUI 截图看的是同一份仿真）"
+            source={
+              <>
+                <code>docs/图/SIM-clk_gen.svg</code>，由 <code>scripts/sim.py</code> 解析{' '}
+                <code>sim/clk_gen.vwf</code> 后自己画的。<strong>它不是 Quartus 界面截图</strong> ——
+                两张图讲的是同一次仿真，差别只在"谁画的"，这正好说明为什么两者不能互相替代。
+              </>
+            }
+          />
           <Figure
             src={figure('sim-disp_format.svg')}
             caption="脚本渲染的辅助波形（不是 Quartus 界面截图）"

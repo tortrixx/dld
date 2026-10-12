@@ -4,12 +4,12 @@
  * 这一版把原来那张"5 列 × 12 行"的宽表换成了**可点的模块地图**：
  * 鼠标点一个模块，右侧只显示它的四件事（职责 / 吃什么 / 吐什么 / 关键机制）。
  * 一次看一个反而更容易横向比较，因为位置固定、扫视成本低；
- * 而完整互联关系仍由带图承担（带图只画主干，跨层连线进对照表）。
+ * 而完整互联关系仍由整机框图承担（框图只画相邻层主干，跨层连线进下面的对照表）。
  */
 
 import { BlockDiagram, SIGNAL_LINKS } from '../components/BlockDiagram';
 import { ModuleMap } from '../components/ModuleMap';
-import { RichText, Section, Src, TableWrap, Tag } from '../components/ui';
+import { Section, Src, TableWrap, Tag } from '../components/ui';
 import { CLOCK_TICKS, DIAG_TOPS, TOP_LEVEL } from '../data/facts';
 
 export function Architecture(): JSX.Element {
@@ -31,7 +31,7 @@ export function Architecture(): JSX.Element {
         </>
       }
     >
-      {/* ---------------- 带图 ---------------- */}
+      {/* ---------------- 整机框图 ---------------- */}
       <div className="frame">
         <BlockDiagram />
         <p className="figcap">
@@ -43,13 +43,13 @@ export function Architecture(): JSX.Element {
           <code>game_fsm</code> 直接命令 <code>puzzle_ctrl</code>）在图上<strong>不画箭头</strong> ——
           一张"每层一根竖箭头"的图天生只能表达相邻层关系，硬画就会把
           "clk_gen 把 t_4hz 送给 buzzer_ctrl"画成"送给 game_fsm"，那是错的。所以它们只进下表。
-          想看完整互联就走上一节的 <code>docs/图/dld-架构.drawio</code>。
+          想看完整互联（含跨层连线）就走 <code>docs/图/dld-架构.drawio</code>。
         </p>
         <TableWrap label="图 03 的连线与信号对照表">
           <table className="tbl" style={{ marginTop: 'var(--s4)' }}>
             <thead>
               <tr>
-                <th className="num">#</th>
+                <th className="num">层</th>
                 <th>从</th>
                 <th>到</th>
                 <th>信号（真实端名）</th>
@@ -89,21 +89,26 @@ export function Architecture(): JSX.Element {
         <ModuleMap />
       </div>
 
-      {/* ---------------- 顶层与时钟 ---------------- */}
+      {/* ---------------- 顶层引脚与时序约束 ---------------- */}
+      {/* 顶层实体自身的职责已经在上面的模块地图里（它现在也是 12 张卡之一），
+          这里只留它**独有的**东西：物理接口的真值源。两处重复讲同一件事是本项目要避免的。 */}
       <div className="grid12" style={{ marginTop: 'var(--s8)' }}>
         <div className="col-5">
           <div className="frame" style={{ height: '100%' }}>
-            <p className="figcap" style={{ marginTop: 0 }}>
-              <b>{TOP_LEVEL.entity}</b>（<Src path={TOP_LEVEL.file} />）
-              <br />
-              {TOP_LEVEL.job}
+            <p className="figcap" style={{ marginTop: 0, marginBottom: 'var(--s3)' }}>
+              <b>顶层只做两件别处做不了的事</b>
             </p>
-            <p style={{ marginTop: 'var(--s3)', fontSize: '0.9rem', color: 'hsl(var(--muted-foreground))' }}>
-              <RichText text={TOP_LEVEL.detail} />
+            <p style={{ fontSize: '0.9rem' }}>
+              ① <strong>引脚绑定</strong>：真值源是 <Src path="quartus/puzzle.qsf" /> ——
+              它由 <Src path="scripts/gen_project.py" />{' '}
+              <strong>生成</strong>，引脚号取自实验板手册、<strong>不手工改</strong>。
+              <br />
+              ② <strong>时序约束</strong>：<Src path="quartus/puzzle.sdc" />{' '}
+              把板上 50 MHz 时钟写成 20 ns 的约束，`Fmax` 只能从 TimeQuest（`quartus_sta`）读 ——
+              经典时序分析器（`quartus_tan`）<strong>不读</strong> <code>.sdc</code>，跑它只会得到空的 Fmax 列。
             </p>
             <p className="figcap" style={{ marginTop: 'var(--s3)' }}>
-              引脚真值源：<Src path="quartus/puzzle.qsf" />（由 <Src path="scripts/gen_project.py" />{' '}
-              生成，<strong>不手工改引脚</strong>）；时序约束：<Src path="quartus/puzzle.sdc" />。
+              顶层实体 <code>{TOP_LEVEL.entity}</code> 自身的职责见上面模块地图里的那一张卡。
             </p>
           </div>
         </div>
