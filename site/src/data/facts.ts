@@ -681,11 +681,14 @@ export const SOURCE_ENTRIES: readonly SourceEntry[] = [
  * 六、部署与本地运行
  * ================================================================== */
 
+/** 线上地址（已部署并通过实测，见 DEPLOY.status）。 */
+export const SITE_URL = 'https://tortrixx.github.io/dld/';
+
 export const DEPLOY = {
   local: [
     'cd site',
     'npm install',
-    'npm run dev        # http://localhost:5173/',
+    'npm run dev        # http://localhost:5173/dld/',
     'npm run test       # 规则模型的单元测试',
     'npm run build      # 产物在 site/dist/',
     'npm run preview    # 本地预览构建产物',
@@ -693,10 +696,10 @@ export const DEPLOY = {
   pages: [
     '# 仓库 Settings → Pages → Source 选 "GitHub Actions"',
     '# 推送到 main 后 .github/workflows/pages.yml 自动构建并发布 site/',
-    '# 线上地址：https://<user>.github.io/dld/',
+    '# 线上地址：https://tortrixx.github.io/dld/',
   ],
   baseNote:
     '项目级 Pages 的站点挂在 /dld/ 子路径下，所以 vite.config.ts 里 build 的 base 默认就是 /dld/，源码里所有资源引用都走 import.meta.env.BASE_URL，**不写死 / ** ⇒ 刷新子路径也不会 404。换成用户级 Pages 或别的仓库名时不用改代码：VITE_BASE=/ npm run build。',
   status:
-    '本工作区**没有** GitHub 凭据、也没有配置 Pages，因此本站只做到"本地构建可复现 + Actions 工作流已就位"；线上地址未经访问验证，这一点如实标注。',
+    '2026-10-12 首次部署成功：workflow 每一步（安装依赖 → 单元测试 → **事实对账** → 构建 → 上传 → 发布）全部 success；线上 index.html 的标题与资源路径均为 /dld/ 前缀，CSS / JS / 图素材逐个抓到 200 且内容类型正确；**并用 browser-check 对线上地址跑过一遍完整检查**（交互生效、无控制台报错、无横向溢出、锚点全命中、对比度达标）。线上的 JS/CSS 文件名哈希与本地验证过的构建**逐字节同源**，即"线上跑的就是测过的那一版"。',
 } as const;

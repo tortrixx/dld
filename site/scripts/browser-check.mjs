@@ -369,12 +369,11 @@ async function main() {
 
   /* ================= 链接与锚点 ================= */
   const links = await evaluate("[...document.querySelectorAll('a[href]')].map(a => a.getAttribute('href'))");
-  const bad = links.filter(
-    (h) =>
-      !h.startsWith('#') &&
-      !h.startsWith('https://github.com/tortrixx/dld') &&
-      !h.startsWith('data:'),
-  );
+  // 允许三类链接：页内锚点、本仓库的 GitHub 链接、以及**本站自己的线上地址**。
+  // 其他一律报出来 —— 这条检查的目的是抓"写错的/意外的链接"，不是禁掉自有域名；
+  // 新增任何一类外链时都要在这里显式登记，否则会被挡下（这是有意的）。
+  const ALLOWED_PREFIXES = ['#', 'https://github.com/tortrixx/dld', 'https://tortrixx.github.io/dld', 'data:'];
+  const bad = links.filter((h) => !ALLOWED_PREFIXES.some((p) => h.startsWith(p)));
   if (bad.length) problems.push(`出现无法分类的链接：${JSON.stringify([...new Set(bad)].slice(0, 8))}`);
   const deadAnchors = await evaluate(
     `[...document.querySelectorAll('a[href^="#"]')].map(a => a.getAttribute('href')).filter(h => h.length > 1 && !document.querySelector(h))`,

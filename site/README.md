@@ -27,7 +27,7 @@ npm run preview    # http://localhost:4173/dld/
 
 ## 2. 部署到 GitHub Pages
 
-仓库用的是**项目级** Pages，所以线上地址是 `https://<user>.github.io/dld/`，
+仓库用的是**项目级** Pages，所以线上地址是 `https://tortrixx.github.io/dld/`，
 `base` 默认就是 `/dld/`。
 
 1. 仓库 `Settings → Pages → Source` 选 **GitHub Actions**；
@@ -36,9 +36,14 @@ npm run preview    # http://localhost:4173/dld/
    workflow 里通过 `VITE_BASE` 环境变量传 `base`，本地也可以
    `VITE_BASE=/ npm run build` 覆盖。
 
-> **当前状态**：本工作区没有 GitHub 凭据、也没有配置过 Pages，
-> 所以只做到"本地构建可复现 + workflow 已就位"。
-> 线上地址**未经访问验证** —— 这一点在页面上和交付说明里都如实标注了。
+> **当前状态：已上线并通过线上实测（2026-10-12）。** 线上地址 <https://tortrixx.github.io/dld/>
+>
+> * workflow 每一步（安装依赖 → 单元测试 → **事实对账** → 构建 → 上传 → 发布）全部 `success`；
+> * `index.html` 的标题与资源路径均为 `/dld/` 前缀，CSS / JS / 图素材逐个抓到 200 且内容类型正确；
+> * **用 `scripts/browser-check.mjs` 对线上地址跑过一遍完整检查** ——
+>   交互全部生效、无控制台报错、无横向溢出、锚点全命中、对比度达标；
+> * 线上的 JS/CSS 文件名哈希与本地验证过的构建**逐字节同源**，
+>   即"线上跑的就是测过的那一版"。
 
 ## 3. 目录结构
 

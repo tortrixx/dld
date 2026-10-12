@@ -6,7 +6,7 @@
  */
 
 import { RichText, Section, Src, Tag } from '../components/ui';
-import { DEPLOY, DOC_ENTRIES, REPO, SOURCE_ENTRIES, blob, tree } from '../data/facts';
+import { DEPLOY, DOC_ENTRIES, REPO, SITE_URL, SOURCE_ENTRIES, blob, tree } from '../data/facts';
 
 export function DocsNav(): JSX.Element {
   return (
@@ -107,10 +107,15 @@ export function DocsNav(): JSX.Element {
         <div className="col-12" style={{ marginTop: 'var(--s4)' }}>
           <div className="caveat" role="note">
             <span className="caveat__mark" aria-hidden="true">
-              !
+              ✓
             </span>
             <div className="caveat__body">
-              <b>部署状态：本工作区没有配置线上站点。</b>
+              <b>
+                部署状态：已上线 ——{' '}
+                <a href={SITE_URL} target="_blank" rel="noreferrer noopener">
+                  {SITE_URL}
+                </a>
+              </b>
               <br />
               <RichText text={DEPLOY.status} />
               仓库里此前<strong>没有任何</strong> CI / Pages 配置（无 <code>.github/</code>、无 <code>.yml</code>、
