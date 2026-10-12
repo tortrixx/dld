@@ -90,7 +90,7 @@ STIM = [
     (S["S_PREVIEW"],   0, 0, 4,  0, WIN),   # PREV4：预览 · 第一关（DISP7 倒数到 4）
     (S["S_PREVIEW"],   1, 0, 5,  0, WIN),   # PREV5：预览 · 第二关
     (S["S_PLAYING"],   0, 0, 27, 0, WIN),   # PLAY27a：第一关对局 → DISP2 必须灭
-    (S["S_PLAYING"],   1, 0, 27, 0, WIN),   # PLAY27b：第二关对局 → DISP2='2'（B9）
+    (S["S_PLAYING"],   1, 0, 27, 0, WIN),   # PLAY27b：第二关对局 → 口径 C：DISP2 必须灭（B9 已于 2026-10-12 作废）
 ] + [(S["S_PLAYING"], 0, 0, t, 0, WIN) for t in LUT_T] + [
     (S["S_WIN"],       0, 0, 30, 0, WIN),   # 4 = S_WIN
     (S["S_FAIL"],      0, 0, 30, 0, WIN),   # 5 = S_FAIL

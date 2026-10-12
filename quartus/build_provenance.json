@@ -1,10 +1,10 @@
 {
-  "timestamp": "2026-10-12 18:42:49",
-  "git_head": "660ff468831e2ee3e81dcd832086a9a004bd67db",
+  "timestamp": "2026-10-12 19:55:09",
+  "git_head": "06686b6a66ce3a3e61e7ee207614b5646435bced",
   "git_dirty": true,
   "sources": {
     "rtl/board_test_top.vhd": "46eaf36f3120",
-    "rtl/buzzer_ctrl.vhd": "9ed62b192e1e",
+    "rtl/buzzer_ctrl.vhd": "4a1249e35757",
     "rtl/clk_gen.vhd": "5bf36f4212ed",
     "rtl/disp_format.vhd": "93fc935f1408",
     "rtl/dot_matrix_scan.vhd": "94ca336009d5",
@@ -39,12 +39,12 @@
     "rtl/seg_scan.vhd": "aa8642b3a503"
   },
   "pof": {
-    "mtime": "2026-10-12 18:42:35",
+    "mtime": "2026-10-12 19:54:53",
     "sha256": "cc3c69b3419f40a20eaf310eb3259d25ff342b56f3b0d52ab270a6ca7e41aea3",
     "bytes": 27312
   },
   "fit": {
-    "status": "Successful - Mon Oct 12 18:42:34 2026",
+    "status": "Successful - Mon Oct 12 19:54:52 2026",
     "le": "1,264 / 1,270 ( 100 % )",
     "lab": "127 / 127 ( 100 % )",
     "pins": "52 / 116 ( 45 % )"
