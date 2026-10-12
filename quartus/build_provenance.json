@@ -1,12 +1,12 @@
 {
-  "timestamp": "2026-10-11 13:46:19",
-  "git_head": "a5cbe8ba53388bcee22b132658f4bfed03bee965",
+  "timestamp": "2026-10-12 18:42:49",
+  "git_head": "660ff468831e2ee3e81dcd832086a9a004bd67db",
   "git_dirty": true,
   "sources": {
     "rtl/board_test_top.vhd": "46eaf36f3120",
-    "rtl/buzzer_ctrl.vhd": "678a817f99d6",
+    "rtl/buzzer_ctrl.vhd": "9ed62b192e1e",
     "rtl/clk_gen.vhd": "5bf36f4212ed",
-    "rtl/disp_format.vhd": "ce8126e59422",
+    "rtl/disp_format.vhd": "93fc935f1408",
     "rtl/dot_matrix_scan.vhd": "94ca336009d5",
     "rtl/game_fsm.vhd": "f3cae82326a2",
     "rtl/keypad_diag_top.vhd": "079408cd827e",
@@ -14,9 +14,9 @@
     "rtl/keypad_scan.vhd": "c4cbd4410516",
     "rtl/pattern_rom.vhd": "136dbc903f69",
     "rtl/piece_rom.vhd": "3ccd01f494de",
-    "rtl/puzzle_ctrl.vhd": "a1771094e927",
-    "rtl/puzzle_pkg.vhd": "218e4eaea6ff",
-    "rtl/puzzle_top.vhd": "bf318835ae44",
+    "rtl/puzzle_ctrl.vhd": "024d726a5074",
+    "rtl/puzzle_pkg.vhd": "dac1c09ffd80",
+    "rtl/puzzle_top.vhd": "6c2148c341c9",
     "rtl/rng_lfsr.vhd": "17e3ea9932c6",
     "rtl/seg_scan.vhd": "89ea0f1ec6f8"
   },
@@ -24,7 +24,7 @@
     "rtl/board_test_top.vhd": "8041d4dfc42f",
     "rtl/buzzer_ctrl.vhd": "b9a9da739302",
     "rtl/clk_gen.vhd": "f0244017372b",
-    "rtl/disp_format.vhd": "bf05d032bdfd",
+    "rtl/disp_format.vhd": "20d7d58bb8f7",
     "rtl/dot_matrix_scan.vhd": "4c5e119844ca",
     "rtl/game_fsm.vhd": "7fbaa620e52b",
     "rtl/keypad_diag_top.vhd": "b4aa6bdd1fac",
@@ -39,18 +39,18 @@
     "rtl/seg_scan.vhd": "aa8642b3a503"
   },
   "pof": {
-    "mtime": "2026-10-11 13:46:15",
-    "sha256": "ed5fdf006526d310634d14c1302f18c1141d784ed96d271eb0d7fbcb6a40d5a4",
+    "mtime": "2026-10-12 18:42:35",
+    "sha256": "cc3c69b3419f40a20eaf310eb3259d25ff342b56f3b0d52ab270a6ca7e41aea3",
     "bytes": 27312
   },
   "fit": {
-    "status": "Successful - Sun Oct 11 13:46:14 2026",
-    "le": "1,268 / 1,270 ( 100 % )",
+    "status": "Successful - Mon Oct 12 18:42:34 2026",
+    "le": "1,264 / 1,270 ( 100 % )",
     "lab": "127 / 127 ( 100 % )",
     "pins": "52 / 116 ( 45 % )"
   },
   "sta": {
-    "setup_slack": 1.599,
+    "setup_slack": 1.572,
     "hold_slack": 1.078
   }
 }
