@@ -7,10 +7,15 @@
     熄灭掩码（`o_blank`，'1' = 该位熄灭）。**纯组合**，没有时钟、没有寄存器。
 
     课程要求对应：B1 自检全 8；B2 待机 DISP7='5' / DISP0=关卡号；
-    B4 预览 DISP7 倒数；B5 游戏中 DISP4:DISP3 = 剩余秒数；B9 第二关 DISP3 旁显示 '2'。
+    B4 预览 DISP7 倒数；B5 游戏中 DISP4:DISP3 = 剩余秒数；B3 关卡号只由 DISP0 显示。
+
+    ⚠️ **口径 C（2026-10-12 用户裁决）**：题目要求 9（B9）"进入第二关，数码管
+    DISP2 显示 2" 与要求 3（B3）"游戏关数由数码管 DISP0 显示" 冲突，用户裁定
+    B9 为笔误、取 B3 —— **DISP2 全程熄灭**，第二关的关卡号只走 DISP0。
+    本 tb 断言 ⑥c 就是这条口径的全局钉子（除 B1 自检态外，每个窗口 DISP2 必须灭）。
 
 【判据的独立来源（不许自证）】
-    · 状态编码 / 关卡数 / 各状态该显示什么：来自课程要求 B1/B2/B4/B5/B9 的**文字描述**
+    · 状态编码 / 关卡数 / 各状态该显示什么：来自课程要求 B1/B2/B3/B4/B5 的**文字描述**
       与 `rtl/puzzle_pkg.vhd`（唯一真值源）里的 `S_*` 常量。tb 直接**读** pkg 取常量，
       不在 tb 里抄 "001"/"010" 这类字面量。
     · 倒计时的两位拆分：tb 用 `t // 10` 与 `t % 10` **独立算**，
@@ -37,7 +42,7 @@
     400~500    S_PREVIEW    t=4  level=1
     500~600    S_PREVIEW    t=5  level=2
     600~700    S_PLAYING    t=27 level=1
-    700~800    S_PLAYING    t=27 level=2
+    700~800    S_PLAYING    t=27 level=2（口径 C：DISP2 必须灭，与第一关同形）
     800~2400   S_PLAYING    level=1，t 依次取 16 个进位边界值（LUT 逐项验收）
     2400~2500  S_WIN
     2500~2600  S_FAIL
@@ -251,27 +256,48 @@ def check(vf):
         "o_data=%s o_blank=%s" % (_hex(d, 8), _hex(bl, 2)),
     ))
 
-    # ---- ⑥ B9 第二关游戏中：DISP2 额外显示 '2' ----
+    # ---- ⑥ 口径 C（2026-10-12 用户裁决）：第二关对局时 DISP2 **必须灭** ----
+    #     历史：2026-10-09 ~ 10-12 这里曾断言 DISP2 额外显示 '2'（严格照 B9 字面），
+    #     用户 2026-10-12 裁定 B9（"进入第二关 DISP2 显示 2"）与 B3（"关数由
+    #     DISP0 显示"）冲突、B9 属笔误，于是改成与第一关完全同形（o_blank=0xE6）。
     d, bl = _render(vf, T_OF[IDX["PLAY27b"]])
-    ok = (disp(d, 4) == 2 and disp(d, 3) == 7 and disp(d, 2) == 2 and disp(d, 0) == 2
-          and (bl >> 2) & 1 == 0 and bl & 1 == 0)
+    ok = (disp(d, 4) == 2 and disp(d, 3) == 7 and disp(d, 0) == 2 and bl == 0xE6)
     res.append((
-        "⑥ B9 游戏中(第二关, t=27) → DISP2 额外显示 '2' 并点亮，DISP0=关卡号 2（o_blank=0xE2）",
-        ok,
-        "o_data=%s o_blank=%s（DISP2=%s 应为 2）" % (_hex(d, 8), _hex(bl, 2), disp(d, 2)),
-    ))
-
-    # ---- ⑥b D2 第三关游戏中：DISP0='3'，而 DISP2 **熄灭**（B9 只规定了第二关）----
-    #     ⚠️ 这一条正是"用户上板问 DISP2 为什么亮 2"那个问题的边界钉：亮 2 的**只有**
-    #        第二关。口径是否要扩到"第三关也亮（显示 3）"待老师裁决，见 docs/06 §12。
-    d, bl = _render(vf, T_OF[IDX["PLAY27c"]])
-    ok = (disp(d, 4) == 2 and disp(d, 3) == 7 and disp(d, 0) == 3 and bl == 0xE6)
-    res.append((
-        "⑥b D2 游戏中(第三关, t=27) → DISP4:DISP3=27、DISP0=关卡号 3、**DISP2 熄灭**"
-        "（o_blank=0xE6，与第一关同形；B9 的 '2' 只属于第二关，第三关题目没规定 → 自拟为灭）",
+        "⑥ 口径 C 游戏中(第二关, t=27) → DISP4:DISP3=27、DISP0=关卡号 2、"
+        "**DISP2 熄灭**（o_blank=0xE6，与第一关同形；B9 已按用户裁决作废）",
         ok,
         "o_data=%s o_blank=%s（DISP2=%s，bit2 掩码=%d 应为 1=灭）"
         % (_hex(d, 8), _hex(bl, 2), disp(d, 2), (bl >> 2) & 1),
+    ))
+
+    # ---- ⑥b 第三关游戏中：DISP0='3'，DISP2 同样熄灭 ----
+    d, bl = _render(vf, T_OF[IDX["PLAY27c"]])
+    ok = (disp(d, 4) == 2 and disp(d, 3) == 7 and disp(d, 0) == 3 and bl == 0xE6)
+    res.append((
+        "⑥b 游戏中(第三关, t=27) → DISP4:DISP3=27、DISP0=关卡号 3、**DISP2 熄灭**"
+        "（o_blank=0xE6，与第一关同形）",
+        ok,
+        "o_data=%s o_blank=%s（DISP2=%s，bit2 掩码=%d 应为 1=灭）"
+        % (_hex(d, 8), _hex(bl, 2), disp(d, 2), (bl >> 2) & 1),
+    ))
+
+    # ---- ⑥c ⭐ 口径 C 的**全局钉子**：除 B1 自检态（明文要求八位全显 '8'）外，
+    #      每一个采样窗口的 DISP2 都必须熄灭。这一条把"只在第二关对局期不亮"
+    #      升级成"任何状态、任何关卡都不亮"，防止将来某次改动把它又带回来。----
+    bad = []
+    for name, i in sorted(IDX.items(), key=lambda kv: kv[1]):
+        if name.startswith("SELF"):
+            continue
+        _d, bl = _render(vf, T_OF[i])
+        if bl is None or ((bl >> 2) & 1) != 1:
+            bad.append("%s(o_blank=%s)" % (name, _hex(bl, 2)))
+    res.append((
+        "⑥c ⭐ 口径 C 全局：除自检态外，全部 %d 个窗口的 DISP2 恒为**熄灭**"
+        "（o_blank bit2 == 1；自检态豁免 —— B1 明文要求八位全显 '8'）"
+        % (len(IDX) - 2),
+        not bad,
+        "全部熄灭（%d 个窗口）" % (len(IDX) - 2) if not bad
+        else "以下窗口 DISP2 未熄灭：%s" % bad,
     ))
 
     # ---- ⑦ 倒计时 64 项查表的进位边界逐项验收（独立算 t//10、t%10）----
