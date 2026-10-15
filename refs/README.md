@@ -17,7 +17,7 @@
 
 | 项 | 内容 |
 | --- | --- |
-| 来源 | 课程组随课下发的课程文件。原始副本同时存在于 `C:\Users\sznnn\Desktop\dld-lab\` 与 `C:\Users\sznnn\Downloads\Google下载\` 两处且**逐字节一致**（修改时间 2026-09-17 17:03:52，见 §4.4）；本目录取自 `C:\Users\sznnn\Desktop\dld-lab\` 副本。 |
+| 来源 | 课程组随课下发的课程文件。原始副本同时存在于 `<本机用户目录>\Desktop\dld-lab\` 与 `<本机用户目录>\Downloads\Google下载\` 两处且**逐字节一致**（修改时间 2026-09-17 17:03:52，见 §4.4）；本目录取自 `<本机用户目录>\Desktop\dld-lab\` 副本。 |
 | 字节数 | 1 434 269 B |
 | sha256 | `e80ef999fe9c7ca5916a6fd5c2e535f8a4cfec0a3c22c221827d9a53b0d33c6e` |
 | 页数 | 15 页 |
@@ -28,7 +28,7 @@
 
 | 项 | 内容 |
 | --- | --- |
-| 来源 | 课程组随课下发的课程文件。原始副本同时存在于 `C:\Users\sznnn\Desktop\dld-lab\` 与 `C:\Users\sznnn\Downloads\Google下载\` 两处且**逐字节一致**（修改时间 2026-09-17 17:03:49，见 §4.4）；本目录取自 `C:\Users\sznnn\Desktop\dld-lab\` 副本。 |
+| 来源 | 课程组随课下发的课程文件。原始副本同时存在于 `<本机用户目录>\Desktop\dld-lab\` 与 `<本机用户目录>\Downloads\Google下载\` 两处且**逐字节一致**（修改时间 2026-09-17 17:03:49，见 §4.4）；本目录取自 `<本机用户目录>\Desktop\dld-lab\` 副本。 |
 | 字节数 | 163 401 B |
 | sha256 | `b06ec98b71edfbc4adce4266e5eb89cd0669b6f9e14c23a40f94ca27cabc7244` |
 | 页数 | 2 页 |
@@ -39,7 +39,7 @@
 
 | 项 | 内容 |
 | --- | --- |
-| 来源 | 课程组随课下发的实验平台手册。原始副本同时存在于 `C:\Users\sznnn\Desktop\dld-lab\` 与 `C:\Users\sznnn\Downloads\Google下载\` 两处且**逐字节一致**（修改时间 2026-09-17 17:11:23，见 §4.4）；本目录取自 `C:\Users\sznnn\Desktop\dld-lab\` 副本。文档内部创建时间为 2022-09-04（沿用旧版手册）。 |
+| 来源 | 课程组随课下发的实验平台手册。原始副本同时存在于 `<本机用户目录>\Desktop\dld-lab\` 与 `<本机用户目录>\Downloads\Google下载\` 两处且**逐字节一致**（修改时间 2026-09-17 17:11:23，见 §4.4）；本目录取自 `<本机用户目录>\Desktop\dld-lab\` 副本。文档内部创建时间为 2022-09-04（沿用旧版手册）。 |
 | 字节数 | 1 838 733 B |
 | sha256 | `97b3f9eee974b915825a4b34cefb1bea02a3d533c4733d128c277b8338ccab84` |
 | 页数 | 13 页 |
@@ -50,7 +50,7 @@
 
 | 项 | 内容 |
 | --- | --- |
-| 来源 | **教师授课讲义**，原始副本位于 `C:\Users\sznnn\Downloads\Google下载\数字系统设计2026.pdf`（PDF 元数据创建时间 2026-09-16 23:18，`/Creator` = WPS 演示）。据内容判定为课程第 3 周讲授环节的讲义：其课程安排（第 3~10 周）、成绩评定（20%／50%／30%）与报告 8 项评分表与 §1.2《课程说明》完全一致。 |
+| 来源 | **教师授课讲义**，原始副本位于 `<本机用户目录>\Downloads\Google下载\数字系统设计2026.pdf`（PDF 元数据创建时间 2026-09-16 23:18，`/Creator` = WPS 演示）。据内容判定为课程第 3 周讲授环节的讲义：其课程安排（第 3~10 周）、成绩评定（20%／50%／30%）与报告 8 项评分表与 §1.2《课程说明》完全一致。 |
 | 字节数 | 2 890 156 B |
 | sha256 | `15bc70166cb91317d348c7393885ab58d9ded27f6e3f644bdaafe6f84b687777` |
 | 页数 | 65 页 |
@@ -98,20 +98,20 @@
 | `2026秋数字电路与逻辑设计实验（下）课程说明.pdf` | 1 119 | 否 | 否（元数据 `/Author` 为通用值 `User`） | 入库 |
 | `MAXII数字实验板（LCM12864液晶版）.pdf` | 4 509 | 否 | 否（元数据 `/Author` 为通用值 `User`） | 入库 |
 | `数字系统设计2026.pdf` | 13 455 | 否 | 正文首页含教师姓名与办公地点（已披露） | 入库 |
-| `C:\Users\sznnn\Desktop\dld-lab\report\初步设计方案.pdf` | 18 129 | 否（未检出姓名／学号） | 否 | 不入库（见 §4.1） |
-| `C:\Users\sznnn\Desktop\dld-lab\report\初步设计方案.docx` | —（docx 正文 + `docProps`） | 否 | 否（`dc:creator` 为 `python-docx`） | 不入库（见 §4.1） |
-| `C:\Users\sznnn\Desktop\dld-lab\report\封面方案对比.pdf` | 580 | 否 | 否 | 不入库（见 §4.1） |
-| `C:\Users\sznnn\Desktop\Keil\2026电子工艺实习课程要求及安排.pdf` | 1 414 | 否（仅出现**班级号**与示例"张三"） | 课程 QQ 群号／群密码 | 不入库（见 §4.2） |
-| `C:\Users\sznnn\Desktop\Keil\电子工艺实习教程_2026.pdf` | 16 348 | 否 | 否 | 不入库（见 §4.2） |
-| `C:\Users\sznnn\Documents\高频电子线路实验@学生\…`（2 份） | 未逐份抽文本 | 未发现与本课程相关者 | — | 不入库（见 §4.2） |
-| `C:\Users\sznnn\Documents\电子电路测量与设计实验.pdf` | 257 819 | 否 | 出版社联系方式（公开版权页信息） | 不入库（见 §4.3） |
+| `<本机用户目录>\Desktop\dld-lab\report\初步设计方案.pdf` | 18 129 | 否（未检出姓名／学号） | 否 | 不入库（见 §4.1） |
+| `<本机用户目录>\Desktop\dld-lab\report\初步设计方案.docx` | —（docx 正文 + `docProps`） | 否 | 否（`dc:creator` 为 `python-docx`） | 不入库（见 §4.1） |
+| `<本机用户目录>\Desktop\dld-lab\report\封面方案对比.pdf` | 580 | 否 | 否 | 不入库（见 §4.1） |
+| `<本机用户目录>\Desktop\Keil\2026电子工艺实习课程要求及安排.pdf` | 1 414 | 否（仅出现**班级号**与示例"张三"） | 课程 QQ 群号／群密码 | 不入库（见 §4.2） |
+| `<本机用户目录>\Desktop\Keil\电子工艺实习教程_2026.pdf` | 16 348 | 否 | 否 | 不入库（见 §4.2） |
+| `<本机用户目录>\Documents\高频电子线路实验@学生\…`（2 份） | 未逐份抽文本 | 未发现与本课程相关者 | — | 不入库（见 §4.2） |
+| `<本机用户目录>\Documents\电子电路测量与设计实验.pdf` | 257 819 | 否 | 出版社联系方式（公开版权页信息） | 不入库（见 §4.3） |
 | 其余与本课程无关的 PDF（共 106 份） | 未逐份抽文本 | 未发现与本课程相关者 | — | 不入库（见 §4.5） |
 
 ---
 
 ## 4. 未被收录的候选及原因
 
-全盘检索范围：`C:\Users\sznnn\Desktop`、`C:\Users\sznnn\Downloads`、`C:\Users\sznnn\Documents`、`C:\Users\sznnn\OneDrive`
+全盘检索范围：`<本机用户目录>\Desktop`、`<本机用户目录>\Downloads`、`<本机用户目录>\Documents`、`<本机用户目录>\OneDrive`
 （本机仅 `C:` 一个盘符），共发现**本仓库之外**的 PDF **121 份**，其归属如下（互不重叠，合计 121）：
 
 | 归属 | 份数 | 说明 |
@@ -130,25 +130,25 @@
 
 | 路径 | 字节数 | sha256 | 原因 |
 | --- | --- | --- | --- |
-| `C:\Users\sznnn\Desktop\dld-lab\report\初步设计方案.pdf` | 1 623 387 | `cdb107c706e37342ad44896cb61c9c5065fbae680392e3dc5fdcbd647e82da24` | 用户本人**待提交**的初步设计报告草稿，属作业产出而非课程组资料；虽经逐页抽文本检查**未检出姓名／学号等个人信息**（封面只有课程名、题目号与日期），但为避免公开尚未提交／未定稿的个人作业，默认不入库。 |
-| `C:\Users\sznnn\Desktop\初步设计方案\初步设计方案.pdf` | 1 623 387 | `cdb107c706e37342ad44896cb61c9c5065fbae680392e3dc5fdcbd647e82da24` | 与上一行**完全同一文件**（sha256 一致，仅目录不同）的重复副本，同样不入库。 |
-| `C:\Users\sznnn\Desktop\dld-lab\report\封面方案对比.pdf` | 37 077 | `9a72713d9eea743797c574953e5304b3e1e9d136fff27be898d4e5ebfef4bc68` | 上述报告的**封面版式对比稿**（5 页仅 5 种封面样式，共 580 字符），属个人作业产出且无独立资料价值。 |
-| `C:\Users\sznnn\Desktop\dld-lab\report\初步设计方案.docx` | 1 417 772 | —（非 PDF，未列入 121 份统计） | 同上报告的 docx 源文件。已解包检查 `docProps/core.xml`：`dc:creator` 为 `python-docx`、`dc:description` 为 `generated by python-docx`，**无姓名**；正文亦未检出姓名／学号。仍因"个人作业产出"不入库。 |
+| `<本机用户目录>\Desktop\dld-lab\report\初步设计方案.pdf` | 1 623 387 | `cdb107c706e37342ad44896cb61c9c5065fbae680392e3dc5fdcbd647e82da24` | 用户本人**待提交**的初步设计报告草稿，属作业产出而非课程组资料；虽经逐页抽文本检查**未检出姓名／学号等个人信息**（封面只有课程名、题目号与日期），但为避免公开尚未提交／未定稿的个人作业，默认不入库。 |
+| `<本机用户目录>\Desktop\初步设计方案\初步设计方案.pdf` | 1 623 387 | `cdb107c706e37342ad44896cb61c9c5065fbae680392e3dc5fdcbd647e82da24` | 与上一行**完全同一文件**（sha256 一致，仅目录不同）的重复副本，同样不入库。 |
+| `<本机用户目录>\Desktop\dld-lab\report\封面方案对比.pdf` | 37 077 | `9a72713d9eea743797c574953e5304b3e1e9d136fff27be898d4e5ebfef4bc68` | 上述报告的**封面版式对比稿**（5 页仅 5 种封面样式，共 580 字符），属个人作业产出且无独立资料价值。 |
+| `<本机用户目录>\Desktop\dld-lab\report\初步设计方案.docx` | 1 417 772 | —（非 PDF，未列入 121 份统计） | 同上报告的 docx 源文件。已解包检查 `docProps/core.xml`：`dc:creator` 为 `python-docx`、`dc:description` 为 `generated by python-docx`，**无姓名**；正文亦未检出姓名／学号。仍因"个人作业产出"不入库。 |
 
 ### 4.2 其它课程的课程资料（4 份）—— 不入库
 
 | 路径 | 字节数 | sha256 | 原因 |
 | --- | --- | --- | --- |
-| `C:\Users\sznnn\Desktop\Keil\2026电子工艺实习课程要求及安排.pdf` | 636 228 | `07998870a30f120ea90cafb1ac9f59a5772fc145b3725b6838a80264c08723d2` | 属**《电子工艺实习》**（另一门课，单片机／Keil／智能四轮车），与本课程（CPLD／MAX II／Quartus）无关。另含课程 QQ 群号与入群密码，不宜公开。 |
-| `C:\Users\sznnn\Desktop\Keil\电子工艺实习教程_2026.pdf` | 6 007 311 | `4b64373f64700f5124127441ed2b551e823c95fe8b68d01cb733acd2b8b24e8f` | 同上，属《电子工艺实习》教程，与本课程无关。 |
-| `C:\Users\sznnn\Documents\高频电子线路实验@学生\高频电子线路实验@学生\2025-2026学年第二学期高频电子线路实验教学安排-电子院.pdf` | 131 276 | — | 属**《高频电子线路实验》**（另一门课），与本课程无关。 |
-| `C:\Users\sznnn\Documents\高频电子线路实验@学生\高频电子线路实验@学生\2026年春季学期高频电子线路实验指导书-电子院学生用书.pdf` | 1 571 813 | — | 同上。 |
+| `<本机用户目录>\Desktop\Keil\2026电子工艺实习课程要求及安排.pdf` | 636 228 | `07998870a30f120ea90cafb1ac9f59a5772fc145b3725b6838a80264c08723d2` | 属**《电子工艺实习》**（另一门课，单片机／Keil／智能四轮车），与本课程（CPLD／MAX II／Quartus）无关。另含课程 QQ 群号与入群密码，不宜公开。 |
+| `<本机用户目录>\Desktop\Keil\电子工艺实习教程_2026.pdf` | 6 007 311 | `4b64373f64700f5124127441ed2b551e823c95fe8b68d01cb733acd2b8b24e8f` | 同上，属《电子工艺实习》教程，与本课程无关。 |
+| `<本机用户目录>\Documents\高频电子线路实验@学生\高频电子线路实验@学生\2025-2026学年第二学期高频电子线路实验教学安排-电子院.pdf` | 131 276 | — | 属**《高频电子线路实验》**（另一门课），与本课程无关。 |
+| `<本机用户目录>\Documents\高频电子线路实验@学生\高频电子线路实验@学生\2026年春季学期高频电子线路实验指导书-电子院学生用书.pdf` | 1 571 813 | — | 同上。 |
 
 ### 4.3 出版社正式出版物（1 份）—— 不入库
 
 | 路径 | 字节数 | sha256 | 原因 |
 | --- | --- | --- | --- |
-| `C:\Users\sznnn\Documents\电子电路测量与设计实验.pdf` | 46 993 781 | `acc9ad57f02072bc86d51fafdf37a1eafbd1d0aa84bd339dee3feb4d74bccf70` | 北京邮电大学出版社正式出版教材《电子电路测量与设计实验（第 2 版）》（ISBN 978-7-5635-6187-2），属**商业出版物**，非课程组随课下发的资料，且与本课程无关；47 MB 亦不适合入库。 |
+| `<本机用户目录>\Documents\电子电路测量与设计实验.pdf` | 46 993 781 | `acc9ad57f02072bc86d51fafdf37a1eafbd1d0aa84bd339dee3feb4d74bccf70` | 北京邮电大学出版社正式出版教材《电子电路测量与设计实验（第 2 版）》（ISBN 978-7-5635-6187-2），属**商业出版物**，非课程组随课下发的资料，且与本课程无关；47 MB 亦不适合入库。 |
 
 ### 4.4 同一文件的重复副本（3 份）—— 不入库
 
@@ -156,11 +156,11 @@
 
 | 路径 | 与入库件的 sha256 |
 | --- | --- |
-| `C:\Users\sznnn\Downloads\Google下载\2026秋季学期数字电路与逻辑设计实验（下）实验题目.pdf` | `e80ef999…3c6e`（与入库件 §1.1 相同） |
-| `C:\Users\sznnn\Downloads\Google下载\2026秋数字电路与逻辑设计实验（下）课程说明.pdf` | `b06ec98b…c7244`（与入库件 §1.2 相同） |
-| `C:\Users\sznnn\Downloads\Google下载\MAXII数字实验板（LCM12864液晶版）.pdf` | `97b3f9ee…ab84`（与入库件 §1.3 相同） |
+| `<本机用户目录>\Downloads\Google下载\2026秋季学期数字电路与逻辑设计实验（下）实验题目.pdf` | `e80ef999…3c6e`（与入库件 §1.1 相同） |
+| `<本机用户目录>\Downloads\Google下载\2026秋数字电路与逻辑设计实验（下）课程说明.pdf` | `b06ec98b…c7244`（与入库件 §1.2 相同） |
+| `<本机用户目录>\Downloads\Google下载\MAXII数字实验板（LCM12864液晶版）.pdf` | `97b3f9ee…ab84`（与入库件 §1.3 相同） |
 
-> 注：`C:\Users\sznnn\Downloads\Google下载\` 与 `C:\Users\sznnn\Desktop\dld-lab\` 中的三份课程 PDF 修改时间逐字节一致
+> 注：`<本机用户目录>\Downloads\Google下载\` 与 `<本机用户目录>\Desktop\dld-lab\` 中的三份课程 PDF 修改时间逐字节一致
 > （实验题目 2026-09-17 17:03:52、课程说明 2026-09-17 17:03:49、MAXII 手册 2026-09-17 17:11:23），
 > 属同一次下发产生的两份拷贝。
 
@@ -170,12 +170,12 @@
 
 | 所在目录／类别 | 份数 | 内容与原因 |
 | --- | --- | --- |
-| `C:\Users\sznnn\Documents\xwechat_files\` | 86 | 微信接收文件：全国大学生电子设计竞赛（NUEDC）历年题目与获奖报告、电赛控制类猜题、元器件与材料清单、北斗定位解算实验、高频电子线路实验、MSPM0／K230／C2000 等器件手册、培养方案、班会与社会实践通知等 —— 均属其它课程或竞赛，与本课程无关。 |
-| `C:\Users\sznnn\Downloads\Google下载\` | 9 | 电赛相关文档（`control-chain.pdf`、`software-flow.pdf`、`system-block.pdf`、`vision-chain.pdf`、`nuedc_latex_overleaf_2026.pdf`、`template.pdf`）与 TI 器件手册 `slvuda3.pdf`，以及 AI 书样例文档 `sample_financial_report_q1_2024.pdf`／`simple_expense_report.pdf`。 |
-| `C:\Users\sznnn\Documents\电赛报告模板\` | 6 | 电赛 LaTeX 报告模板的编译产物与历史预览稿（`output\pdf\`、`tmp\` 下共 6 份）。 |
-| `C:\Users\sznnn\Downloads\电赛分享\电赛分享\` | 2 | 电赛经验分享与器件手册。 |
-| `C:\Users\sznnn\Downloads\` | 2 | `2026年北京市大学生电子设计竞赛测评手册(1).pdf`、`B25708_s.pdf`。 |
-| `C:\Users\sznnn\Desktop\code\Python\.conda\Library\share\doc\zlib\zlib\crc-doc.1.0.pdf` | 1 | 第三方软件（zlib）文档。 |
+| `<本机用户目录>\Documents\xwechat_files\` | 86 | 微信接收文件：全国大学生电子设计竞赛（NUEDC）历年题目与获奖报告、电赛控制类猜题、元器件与材料清单、北斗定位解算实验、高频电子线路实验、MSPM0／K230／C2000 等器件手册、培养方案、班会与社会实践通知等 —— 均属其它课程或竞赛，与本课程无关。 |
+| `<本机用户目录>\Downloads\Google下载\` | 9 | 电赛相关文档（`control-chain.pdf`、`software-flow.pdf`、`system-block.pdf`、`vision-chain.pdf`、`nuedc_latex_overleaf_2026.pdf`、`template.pdf`）与 TI 器件手册 `slvuda3.pdf`，以及 AI 书样例文档 `sample_financial_report_q1_2024.pdf`／`simple_expense_report.pdf`。 |
+| `<本机用户目录>\Documents\电赛报告模板\` | 6 | 电赛 LaTeX 报告模板的编译产物与历史预览稿（`output\pdf\`、`tmp\` 下共 6 份）。 |
+| `<本机用户目录>\Downloads\电赛分享\电赛分享\` | 2 | 电赛经验分享与器件手册。 |
+| `<本机用户目录>\Downloads\` | 2 | `2026年北京市大学生电子设计竞赛测评手册(1).pdf`、`B25708_s.pdf`。 |
+| `<本机用户目录>\Desktop\code\Python\.conda\Library\share\doc\zlib\zlib\crc-doc.1.0.pdf` | 1 | 第三方软件（zlib）文档。 |
 | **合计** | **106** | |
 
 ---
