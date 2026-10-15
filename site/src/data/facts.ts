@@ -294,7 +294,7 @@ export const MODULES: readonly ModuleRow[] = [
     consumes: '散落/选择/移动/确认/旋转命令、零片形状与包围盒、目标图案、随机数、行渲染节拍',
     produces: '64 位红/绿帧、锚点、朝向、锁定标志、solved / all_lock / busy',
     mechanism:
-      '**行扫描渲染器**：不存 64 位占位，每拍只算一行，把组合路径压到 8 位（ph 相位机 + srl8 移位）。配色 redrow := cov and (not sl)、grnrow := kc or sl。重叠检查串行化（一拍比一个邻块）。面积 861 LC —— 全设计最大的一块',
+      '**行扫描渲染器**：不存 64 位占位，每拍只算一行，把组合路径压到 8 位（ph 相位机 + srl8 移位）。配色 redrow := cov and (not sl)、grnrow := kc or sl。重叠检查串行化（一拍比一个邻块）。⭐ **面积 861 LC 是"全设计最大的一块"这一层级的当轮快照**（来源：本机 `quartus/output_files/puzzle.map.rpt` 的层次面积表 —— **构建产物，未入库**，克隆下来不存在，故不作为可点的出处；当前整机读数见 `quartus/build_provenance.json` / `docs/05`，逐模块层次面积在 `docs/05` §1.1/§1.3 里只有部分模块的部分阶段）',
     tier: 'core',
   },
   {
@@ -367,7 +367,7 @@ export const DIAG_TOPS: readonly { entity: string; file: string; when: string; w
     entity: 'board_test_top',
     file: 'rtl/board_test_top.vhd',
     when: '上板第一步：烧进去先确认引脚级假设（位序 / 极性 / 键盘 / 时钟档位）',
-    what: '只实例化 clk_gen / keypad_scan / dot_matrix_scan / seg_scan；自带 1 kHz 蜂鸣器方波；测试序号每 3 s 自动前进、BTN0 边沿冻结（RTL 的 test_idx 是 0..13 回绕；其中 0~9 有定义）',
+    what: '只实例化 clk_gen / keypad_scan / dot_matrix_scan / seg_scan；自带 1 kHz 蜂鸣器方波；测试序号每 3 s 自动前进、BTN0 短按冻结（RTL 的 `test_idx` 是 **4 位：15→0 回绕，共 16 槽**；其中 **0~10 有定义** —— 第 26 工作阶段新增测试 10「CAT」：8 位数码管各显示自己的位号，读出位选顺序）',
   },
   {
     entity: 'keypad_diag_top',
@@ -570,7 +570,7 @@ export const LIMITATIONS: readonly Limitation[] = [
     title: '引擎内容更新率是 25 / 21 Hz（扫描是 125 Hz）',
     detail:
       '显示**扫描**已经是 125 Hz（点阵 8 行 = 8 ms；数码管每拍一位、1 ms/位，8 位一轮 = 8 ms ⇒ 125 Hz/位）。引擎 `puzzle_ctrl.i_tick` 接 **t_1k（1 kHz）**，但一行要渲染 `npc+2` 拍（第一关 5 拍、二三关 6 拍）⇒ 一帧 40 / 48 拍 = **40 / 48 ms**，即内容刷新 25 / 21 Hz。所以移动零片后，画面逐行重建、最多约 40 / 48 ms 后完全更新（观感上是轻微"滚过"）。**把这 40/48 ms 再压下去要再加流水线，而收益只是"更快一点点"、面积却已到顶** —— 这是面积与观感的取舍，不是缺陷。（⚠️ 早先这里写过"消除要 +76 LE"：那是第 11 工作阶段的受控实验数字，`docs/02` 已明确标注**结论已被取代**，不应当作现状引用。）',
-    source: 'docs/02-模块详细设计.md:237-248 · rtl/puzzle_top.vhd:520',
+    source: 'docs/02-模块详细设计.md:237-248 · rtl/puzzle_top.vhd:526',
   },
   {
     title: '没有重叠检查的极端散落分支（ERR-018b，未修）',

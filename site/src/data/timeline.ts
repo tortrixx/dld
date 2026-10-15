@@ -8,7 +8,7 @@
  *   ④ 旋转的几何：为什么"盒内转 + 补锚点偏移"是等价的，以及拒绝的条件
  *
  * ⚠️ 这里**不能凭印象写**。核实过的一处反例：早先文档/摘要里流传"引擎 i_tick 接 tick_200、
- *    所以内容刷新是 25/21 Hz"—— 源码里是 `u_puzzle.i_tick => t_1k`（rtl/puzzle_top.vhd:520），
+ *    所以内容刷新是 25/21 Hz"—— 源码里是 `u_puzzle.i_tick => t_1k`（rtl/puzzle_top.vhd:526），
  *    25/21 Hz 的真正来源是"一行 npc+2 拍 × 8 行 = 40/48 拍（每拍 1 ms）"（docs/02:240-248）。
  *    所以下面写的是 1 kHz + 40/48 拍，不是"接在 200 Hz 上"。
  */
@@ -96,7 +96,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '第 1 级：50 MHz → 1 kHz',
         detail:
           'CNT_1K = CLK_HZ/1000 − 1 = 49 999。这是整条链里**唯一**面对 50 MHz 的计数器，后面所有级都只数上一级来的脉冲。',
-        cite: 'rtl/puzzle_pkg.vhd:388 · rtl/clk_gen.vhd:124',
+        cite: 'rtl/puzzle_pkg.vhd:397 · rtl/clk_gen.vhd:134',
         active: [1, 2],
         busyLinks: [0, 1],
         holdMs: 1000,
@@ -107,7 +107,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '第 2/3 级：键盘与中间时基',
         detail:
           't_1k ÷5 ⇒ t_200（5 ms，键盘扫描用它）；t_200 二分频 ⇒ t_100（10 ms，顶层没有读者，保留在链里）。',
-        cite: 'rtl/puzzle_pkg.vhd:393',
+        cite: 'rtl/puzzle_pkg.vhd:400',
         active: [3],
         busyLinks: [2],
         holdMs: 1000,
@@ -118,7 +118,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '第 4/5 级：闪烁与秒',
         detail:
           't_100 ÷25 ⇒ t_4hz（250 ms）：自检整屏闪、告急幽灵、结算"先闪后常亮"、以及蜂鸣器换步都借它；t_4hz ÷4 ⇒ t_1hz（1 s），倒计时每秒减 1。',
-        cite: 'rtl/clk_gen.vhd:149 · docs/02-模块详细设计.md:117',
+        cite: 'rtl/clk_gen.vhd:169 · docs/02-模块详细设计.md:117',
         active: [4],
         busyLinks: [3],
         holdMs: 1000,
@@ -129,7 +129,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '行推进：8 行 = 8 ms ⇒ 125 Hz',
         detail:
           '顶层的 mrow 每 t_1k 推进一行，8 行走完一屏 ⇒ 帧扫描 125 Hz、占空比 1/8。数码管位选（seg_scan.i_tick）也走 t_1k ⇒ 每位同样 125 Hz。',
-        cite: 'rtl/puzzle_top.vhd:367 · docs/02-模块详细设计.md:237',
+        cite: 'rtl/puzzle_top.vhd:373 · docs/02-模块详细设计.md:237',
         active: [5],
         busyLinks: [4],
         holdMs: 1200,
@@ -140,7 +140,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '引擎同源同速（不是"接在 200 Hz 上"）',
         detail:
           'puzzle_ctrl.i_tick 也接 t_1k，所以它与点阵扫描**同源同速**；一行的渲染要 npc+2 拍（第一关 5 拍、二三关 6 拍），一帧 8 行 ⇒ 40 / 48 拍 = 40 / 48 ms，即内容刷新 25 / 21 Hz。',
-        cite: 'rtl/puzzle_top.vhd:520 · docs/02-模块详细设计.md:240',
+        cite: 'rtl/puzzle_top.vhd:526 · docs/02-模块详细设计.md:240',
         active: [2, 5],
         busyLinks: [1, 4],
         holdMs: 1400,
@@ -194,7 +194,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: 't = 0：触点闭合（带抖动）',
         detail:
           '廉价矩阵键盘的接触抖动典型是几毫秒量级，所以"按下一次"在电气上是一串毛刺，不能直接当按键用。',
-        cite: 'rtl/puzzle_pkg.vhd:487',
+        cite: 'rtl/puzzle_pkg.vhd:481',
         active: [0],
         holdMs: 800,
         clock: '0 ms',
@@ -204,7 +204,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '四相扫描：每 10 ms 才采一个样',
         detail:
           '扫描状态机走 ALL_HIGH（等 1 个 t_200）→ ALL_LOW（**再等 1 个**）→ SETTLE(64 拍) → RELEASE（相 0 一拍 + 相 1/2/3 各 64 拍）。两个等待相各吃一个 200 Hz 周期 ⇒ **一轮 = 2 × 5 ms = 10 ms**，不是 5 ms。',
-        cite: 'rtl/keypad_scan.vhd:72 · rtl/puzzle_pkg.vhd:465',
+        cite: 'rtl/keypad_scan.vhd:72 · rtl/puzzle_pkg.vhd:481',
         active: [1],
         busyLinks: [0, 1],
         holdMs: 1100,
@@ -215,7 +215,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '消抖：4 轮 = 40 ms',
         detail:
           'DEBOUNCE_MAX = 3 ⇒ 需要 **4 个连续一致**的干净采样（样与样相隔 10 ms）才改 stable。按下→接受 = 4 轮 = 40 ms（改之前是 16 轮 = **160 ms**，用户上板反馈"防抖时间有点长"）。',
-        cite: 'rtl/puzzle_pkg.vhd:477 · docs/06-硬件调试记录.md（ERR-031）',
+        cite: 'rtl/puzzle_pkg.vhd:503 · docs/06-硬件调试记录.md（ERR-031）',
         active: [2],
         busyLinks: [1],
         holdMs: 1300,
@@ -226,7 +226,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: 'o_press：一个时钟宽的单拍脉冲',
         detail:
           '接受条件 = stable ≠ K_NONE 且 stable ≠ key_r，所以"按住"只发一次，"换键"当新按下。实测按下→o_press 约 45 ms（脉冲判定还读同拍旧值、再加按键落点相对扫描相位的 ≤10 ms 抖动）。',
-        cite: 'rtl/keypad_scan.vhd:305 · sim/rounds/keypad_scan/r24.md 断言 ⑨',
+        cite: 'rtl/keypad_scan.vhd:286 · sim/rounds/keypad_scan/r24.md 断言 ⑨',
         active: [3],
         busyLinks: [2],
         holdMs: 1100,
@@ -237,7 +237,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: 'game_fsm 译码：原始键号 → 游戏键',
         detail:
           '扫描器只报"4×行＋列"的原始键号，游戏含义由 key_of() 一个函数决定（【开始】=1/KEY14、【选择】=3/KEY16、十字=10/2/5/7、中心=6、旋转=11）。',
-        cite: 'rtl/game_fsm.vhd:139',
+        cite: 'rtl/game_fsm.vhd:143',
         active: [4],
         busyLinks: [3],
         holdMs: 1000,
@@ -248,7 +248,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '命令与方向必须同拍锁存（ERR-020 的教训）',
         detail:
           '方向脉冲与移动请求都只有**一个时钟宽（20 ns）**。当初把方向锁存放在引擎流水的第二级，第 T+1 拍采方向时脉冲已经撤销 ⇒ mv_dir 恒为 0、四个方向键全部失效，而上板"看起来没事"。修法：搬进 i_move = \'1\' 那一拍。',
-        cite: 'docs/06-硬件调试记录.md（ERR-020）· rtl/game_fsm.vhd:391',
+        cite: 'docs/06-硬件调试记录.md（ERR-020）· rtl/game_fsm.vhd:433',
         active: [5],
         busyLinks: [4],
         holdMs: 1300,
@@ -259,7 +259,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '引擎三级流水：夹紧 → 边界 → 重叠',
         detail:
           '先把锚点夹紧到 0..7，再查"旋转后包围盒装得下"，最后跑**串行**重叠引擎（一拍比一个邻块，省逻辑）。任何一级不过就整个请求作废 —— 位置不变，而且硬件上**没有提示音**（+5 LE 装不下，已回退）。',
-        cite: 'rtl/puzzle_ctrl.vhd:801 · rtl/puzzle_ctrl.vhd:850',
+        cite: 'rtl/puzzle_ctrl.vhd:823 · rtl/puzzle_ctrl.vhd:850',
         active: [6],
         busyLinks: [5],
         holdMs: 1300,
@@ -310,7 +310,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '上电复位：约 9 ms',
         detail:
           'por_cnt 数 tick_1k 到 CNT_POR = T_POR_MS − 1 = 9 就释放（注释记 10 ms、实测 9 个刻度，功能无差别，注释已更正）。按键复位另走 20 ms 消抖。o_rst = 上电 or 按键。',
-        cite: 'rtl/puzzle_pkg.vhd:413 · rtl/clk_gen.vhd:236',
+        cite: 'rtl/puzzle_pkg.vhd:427 · rtl/clk_gen.vhd:239',
         active: [0],
         holdMs: 900,
         clock: '≈9 ms',
@@ -320,7 +320,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: 'B1 自检：整屏黄 + 2 Hz，数码管 8 位全 "8"',
         detail:
           '窗口数 **8 个 t_4hz**。这是 ERR-051 的修法：旧实现数 2 个 tick_1hz，SW7 关→开重入时只走 1 s（B2 明文要求 2 s）；改数 4 Hz 之后窗口恒为 8 个旋律步，恰好含一个发声步。',
-        cite: 'rtl/puzzle_pkg.vhd:423 · rtl/puzzle_pkg.vhd:442',
+        cite: 'rtl/puzzle_pkg.vhd:458 · rtl/puzzle_pkg.vhd:440',
         active: [0],
         holdMs: 1300,
         clock: '2 s（复位路径）',
@@ -329,7 +329,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
       {
         title: 'B2 待机：点阵全灭、DISP7=5、DISP0=1',
         detail: '其余数码管位全部消隐。此时点阵不画引擎帧 —— 零片还没散落，否则会全堆在锚点 (0,0) 上。',
-        cite: 'rtl/puzzle_top.vhd:731 · rtl/disp_format.vhd:117',
+        cite: 'rtl/puzzle_top.vhd:739 · rtl/disp_format.vhd:123',
         active: [1],
         holdMs: 1000,
         clock: '不定长',
@@ -339,7 +339,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: 'B4/B10 预览：5 秒，DISP7 倒数',
         detail:
           '点阵直接画**目标图案常量**（引擎不参与），DISP7 从 5 倒数到 1；DISP0 显示当前关数。第一关恒为图 4-1；第二关恒为阶梯形；第三关从四幅库里随机选。',
-        cite: 'rtl/puzzle_pkg.vhd:443 · rtl/puzzle_top.vhd:617',
+        cite: 'rtl/puzzle_pkg.vhd:240 · rtl/puzzle_top.vhd:623 · rtl/disp_format.vhd:132',
         active: [2],
         busyLinks: [1],
         holdMs: 1500,
@@ -350,7 +350,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '散落：请求/应答握手（不是单拍脉冲）',
         detail:
           '进入对局时 req_go 置起并**保持**，直到引擎报告 o_busy；go_done 保证一局只请求一次（没有它会不断反复散落、按键全部失效）。散落用拒绝采样，候选锚点范围 ch = 9 − hh、cw = 9 − ww。',
-        cite: 'rtl/game_fsm.vhd:404 · rtl/puzzle_ctrl.vhd:897',
+        cite: 'rtl/game_fsm.vhd:416 · rtl/puzzle_ctrl.vhd:897',
         active: [3],
         busyLinks: [2],
         holdMs: 1400,
@@ -361,7 +361,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '对局：限时 30 / 40 / 60 s',
         detail:
           'DISP4:DISP3 显示两位倒计时。第一关 30 s（B5 明文）、第二关 40 s（B10 明文）、第三关 60 s（A2 扩展关，自拟）。倒计时由 t_1hz 递减。',
-        cite: 'rtl/puzzle_pkg.vhd:444 · rtl/puzzle_pkg.vhd:458',
+        cite: 'rtl/puzzle_pkg.vhd:460 · rtl/puzzle_pkg.vhd:474',
         active: [3],
         holdMs: 1300,
         clock: '30 / 40 / 60 s',
@@ -371,7 +371,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '告急幽灵：≤10 s 才出现（绿 + 2 Hz 闪）',
         detail:
           '倒计时 ≤10 s 时把目标图案里**还空着**的格子用绿列 2 Hz 闪出来（借 game_fsm 自由走的 gblink，不新增计数器，代价 0 LE）。为什么不是别的颜色：双色点阵每点只有 灭/红/绿/黄 四态，而对局中三种点亮态已经被零片占满。',
-        cite: 'rtl/puzzle_top.vhd:646 · docs/06-硬件调试记录.md（ERR-056）',
+        cite: 'rtl/puzzle_top.vhd:653 · docs/06-硬件调试记录.md（ERR-056）',
         active: [3],
         holdMs: 1400,
         clock: 't ≤ 10 s',
@@ -392,7 +392,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '结算画面：先闪 1 s 再常亮',
         detail:
           '胜利 = 绿色粗对勾（只点绿列）、失败 = 红色叉（只点红列），交通灯配色；数码管 DISP7..4 显示 PASS / FAIL。闪烁数 t_4hz 的 4 个半周期 = 1 s 后转常亮 —— 一直闪不利于远距离判读。',
-        cite: 'rtl/puzzle_top.vhd:664 · rtl/puzzle_top.vhd:742',
+        cite: 'rtl/puzzle_top.vhd:725 · rtl/puzzle_top.vhd:663',
         active: [4, 5],
         holdMs: 1500,
         clock: '1 s 闪 + 常亮',
@@ -433,7 +433,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '一次按键 = ori + 1（顺时针 90°）',
         detail:
           '每块零片一个 2 位朝向，4 次回到原样。语义是**原地顺时针 90°**：只改朝向、不动锚点。',
-        cite: 'rtl/puzzle_pkg.vhd:140 · docs/00-规范理解与需求.md §1.2 A4',
+        cite: 'rtl/puzzle_pkg.vhd:310 · docs/00-规范理解与需求.md §1.2 A4',
         active: [0],
         holdMs: 900,
         clock: 'ori: 0→1',
@@ -443,7 +443,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '在固定 3×3 盒里转（为了省面积）',
         detail:
           '盒内坐标 (r,c)：00 → in(sr,c)；01 → in(2−c, sr)；10 → in(2−sr, 2−c)；11 → in(c, 2−sr)。每个调用点只有 3 个 4:1 mux。对照组：**直接在紧包围盒里转**要算 h−1−c / w−1−c 并加范围保护，实测 **+229 LE，直接装不下**。',
-        cite: 'rtl/puzzle_pkg.vhd:100 · rtl/puzzle_pkg.vhd:116',
+        cite: 'rtl/puzzle_pkg.vhd:122 · rtl/puzzle_pkg.vhd:103',
         active: [1],
         busyLinks: [0, 1],
         holdMs: 1500,
@@ -454,7 +454,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '但盒内转会把锚点"甩偏"，必须补回来',
         detail:
           '3×3 盒内转完之后，紧包围盒不再锚在 (0,0)：例如 1×3 横条转 90° 会落到盒子的第 2 列。若不补，零片一旋转就凭空横移两格、而且再也够不到左边界 —— 第一版就是这个 bug，被"旋转后仍以紧包围盒左上角为锚点"这条不变量抓出来。补法只有一个地方：盒内行号 = 紧包围盒行号 + dr，列移位 = 锚点列 − dc。',
-        cite: 'rtl/puzzle_pkg.vhd:104 · rtl/puzzle_pkg.vhd:122',
+        cite: 'rtl/puzzle_pkg.vhd:107 · rtl/puzzle_ctrl.vhd:151',
         active: [2],
         busyLinks: [1, 2],
         holdMs: 1700,
@@ -476,7 +476,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '重叠：复用移动那一套串行引擎',
         detail:
           '旋转与移动共用同一条校验流水（所以两者的拒绝语义天然一致）。引擎一拍只算一个 row_mask、比一个邻块，用资源换面积。',
-        cite: 'rtl/puzzle_ctrl.vhd:195 · rtl/puzzle_ctrl.vhd:972',
+        cite: 'rtl/puzzle_ctrl.vhd:965 · rtl/puzzle_ctrl.vhd:972',
         active: [4],
         busyLinks: [4],
         holdMs: 1300,

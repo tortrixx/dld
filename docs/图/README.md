@@ -18,7 +18,7 @@
 两者**不是**二选一 —— `SIM-*.svg` 留作"逐点比对"的辅助证据（`sim/rounds/*.md` 会链它），
 报告正文的仿真波形图用 `GUI-*.png`。
 
-### 0.1 ⚠️ 截图前必读：**一定要把窗口标题栏裁掉**
+### 0.1 ⚠️ 截图前必读：**只留波形编辑器那一片，标题栏/菜单栏/各面板一律裁掉**
 
 Quartus 的标题栏写的是**完整工程路径**，里面带**你的 Windows 用户名**：
 
@@ -30,11 +30,17 @@ Quartus II - C:/Users/<你的用户名>/Desktop/dld/quartus/puzzle - puzzle - [.
 **"全仓库不出现作者本机绝对路径"**（`HANDOFF.md` §0；文本文件已经 `git grep` 0 命中）。
 ⚠️ 文本文件查得到，**PNG 是二进制，`git grep -I` 看不见** —— 所以这一条**只能靠人手动保证**。
 
-**做法**：只截菜单栏以下的部分，或拍完把顶部标题栏那一条约 33 像素裁掉。
-裁完之后菜单栏、工程名（Project Navigator 里的 `MAXII: EPM1270T144C5` / `puzzle_top`）、
-节点名列表、波形网格、时间刻度**都还在**，一眼仍能看出是 Quartus 界面，不影响可信度。
+**做法（2026-10-15 定稿口径）**：图里**只保留波形编辑器那一片**：
 
-`docs/图/GUI-clk_gen.png` 那张样例就是**裁掉标题栏之后**的样子，可以直接对照。
+| 必须保留 | 必须裁掉 |
+|---|---|
+| `.vwf` 文档标题条/标签栏、`Master Time Bar` 一行、`Name` 节点列表、波形网格 + 时间刻度 | 窗口标题栏、菜单栏、工具栏、左侧 `Project Navigator` 与 `Tasks/Flow`、底部 `Messages` 面板、状态栏 |
+
+实现上**不要用"固定裁掉顶部 N 像素"**：先量出 **MDI 客户区**（`MDIClient` 子窗口）的实际矩形，
+把本文档子窗口 `SetWindowPos` 铺满它，再按 `Ctrl+W`（Fit in Window）后按该矩形裁剪主窗口位图。
+本机实测：主窗口 `(-8,-8)-(1715,1027)`、`MDIClient (246,74)-(1707,760)`、裁剪起点 `(254,82)`、
+成品 **1461×686**（12 张统一）。`docs/图/GUI-*.png` 就是这套口径的成品，可直接对照。
+⚠️ 实测坑：传给 MDI 子窗口的 `SetWindowPos` 坐标被 Quartus 当成"**相对 MDI 客户区**"（传 `0,0` 才落在原点）。
 
 ---
 
@@ -63,18 +69,18 @@ quartus_sim <工程> --mode=functional --overwrite_waveform=on
 
 | # | 目标文件名 | 打开的源文件 | 这张图在报告里证明什么 | 状态 |
 |---|---|---|---|---|
-| 1 | `GUI-clk_gen.png` | `sim/clk_gen.vwf` | 分频链（1 kHz → 200 Hz → 100 Hz → 4 Hz / 2 Hz / 1 Hz / 40 Hz）与按键消抖计数 | ✅ 已有样例 |
-| 2 | `GUI-keypad_scan.png` | `sim/keypad_scan.vwf` | 4×4 键盘扫描四状态机 + 消抖 + 按键按下/释放 | ⬜ 待拍 |
-| 3 | `GUI-seg_scan.png` | `sim/seg_scan.vwf` | 数码管位选/段选扫描与 5 个字母的段形 | ⬜ 待拍 |
-| 4 | `GUI-dot_matrix_scan.png` | `sim/dot_matrix_scan.vwf` | 8×8 点阵行扫描（125 Hz）与行序 | ⬜ 待拍 |
-| 5 | `GUI-rng_lfsr.png` | `sim/rng_lfsr.vwf` | LFSR 伪随机序列（x⁸+x⁶+x⁵+x⁴+1，周期 255） | ⬜ 待拍 |
-| 6 | `GUI-pattern_rom.png` | `sim/pattern_rom.vwf` | 图案库按 `i_pat` 查表输出 | ⬜ 待拍 |
-| 7 | `GUI-piece_rom.png` | `sim/piece_rom.vwf` | 零片形状库按（形状/朝向）查表输出 | ⬜ 待拍 |
-| 8 | `GUI-disp_format.png` | `sim/disp_format.vwf` | 状态 → 8 位数码管内容 + **熄灭掩码**（`o_data`/`o_blank`）：待机/预览/对局/结算各态、倒计时两位拆分，以及 ⭐ **口径 C：`DISP2` 在所有窗口都熄灭（断言 ⑥c）**；**同一条波形也覆盖自检态的八位全 8** | ⬜ 待拍 |
-| 9 | `GUI-game_fsm.png` | `sim/game_fsm.vwf` | 主状态机 S_IDLE→预览→对局→胜负 的迁移与计时 | ⬜ 待拍 |
-| 10 | `GUI-puzzle_ctrl.png` | `sim/puzzle_ctrl.vwf` | 拼图引擎：重叠判定 / 选中锁定 / 旋转 / 整帧判据 | ⬜ 待拍 |
-| 11 | `GUI-buzzer_ctrl.png` | `sim/buzzer_ctrl.vwf` | 音效：音高表查表 + 方波计数 + 三关 BGM 乐句 | ⬜ 待拍 |
-| 12 | `GUI-puzzle_top.png` | `sim/puzzle_top.vwf` | 整机：三关流程 + 告急幽灵（绿 + 2 Hz 闪） | ⬜ 待拍 |
+| 1 | `GUI-clk_gen.png` | `sim/clk_gen.vwf` | 分频链（1 kHz → 200 Hz → 100 Hz → 4 Hz / 2 Hz / 1 Hz / 40 Hz）与按键消抖计数 | ✅ 已拍（2026-10-15，1461×686） |
+| 2 | `GUI-keypad_scan.png` | `sim/keypad_scan.vwf` | 4×4 键盘扫描四状态机 + 消抖 + 按键按下/释放 | ✅ 已拍（2026-10-15，1461×686） |
+| 3 | `GUI-seg_scan.png` | `sim/seg_scan.vwf` | 数码管位选/段选扫描与 5 个字母的段形 | ✅ 已拍（2026-10-15，1461×686） |
+| 4 | `GUI-dot_matrix_scan.png` | `sim/dot_matrix_scan.vwf` | 8×8 点阵行扫描（125 Hz）与行序 | ✅ 已拍（2026-10-15，1461×686） |
+| 5 | `GUI-rng_lfsr.png` | `sim/rng_lfsr.vwf` | LFSR 伪随机序列（x⁸+x⁶+x⁵+x⁴+1，周期 255） | ✅ 已拍（2026-10-15，1461×686） |
+| 6 | `GUI-pattern_rom.png` | `sim/pattern_rom.vwf` | 图案库按 `i_pat` 查表输出 | ✅ 已拍（2026-10-15，1461×686） |
+| 7 | `GUI-piece_rom.png` | `sim/piece_rom.vwf` | 零片形状库按（形状/朝向）查表输出 | ✅ 已拍（2026-10-15，1461×686） |
+| 8 | `GUI-disp_format.png` | `sim/disp_format.vwf` | 状态 → 8 位数码管内容 + **熄灭掩码**（`o_data`/`o_blank`）：待机/预览/对局/结算各态、倒计时两位拆分，以及 ⭐ **口径 C：`DISP2` 在所有窗口都熄灭（断言 ⑥c）**；**同一条波形也覆盖自检态的八位全 8** | ✅ 已拍（2026-10-15，1461×686） |
+| 9 | `GUI-game_fsm.png` | `sim/game_fsm.vwf` | 主状态机 S_IDLE→预览→对局→胜负 的迁移与计时 | ✅ 已拍（2026-10-15，1461×686） |
+| 10 | `GUI-puzzle_ctrl.png` | `sim/puzzle_ctrl.vwf` | 拼图引擎：重叠判定 / 选中锁定 / 旋转 / 整帧判据 | ✅ 已拍（2026-10-15，1461×686） |
+| 11 | `GUI-buzzer_ctrl.png` | `sim/buzzer_ctrl.vwf` | 音效：音高表查表 + 方波计数 + 三关 BGM 乐句 | ✅ 已拍（2026-10-15，1461×686） |
+| 12 | `GUI-puzzle_top.png` | `sim/puzzle_top.vwf` | 整机：三关流程 + 告急幽灵（绿 + 2 Hz 闪） | ✅ 已拍（2026-10-15，1461×686） |
 
 > 每张图对应的**断言明细**在 `sim/rounds/<模块>/rNN.json`（机读）与 `rNN.md`（人看），
 > 逐模块的"当前轮次 + 条数"总表在 `docs/03-仿真验证方案.md` §2 / §4。
@@ -187,12 +193,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\shoot_vwf.ps1 -Close
 
 **为什么它比手点更稳**：抓的是**窗口位图**（`PrintWindow`）而不是屏幕像素 ——
 窗口被别的窗口挡住、甚至被拖到屏幕外都不影响结果，也绝不会把桌面上的东西拍进去。
-**它默认会把顶部 33 像素（标题栏，含本机用户名）裁掉**（见 §0.1）；
-确实想要完整窗口就连标题栏一起留，加 `-CropTop 0`。
 
-**已知的两点**（不是故障）：
+⚠️ **已知缺陷（2026-10-15 实测，尚未合并修正）**：本机跑它 **12/12 都报「打开对话框没出现」**，根因两条 ——
+① 它只用 `SetForegroundWindow` 抢前台，当别的进程占着前台时**不生效**（`Ctrl+O` 打飞）⇒ 需改用
+`AttachThreadInput` 强抢；② `Ctrl+O` 之后只固定等 2.5 s，**没有轮询**等对话框 ⇒ 需改成轮询。
+另外它默认只裁顶部 33 px，**已不符合 §0.1 的新口径**（要裁到只剩 MDI 客户区那一片）。
+2026-10-15 的 12 张成品不是它拍的，而是用修正版脚本（当时放在 `.tmp/shoot_gui_v27.ps1`，`.tmp/` 不入库）：
+强抢前台 → `Ctrl+O` 轮询 → 枚举 `MDIClient` 与本文档子窗口 → `SetWindowPos` 铺满 → `Ctrl+W`
+→ `PrintWindow` → 按 `MDIClient` 矩形裁剪。要长期可用，应把这套修正并回 `scripts/shoot_vwf.ps1`。
 
-* 脚本可能打印 `!! <模块>：波形编辑器没有切到该文件` —— 这是**误报**：新版把多个 `.vwf`
+**其它已知的两点**（不是故障）：
+
+* 脚本可能打印 `!! <模块>：波形编辑器没有切到该文件` —— 这是**误报**：Quartus 把多个 `.vwf`
   开成**标签页**，而脚本比的是面板标题（停留在第一个标签的名字），实际已经切过去了。
   拍完自己扫一眼图确认即可。
 * 脚本会把 Quartus 窗口挪到屏幕左上角并调整大小，拍完恢复；运行期间会**抢桌面焦点**，
@@ -206,7 +218,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\shoot_vwf.ps1 -Close
 |---|---|---|
 | 波形挤成一片黑，看不出周期 | 漏了 `Ctrl+W`（Fit in Window） | 补按 `Ctrl+W` |
 | 图里出现桌面/浏览器 | 用了全屏 `PrintScreen` | 改用 `Alt+PrintScreen` 或 `Win+Shift+S` |
-| 图里出现 `C:/Users/<你的用户名>/...` | 标题栏没裁掉（**会泄露本机路径与用户名**） | 按 §0.1 裁掉顶部标题栏；用脚本则默认已裁 |
+| 图里出现 `C:/Users/<你的用户名>/...` | 标题栏没裁掉（**会泄露本机路径与用户名**） | 按 §0.1 只留波形编辑器那一片；⚠️ `scripts/shoot_vwf.ps1` 默认只裁 33 px，**不够** |
+| 图里波形只占右下 2/3，左侧/底部一堆面板 | 只裁了标题栏、没裁到 MDI 客户区 | 按 §0.1：量出 `MDIClient` 矩形再裁（成品 1461×686），或先 `View → Utility Windows` 关掉各停靠面板 |
 | `docs/03` §3.1 的通配匹配不到图 | 文件名写错（大小写/下划线/模块名） | 严格按 §2 表的文件名 |
 | 想看的内部信号找不到 | 总线折叠，或该模块节点太多需滚动 | 点小方块展开；或在信号列表里滚动 |
 | 打开 `.vwf` 后提示"不支持内置仿真器" | Quartus 9.1 的固定提示 | 勾 `Don't show this again` → OK |
@@ -216,7 +229,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\shoot_vwf.ps1 -Close
 
 ## 6. 拍完之后
 
-1. 把 §2 表格里的状态从 `⬜ 待拍` 改成 `✅`（**本文件是清单所有者，只在这里改**）；
+1. 把 §2 表格里的状态从 `✅ 已拍（2026-10-15，1461×686）` 改成 `✅`（**本文件是清单所有者，只在这里改**）；
 2. 确认 12 个文件名一个不缺：
    ```powershell
    Get-ChildItem docs\图\GUI-*.png | Select-Object Name, Length
