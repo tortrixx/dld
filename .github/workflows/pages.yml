@@ -1,41 +1,51 @@
 # ============================================================================
-#  .github/workflows/pages.yml —— 把 site/ 构建成静态站点并发布到 GitHub Pages
+#  .github/workflows/pages.yml —— 构建「工程展示站 + 技术文档站」并发布到 Pages
 # ----------------------------------------------------------------------------
+#  线上是**一个**站点、两个入口：
+#      https://tortrixx.github.io/dld/         ← site/    工程展示站（Vite + React）
+#      https://tortrixx.github.io/dld/docs/    ← book/    技术文档站（Material for MkDocs）
+#
+#  ⚠️⚠️ 构建顺序是这份工作流里**唯一不能改**的东西：
+#        ① 先 `npm run build`（Vite）—— 它会把 `site/dist/` **整个清空**；
+#        ② 再 `mkdocs build` 输出到 `site/dist/docs/`；
+#        ③ 最后上传 `site/dist`。
+#      如果反过来（先 mkdocs 再 vite），文档会被 Vite 的清理动作删掉，
+#      而 CI 依然"成功"—— 这是最难发现的一类故障，所以顺序写在这里。
+#
 #  设计原则（与仓库既有纪律一致）：
-#    · **只碰 site/**：不编译 RTL、不跑仿真、不调用 Quartus，也不改动
-#      rtl/ / sim/ / quartus/ 下的任何文件。硬件工程的流程完全不受影响。
-#    · **不动既有流程**：本仓库此前没有任何 CI / Pages 配置（无 .github/、
-#      无 *.yml、无 gh-pages 分支），所以这是一条**新增**的独立流程，
-#      不存在"覆盖原有流程"的问题。
-#    · **base 由环境变量传**：项目级 Pages 的站点挂在 /dld/ 下，
-#      vite.config.ts 的默认值就是 '/dld/'；这里显式传一次，
-#      换成用户级 Pages 或改仓库名时只需改这一行的值，不用动代码。
+#    · **不碰硬件**：不编译 RTL、不跑仿真、不调用 Quartus，`rtl/` `sim/` `quartus/`
+#      下的任何文件都不会被本流程修改。硬件工程流程完全不受影响。
+#    · **不提交构建产物**：`site/dist/`、`book/site/`、`book/docs/_generated/`、
+#      `book/docs/assets/` 下的素材副本、`book/.venv/` 全部在 .gitignore 里。
+#    · **发布前先对账**：站点数字要先与仓库真值源对一遍（verify:facts + extract_facts --check
+#      + check_book），对不上就不发布 —— 而不是先上线再发现。
 #
 #  使用前提（人类操作，workflow 无法代劳）：
-#    仓库 Settings → Pages → Source 选 **GitHub Actions**。
-#    在此之前本 workflow 不会真正发布成功。
+#      仓库 Settings → Pages → Source 选 **GitHub Actions**。
 # ============================================================================
 
-name: Deploy showcase site to Pages
+name: Deploy showcase + docs to Pages
 
 on:
-  # 只在站点自身、它引用的素材、以及**被对账的数据源**变化时触发 ——
+  # 只在**站点自身、它引用的素材、以及被对账的数据源**变化时触发 ——
   # 改 RTL 或 Quartus 工程不会白白跑一遍站点构建。
-  # ⚠️ 最后三项是 `npm run verify:facts` 的真值源：它们一变，"网页上的数字是否过期"
-  #    这件事就需要重新判定，所以必须跟着触发（否则网页会悄悄落后于仓库）。
+  # ⚠️ 下面这些是 `verify:facts` / `extract_facts.py` 会**逐个核对**的输入：
+  #    漏掉任何一类，重命名/删除那些文件时这条流水线就**一次都不跑**，
+  #    于是线上留下死链而 CI 永不报警。多跑一次 1 分钟，远比"该跑不跑"便宜。
   push:
     branches: [main]
     paths:
       - 'site/**'
-      # ⚠️ 下面这些是 verify:facts 会**逐个核对**的输入（39 个被引用路径）：
-      #    原触发集只覆盖 3 个，于是重命名/删除 rtl/*.vhd、docs/0*.md、scripts/*.py、
-      #    sim/*.vwf、根 md、puzzle.qsf 时这条流水线**一次都不跑** ⇒ 线上留死链而 CI 永不报警。
-      #    多跑一次 40 秒，远比"该跑不跑"便宜。
+      - 'book/**'
+      - 'facts/**'
+      - 'docs-site-plan.md'
       - 'rtl/**'
       - 'docs/*.md'
       - 'docs/图/**'
       - 'scripts/**'
       - 'sim/*.vwf'
+      - 'sim/rounds/**'
+      - 'sim/*.py'
       - 'quartus/build_provenance.json'
       - 'quartus/puzzle.qsf'
       - 'quartus/puzzle.sdc'
@@ -43,10 +53,7 @@ on:
       - 'HANDOFF.md'
       - 'PROGRESS.md'
       - 'AI_LOG.md'
-      - 'docs/图/**'
-      - 'quartus/build_provenance.json'
       - 'docs/05-资源利用与编译报告.md'
-      - 'sim/rounds/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -62,15 +69,14 @@ concurrency:
 
 jobs:
   build:
-    name: Build site/ (Vite + React)
+    name: Build showcase (site/) + docs (book/)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: site
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # ---------------------------------------------------------------- 展示站
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -78,24 +84,75 @@ jobs:
           cache: npm
           cache-dependency-path: site/package-lock.json
 
-      - name: Install dependencies
-        run: npm ci
+      # ---------------------------------------------------------------- 文档站
+      # 为什么用 3.12 而不是 latest：文档站的依赖（Material for MkDocs 9.7.7 +
+      # jieba）在 3.12 上有现成轮子，构建最快也最稳。
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: book/requirements.txt
 
-      - name: Unit tests (规则模型)
-        run: npm test
+      - name: Install docs dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -r book/requirements.txt
 
-      # 把网页上写的数字与仓库里的机读真值源机械对一遍
-      # （LE/LAB/引脚/slack/POF 对 build_provenance.json；各模块最新轮次与断言数对
-      #   sim/rounds/*.json；被引用的路径是否已入库对 git ls-files）。
+      # ---------------------------------------------------------------- 对账
+      # 展示站自身的单元测试（规则模型）
+      - name: Showcase unit tests
+        working-directory: site
+        run: npm ci && npm test
+
+      # 事实模型是否与源码一致（重新生成后**逐字节**比对）
+      - name: Verify fact model is up to date
+        run: python scripts/extract_facts.py --check
+
+      # 把网页上写的数字与仓库里的机读真值源机械对一遍：
+      # LE/LAB/引脚/slack/POF 对 build_provenance.json；各模块最新轮次与断言数对
+      # sim/rounds/*.json；**并与两个站点共用的 facts/facts.json 交叉核对**；
+      # 被引用的路径是否已入库对 git ls-files。
       # 放在 build 之前：数字过期就不该发布，而不是先上线再发现。
-      - name: Verify facts against repository
+      - name: Verify showcase facts against repository
+        working-directory: site
         run: npm run verify:facts
 
-      - name: Build
+      # 文档站门禁：生成事实页 + 检查占位符/源码路径/图片/内部链接/漏页
+      - name: Check docs against repository
+        run: python book/scripts/book.py check
+
+      # ---------------------------------------------------------------- 构建
+      # ① 展示站（会清空 site/dist）
+      - name: Build showcase
+        working-directory: site
         env:
           # 项目级 Pages：https://<user>.github.io/dld/
           VITE_BASE: /dld/
         run: npm run build
+
+      # ② 文档站 —— **必须在 Vite 之后**，直接落在 site/dist/docs/
+      #    ⚠️ 不要改成 `--site-dir site/dist/docs`：mkdocs 把 site_dir 解析为
+      #    "相对配置文件目录"，而配置文件在 book/ 下，所以要写 `../site/dist/docs`。
+      - name: Build docs into site/dist/docs
+        run: python book/scripts/book.py build --site-dir ../site/dist/docs
+
+      # ③ 上传前自证"合并产物是完整的"：两个入口都在，且文档站的搜索索引在
+      - name: Assert merged artifact is complete
+        run: |
+          set -euo pipefail
+          for f in site/dist/index.html \
+                   site/dist/docs/index.html \
+                   site/dist/docs/search/search_index.json \
+                   site/dist/docs/sitemap.xml; do
+            if [ ! -f "$f" ]; then
+              echo "::error::合并产物缺少 $f"
+              exit 1
+            fi
+            echo "ok  $f  ($(stat -c%s "$f") bytes)"
+          done
+          echo "--- 展示站资源引用必须是 /dld/ 前缀 ---"
+          grep -o '/dld/assets/[^"]*' site/dist/index.html | head -3
+          echo "--- 文档站的静态资源必须是相对路径（子路径刷新才不 404）---"
+          grep -o 'href="[^"]*stylesheets[^"]*"' site/dist/docs/index.html | head -3
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
@@ -105,6 +162,7 @@ jobs:
         with:
           # ⚠️ 注意：upload-pages-artifact 的默认路径也是仓库根，
           #    这里必须显式指向 site/dist，否则会把整个硬件工程当站点传上去。
+          #    现在 site/dist 里同时含展示站与 docs/，两个入口一次发布。
           path: site/dist
 
   deploy:

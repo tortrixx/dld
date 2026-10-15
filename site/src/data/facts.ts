@@ -156,8 +156,7 @@ export interface SimRow {
   readonly note: string;
 }
 
-export const SIM_COVERAGE: readonly SimRow[] = [
-  { module: 'puzzle_top', round: 'r56 / r57', assertions: 28, note: '整机模式 A / B 各 28 条（三关流程、胜负画面、幽灵、音效链路；① 已加强为"每位槽段码集合同时含 0x7F 与 0x00"）' },
+export const SIM_COVERAGE: readonly SimRow[] = [  { module: 'puzzle_top', round: 'r56 / r57', assertions: 28, note: '整机模式 A / B 各 28 条（三关流程、胜负画面、幽灵、音效链路；① 已加强为"每位槽段码集合同时含 0x7F 与 0x00"）' },
   { module: 'game_fsm', round: 'r36', assertions: 30, note: '主状态机与倒计时、关卡切换、命令译码' },
   { module: 'puzzle_ctrl', round: 'r37', assertions: 28, note: '引擎：重叠判定、选中/锁定、旋转、整帧判据（含 ⑳ 主路径竞态；该轮"RTL 补丁：无"）' },
   { module: 'buzzer_ctrl', round: 'r37', assertions: 16, note: '音高表、方波计数、16 步乐句' },
@@ -171,7 +170,15 @@ export const SIM_COVERAGE: readonly SimRow[] = [
   { module: 'dot_matrix_scan', round: 'r23', assertions: 7, note: '8 行扫描与行序；⑤b 早采样点（+20 ns）无混合态' },
 ];
 
-export const SIM_TOTAL_ASSERTIONS = 184;
+/**
+ * 断言总数 = 上面 12 行逐项相加（整机 `puzzle_top` 只计一次，它一行代表两种场景）。
+ *
+ * ⚠️ 这里**必须**由表算出来，不许再写一个手打常数。
+ * 2026-10-15 第 27 工作阶段排查到：`Hero.tsx` / `Footer.tsx` 里手写的 "179 条" 
+ * 已过期（第 26 工作阶段补了 5 条断言 ⇒ 179 → 184），而本表求和是 184。
+ * 同一个数字在仓库里有两个值时，页面读起来就像在撒谎 —— 所以改成派生。
+ */
+export const SIM_TOTAL_ASSERTIONS = SIM_COVERAGE.reduce((sum, r) => sum + r.assertions, 0);
 
 export const EXTRA_CHECKS: readonly { name: string; result: string; what: string; path: string }[] = [
   {
@@ -764,6 +771,73 @@ export const RESOURCE_EVOLUTION = [
 /** 线上地址（已部署并通过实测，见 DEPLOY.status）。 */
 export const SITE_URL = 'https://tortrixx.github.io/dld/';
 
+/**
+ * 技术文档站（Material for MkDocs，源码在 `book/`）。
+ *
+ * 本站与文档站是**两层互补**的站点，共用同一套工程事实：
+ *   · 这里（`site/`）负责"一眼看懂"——首屏、交互点阵、时序播放器、演示动画；
+ *   · 文档站（`book/`）负责"逐条查证"——端口契约、数据字典、时序契约、证据索引、答辩稿。
+ * 所以本站**不复制**文档站的实现，只做摘要 + 深链（见 docs-site-plan.md §2）。
+ */
+export const DOCS_SITE_URL = 'https://tortrixx.github.io/dld/docs/';
+
+export interface DocsEntry {
+  readonly title: string;
+  readonly tag: string;
+  readonly summary: string;
+  /** 相对文档站根目录的路径（`''` 表示首页）。 */
+  readonly href: string;
+}
+
+/** 从展示站跳去文档站时，最值得先看的几页。 */
+export const DOCS_ENTRIES: readonly DocsEntry[] = [
+  {
+    title: '系统总体架构',
+    tag: '架构',
+    summary:
+      '一张完整框图 + 7 张子系统图（时钟复位 / 键盘 / 游戏控制↔引擎 / 图案与零片 / 显示 / 音效 / 端到端时序），每条关键连线都标真实端口名。',
+    href: '02-architecture/system-overview/',
+  },
+  {
+    title: '接口与信息传递',
+    tag: '接口',
+    summary:
+      '跨模块连接总表（由 port map 机械抽出）、控制信号与握手、数据字典与位序约定、时序契约、端到端流程 A~E。',
+    href: '04-interfaces/',
+  },
+  {
+    title: '端到端事件追踪',
+    tag: '数据流',
+    summary: '一次按键移动 / 一次旋转 / 随机散落 / 通关判定 / 倒计时失败 —— 五条完整信号链，各有图、信号表与证据。',
+    href: '04-interfaces/event-traces/',
+  },
+  {
+    title: '数据字典与位序约定',
+    tag: '编码',
+    summary:
+      '状态码、键码、图案与零片掩码、朝向、锚点打包、数码管数据与熄灭掩码、音效码、LFSR 状态；并区分逻辑坐标 / 位掩码 / 物理引脚三种位序。',
+    href: '04-interfaces/data-encoding/',
+  },
+  {
+    title: '184 条断言与波形证据',
+    tag: '验证',
+    summary: '每条断言"为什么测 / 激励是什么 / 观察什么 / 判据是什么 / 能证明什么 / 不能证明什么"，配 12 张真实 Quartus GUI 截图。',
+    href: '06-verification/assertions/',
+  },
+  {
+    title: '工程取舍（不隐藏）',
+    tag: '取舍',
+    summary: 'A3 为什么只做一半、被拒操作为什么没有提示音、内容率为什么是 25/21 Hz、LAB 为什么是真瓶颈 —— 每条都给出得到什么与失去什么。',
+    href: '08-debugging/engineering-tradeoffs/',
+  },
+  {
+    title: '答辩：演示脚本与 24 问 FAQ',
+    tag: '答辩',
+    summary: '现场演示逐步脚本（含异常恢复），以及覆盖 20 个方向的高频问答，每问含 30 秒回答 + 深入解释 + 可展示的图与源码 + 追问应对。',
+    href: '09-defense/demo-script/',
+  },
+];
+
 export const DEPLOY = {
   local: [
     'cd site',
@@ -772,11 +846,19 @@ export const DEPLOY = {
     'npm run test       # 规则模型的单元测试',
     'npm run build      # 产物在 site/dist/',
     'npm run preview    # 本地预览构建产物',
+    '',
+    '# 技术文档站（book/，Material for MkDocs）',
+    'python -m venv book/.venv',
+    'book/.venv/Scripts/python -m pip install -r book/requirements.txt',
+    'python book/scripts/book.py serve    # http://127.0.0.1:8000/',
   ],
   pages: [
     '# 仓库 Settings → Pages → Source 选 "GitHub Actions"',
-    '# 推送到 main 后 .github/workflows/pages.yml 自动构建并发布 site/',
-    '# 线上地址：https://tortrixx.github.io/dld/',
+    '# 推送到 main 后 .github/workflows/pages.yml 自动构建并发布，产物是**一个**完整站点：',
+    '#   site/dist/        ← 展示站（Vite/React）',
+    '#   site/dist/docs/   ← 技术文档站（Material for MkDocs）',
+    '# ⚠️ 顺序不能反：vite build 会清空 site/dist，所以文档必须在它之后构建到 dist/docs/',
+    '# 线上地址：https://tortrixx.github.io/dld/ 与 https://tortrixx.github.io/dld/docs/',
   ],
   baseNote:
     '项目级 Pages 的站点挂在 /dld/ 子路径下，所以 vite.config.ts 里 build 的 base 默认就是 /dld/，源码里所有资源引用都走 import.meta.env.BASE_URL，**不写死 / ** ⇒ 刷新子路径也不会 404。换成用户级 Pages 或别的仓库名时不用改代码：VITE_BASE=/ npm run build。',

@@ -3,10 +3,24 @@
  *
  * 所有链接都由 `facts.ts` 的 `blob()` 生成，指向仓库里**已入库**的文件；
  * 中文路径逐段编码，避免不同浏览器对未编码 UTF-8 路径的处理差异。
+ *
+ * 本页最上面那一块是**跨站**入口：本站负责"一眼看懂"，
+ * 技术文档站（`book/`，Material for MkDocs）负责"逐条查证"。
+ * 两者共用同一套工程事实，所以这里只做摘要 + 深链，不复制文档站的实现。
  */
 
 import { RichText, Section, Src, Tag } from '../components/ui';
-import { DEPLOY, DOC_ENTRIES, REPO, SITE_URL, SOURCE_ENTRIES, blob, tree } from '../data/facts';
+import {
+  DEPLOY,
+  DOCS_ENTRIES,
+  DOCS_SITE_URL,
+  DOC_ENTRIES,
+  REPO,
+  SITE_URL,
+  SOURCE_ENTRIES,
+  blob,
+  tree,
+} from '../data/facts';
 
 export function DocsNav(): JSX.Element {
   return (
@@ -26,6 +40,43 @@ export function DocsNav(): JSX.Element {
         </>
       }
     >
+      {/* ---------------- 跨站入口：技术文档站 ---------------- */}
+      <div className="docscard">
+        <div className="docscard__head">
+          <p className="docscard__title">技术文档站 · Material for MkDocs</p>
+          <Tag>同一个仓库 · 同一套事实</Tag>
+        </div>
+        <p className="docscard__lede">
+          本站（<code>site/</code>）的定位是<strong>一眼看懂</strong>：首屏、交互点阵、时序播放器、演示动画。
+          要做<strong>逐条查证</strong>就换到文档站（<code>book/</code>）：那里有 11 个模块的接口契约、
+          跨模块连接总表、数据字典与位序约定、时序契约、184 条断言的逐条判据、资源/时序报告和答辩稿。
+          两边读的是<strong>同一份</strong> <code>facts/facts.json</code>，所以数字不会互相打架。
+          <br />
+          <a href={DOCS_SITE_URL} target="_blank" rel="noreferrer noopener">
+            {DOCS_SITE_URL}
+          </a>
+        </p>
+        <div className="navlist">
+          {DOCS_ENTRIES.map((d) => (
+            <a
+              className="navlist__item"
+              key={d.href}
+              href={DOCS_SITE_URL + d.href}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              <span className="navlist__title">
+                {d.title}
+                <br />
+                <Tag>{d.tag}</Tag>
+              </span>
+              <span className="navlist__sum"><RichText text={d.summary} /></span>
+              <span className="navlist__path">book/docs/{d.href}</span>
+            </a>
+          ))}
+        </div>
+      </div>
+
       <div className="navlist">
         {DOC_ENTRIES.map((d) => (
           <a className="navlist__item" key={d.path} href={blob(d.path)} target="_blank" rel="noreferrer noopener">

@@ -6,7 +6,7 @@
  */
 
 import { Src } from '../components/ui';
-import { BUILD_PROVENANCE, PROJECT, REPO, blob } from '../data/facts';
+import { BUILD_PROVENANCE, DOCS_SITE_URL, PROJECT, REPO, SIM_TOTAL_ASSERTIONS, blob } from '../data/facts';
 
 const DOC_LINKS: readonly { readonly label: string; readonly path: string }[] = [
   { label: 'README · 项目总览', path: 'README.md' },
@@ -89,7 +89,7 @@ export function Footer(): JSX.Element {
             <div className="foot__list">
               <span>功能全部完成 · 最后一条挂起口径已闭环</span>
               <span>已上板复测通过</span>
-              <span>179 条仿真断言全过 · 固件已烧录并读回校验</span>
+              <span>{SIM_TOTAL_ASSERTIONS} 条仿真断言全过 · 固件已烧录并读回校验</span>
               <span>
                 最后编译：{BUILD_PROVENANCE.timestamp}
                 <br />
@@ -103,6 +103,11 @@ export function Footer(): JSX.Element {
           <span>
             本站是 <Src path="site/">site/</Src> 下的静态站点，与 <code>rtl/</code> /
             <code>sim/</code> / <code>quartus/</code> 完全隔离，不参与也不影响硬件工程。
+            逐条查证的<strong>技术文档站</strong>在{' '}
+            <a href={DOCS_SITE_URL} target="_blank" rel="noreferrer noopener">
+              /dld/docs/
+            </a>
+            （源码在 <code>book/</code>）—— 两个站点共用同一套 <code>facts/facts.json</code>。
           </span>
           <span>
             页面上每个数字都带出处；未经核实的说法一律不写。

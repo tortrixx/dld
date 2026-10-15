@@ -4,7 +4,7 @@
  *
  * 为什么要写这个脚本：
  *   本项目最花时间的纪律是"每句话都有可执行的证据"。网页是**最容易漂移**的一环 ——
- *   改完 RTL、重新编译、重跑仿真之后，网页上的 1264 LE / 54.27 MHz / 179 条断言
+ *   改完 RTL、重新编译、重跑仿真之后，网页上的 1264 LE / 54.27 MHz / 断言条数
  *   就会悄悄变成旧数字，而且**没人会注意到**（页面照样好看）。
  *   所以这里不靠人眼复核，直接拿仓库里的机读文件来对。
  *
@@ -254,17 +254,76 @@ for (const row of coverageRows) {
   total += row.assertions;
 }
 
-// "179" 这个合计口径：12 行逐项相加（整机只计一次）
-const siteTotalMatch = /SIM_TOTAL_ASSERTIONS\s*=\s*(\d+)/.exec(site);
-if (siteTotalMatch) {
-  const declared = Number(siteTotalMatch[1]);
+// 断言合计口径：12 行逐项相加（整机 `puzzle_top` 只计一次，它一行代表两种场景）。
+//
+// ⚠️ 2026-10-15 第 27 工作阶段改动：`facts.ts` 里的合计从**手打常数**改成了
+//    由 `SIM_COVERAGE` 派生的 `reduce` —— 因为排查发现 Hero/Footer 里手写的
+//    "179 条"已经过期（真实是 184），同一个数字在仓库里存在两个值。
+//    所以这里要同时接受两种写法，但**不接受**其它任何写法。
+const literalTotal = /SIM_TOTAL_ASSERTIONS\s*=\s*(\d+)\s*;/.exec(site);
+const derivedTotal = /SIM_TOTAL_ASSERTIONS\s*=\s*SIM_COVERAGE\.reduce\(/.exec(site);
+if (literalTotal) {
+  const declared = Number(literalTotal[1]);
   if (declared !== total) {
     fail(`断言合计对不上：站点声明 ${declared}，逐模块相加 = ${total}`);
   } else {
-    ok(`断言合计 = ${declared} 条（逐模块相加一致）`);
+    ok(`断言合计 = ${declared} 条（字面量，且与逐模块相加一致）`);
   }
+} else if (derivedTotal) {
+  ok(`断言合计由 SIM_COVERAGE 派生（= ${total} 条，逐模块相加一致）`);
 } else {
-  fail('站点源码里找不到 SIM_TOTAL_ASSERTIONS');
+  fail('站点源码里既没有 SIM_TOTAL_ASSERTIONS 的字面量，也不是 SIM_COVERAGE 的 reduce 派生');
+}
+
+/* ================================================================== *
+ * ②b 与「技术文档站」共用同一套事实：facts/facts.json
+ * ------------------------------------------------------------------
+ * 展示站（site/）与文档站（book/）是两个站点，但**必须是同一套工程事实**，
+ * 否则会出现"网页说 1264 LE、文档说别的"这种最尴尬的分歧。
+ * facts/facts.json 是两者共用的机读真值源（由 scripts/extract_facts.py 生成），
+ * 这里把本站声明的读数与它逐项对一遍。
+ * ================================================================== */
+
+const factsPath = join(repoRoot, 'facts', 'facts.json');
+if (!existsSync(factsPath)) {
+  fail('缺少 facts/facts.json（两个站点共用的事实模型未生成，跑 python scripts/extract_facts.py）');
+} else {
+  let facts = null;
+  try {
+    facts = JSON.parse(readFileSync(factsPath, 'utf8'));
+  } catch (e) {
+    fail(`facts/facts.json 解析失败：${e.message}`);
+  }
+  if (facts) {
+    const checks = [
+      ['LE', String(facts.build.fit.le).replace(/[^\d]/g, '').slice(0, 4), /"le"\s*:/],
+      ['断言总数', String(facts.sim.totals.assertions), null],
+    ];
+    // 断言总数：facts.json 必须与"逐模块相加"完全一致
+    if (facts.sim.totals.assertions !== total) {
+      fail(`facts/facts.json 的断言总数 ${facts.sim.totals.assertions} ≠ 轮次记录逐模块相加 ${total}`);
+    } else {
+      ok(`facts/facts.json 与轮次记录一致（断言 ${total} 条、模块 ${facts.sim.totals.modules} 个）`);
+    }
+    // 关键读数：本站 HEADLINE_METRICS 里的数字必须能在 facts.json 里找到同值
+    const leFromFacts = String(facts.build.fit.le).match(/([\d,]+)\s*\/\s*([\d,]+)/);
+    const leSite = /label: '逻辑单元 LE',\s*\n\s*value: '([\d,]+)'/.exec(site);
+    if (leFromFacts && leSite && leFromFacts[1].replace(/,/g, '') !== leSite[1].replace(/,/g, '')) {
+      fail(`LE 对不上：站点 ${leSite[1]}，facts.json ${leFromFacts[1]}`);
+    }
+    const labFromFacts = String(facts.build.fit.lab).match(/([\d,]+)\s*\/\s*([\d,]+)/);
+    const labSite = /label: 'LAB（逻辑阵列块）',\s*\n\s*value: '([\d,]+)'/.exec(site);
+    if (labFromFacts && labSite && labFromFacts[1].replace(/,/g, '') !== labSite[1].replace(/,/g, '')) {
+      fail(`LAB 对不上：站点 ${labSite[1]}，facts.json ${labFromFacts[1]}`);
+    }
+    // POF 指纹：站点里的 sha256 前 8 位必须是 facts.json 里那一个的前缀
+    const pofSite = /pofSha256:\s*'([0-9a-f]{8})/.exec(site);
+    if (pofSite && !String(facts.build.provenance.pof.sha256).startsWith(pofSite[1])) {
+      fail(`POF sha256 前缀对不上：站点 ${pofSite[1]}…，facts.json ${facts.build.provenance.pof.sha256.slice(0, 8)}…`);
+    }
+    if (pofSite) ok(`POF 指纹与 facts.json 一致（${pofSite[1]}…）`);
+    void checks;
+  }
 }
 
 /* ================================================================== *

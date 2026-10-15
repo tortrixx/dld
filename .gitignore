@@ -109,6 +109,31 @@ site/*.local
 site/.vite/
 
 # ============================================================
+# 技术文档站（book/，Material for MkDocs）—— 2026-10-15 第 27 工作阶段新增
+# ------------------------------------------------------------
+# ⚠️ 这一节挡的是**三类可再生内容**，一类都不能多挡：
+#   · book/.venv/            Python 虚拟环境（几百 MB，pip install 即得）
+#   · book/site/             mkdocs build 的产物
+#   · book/docs/_generated/  由 book/scripts/gen_pages.py 从 facts/facts.json
+#                            生成的表格页 —— **必须**每次构建前重新生成，
+#                            否则就会出现"源码改了、文档表还是老的"这种
+#                            最难发现的过期（本项目最怕的一类事故）
+#   · book/docs/assets/      从 docs/图/ 同步来的素材副本（真值源只有 docs/图/）
+#     ⚠️ 只挡子目录，不挡 book/docs/assets/brand/ 与 hardware/README.md
+#        —— 那两个是**手写**的品牌图标与"缺失证据"说明，要入库。
+# ============================================================
+book/.venv/
+book/site/
+book/_smoke/
+book/docs/_generated/
+book/docs/assets/waveforms/
+book/docs/assets/figures/
+book/docs/assets/diagrams/
+book/docs/assets/SYNCED.md
+# jieba（中文分词）把词典缓存写在**当前工作目录**，构建一次就冒出来
+jieba.cache
+
+# ============================================================
 # 通用
 # ============================================================
 Thumbs.db

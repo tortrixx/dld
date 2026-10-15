@@ -1,0 +1,5707 @@
+{
+  "schema": 1,
+  "generator": "scripts/extract_facts.py",
+  "sources": {
+    "rtl": [
+      "rtl/board_test_top.vhd",
+      "rtl/buzzer_ctrl.vhd",
+      "rtl/clk_gen.vhd",
+      "rtl/disp_format.vhd",
+      "rtl/dot_matrix_scan.vhd",
+      "rtl/game_fsm.vhd",
+      "rtl/keypad_diag_top.vhd",
+      "rtl/keypad_raw_top.vhd",
+      "rtl/keypad_scan.vhd",
+      "rtl/pattern_rom.vhd",
+      "rtl/piece_rom.vhd",
+      "rtl/puzzle_ctrl.vhd",
+      "rtl/puzzle_pkg.vhd",
+      "rtl/puzzle_top.vhd",
+      "rtl/rng_lfsr.vhd",
+      "rtl/seg_scan.vhd"
+    ],
+    "sim_rounds": "sim/rounds/<module>/rNN.json",
+    "build": "quartus/build_provenance.json",
+    "qsf": "quartus/puzzle.qsf",
+    "sdc": "quartus/puzzle.sdc",
+    "figures": "docs/图/",
+    "errors": "docs/06-硬件调试记录.md"
+  },
+  "design": {
+    "title": "简易拼图游戏",
+    "device": "EPM1270T144C5",
+    "family": "MAX II",
+    "hdl": "VHDL-93",
+    "tool": "Quartus II 9.1",
+    "games": 3,
+    "matrix": "8x8 dual-color"
+  },
+  "entities": {
+    "board_test_top": {
+      "entity": "board_test_top",
+      "file": "rtl/board_test_top.vhd",
+      "entity_line": 69,
+      "end_entity_line": 88,
+      "architecture": {
+        "name": "rtl",
+        "line": 90
+      },
+      "ports": [
+        {
+          "name": "clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_18"
+        },
+        {
+          "name": "sw7",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_125，向上 = '1'"
+        },
+        {
+          "name": "btn",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_61，BTN0 = 最右边，按下 = '1'"
+        },
+        {
+          "name": "kp_row",
+          "dir": "in",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "PIN_111..114"
+        },
+        {
+          "name": "kp_col",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "PIN_117..120"
+        },
+        {
+          "name": "dot_row",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_8..1"
+        },
+        {
+          "name": "dot_colr",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_22,21,16,15,14,13,12,11"
+        },
+        {
+          "name": "dot_colg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_45,44,43,42,41,40,39,38"
+        },
+        {
+          "name": "seg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_62,59,58,57,55,53,52,51"
+        },
+        {
+          "name": "cat",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_63,66,67,68,69,70,30,31"
+        },
+        {
+          "name": "buzz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_60"
+        }
+      ],
+      "components_declared": [
+        "clk_gen",
+        "keypad_scan",
+        "dot_matrix_scan",
+        "seg_scan"
+      ],
+      "instantiations": [
+        {
+          "instance": "u_clk",
+          "entity": "clk_gen",
+          "file": "rtl/board_test_top.vhd",
+          "line": 244,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_btn",
+              "actual": "btn"
+            },
+            {
+              "formal": "o_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "o_tick_1k",
+              "actual": "t_1k"
+            },
+            {
+              "formal": "o_tick_200",
+              "actual": "t_200"
+            },
+            {
+              "formal": "o_tick_100",
+              "actual": "t_100"
+            },
+            {
+              "formal": "o_tick_2hz",
+              "actual": "t_2hz"
+            },
+            {
+              "formal": "o_tick_4hz",
+              "actual": "open"
+            },
+            {
+              "formal": "o_tick_1hz",
+              "actual": "t_1hz"
+            },
+            {
+              "formal": "o_tick_40",
+              "actual": "t_40"
+            }
+          ]
+        },
+        {
+          "instance": "u_keypad",
+          "entity": "keypad_scan",
+          "file": "rtl/board_test_top.vhd",
+          "line": 258,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t_200"
+            },
+            {
+              "formal": "i_row",
+              "actual": "kp_row"
+            },
+            {
+              "formal": "o_col",
+              "actual": "kp_col"
+            },
+            {
+              "formal": "o_key",
+              "actual": "key"
+            },
+            {
+              "formal": "o_press",
+              "actual": "open"
+            },
+            {
+              "formal": "o_release",
+              "actual": "open"
+            },
+            {
+              "formal": "o_raw",
+              "actual": "kp_raw"
+            }
+          ]
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "file": "rtl/board_test_top.vhd",
+          "line": 595,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_en",
+              "actual": "sw7"
+            },
+            {
+              "formal": "i_row",
+              "actual": "std_logic_vector(row_idx)"
+            },
+            {
+              "formal": "i_colr",
+              "actual": "row_r"
+            },
+            {
+              "formal": "i_colg",
+              "actual": "row_g"
+            },
+            {
+              "formal": "o_row",
+              "actual": "dot_row"
+            },
+            {
+              "formal": "o_colr",
+              "actual": "dot_colr"
+            },
+            {
+              "formal": "o_colg",
+              "actual": "dot_colg"
+            }
+          ]
+        },
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "file": "rtl/board_test_top.vhd",
+          "line": 677,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t_200"
+            },
+            {
+              "formal": "i_en",
+              "actual": "seg_en"
+            },
+            {
+              "formal": "i_data",
+              "actual": "disp"
+            },
+            {
+              "formal": "i_blank",
+              "actual": "NO_BLANK"
+            },
+            {
+              "formal": "i_raw_en",
+              "actual": "seg_raw_en"
+            },
+            {
+              "formal": "i_raw",
+              "actual": "seg_raw"
+            },
+            {
+              "formal": "o_seg",
+              "actual": "seg"
+            },
+            {
+              "formal": "o_cat",
+              "actual": "cat"
+            }
+          ]
+        }
+      ],
+      "loc": 708,
+      "tier": "diag_top",
+      "subsystem": "—"
+    },
+    "buzzer_ctrl": {
+      "entity": "buzzer_ctrl",
+      "file": "rtl/buzzer_ctrl.vhd",
+      "entity_line": 119,
+      "end_entity_line": 128,
+      "architecture": {
+        "name": "rtl",
+        "line": 130
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "50 MHz"
+        },
+        {
+          "name": "i_rst",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "高电平有效"
+        },
+        {
+          "name": "i_en",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' = 强制静音（SW7）"
+        },
+        {
+          "name": "i_sel",
+          "dir": "in",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "音效码（本轮由 3 位加宽到 4 位）"
+        },
+        {
+          "name": "i_t4",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "4 Hz tick（250 ms）：一步一个音"
+        },
+        {
+          "name": "o_buzz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 529,
+      "tier": "module",
+      "subsystem": "S7 音效"
+    },
+    "clk_gen": {
+      "entity": "clk_gen",
+      "file": "rtl/clk_gen.vhd",
+      "entity_line": 50,
+      "end_entity_line": 67,
+      "architecture": {
+        "name": "rtl",
+        "line": 69
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "板级全局时钟（PIN_18）"
+        },
+        {
+          "name": "i_btn",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "复位按键 BTN0，高电平有效"
+        },
+        {
+          "name": "o_rst",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "系统复位，高电平有效"
+        },
+        {
+          "name": "o_tick_1k",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "1 ms 脉冲"
+        },
+        {
+          "name": "o_tick_200",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "5 ms 脉冲"
+        },
+        {
+          "name": "o_tick_100",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "10 ms 脉冲（当前无人使用）"
+        },
+        {
+          "name": "o_tick_2hz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "500 ms 脉冲（**不是**音效节奏：见文件头 21-23 行；唯一实读者是 board_test_top）"
+        },
+        {
+          "name": "o_tick_4hz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "250 ms 脉冲（翻转 → 2 Hz 方波）"
+        },
+        {
+          "name": "o_tick_1hz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "1 s 脉冲"
+        },
+        {
+          "name": "o_tick_40",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 261,
+      "tier": "module",
+      "subsystem": "S1 时钟与复位"
+    },
+    "disp_format": {
+      "entity": "disp_format",
+      "file": "rtl/disp_format.vhd",
+      "entity_line": 46,
+      "end_entity_line": 56,
+      "architecture": {
+        "name": "rtl",
+        "line": 58
+      },
+      "ports": [
+        {
+          "name": "i_state",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": "state_t"
+        },
+        {
+          "name": "i_level",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' = 第 1 关，'1' = 第 2/3 关"
+        },
+        {
+          "name": "i_lvl3",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'1' = 第三关（A2）"
+        },
+        {
+          "name": "i_time",
+          "dir": "in",
+          "type": "std_logic_vector(5 downto 0)",
+          "width": 6,
+          "default": null,
+          "comment": "倒计时值，单位秒"
+        },
+        {
+          "name": "i_blink",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "2 Hz 闪烁标志（自检）"
+        },
+        {
+          "name": "o_data",
+          "dir": "out",
+          "type": "std_logic_vector(31 downto 0)",
+          "width": 32,
+          "default": null,
+          "comment": "8 x BCD"
+        },
+        {
+          "name": "o_blank",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "'1' = 消隐该位"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 241,
+      "tier": "module",
+      "subsystem": "S6 显示输出"
+    },
+    "dot_matrix_scan": {
+      "entity": "dot_matrix_scan",
+      "file": "rtl/dot_matrix_scan.vhd",
+      "entity_line": 60,
+      "end_entity_line": 72,
+      "architecture": {
+        "name": "rtl",
+        "line": 74
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_rst",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "高电平有效"
+        },
+        {
+          "name": "i_en",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' = 点阵全灭"
+        },
+        {
+          "name": "i_row",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": "哪一逻辑行（0 = 顶部）"
+        },
+        {
+          "name": "i_colr",
+          "dir": "in",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "该行的红色位"
+        },
+        {
+          "name": "i_colg",
+          "dir": "in",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "该行的绿色位"
+        },
+        {
+          "name": "o_row",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "ROW0..ROW7，低电平有效"
+        },
+        {
+          "name": "o_colr",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "COLR0..COLR7"
+        },
+        {
+          "name": "o_colg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "COLG0..COLG7"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 115,
+      "tier": "module",
+      "subsystem": "S6 显示输出"
+    },
+    "game_fsm": {
+      "entity": "game_fsm",
+      "file": "rtl/game_fsm.vhd",
+      "entity_line": 54,
+      "end_entity_line": 86,
+      "architecture": {
+        "name": "rtl",
+        "line": 88
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_rst",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "高电平有效"
+        },
+        {
+          "name": "i_sw",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "SW7 系统开关"
+        },
+        {
+          "name": "i_tick_1hz",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_tick_4hz",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "ERR-038：翻转它 → 2 Hz 方波"
+        },
+        {
+          "name": "i_press",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "单拍：有一个按键被接受"
+        },
+        {
+          "name": "i_key",
+          "dir": "in",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "被接受的按键码"
+        },
+        {
+          "name": "o_sel",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "单拍：循环切换选择"
+        },
+        {
+          "name": "o_move",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "单拍：移动请求"
+        },
+        {
+          "name": "o_conf",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "单拍：锁定请求"
+        },
+        {
+          "name": "o_go",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "散落请求：**电平**（请求/应答握手，"
+        },
+        {
+          "name": "o_up",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_down",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_left",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_right",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_rot",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "A4: 90° 旋转请求（1 拍）"
+        },
+        {
+          "name": "o_level",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' = 第一关，'1' = 第二关/第三关"
+        },
+        {
+          "name": "o_lvl3",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'1' = 第三关（A2：增加关数）"
+        },
+        {
+          "name": "o_state",
+          "dir": "out",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": "state_t"
+        },
+        {
+          "name": "o_time",
+          "dir": "out",
+          "type": "std_logic_vector(5 downto 0)",
+          "width": 6,
+          "default": null,
+          "comment": "倒计时秒数"
+        },
+        {
+          "name": "o_blink",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "2 Hz 闪烁标志"
+        },
+        {
+          "name": "i_solved",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "来自 puzzle_ctrl"
+        },
+        {
+          "name": "i_all_lock",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "来自 puzzle_ctrl"
+        },
+        {
+          "name": "i_shuf_busy",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "来自 puzzle_ctrl"
+        },
+        {
+          "name": "o_sound",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "音效选择码（4 位，A1 v2）"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 602,
+      "tier": "module",
+      "subsystem": "S3 游戏控制"
+    },
+    "keypad_diag_top": {
+      "entity": "keypad_diag_top",
+      "file": "rtl/keypad_diag_top.vhd",
+      "entity_line": 40,
+      "end_entity_line": 54,
+      "architecture": {
+        "name": "rtl",
+        "line": 56
+      },
+      "ports": [
+        {
+          "name": "clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "sw7",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "btn",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "kp_row",
+          "dir": "in",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "kp_col",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "dot_row",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "dot_colr",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "dot_colg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "seg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "cat",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "buzz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [
+        {
+          "instance": "u_clk",
+          "entity": "clk_gen",
+          "file": "rtl/keypad_diag_top.vhd",
+          "line": 120,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_btn",
+              "actual": "btn"
+            },
+            {
+              "formal": "o_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "o_tick_1k",
+              "actual": "t_1k"
+            },
+            {
+              "formal": "o_tick_200",
+              "actual": "t_200"
+            },
+            {
+              "formal": "o_tick_100",
+              "actual": "t_100"
+            },
+            {
+              "formal": "o_tick_2hz",
+              "actual": "t_2hz"
+            },
+            {
+              "formal": "o_tick_4hz",
+              "actual": "open"
+            },
+            {
+              "formal": "o_tick_1hz",
+              "actual": "t_1hz"
+            },
+            {
+              "formal": "o_tick_40",
+              "actual": "t_40"
+            }
+          ]
+        },
+        {
+          "instance": "u_keypad",
+          "entity": "keypad_scan",
+          "file": "rtl/keypad_diag_top.vhd",
+          "line": 134,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t_200"
+            },
+            {
+              "formal": "i_row",
+              "actual": "kp_row"
+            },
+            {
+              "formal": "o_col",
+              "actual": "kp_col"
+            },
+            {
+              "formal": "o_key",
+              "actual": "key"
+            },
+            {
+              "formal": "o_press",
+              "actual": "press"
+            },
+            {
+              "formal": "o_release",
+              "actual": "release"
+            },
+            {
+              "formal": "o_raw",
+              "actual": "kp_raw"
+            }
+          ]
+        },
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "file": "rtl/keypad_diag_top.vhd",
+          "line": 195,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t_200"
+            },
+            {
+              "formal": "i_en",
+              "actual": "sw7"
+            },
+            {
+              "formal": "i_data",
+              "actual": "disp"
+            },
+            {
+              "formal": "i_blank",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "i_raw_en",
+              "actual": "'0'"
+            },
+            {
+              "formal": "i_raw",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "o_seg",
+              "actual": "seg"
+            },
+            {
+              "formal": "o_cat",
+              "actual": "cat"
+            }
+          ]
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "file": "rtl/keypad_diag_top.vhd",
+          "line": 209,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_en",
+              "actual": "'0'"
+            },
+            {
+              "formal": "i_row",
+              "actual": "\"000\""
+            },
+            {
+              "formal": "i_colr",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "i_colg",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "o_row",
+              "actual": "dot_row"
+            },
+            {
+              "formal": "o_colr",
+              "actual": "dot_colr"
+            },
+            {
+              "formal": "o_colg",
+              "actual": "dot_colg"
+            }
+          ]
+        }
+      ],
+      "loc": 224,
+      "tier": "diag_top",
+      "subsystem": "—"
+    },
+    "keypad_raw_top": {
+      "entity": "keypad_raw_top",
+      "file": "rtl/keypad_raw_top.vhd",
+      "entity_line": 35,
+      "end_entity_line": 49,
+      "architecture": {
+        "name": "rtl",
+        "line": 51
+      },
+      "ports": [
+        {
+          "name": "clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "sw7",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "btn",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "kp_row",
+          "dir": "in",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "kp_col",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "dot_row",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "dot_colr",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "dot_colg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "seg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "cat",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "buzz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "file": "rtl/keypad_raw_top.vhd",
+          "line": 110,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "'0'"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t200"
+            },
+            {
+              "formal": "i_en",
+              "actual": "sw7"
+            },
+            {
+              "formal": "i_data",
+              "actual": "disp"
+            },
+            {
+              "formal": "i_blank",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "i_raw_en",
+              "actual": "'0'"
+            },
+            {
+              "formal": "i_raw",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "o_seg",
+              "actual": "seg"
+            },
+            {
+              "formal": "o_cat",
+              "actual": "cat"
+            }
+          ]
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "file": "rtl/keypad_raw_top.vhd",
+          "line": 124,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "'0'"
+            },
+            {
+              "formal": "i_en",
+              "actual": "'0'"
+            },
+            {
+              "formal": "i_row",
+              "actual": "\"000\""
+            },
+            {
+              "formal": "i_colr",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "i_colg",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "o_row",
+              "actual": "dot_row"
+            },
+            {
+              "formal": "o_colr",
+              "actual": "dot_colr"
+            },
+            {
+              "formal": "o_colg",
+              "actual": "dot_colg"
+            }
+          ]
+        }
+      ],
+      "loc": 139,
+      "tier": "diag_top",
+      "subsystem": "—"
+    },
+    "keypad_scan": {
+      "entity": "keypad_scan",
+      "file": "rtl/keypad_scan.vhd",
+      "entity_line": 52,
+      "end_entity_line": 64,
+      "architecture": {
+        "name": "rtl",
+        "line": 66
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_rst",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "高电平有效"
+        },
+        {
+          "name": "i_tick",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "200 Hz 扫描 tick"
+        },
+        {
+          "name": "i_row",
+          "dir": "in",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "矩阵行 ROW0..ROW3"
+        },
+        {
+          "name": "o_col",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "矩阵列 COL0..COL3"
+        },
+        {
+          "name": "o_key",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "被接受的键号"
+        },
+        {
+          "name": "o_press",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "单时钟脉冲"
+        },
+        {
+          "name": "o_release",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "单时钟脉冲"
+        },
+        {
+          "name": "o_raw",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "调试：实时列驱动"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 328,
+      "tier": "module",
+      "subsystem": "S2 键盘输入"
+    },
+    "pattern_rom": {
+      "entity": "pattern_rom",
+      "file": "rtl/pattern_rom.vhd",
+      "entity_line": 33,
+      "end_entity_line": 39,
+      "architecture": {
+        "name": "rtl",
+        "line": 41
+      },
+      "ports": [
+        {
+          "name": "i_level",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' = 第一关，'1' = 第二/三关"
+        },
+        {
+          "name": "i_pat",
+          "dir": "in",
+          "type": "std_logic_vector(1 downto 0)",
+          "width": 2,
+          "default": null,
+          "comment": "图案库下标（只对第二/三关有效）"
+        },
+        {
+          "name": "o_mask",
+          "dir": "out",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": "目标图案掩码"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 49,
+      "tier": "module",
+      "subsystem": "S5 图案与零片数据"
+    },
+    "piece_rom": {
+      "entity": "piece_rom",
+      "file": "rtl/piece_rom.vhd",
+      "entity_line": 27,
+      "end_entity_line": 35,
+      "architecture": {
+        "name": "rtl",
+        "line": 37
+      },
+      "ports": [
+        {
+          "name": "i_level",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' = 第一关，'1' = 第二/三关"
+        },
+        {
+          "name": "o_mask",
+          "dir": "out",
+          "type": "mask_arr_t",
+          "width": 1,
+          "default": null,
+          "comment": "4 个相对形状掩码"
+        },
+        {
+          "name": "o_h",
+          "dir": "out",
+          "type": "dim_arr_t",
+          "width": 1,
+          "default": null,
+          "comment": "4 个包围盒高度"
+        },
+        {
+          "name": "o_w",
+          "dir": "out",
+          "type": "dim_arr_t",
+          "width": 1,
+          "default": null,
+          "comment": "4 个包围盒宽度"
+        },
+        {
+          "name": "o_n",
+          "dir": "out",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": "本关使用多少块零片"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 61,
+      "tier": "module",
+      "subsystem": "S5 图案与零片数据"
+    },
+    "puzzle_ctrl": {
+      "entity": "puzzle_ctrl",
+      "file": "rtl/puzzle_ctrl.vhd",
+      "entity_line": 60,
+      "end_entity_line": 114,
+      "architecture": {
+        "name": "rtl",
+        "line": 116
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_rst",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_tick",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "行渲染节拍：顶层给 **1 kHz**"
+        },
+        {
+          "name": "rnd_step",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "rnd_val",
+          "dir": "in",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_level",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' 第一关，'1' 第二/三关"
+        },
+        {
+          "name": "i_pat",
+          "dir": "in",
+          "type": "std_logic_vector(1 downto 0)",
+          "width": 2,
+          "default": null,
+          "comment": "图案库下标（A2/S1）："
+        },
+        {
+          "name": "i_sh0",
+          "dir": "in",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_sh1",
+          "dir": "in",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_sh2",
+          "dir": "in",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_sh3",
+          "dir": "in",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_h0",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_h1",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_h2",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_h3",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_w0",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_w1",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_w2",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_w3",
+          "dir": "in",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_target",
+          "dir": "in",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_go",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_select",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_move",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_confirm",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_rot",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "【旋转】键（A4）：1 拍脉冲，"
+        },
+        {
+          "name": "i_up",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_down",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_left",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_right",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_ori",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "四块各 2 位的朝向（A4，仿真用）"
+        },
+        {
+          "name": "o_solved",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_all_lock",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_busy",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_sel_idx",
+          "dir": "out",
+          "type": "std_logic_vector(1 downto 0)",
+          "width": 2,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_pos",
+          "dir": "out",
+          "type": "std_logic_vector(31 downto 0)",
+          "width": 32,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_lock",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_scanrow",
+          "dir": "out",
+          "type": "std_logic_vector(2 downto 0)",
+          "width": 3,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "o_rowr",
+          "dir": "out",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": "红色帧"
+        },
+        {
+          "name": "o_rowg",
+          "dir": "out",
+          "type": "std_logic_vector(63 downto 0)",
+          "width": 64,
+          "default": null,
+          "comment": "绿色帧"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 1130,
+      "tier": "module",
+      "subsystem": "S4 拼图引擎"
+    },
+    "puzzle_top": {
+      "entity": "puzzle_top",
+      "file": "rtl/puzzle_top.vhd",
+      "entity_line": 54,
+      "end_entity_line": 68,
+      "architecture": {
+        "name": "rtl",
+        "line": 70
+      },
+      "ports": [
+        {
+          "name": "clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_18 板载时钟"
+        },
+        {
+          "name": "sw7",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_125，拨上 = '1'"
+        },
+        {
+          "name": "btn",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_61，BTN0 复位"
+        },
+        {
+          "name": "kp_row",
+          "dir": "in",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "PIN_111..114"
+        },
+        {
+          "name": "kp_col",
+          "dir": "out",
+          "type": "std_logic_vector(3 downto 0)",
+          "width": 4,
+          "default": null,
+          "comment": "PIN_117..120"
+        },
+        {
+          "name": "dot_row",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_8..1"
+        },
+        {
+          "name": "dot_colr",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_22..11"
+        },
+        {
+          "name": "dot_colg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_45..38"
+        },
+        {
+          "name": "seg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_62..51"
+        },
+        {
+          "name": "cat",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "PIN_63..31"
+        },
+        {
+          "name": "buzz",
+          "dir": "out",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "PIN_60"
+        }
+      ],
+      "components_declared": [
+        "clk_gen",
+        "keypad_scan",
+        "game_fsm",
+        "piece_rom",
+        "pattern_rom",
+        "rng_lfsr",
+        "puzzle_ctrl",
+        "dot_matrix_scan",
+        "disp_format",
+        "seg_scan",
+        "buzzer_ctrl"
+      ],
+      "instantiations": [
+        {
+          "instance": "u_clk",
+          "entity": "clk_gen",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 425,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_btn",
+              "actual": "btn"
+            },
+            {
+              "formal": "o_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "o_tick_1k",
+              "actual": "t_1k"
+            },
+            {
+              "formal": "o_tick_200",
+              "actual": "t_200"
+            },
+            {
+              "formal": "o_tick_100",
+              "actual": "t_100"
+            },
+            {
+              "formal": "o_tick_2hz",
+              "actual": "open"
+            },
+            {
+              "formal": "o_tick_4hz",
+              "actual": "t_4hz"
+            },
+            {
+              "formal": "o_tick_1hz",
+              "actual": "t_1hz"
+            },
+            {
+              "formal": "o_tick_40",
+              "actual": "t_40"
+            }
+          ]
+        },
+        {
+          "instance": "u_keypad",
+          "entity": "keypad_scan",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 440,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t_200"
+            },
+            {
+              "formal": "i_row",
+              "actual": "kp_row"
+            },
+            {
+              "formal": "o_col",
+              "actual": "kp_col"
+            },
+            {
+              "formal": "o_key",
+              "actual": "key"
+            },
+            {
+              "formal": "o_press",
+              "actual": "press"
+            },
+            {
+              "formal": "o_release",
+              "actual": "release"
+            },
+            {
+              "formal": "o_raw",
+              "actual": "kp_raw"
+            }
+          ]
+        },
+        {
+          "instance": "u_fsm",
+          "entity": "game_fsm",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 454,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_sw",
+              "actual": "sw7"
+            },
+            {
+              "formal": "i_tick_1hz",
+              "actual": "t_1hz"
+            },
+            {
+              "formal": "i_tick_4hz",
+              "actual": "t_4hz"
+            },
+            {
+              "formal": "i_press",
+              "actual": "press"
+            },
+            {
+              "formal": "i_key",
+              "actual": "key"
+            },
+            {
+              "formal": "o_sel",
+              "actual": "sel"
+            },
+            {
+              "formal": "o_move",
+              "actual": "move"
+            },
+            {
+              "formal": "o_conf",
+              "actual": "conf"
+            },
+            {
+              "formal": "o_go",
+              "actual": "go"
+            },
+            {
+              "formal": "o_up",
+              "actual": "mv_up"
+            },
+            {
+              "formal": "o_down",
+              "actual": "mv_dn"
+            },
+            {
+              "formal": "o_left",
+              "actual": "mv_lf"
+            },
+            {
+              "formal": "o_right",
+              "actual": "mv_rt"
+            },
+            {
+              "formal": "o_rot",
+              "actual": "mv_rot"
+            },
+            {
+              "formal": "o_level",
+              "actual": "level"
+            },
+            {
+              "formal": "o_state",
+              "actual": "state"
+            },
+            {
+              "formal": "o_time",
+              "actual": "gtime"
+            },
+            {
+              "formal": "o_blink",
+              "actual": "gblink"
+            },
+            {
+              "formal": "i_solved",
+              "actual": "solved"
+            },
+            {
+              "formal": "i_all_lock",
+              "actual": "all_lock"
+            },
+            {
+              "formal": "i_shuf_busy",
+              "actual": "shuf_busy"
+            },
+            {
+              "formal": "o_sound",
+              "actual": "sound"
+            },
+            {
+              "formal": "o_lvl3",
+              "actual": "lvl3"
+            }
+          ]
+        },
+        {
+          "instance": "u_pieces",
+          "entity": "piece_rom",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 484,
+          "port_map": [
+            {
+              "formal": "i_level",
+              "actual": "level"
+            },
+            {
+              "formal": "o_mask",
+              "actual": "shapes"
+            },
+            {
+              "formal": "o_h",
+              "actual": "shape_h"
+            },
+            {
+              "formal": "o_w",
+              "actual": "shape_w"
+            },
+            {
+              "formal": "o_n",
+              "actual": "piece_n"
+            }
+          ]
+        },
+        {
+          "instance": "u_pattern",
+          "entity": "pattern_rom",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 493,
+          "port_map": [
+            {
+              "formal": "i_level",
+              "actual": "level"
+            },
+            {
+              "formal": "i_pat",
+              "actual": "pat_sel"
+            },
+            {
+              "formal": "o_mask",
+              "actual": "tgt_mask"
+            }
+          ]
+        },
+        {
+          "instance": "u_rng",
+          "entity": "rng_lfsr",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 501,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_step",
+              "actual": "rnd_step"
+            },
+            {
+              "formal": "o_val",
+              "actual": "rnd_val"
+            }
+          ]
+        },
+        {
+          "instance": "u_puzzle",
+          "entity": "puzzle_ctrl",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 522,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t_1k"
+            },
+            {
+              "formal": "rnd_step",
+              "actual": "rnd_step"
+            },
+            {
+              "formal": "rnd_val",
+              "actual": "rnd_val"
+            },
+            {
+              "formal": "i_level",
+              "actual": "level"
+            },
+            {
+              "formal": "i_pat",
+              "actual": "pat_sel"
+            },
+            {
+              "formal": "i_sh0",
+              "actual": "shapes(0)"
+            },
+            {
+              "formal": "i_sh1",
+              "actual": "shapes(1)"
+            },
+            {
+              "formal": "i_sh2",
+              "actual": "shapes(2)"
+            },
+            {
+              "formal": "i_sh3",
+              "actual": "shapes(3)"
+            },
+            {
+              "formal": "i_h0",
+              "actual": "shape_h(0)"
+            },
+            {
+              "formal": "i_h1",
+              "actual": "shape_h(1)"
+            },
+            {
+              "formal": "i_h2",
+              "actual": "shape_h(2)"
+            },
+            {
+              "formal": "i_h3",
+              "actual": "shape_h(3)"
+            },
+            {
+              "formal": "i_w0",
+              "actual": "shape_w(0)"
+            },
+            {
+              "formal": "i_w1",
+              "actual": "shape_w(1)"
+            },
+            {
+              "formal": "i_w2",
+              "actual": "shape_w(2)"
+            },
+            {
+              "formal": "i_w3",
+              "actual": "shape_w(3)"
+            },
+            {
+              "formal": "i_target",
+              "actual": "tgt_mask"
+            },
+            {
+              "formal": "i_go",
+              "actual": "go"
+            },
+            {
+              "formal": "i_select",
+              "actual": "sel"
+            },
+            {
+              "formal": "i_move",
+              "actual": "move"
+            },
+            {
+              "formal": "i_confirm",
+              "actual": "conf"
+            },
+            {
+              "formal": "i_rot",
+              "actual": "mv_rot"
+            },
+            {
+              "formal": "i_up",
+              "actual": "mv_up"
+            },
+            {
+              "formal": "i_down",
+              "actual": "mv_dn"
+            },
+            {
+              "formal": "i_left",
+              "actual": "mv_lf"
+            },
+            {
+              "formal": "i_right",
+              "actual": "mv_rt"
+            },
+            {
+              "formal": "o_ori",
+              "actual": "open"
+            },
+            {
+              "formal": "o_solved",
+              "actual": "solved"
+            },
+            {
+              "formal": "o_all_lock",
+              "actual": "all_lock"
+            },
+            {
+              "formal": "o_busy",
+              "actual": "shuf_busy"
+            },
+            {
+              "formal": "o_sel_idx",
+              "actual": "sel_idx"
+            },
+            {
+              "formal": "o_pos",
+              "actual": "pos_dbg"
+            },
+            {
+              "formal": "o_lock",
+              "actual": "lock_dbg"
+            },
+            {
+              "formal": "o_scanrow",
+              "actual": "scanrow"
+            },
+            {
+              "formal": "o_rowr",
+              "actual": "eng_fr"
+            },
+            {
+              "formal": "o_rowg",
+              "actual": "eng_fg"
+            }
+          ]
+        },
+        {
+          "instance": "u_disp",
+          "entity": "disp_format",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 576,
+          "port_map": [
+            {
+              "formal": "i_state",
+              "actual": "state"
+            },
+            {
+              "formal": "i_level",
+              "actual": "level"
+            },
+            {
+              "formal": "i_lvl3",
+              "actual": "lvl3"
+            },
+            {
+              "formal": "i_time",
+              "actual": "gtime"
+            },
+            {
+              "formal": "i_blink",
+              "actual": "gblink"
+            },
+            {
+              "formal": "o_data",
+              "actual": "disp_data"
+            },
+            {
+              "formal": "o_blank",
+              "actual": "disp_blank"
+            }
+          ]
+        },
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 587,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_tick",
+              "actual": "t_1k"
+            },
+            {
+              "formal": "i_en",
+              "actual": "sw7"
+            },
+            {
+              "formal": "i_data",
+              "actual": "disp_data"
+            },
+            {
+              "formal": "i_blank",
+              "actual": "disp_blank"
+            },
+            {
+              "formal": "i_raw_en",
+              "actual": "'0'"
+            },
+            {
+              "formal": "i_raw",
+              "actual": "(others => '0')"
+            },
+            {
+              "formal": "o_seg",
+              "actual": "seg"
+            },
+            {
+              "formal": "o_cat",
+              "actual": "cat"
+            }
+          ]
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 820,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_en",
+              "actual": "sw7"
+            },
+            {
+              "formal": "i_row",
+              "actual": "std_logic_vector(mrow)"
+            },
+            {
+              "formal": "i_colr",
+              "actual": "mat_r"
+            },
+            {
+              "formal": "i_colg",
+              "actual": "mat_g"
+            },
+            {
+              "formal": "o_row",
+              "actual": "dot_row"
+            },
+            {
+              "formal": "o_colr",
+              "actual": "dot_colr"
+            },
+            {
+              "formal": "o_colg",
+              "actual": "dot_colg"
+            }
+          ]
+        },
+        {
+          "instance": "u_buzz",
+          "entity": "buzzer_ctrl",
+          "file": "rtl/puzzle_top.vhd",
+          "line": 834,
+          "port_map": [
+            {
+              "formal": "i_clk",
+              "actual": "clk"
+            },
+            {
+              "formal": "i_rst",
+              "actual": "rst"
+            },
+            {
+              "formal": "i_en",
+              "actual": "sw7"
+            },
+            {
+              "formal": "i_sel",
+              "actual": "sound"
+            },
+            {
+              "formal": "i_t4",
+              "actual": "t_4hz"
+            },
+            {
+              "formal": "o_buzz",
+              "actual": "buzz"
+            }
+          ]
+        }
+      ],
+      "loc": 844,
+      "tier": "top",
+      "subsystem": "—"
+    },
+    "rng_lfsr": {
+      "entity": "rng_lfsr",
+      "file": "rtl/rng_lfsr.vhd",
+      "entity_line": 23,
+      "end_entity_line": 30,
+      "architecture": {
+        "name": "rtl",
+        "line": 32
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_rst",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "高电平有效"
+        },
+        {
+          "name": "i_step",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "推进一步"
+        },
+        {
+          "name": "o_val",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": null
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 55,
+      "tier": "module",
+      "subsystem": "S5 图案与零片数据"
+    },
+    "seg_scan": {
+      "entity": "seg_scan",
+      "file": "rtl/seg_scan.vhd",
+      "entity_line": 39,
+      "end_entity_line": 58,
+      "architecture": {
+        "name": "rtl",
+        "line": 60
+      },
+      "ports": [
+        {
+          "name": "i_clk",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_rst",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "高电平有效"
+        },
+        {
+          "name": "i_tick",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "位选推进节拍：设计用 1 kHz"
+        },
+        {
+          "name": "i_en",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": "'0' = 所有位熄灭"
+        },
+        {
+          "name": "i_data",
+          "dir": "in",
+          "type": "std_logic_vector(31 downto 0)",
+          "width": 32,
+          "default": null,
+          "comment": "8 x 4 位 BCD，digit7..digit0"
+        },
+        {
+          "name": "i_blank",
+          "dir": "in",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "'1' = 该位被消隐"
+        },
+        {
+          "name": "i_raw_en",
+          "dir": "in",
+          "type": "std_logic",
+          "width": 1,
+          "default": null,
+          "comment": null
+        },
+        {
+          "name": "i_raw",
+          "dir": "in",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "bit0=AA ... bit6=AG, bit7=AP"
+        },
+        {
+          "name": "o_seg",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "AA..AP"
+        },
+        {
+          "name": "o_cat",
+          "dir": "out",
+          "type": "std_logic_vector(7 downto 0)",
+          "width": 8,
+          "default": null,
+          "comment": "CAT0..CAT7，低电平有效"
+        }
+      ],
+      "components_declared": [],
+      "instantiations": [],
+      "loc": 187,
+      "tier": "module",
+      "subsystem": "S6 显示输出"
+    }
+  },
+  "packages": {
+    "puzzle_pkg": {
+      "package": "puzzle_pkg",
+      "file": "rtl/puzzle_pkg.vhd",
+      "line": 19,
+      "body_line": 619,
+      "loc": 840,
+      "constants": [
+        {
+          "name": "MASK_ZERO",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "(others => '0')",
+          "comment": "* 全部时序常量与状态编码",
+          "line": 27
+        },
+        {
+          "name": "L1_TARGET_MASK",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000111000001110000011100000111000000000000000000\"",
+          "comment": null,
+          "line": 147
+        },
+        {
+          "name": "L1_P0",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000000000000000000000000000000000000000000000111\"",
+          "comment": null,
+          "line": 157
+        },
+        {
+          "name": "L1_P1",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000000000000000000000000000000010000001100000111\"",
+          "comment": "下一个朝向（每次按【旋转】键转 90°，4 次回到原样）",
+          "line": 162
+        },
+        {
+          "name": "L1_P2",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000000000000000000000000000000000000001100000010\"",
+          "comment": "占据点阵第 2..5 行、第 2..4 列  -> 12 格",
+          "line": 172
+        },
+        {
+          "name": "L2_TARGET_MASK",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000001111000011110000111100001111000000000000000000\"",
+          "comment": "P1 ：1x3 横条        （3 格）",
+          "line": 175
+        },
+        {
+          "name": "L2_PAT0",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000001111000011110000111100001111000000000000000000\"",
+          "comment": null,
+          "line": 191
+        },
+        {
+          "name": "L2_PAT1",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000111000011111000111110000111000000000000000000\"",
+          "comment": "实测：PAT0/PAT1/PAT2 各 **1 种**铺法、PAT3 **2 种**（见 docs/02 §9.2）。",
+          "line": 242
+        },
+        {
+          "name": "L2_PAT2",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000111100111100001111000000111100000000000000000\"",
+          "comment": "升级成真的要**拼出**轮廓。40 秒够用：散落最大位移 14 步、平均约 9 步/块。",
+          "line": 244
+        },
+        {
+          "name": "L2_PAT3",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000001110000011110000111110000111100000000000000000\"",
+          "comment": "【面积账】零片与图案仍然全是**编译期常量**：piece_rom 0 LE、pattern_rom 4 LE",
+          "line": 246
+        },
+        {
+          "name": "L2_PATS",
+          "type": "pat_arr_t",
+          "value": "(L2_PAT0, L2_PAT1, L2_PAT2, L2_PAT3)",
+          "comment": "· **第二关**（level='1' 且 lvl3='0'）→ 恒锁 `L2_FIXED_PAT`（PAT3 阶梯，固定）",
+          "line": 251
+        },
+        {
+          "name": "L2_PAT_N",
+          "type": "integer",
+          "value": "4",
+          "comment": "· **第三关**（lvl3='1'，A2 新增）  → 锁 rng_lfsr 低 2 位 → 四幅里随机选",
+          "line": 252
+        },
+        {
+          "name": "L2_FIXED_PAT",
+          "type": "std_logic_vector(1 downto 0)",
+          "value": "\"11\"",
+          "comment": "第一关按 B4 恒为图 4-1（pattern_rom 在 level='0' 时忽略 i_pat）。",
+          "line": 253
+        },
+        {
+          "name": "L2_P0",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000000000000000000000000000000000000000000000111\"",
+          "comment": "而\"**多种拼图图案随机选择**\"是**提高要求 2**里的内容，且与\"**增加游戏关数**\"",
+          "line": 274
+        },
+        {
+          "name": "L2_P1",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000000000000000000000000000000000000000100000001\"",
+          "comment": "第三关 = 从 L2_PATS 四幅里**随机选**（A2：增加关数 + 多种图案随机选择，见",
+          "line": 279
+        },
+        {
+          "name": "L2_P2",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000000000000000000000000000001000000010000000111\"",
+          "comment": "rtl/game_fsm.vhd 的 lvl3 与 rtl/puzzle_top.vhd 的 pat_sel 锁存）",
+          "line": 281
+        },
+        {
+          "name": "L2_P3",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000000000000000000000000000000000000000001100000011100000001\"",
+          "comment": "① 用户明确要求\"第二关的固定图案不要用原来的 4x4\"；",
+          "line": 283
+        },
+        {
+          "name": "PIECE_ORI_INIT",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"10\" & \"10\" & \"01\" & \"01\"",
+          "comment": "② PAT3 是四幅里**唯一有 2 种**等价铺法的图案（PAT0/PAT1/PAT2 各只有 1 种），",
+          "line": 285
+        },
+        {
+          "name": "L1_TGT0",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0010\" & \"0010\"",
+          "comment": "旋转参考模型），要求同时满足",
+          "line": 311
+        },
+        {
+          "name": "L1_TGT1",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0011\" & \"0010\"",
+          "comment": "端到端证明：sim/tb_puzzle_ctrl.py / sim/tb_puzzle_top.py 的走法计划里**必须出现",
+          "line": 324
+        },
+        {
+          "name": "L1_TGT2",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0100\" & \"0011\"",
+          "comment": "【旋转】按键**才铺得满（把计划里的旋转删掉就会失败）。",
+          "line": 325
+        },
+        {
+          "name": "L1_TGT3",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0000\" & \"0000\"",
+          "comment": "编码：块 k 占 ori(2k+1 downto 2k)；\"01\" = 顺时针 90°，\"10\" = 180°，\"11\" = 270°。",
+          "line": 326
+        },
+        {
+          "name": "L2_TGT0",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0101\" & \"0011\"",
+          "comment": "编码：块 k 占 ori(2k+1 downto 2k)；\"01\" = 顺时针 90°，\"10\" = 180°，\"11\" = 270°。",
+          "line": 327
+        },
+        {
+          "name": "L2_TGT1",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0100\" & \"0010\"",
+          "comment": "⚠️ ERR-021：这些常量**不再**是成功判据。把每块零片的锚点与",
+          "line": 333
+        },
+        {
+          "name": "L2_TGT2",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0010\" & \"0011\"",
+          "comment": "下面的值比较会否掉每一种等价铺法：第二关以前是四块",
+          "line": 334
+        },
+        {
+          "name": "L2_TGT3",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0010\" & \"0010\"",
+          "comment": "**完全相同**的 2x2 方块（24 种等价摆位，只接受 1 种），",
+          "line": 335
+        },
+        {
+          "name": "L2_PAT3_TGT0",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0010\" & \"0010\"",
+          "comment": "第一关的矩形有 2 种等价铺法（只接受 1 种），所以",
+          "line": 336
+        },
+        {
+          "name": "L2_PAT3_TGT1",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0010\" & \"0001\"",
+          "comment": "第二关见证：四块自拟零片恰好铺满 PAT0（4x4 方块，",
+          "line": 345
+        },
+        {
+          "name": "L2_PAT3_TGT2",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0011\" & \"0011\"",
+          "comment": "第 2..5 行 x 第 2..5 列），Q0..Q3 分别位于 (5,3) (4,2) (2,3) (2,2)。",
+          "line": 346
+        },
+        {
+          "name": "L2_PAT3_TGT3",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "\"0011\" & \"0010\"",
+          "comment": "PAT0 的铺法是唯一的（check_geometry.py 枚举过），所以这组见证",
+          "line": 347
+        },
+        {
+          "name": "WIN_MASK",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000111000011111000110110011000101110000111000001100000010000000\"",
+          "comment": "Q0 @ (5,3)",
+          "line": 348
+        },
+        {
+          "name": "FAIL_MASK",
+          "type": "std_logic_vector(63 downto 0)",
+          "value": "\"0000000011000011011001100011110000111100011001101100001100000000\"",
+          "comment": "⚠️ 颜色：胜利 = **绿**（只点绿列）、失败 = **红**（只点红列），互为反色，",
+          "line": 376
+        },
+        {
+          "name": "PIECE_MAX_DIM",
+          "type": "integer",
+          "value": "3",
+          "comment": "⚠️ 方向：对勾是**斜的、左右/上下都不对称**，所以它同时是 ERR-015",
+          "line": 380
+        },
+        {
+          "name": "CLK_HZ",
+          "type": "integer",
+          "value": "50_000_000",
+          "comment": "........######..   row3 = 0x70",
+          "line": 386
+        },
+        {
+          "name": "CNT_1K",
+          "type": "integer",
+          "value": "CLK_HZ / 1_000 - 1",
+          "comment": "FAIL ：一个叉（红色；与绿色的胜利对勾互为反色 —— 交通灯配色）",
+          "line": 395
+        },
+        {
+          "name": "CNT_200",
+          "type": "integer",
+          "value": "1_000 / 200 - 1",
+          "comment": "每块零片的包围盒上限：所有零片（第一关与第二关，包括新自拟的",
+          "line": 398
+        },
+        {
+          "name": "CNT_100",
+          "type": "integer",
+          "value": "200 / 100 - 1",
+          "comment": "散落算法「有界候选」算术的前提。",
+          "line": 401
+        },
+        {
+          "name": "CNT_2HZ",
+          "type": "integer",
+          "value": "100 / 2 - 1",
+          "comment": "并从 FREQ LED 那一行读出。本设计假定选在 50 MHz 档。",
+          "line": 407
+        },
+        {
+          "name": "CNT_1HZ",
+          "type": "integer",
+          "value": "100 / 1 - 1",
+          "comment": "计数器链是有意级联的：只有第一级见到 50 MHz，",
+          "line": 408
+        },
+        {
+          "name": "CNT_4HZ",
+          "type": "integer",
+          "value": "100 / 4 - 1",
+          "comment": "--------------------------------------------------------------------------",
+          "line": 411
+        },
+        {
+          "name": "T_POR_MS",
+          "type": "integer",
+          "value": "10",
+          "comment": "级联链\"结构**已不存在**，下面几条的\"级/角色\"描述一并作废。",
+          "line": 422
+        },
+        {
+          "name": "CNT_POR",
+          "type": "integer",
+          "value": "T_POR_MS - 1",
+          "comment": "⚠️ 第 6 级 ：100 Hz -> **4 Hz**（除以 25，= 250 ms 一个脉冲）",
+          "line": 428
+        },
+        {
+          "name": "T_BTN_MS",
+          "type": "integer",
+          "value": "20",
+          "comment": "2026-10-09 第 11 工作阶段（全项目审计发现，ERR-038）：B1 要求自检\"以 **2 Hz**",
+          "line": 429
+        },
+        {
+          "name": "CNT_BTN",
+          "type": "integer",
+          "value": "T_BTN_MS - 1",
+          "comment": "（与 ERR-031 同类的\"2 倍算错\"）。2 Hz 方波需要**每 250 ms 翻转一次**，",
+          "line": 432
+        },
+        {
+          "name": "T_SELFTEST",
+          "type": "integer",
+          "value": "2",
+          "comment": "早先这么写，不成立）：蜂鸣器的换步时钟是 **i_t4 = tick_4hz**",
+          "line": 435
+        },
+        {
+          "name": "T_SELFTEST_T4",
+          "type": "integer",
+          "value": "7",
+          "comment": "上电复位 ：数 tick_1k 脉冲，所以只需要一个 4 位计数器",
+          "line": 440
+        },
+        {
+          "name": "T_PREVIEW",
+          "type": "integer",
+          "value": "5",
+          "comment": "与 FSM 入口无关）⇒ 从入口到第 8 个脉冲 = 7~8 个 250 ms 周期，即复位路径 ≈2.000 s、",
+          "line": 459
+        },
+        {
+          "name": "T_LEVEL1",
+          "type": "integer",
+          "value": "30",
+          "comment": "SW7 重入路径 **(1.75, 2.0] s**。所以只能说\"窗口恒为 8 个旋律步\"，**不要说\"恒为 2 s\"**",
+          "line": 460
+        },
+        {
+          "name": "T_LEVEL2",
+          "type": "integer",
+          "value": "40",
+          "comment": "（ERR-051 自己总结的\"绝对说法要逐路径验\"）。",
+          "line": 461
+        },
+        {
+          "name": "T_LEVEL3",
+          "type": "integer",
+          "value": "60",
+          "comment": "为什么必须改：旧实现数 **tick_1hz**（`selfc` 2 位，`selfc = 1` 时退出），",
+          "line": 462
+        },
+        {
+          "name": "DEBOUNCE_MAX",
+          "type": "integer",
+          "value": "3",
+          "comment": "倒计数初值：8 拍 x 250 ms（≤2 s，见上）",
+          "line": 475
+        },
+        {
+          "name": "SEED_DEFAULT",
+          "type": "std_logic_vector(7 downto 0)",
+          "value": "x\"5A\"",
+          "comment": "各吃一个 200 Hz 周期，所以**消抖级每 10 ms 才采一个样**。仿真测试台独立",
+          "line": 504
+        },
+        {
+          "name": "S_SELF_TEST",
+          "type": "state_t",
+          "value": "\"000\"",
+          "comment": "\"按下 → 接受\"才是 4 轮 = 40 ms）；脉冲本身还要**再晚一个采样拍**（RTL 里脉冲判定",
+          "line": 512
+        },
+        {
+          "name": "S_IDLE",
+          "type": "state_t",
+          "value": "\"001\"",
+          "comment": "**按下 → o_press 实测约 45 ms**（原来 16 轮 = 165 ms），松开同样约 50 ms；",
+          "line": 514
+        },
+        {
+          "name": "S_PREVIEW",
+          "type": "state_t",
+          "value": "\"010\"",
+          "comment": "连按可达 ~12 次/秒（原来 ~3 次/秒）。证据：sim/tb_keypad_scan.py ⑨",
+          "line": 515
+        },
+        {
+          "name": "S_PLAYING",
+          "type": "state_t",
+          "value": "\"011\"",
+          "comment": "（实测 o_press 在 9T、o_release 在 63T；T = 8 us 仿真 = 5 ms 板上）。",
+          "line": 516
+        },
+        {
+          "name": "S_WIN",
+          "type": "state_t",
+          "value": "\"100\"",
+          "comment": "40 ms 的确认窗口对廉价矩阵键盘的接触抖动（典型几 ms）仍很宽裕。",
+          "line": 517
+        },
+        {
+          "name": "S_FAIL",
+          "type": "state_t",
+          "value": "\"101\"",
+          "comment": "⚠️ 改这个常量必须同步改 sim/tb_puzzle_top.py 的 DB_ROUNDS（按键计划按轮排期）",
+          "line": 518
+        },
+        {
+          "name": "K_NONE",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0000\"",
+          "comment": "与 sim/tb_keypad_scan.py 的断言 ⑨。",
+          "line": 519
+        },
+        {
+          "name": "K_START",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0001\"",
+          "comment": null,
+          "line": 524
+        },
+        {
+          "name": "K_SELECT",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0010\"",
+          "comment": "--------------------------------------------------------------------------",
+          "line": 525
+        },
+        {
+          "name": "K_CONFIRM",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0011\"",
+          "comment": "7. 主状态机的状态编码（3 位，6 个状态）",
+          "line": 526
+        },
+        {
+          "name": "K_UP",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0100\"",
+          "comment": "--------------------------------------------------------------------------",
+          "line": 527
+        },
+        {
+          "name": "K_DOWN",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0101\"",
+          "comment": "--------------------------------------------------------------------------",
+          "line": 528
+        },
+        {
+          "name": "K_LEFT",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0110\"",
+          "comment": null,
+          "line": 529
+        },
+        {
+          "name": "K_RIGHT",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0111\"",
+          "comment": null,
+          "line": 530
+        },
+        {
+          "name": "K_ROT",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1000\"",
+          "comment": null,
+          "line": 531
+        },
+        {
+          "name": "SND_NONE",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0000\"",
+          "comment": null,
+          "line": 535
+        },
+        {
+          "name": "SND_SELF",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0001\"",
+          "comment": "⚠️ 这些码是 **game_fsm 与 buzzer_ctrl 之间的接口**：两边的码表必须一一对应，",
+          "line": 565
+        },
+        {
+          "name": "SND_PREVIEW",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0010\"",
+          "comment": "改这里必须同时改 rtl/buzzer_ctrl.vhd 的 MEL_* 表与记录它的",
+          "line": 566
+        },
+        {
+          "name": "SND_CLEAR",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0011\"",
+          "comment": "sim/tb_buzzer_ctrl.py（该 tb 会逐条核对音高/节奏）。",
+          "line": 567
+        },
+        {
+          "name": "SND_WRONG",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0100\"",
+          "comment": "sim/tb_buzzer_ctrl.py（该 tb 会逐条核对音高/节奏）。",
+          "line": 568
+        },
+        {
+          "name": "SND_KEY",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0101\"",
+          "comment": "⚠️ 2026-10-09（第 15 工作阶段，用户实机确认\"音乐功能正常\"后的**内容升级**）：",
+          "line": 569
+        },
+        {
+          "name": "SND_WIN",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0110\"",
+          "comment": "用户要求\"不同场景的音乐要适配内容\"：自检用**行业标准音效**、每关不同的",
+          "line": 570
+        },
+        {
+          "name": "SND_FAIL",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0111\"",
+          "comment": "**热门游戏背景曲**、胜负音效要独特且符合行业习惯。于是本版：",
+          "line": 571
+        },
+        {
+          "name": "SND_BGM1",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1000\"",
+          "comment": "· 自检 = **单声 ~1 kHz 短鸣**（PC 的 POST\"一短声 = 自检通过\"惯例）；",
+          "line": 572
+        },
+        {
+          "name": "SND_BGM2",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1001\"",
+          "comment": "· **背景音乐按关卡分三首**（码 1000/1001/**1011**）——",
+          "line": 573
+        },
+        {
+          "name": "SND_BGM3",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1011\"",
+          "comment": "这个 2 位选择**直接用现有寄存器拼线**：`\"10\" & lvl3 & level`",
+          "line": 574
+        },
+        {
+          "name": "SND_ROT",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1010\"",
+          "comment": "（第一关 1000 / 第二关 1001 / 第三关 1011），**0 个逻辑单元**；",
+          "line": 575
+        },
+        {
+          "name": "SND_CONF",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1100\"",
+          "comment": "· 原 `SND_NAK`（被拒绝音，代码里已撤销生成）与 `SND_LVL`（从未使用）",
+          "line": 576
+        },
+        {
+          "name": "SND_SEL",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1101\"",
+          "comment": "让位给第二/第三关的背景曲，码表仍是 16 个、不增位宽。",
+          "line": 577
+        },
+        {
+          "name": "SND_MOVE",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1110\"",
+          "comment": "⚠️ 改码表必须同步 `rtl/buzzer_ctrl.vhd`、`sim/tb_buzzer_ctrl.py`、",
+          "line": 578
+        },
+        {
+          "name": "SND_TIME",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1111\"",
+          "comment": "`sim/tb_game_fsm.py` 三处（本项目 ERR-022 的教训：码表漂移 = 陈旧绿）。",
+          "line": 579
+        },
+        {
+          "name": "DIG_BLANK",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1111\"",
+          "comment": "--------------------------------------------------------------------------",
+          "line": 580
+        },
+        {
+          "name": "DIG_A",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1010\"",
+          "comment": "⚠️ 试过把 1010/1011 对调（让码表更好看），结果整机装箱从 127 LAB 掉到",
+          "line": 609
+        },
+        {
+          "name": "DIG_P",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1011\"",
+          "comment": "128 LAB **装不下** —— 99% 占用率下改常量值本身就会扰动装箱，",
+          "line": 610
+        },
+        {
+          "name": "DIG_S",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1100\"",
+          "comment": "所以码表按\"能装下\"为准，负结果见 docs/05 §1.4。",
+          "line": 611
+        },
+        {
+          "name": "DIG_F",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1101\"",
+          "comment": "所以码表按\"能装下\"为准，负结果见 docs/05 §1.4。",
+          "line": 612
+        },
+        {
+          "name": "DIG_L",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"1110\"",
+          "comment": "--------------------------------------------------------------------------",
+          "line": 613
+        },
+        {
+          "name": "DIG_I",
+          "type": "std_logic_vector(3 downto 0)",
+          "value": "\"0001\"",
+          "comment": "10. DISP 字位码：disp_format 往 i_data 里放的 4 位码 == seg_scan 的译码输入",
+          "line": 614
+        }
+      ],
+      "types": [
+        {
+          "name": "dim_arr_t",
+          "def": "array (0 to 3) of std_logic_vector(2 downto 0)",
+          "line": 26
+        },
+        {
+          "name": "pat_arr_t",
+          "def": "array (0 to 3) of std_logic_vector(63 downto 0)",
+          "line": 248
+        }
+      ],
+      "subtypes": [
+        {
+          "name": "state_t",
+          "def": "std_logic_vector(2 downto 0)",
+          "line": 507
+        }
+      ],
+      "functions": [
+        {
+          "name": "mk_cell",
+          "line": 40
+        },
+        {
+          "name": "popcount",
+          "line": 43
+        },
+        {
+          "name": "mask_to_px",
+          "line": 53
+        },
+        {
+          "name": "shift_mask",
+          "line": 60
+        },
+        {
+          "name": "srl8",
+          "line": 71
+        },
+        {
+          "name": "row24",
+          "line": 86
+        },
+        {
+          "name": "rot_row",
+          "line": 122
+        },
+        {
+          "name": "rot_off_r",
+          "line": 128
+        },
+        {
+          "name": "rot_off_c",
+          "line": 132
+        },
+        {
+          "name": "oh",
+          "line": 138
+        },
+        {
+          "name": "ow",
+          "line": 141
+        },
+        {
+          "name": "ori_next",
+          "line": 146
+        },
+        {
+          "name": "mk_cell",
+          "line": 621
+        },
+        {
+          "name": "popcount",
+          "line": 628
+        },
+        {
+          "name": "mask_to_px",
+          "line": 643
+        },
+        {
+          "name": "shift_mask",
+          "line": 660
+        },
+        {
+          "name": "srl8",
+          "line": 703
+        },
+        {
+          "name": "row24",
+          "line": 738
+        },
+        {
+          "name": "rot_row",
+          "line": 766
+        },
+        {
+          "name": "rot_off_r",
+          "line": 795
+        },
+        {
+          "name": "rot_off_c",
+          "line": 807
+        },
+        {
+          "name": "oh",
+          "line": 819
+        },
+        {
+          "name": "ow",
+          "line": 826
+        },
+        {
+          "name": "ori_next",
+          "line": 833
+        }
+      ]
+    }
+  },
+  "hierarchy": {
+    "roots": [
+      "board_test_top",
+      "keypad_diag_top",
+      "keypad_raw_top",
+      "puzzle_top"
+    ],
+    "game_top": "puzzle_top",
+    "children": {
+      "board_test_top": [
+        {
+          "instance": "u_clk",
+          "entity": "clk_gen",
+          "line": 244,
+          "file": "rtl/board_test_top.vhd"
+        },
+        {
+          "instance": "u_keypad",
+          "entity": "keypad_scan",
+          "line": 258,
+          "file": "rtl/board_test_top.vhd"
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "line": 595,
+          "file": "rtl/board_test_top.vhd"
+        },
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "line": 677,
+          "file": "rtl/board_test_top.vhd"
+        }
+      ],
+      "buzzer_ctrl": [],
+      "clk_gen": [],
+      "disp_format": [],
+      "dot_matrix_scan": [],
+      "game_fsm": [],
+      "keypad_diag_top": [
+        {
+          "instance": "u_clk",
+          "entity": "clk_gen",
+          "line": 120,
+          "file": "rtl/keypad_diag_top.vhd"
+        },
+        {
+          "instance": "u_keypad",
+          "entity": "keypad_scan",
+          "line": 134,
+          "file": "rtl/keypad_diag_top.vhd"
+        },
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "line": 195,
+          "file": "rtl/keypad_diag_top.vhd"
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "line": 209,
+          "file": "rtl/keypad_diag_top.vhd"
+        }
+      ],
+      "keypad_raw_top": [
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "line": 110,
+          "file": "rtl/keypad_raw_top.vhd"
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "line": 124,
+          "file": "rtl/keypad_raw_top.vhd"
+        }
+      ],
+      "keypad_scan": [],
+      "pattern_rom": [],
+      "piece_rom": [],
+      "puzzle_ctrl": [],
+      "puzzle_top": [
+        {
+          "instance": "u_clk",
+          "entity": "clk_gen",
+          "line": 425,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_keypad",
+          "entity": "keypad_scan",
+          "line": 440,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_fsm",
+          "entity": "game_fsm",
+          "line": 454,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_pieces",
+          "entity": "piece_rom",
+          "line": 484,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_pattern",
+          "entity": "pattern_rom",
+          "line": 493,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_rng",
+          "entity": "rng_lfsr",
+          "line": 501,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_puzzle",
+          "entity": "puzzle_ctrl",
+          "line": 522,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_disp",
+          "entity": "disp_format",
+          "line": 576,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_seg",
+          "entity": "seg_scan",
+          "line": 587,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_dot",
+          "entity": "dot_matrix_scan",
+          "line": 820,
+          "file": "rtl/puzzle_top.vhd"
+        },
+        {
+          "instance": "u_buzz",
+          "entity": "buzzer_ctrl",
+          "line": 834,
+          "file": "rtl/puzzle_top.vhd"
+        }
+      ],
+      "rng_lfsr": [],
+      "seg_scan": []
+    },
+    "counts": {
+      "entities": 15,
+      "modules": 11,
+      "diag_tops": 3,
+      "packages": 1,
+      "files": 16
+    },
+    "tree": [
+      {
+        "root": "board_test_top",
+        "children": [
+          {
+            "instance": "u_clk",
+            "entity": "clk_gen",
+            "line": 244,
+            "file": "rtl/board_test_top.vhd"
+          },
+          {
+            "instance": "u_keypad",
+            "entity": "keypad_scan",
+            "line": 258,
+            "file": "rtl/board_test_top.vhd"
+          },
+          {
+            "instance": "u_dot",
+            "entity": "dot_matrix_scan",
+            "line": 595,
+            "file": "rtl/board_test_top.vhd"
+          },
+          {
+            "instance": "u_seg",
+            "entity": "seg_scan",
+            "line": 677,
+            "file": "rtl/board_test_top.vhd"
+          }
+        ]
+      },
+      {
+        "root": "keypad_diag_top",
+        "children": [
+          {
+            "instance": "u_clk",
+            "entity": "clk_gen",
+            "line": 120,
+            "file": "rtl/keypad_diag_top.vhd"
+          },
+          {
+            "instance": "u_keypad",
+            "entity": "keypad_scan",
+            "line": 134,
+            "file": "rtl/keypad_diag_top.vhd"
+          },
+          {
+            "instance": "u_seg",
+            "entity": "seg_scan",
+            "line": 195,
+            "file": "rtl/keypad_diag_top.vhd"
+          },
+          {
+            "instance": "u_dot",
+            "entity": "dot_matrix_scan",
+            "line": 209,
+            "file": "rtl/keypad_diag_top.vhd"
+          }
+        ]
+      },
+      {
+        "root": "keypad_raw_top",
+        "children": [
+          {
+            "instance": "u_seg",
+            "entity": "seg_scan",
+            "line": 110,
+            "file": "rtl/keypad_raw_top.vhd"
+          },
+          {
+            "instance": "u_dot",
+            "entity": "dot_matrix_scan",
+            "line": 124,
+            "file": "rtl/keypad_raw_top.vhd"
+          }
+        ]
+      },
+      {
+        "root": "puzzle_top",
+        "children": [
+          {
+            "instance": "u_clk",
+            "entity": "clk_gen",
+            "line": 425,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_keypad",
+            "entity": "keypad_scan",
+            "line": 440,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_fsm",
+            "entity": "game_fsm",
+            "line": 454,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_pieces",
+            "entity": "piece_rom",
+            "line": 484,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_pattern",
+            "entity": "pattern_rom",
+            "line": 493,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_rng",
+            "entity": "rng_lfsr",
+            "line": 501,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_puzzle",
+            "entity": "puzzle_ctrl",
+            "line": 522,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_disp",
+            "entity": "disp_format",
+            "line": 576,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_seg",
+            "entity": "seg_scan",
+            "line": 587,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_dot",
+            "entity": "dot_matrix_scan",
+            "line": 820,
+            "file": "rtl/puzzle_top.vhd"
+          },
+          {
+            "instance": "u_buzz",
+            "entity": "buzzer_ctrl",
+            "line": 834,
+            "file": "rtl/puzzle_top.vhd"
+          }
+        ]
+      }
+    ],
+    "puzzle_top_instances": [
+      {
+        "instance": "u_clk",
+        "entity": "clk_gen",
+        "line": 425,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_keypad",
+        "entity": "keypad_scan",
+        "line": 440,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_fsm",
+        "entity": "game_fsm",
+        "line": 454,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_pieces",
+        "entity": "piece_rom",
+        "line": 484,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_pattern",
+        "entity": "pattern_rom",
+        "line": 493,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_rng",
+        "entity": "rng_lfsr",
+        "line": 501,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_puzzle",
+        "entity": "puzzle_ctrl",
+        "line": 522,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_disp",
+        "entity": "disp_format",
+        "line": 576,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_seg",
+        "entity": "seg_scan",
+        "line": 587,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_dot",
+        "entity": "dot_matrix_scan",
+        "line": 820,
+        "file": "rtl/puzzle_top.vhd"
+      },
+      {
+        "instance": "u_buzz",
+        "entity": "buzzer_ctrl",
+        "line": 834,
+        "file": "rtl/puzzle_top.vhd"
+      }
+    ]
+  },
+  "sim": {
+    "modules": {
+      "buzzer_ctrl": {
+        "module": "buzzer_ctrl",
+        "round": 37,
+        "rounds_total": 37,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:19:20",
+        "duration_ns": 6730310.0,
+        "passed": 16,
+        "total": 16,
+        "all_pass": true,
+        "record_json": "sim/rounds/buzzer_ctrl/r37.json",
+        "record_md": "sim/rounds/buzzer_ctrl/r37.md",
+        "tb": "sim/tb_buzzer_ctrl.py",
+        "vwf": "sim/buzzer_ctrl.vwf",
+        "assertions": [
+          {
+            "name": "① 复位期间（i_rst=1）与 i_sel=0000 静音码（idle）的一整句（16 步）：o_buzz 恒 '0'（无任何翻转）",
+            "ok": true,
+            "detail": "复位窗口 [0,1000] 翻转 0 次、3 个采样点 = ['0', '0', '0']；静音码整句 [10010,330010] 翻转 0 次"
+          },
+          {
+            "name": "②~⑤ 码 0001..0100 各一整句 **16 步**的响/停与音高 == 旋律表",
+            "ok": true,
+            "detail": "码 0001「自检POST」C6 - - - - - - - C6 - - - - - - -：C6(94拍) - - - - - - - C6(94拍) - - - - - - - ｜ 码 0010「预览上行五度」A5 E6 E6 - - - - - - - - - - - - -：A5(114拍) E6(76拍) E6(76拍) - - - - - - - - - - - - - ｜ 码 0011「过关」C6 E6 G6 E6 C6 E6 G6 E6 C6 E6 G6 E6 C6 E6 G6 E6：C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) ｜ 码 0100「拼错」E6 C6 B5 A#5 A5 G5 E5 G5 E6 C6 B5 A#5 A5 G5 E5 G5：E6(76拍) C6(94拍) B5(102拍) A#5(106拍) A5(114拍) G5(126拍) E5(150拍) G5(126拍) E6(76拍) C6(94拍) B5(102拍) A#5(106拍) A5(114拍) G5(126拍) E5(150拍) G5(126拍)"
+          },
+          {
+            "name": "②~⑤ 码 0101..1000 各一整句 **16 步**的响/停与音高 == 旋律表",
+            "ok": true,
+            "detail": "码 0101「按键」G6 G6 G6 G6 G6 G6 G6 G6 G6 G6 G6 G6 G6 G6 G6 G6：G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) ｜ 码 0110「通关高音同音反复拖长」G6 - G6 - G6 - G6 G6 G6 - E6 E6 - G6 G6 G6：G6(64拍) - G6(64拍) - G6(64拍) - G6(64拍) G6(64拍) G6(64拍) - E6(76拍) E6(76拍) - G6(64拍) G6(64拍) G6(64拍) ｜ 码 0111「失败大跳落底」E6 - A5 - E5 E5 - - - - - - - - - -：E6(76拍) - A5(114拍) - E5(150拍) E5(150拍) - - - - - - - - - - ｜ 码 1000「BGM1第一关高音连奏」E6 E6 E6 E6 C6 C6 E6 G6 G6 G5 G5 G5 G5 G5 G5 G5：E6(76拍) E6(76拍) E6(76拍) E6(76拍) C6(94拍) C6(94拍) E6(76拍) G6(64拍) G6(64拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍)"
+          },
+          {
+            "name": "②~⑤ 码 1001..1100 各一整句 **16 步**的响/停与音高 == 旋律表",
+            "ok": true,
+            "detail": "码 1001「BGM2第二关低音稀疏」E5 E5 E5 E5 G5 G5 G5 G5 A5 A5 A5 A5 E5 E5 E5 E5：E5(150拍) E5(150拍) E5(150拍) E5(150拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) A5(114拍) A5(114拍) A5(114拍) A5(114拍) E5(150拍) E5(150拍) E5(150拍) E5(150拍) ｜ 码 1010「旋转(已删)」- - - - - - - - - - - - - - - -：- - - - - - - - - - - - - - - - ｜ 码 1011「BGM3第三关跨音区」G5 B5 C6 E6 C6 B5 G5 B5 C6 E6 E6 C6 B5 G5 B5 C6：G5(126拍) B5(102拍) C6(94拍) E6(76拍) C6(94拍) B5(102拍) G5(126拍) B5(102拍) C6(94拍) E6(76拍) E6(76拍) C6(94拍) B5(102拍) G5(126拍) B5(102拍) C6(94拍) ｜ 码 1100「确认(已删)」- - - - - - - - - - - - - - - -：- - - - - - - - - - - - - - - -"
+          },
+          {
+            "name": "②~⑤ 码 1101..1111 各一整句 **16 步**的响/停与音高 == 旋律表（1101/1110/1111 = 预留码：RTL 的 case 分支已删除 → 落入 when others，表里整句休止，实测必须全程静音）",
+            "ok": true,
+            "detail": "码 1101「预留静音」- - - - - - - - - - - - - - - -：- - - - - - - - - - - - - - - - ｜ 码 1110「预留静音」- - - - - - - - - - - - - - - -：- - - - - - - - - - - - - - - - ｜ 码 1111「预留静音」- - - - - - - - - - - - - - - -：- - - - - - - - - - - - - - - -"
+          },
+          {
+            "name": "⑥ 8 个音高逐一实测：翻转间隔恰等于 (查表 half+1)×PRE_PATCH（**精确**）；查表 half == round(TICK_HZ/(2*注释频率))（**精确**）；真实设计频率 TICK_HZ/(2*(half+1)) == 注释频率（容差 1.5%）；E5 最低 → G6 最高，阶梯严格递减",
+            "ok": true,
+            "detail": "E5：查表 half=148（== round(tick/(2f))，精确）→ 补丁 half=74；实测翻转间隔 [(150,)] 拍 == (补丁 half+1)×2 = 150（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 150 拍 → 651.0 Hz（注释 659.3 Hz，差 1.25% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 655.4 Hz（差 0.59% ≤ 1.5%）；出现 12 次\nG5：查表 half=125（== round(tick/(2f))，精确）→ 补丁 half=62；实测翻转间隔 [(126,)] 拍 == (补丁 half+1)×2 = 126（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 126 拍 → 775.0 Hz（注释 784 Hz，差 1.14% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 775.0 Hz（差 1.14% ≤ 1.5%）；出现 18 次\nA5：查表 half=111（== round(tick/(2f))，精确）→ 补丁 half=56；实测翻转间隔 [(114,)] 拍 == (补丁 half+1)×2 = 114（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 114 拍 → 856.6 Hz（注释 880 Hz，差 2.66% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 871.9 Hz（差 0.92% ≤ 1.5%）；出现 8 次\nA#5：查表 half=105（== round(tick/(2f))，精确）→ 补丁 half=52；实测翻转间隔 [(106,)] 拍 == (补丁 half+1)×2 = 106（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 106 拍 → 921.3 Hz（注释 932.3 Hz，差 1.18% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 921.3 Hz（差 1.18% ≤ 1.5%）；出现 2 次\nB5：查表 half=99（== round(tick/(2f))，精确）→ 补丁 half=50；实测翻转间隔 [(102,)] 拍 == (补丁 half+1)×2 = 102（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 102 拍 → 957.4 Hz（注释 987.8 Hz，差 3.08% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 976.6 Hz（差 1.14% ≤ 1.5%）；出现 7 次\nC6：查表 half=93（== round(tick/(2f))，精确）→ 补丁 half=46；实测翻转间隔 [(94,)] 拍 == (补丁 half+1)×2 = 94（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 94 拍 → 1038.9 Hz（注释 1046.5 Hz，差 0.73% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 1038.9 Hz（差 0.73% ≤ 1.5%）；出现 19 次\nE6：查表 half=74（== round(tick/(2f))，精确）→ 补丁 half=37；实测翻转间隔 [(76,)] 拍 == (补丁 half+1)×2 = 76（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 76 拍 → 1285.0 Hz（注释 1318.5 Hz，差 2.54% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 1302.1 Hz（差 1.25% ≤ 1.5%）；出现 30 次\nG6：查表 half=62（== round(tick/(2f))，精确）→ 补丁 half=31；实测翻转间隔 [(64,)] 拍 == (补丁 half+1)×2 = 64（**精确判据**）；由实测间隔 ×2 还原的真实半周期 = 64 拍 → 1525.9 Hz（注释 1568 Hz，差 2.69% —— 这是 PATCH_DIV=2 的**补丁量化**，故只报告不设卡）；真实设计 f = TICK_HZ/(2*(half+1)) = 1550.1 Hz（差 1.14% ≤ 1.5%）；出现 34 次"
+          },
+          {
+            "name": "⑦ i_en='0'（SW7 静音）时 o_buzz 恒 '0'：① 码 0011 的**整整一句**（16 步，本来该响 C6 E6 G6 E6 C6 E6 G6 E6 C6 E6 G6 E6 C6 E6 G6 E6）全程无上升沿；② 再加三整句、**每一步换一个码**（10 个发声码各验一次，且每一步都是该码本来会响的步）也全程无上升沿",
+            "ok": true,
+            "detail": "码 0011 整句 [5130010,5450010]：翻转 0 次、上升沿 0 次、采样点 = ['0', '0', '0']、16 步边沿数 = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] | 逐码句 [(18, 0, 0), (19, 0, 0), (20, 0, 0)]（窗口, 翻转, 上升沿）；覆盖的码 = ['0001', '0010', '0011', '0100', '0101', '0110', '0111', '1000', '1001', '1011']"
+          },
+          {
+            "name": "⑧ 休止步真的静音（124 个休止步的 o_buzz 边沿数全为 0）；而静音时内部 `wave` 仍在一路翻转 —— 静音是最后一级 (i_en AND on_now) 门掉的，不是停振荡器",
+            "ok": true,
+            "detail": "休止步数=124，其中有声的=无；i_en=0 段 wave 翻转 203 次 / o_buzz 0 次；正常句里的休止步（码 0001 第 4 步）wave 翻转 6 次 / o_buzz 0 次"
+          },
+          {
+            "name": "⑨ 换码**不清零** step：窗口 17 前 3 步用码 0001、第 3 步起换成 0011，换码后 step 必须接着走（=3，不是 0），发声也按**新码的当前步**取（= E6 C6 E6 G6 ...，而不是新码的步 0 起）",
+            "ok": true,
+            "detail": "换码后一拍 step = 3（期望 3；若旧实现清零则为 0）| 16 步全部符合 | 实测（步 0..15）：C6(94拍) - - E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍)"
+          },
+          {
+            "name": "⑩ 方波占空比 50%：码 0001 第 0 步（C6，补丁 half=46 → 每 94 拍翻转一次）稳定段 [331870, 346910] ns 内高电平总时长 == 低电平总时长（容差 1 拍）",
+            "ok": true,
+            "detail": "高 = 7520 ns，低 = 7520 ns，占空比 = 50.0%"
+          },
+          {
+            "name": "⑪ 中间信号 cnt[7:0]（**8 位**半周期计数器；第 16 工作阶段由 9 位缩到 8 位）：每次翻转前的计数值恰为查表 half（补丁后 E5=74 / A#5=52 / G6=31）—— 音调分频在波形上可直接读出来",
+            "ok": true,
+            "detail": "E5（补丁 half=74）：各次翻转前 cnt = [74, 74, 74, 74, 74, 74]\nA#5（补丁 half=52）：各次翻转前 cnt = [52, 52, 52, 52, 52, 52, 52, 52, 52]\nG6（补丁 half=31）：各次翻转前 cnt = [31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31]"
+          },
+          {
+            "name": "⑫ 旋律输出是**寄存**的：每个步边界上 step 已经跳到新值，而 tone_sel/on_now **晚一拍**才跟上（旧值 → 新值）；窗口 1 的 15 个步边界逐一核对",
+            "ok": true,
+            "detail": "边界 350010：step 已=1，而 tone_sel/on_now 仍是上一步的 5/1\n边界 370010：step 已=2，而 tone_sel/on_now 仍是上一步的 0/0\n边界 390010：step 已=3，而 tone_sel/on_now 仍是上一步的 0/0\n边界 410010：step 已=4，而 tone_sel/on_now 仍是上一步的 0/0\n边界 430010：step 已=5，而 tone_sel/on_now 仍是上一步的 0/0\n边界 450010：step 已=6，而 tone_sel/on_now 仍是上一步的 0/0\n边界 470010：step 已=7，而 tone_sel/on_now 仍是上一步的 0/0\n边界 490010：step 已=8，而 tone_sel/on_now 仍是上一步的 0/0\n边界 510010：step 已=9，而 tone_sel/on_now 仍是上一步的 5/1\n边界 530010：step 已=10，而 tone_sel/on_now 仍是上一步的 0/0\n边界 550010：step 已=11，而 tone_sel/on_now 仍是上一步的 0/0\n边界 570010：step 已=12，而 tone_sel/on_now 仍是上一步的 0/0\n边界 590010：step 已=13，而 tone_sel/on_now 仍是上一步的 0/0\n边界 610010：step 已=14，而 tone_sel/on_now 仍是上一步的 0/0\n边界 630010：step 已=15，而 tone_sel/on_now 仍是上一步的 0/0"
+          },
+          {
+            "name": "⑬ 16 个音效码（0000..1111）全部驱动过；复位后 o_buzz 全程为确定值（0/1，无 X/Z）",
+            "ok": true,
+            "detail": "驱动过的 i_sel = ['0000', '0001', '0010', '0011', '0100', '0101', '0110', '0111', '1000', '1001', '1010', '1011', '1100', '1101', '1110', '1111']；非 0/1 电平 = 无"
+          },
+          {
+            "name": "⑭ **有查表臂的 11 个音效码**（0000..1001 与 1011；`game_fsm` 实际发出其中 10 个）的实测（音高/节奏）序列**两两不同**（55 对全部比对过），且这些码没有一个是整句无声；1010/1100/1101/1110/1111 无查表臂 ⇒ 实测必须整句静音 —— 不同情况耳听可辨",
+            "ok": true,
+            "detail": "码 0000「静音」：- - - - - - - - - - - - - - - - ｜ 码 0001「自检POST」：C6(94拍) - - - - - - - C6(94拍) - - - - - - - ｜ 码 0010「预览上行五度」：A5(114拍) E6(76拍) E6(76拍) - - - - - - - - - - - - - ｜ 码 0011「过关」：C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) C6(94拍) E6(76拍) G6(64拍) E6(76拍) ｜ 码 0100「拼错」：E6(76拍) C6(94拍) B5(102拍) A#5(106拍) A5(114拍) G5(126拍) E5(150拍) G5(126拍) E6(76拍) C6(94拍) B5(102拍) A#5(106拍) A5(114拍) G5(126拍) E5(150拍) G5(126拍) ｜ 码 0101「按键」：G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) G6(64拍) ｜ 码 0110「通关高音同音反复拖长」：G6(64拍) - G6(64拍) - G6(64拍) - G6(64拍) G6(64拍) G6(64拍) - E6(76拍) E6(76拍) - G6(64拍) G6(64拍) G6(64拍) ｜ 码 0111「失败大跳落底」：E6(76拍) - A5(114拍) - E5(150拍) E5(150拍) - - - - - - - - - - ｜ 码 1000「BGM1第一关高音连奏」：E6(76拍) E6(76拍) E6(76拍) E6(76拍) C6(94拍) C6(94拍) E6(76拍) G6(64拍) G6(64拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) ｜ 码 1001「BGM2第二关低音稀疏」：E5(150拍) E5(150拍) E5(150拍) E5(150拍) G5(126拍) G5(126拍) G5(126拍) G5(126拍) A5(114拍) A5(114拍) A5(114拍) A5(114拍) E5(150拍) E5(150拍) E5(150拍) E5(150拍) ｜ 码 1010「旋转(已删)」：- - - - - - - - - - - - - - - - ｜ 码 1011「BGM3第三关跨音区」：G5(126拍) B5(102拍) C6(94拍) E6(76拍) C6(94拍) B5(102拍) G5(126拍) B5(102拍) C6(94拍) E6(76拍) E6(76拍) C6(94拍) B5(102拍) G5(126拍) B5(102拍) C6(94拍) ｜ 码 1100「确认(已删)」：- - - - - - - - - - - - - - - - ｜ 码 1101「预留静音」：- - - - - - - - - - - - - - - - ｜ 码 1110「预留静音」：- - - - - - - - - - - - - - - - ｜ 码 1111「预留静音」：- - - - - - - - - - - - - - - -"
+          },
+          {
+            "name": "⑮ 预分频器（两件事都要过）：(a) **静态**核对 RTL 源码的 `PRE_DIV` == 256；(b) **动态**量 `pre_cnt[7:0]` 的回绕周期 == PRE_PATCH=2 拍（40 ns）⇒ 补丁后 tick = 25 MHz，按 256→2 换算回真实 tick = 195.31 kHz（说明 195.3 kHz）",
+            "ok": true,
+            "detail": "(a) rtl/buzzer_ctrl.vhd 的 `PRE_DIV` = 256（期望 256）⇒ OK；(b) 窗口 [10010,650010] ns 内 pre_cnt 回绕 16000 次，相邻回绕间隔集合 = [40.0] ns（期望 {40}）；tick_sim=25 MHz → tick_real=195.3125 kHz，注释 = 195.3125 kHz"
+          },
+          {
+            "name": "⑯ 每来一个 i_t4 脉冲 step 恰 +1（mod 16，15→0 回绕），步内保持不变；335 个脉冲 + 336 个步窗口全部核对",
+            "ok": true,
+            "detail": "335/335 个脉冲都是 +1；336 个步窗口内 step 采样两次都等于步号"
+          }
+        ]
+      },
+      "clk_gen": {
+        "module": "clk_gen",
+        "round": 25,
+        "rounds_total": 25,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:45",
+        "duration_ns": 460000.0,
+        "passed": 10,
+        "total": 10,
+        "all_pass": true,
+        "record_json": "sim/rounds/clk_gen/r25.json",
+        "record_md": "sim/rounds/clk_gen/r25.md",
+        "tb": "sim/tb_clk_gen.py",
+        "vwf": "sim/clk_gen.vwf",
+        "assertions": [
+          {
+            "name": "① 7 档 tick 全是单 clk 周期脉冲（共检查 3094 个高电平段，宽度应恒为 20 ns）",
+            "ok": true,
+            "detail": "全部 3094 个脉冲宽度 = 20 ns = 1 个 clk 周期"
+          },
+          {
+            "name": "② 分频周期（clk 拍数）：1k=1ms→10 拍、200=5ms→50、100=10ms→100、40=25ms→250、2Hz=500ms→5000、1Hz=1000ms→10000",
+            "ok": true,
+            "detail": "o_tick_1k 实测 10 拍 / 期望 10 拍(1ms) ✓\no_tick_200 实测 50 拍 / 期望 50 拍(5ms) ✓\no_tick_100 实测 100 拍 / 期望 100 拍(10ms) ✓\no_tick_40 实测 250 拍 / 期望 250 拍(25ms) ✓\no_tick_2hz 实测 5000 拍 / 期望 5000 拍(500ms) ✓\no_tick_4hz 实测 2500 拍 / 期望 2500 拍(250ms) ✓\no_tick_1hz 实测 10000 拍 / 期望 10000 拍(1000ms) ✓"
+          },
+          {
+            "name": "③ 级联分频比：200Hz=5×1k、100Hz=2×200、40Hz=5×200、2Hz=50×100、1Hz=100×100",
+            "ok": true,
+            "detail": "实测比值全部正确（tick_200 / tick_1k=5、tick_100 / tick_200=2、tick_40 / tick_200=5、tick_2hz / tick_100=50、tick_4hz / tick_100=25、tick_1hz / tick_100=100）"
+          },
+          {
+            "name": "④ 上电复位：上电即为 '1'，8~11ms 之间释放（实测 1810 ns（= 9.05 标称ms）），按钮未按期间不再自行断言（无幽灵复位）",
+            "ok": true,
+            "detail": "o_rst(0)=1；释放前经过 9 个 tick_1k（标称 10 ms，容差 ±1）；释放后到按下按键之间 o_rst 再次为 '1' 的次数 = 0"
+          },
+          {
+            "name": "⑤ 内部 por_cnt 单调增到顶后饱和（顶值应 = 9，回绕会挂）",
+            "ok": true,
+            "detail": "por_cnt 实测序列 [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]…（共 10 个值），最大值 = 9，回绕次数 = 0"
+          },
+          {
+            "name": "⑥ 按键消抖（按下）：连满 20 个 1ms 样本 o_rst 才置位（19~20 标称 ms）",
+            "ok": true,
+            "detail": "按下 20000 ns（= 100 标称ms）；o_rst 置位于 23810 ns（= 119 标称ms）（Δ = 3810 ns = 19.05 标称 ms，期望 19~20）；置位前 1ns = 0；按住期间 o_rst=1"
+          },
+          {
+            "name": "⑦ 松开按键：o_rst 在 ≤1 个 1ms 样本内释放（非对称消抖：全 1 检测器，任一低样本立即撤销），且之后不再误断言",
+            "ok": true,
+            "detail": "松开 60000 ns（= 300 标称ms）；o_rst 释放于 60010 ns（= 300.1 标称ms）（Δ = 10 ns = 0.05 标称 ms）；之后到毛刺结束期间为 '1' 的次数 = 0"
+          },
+          {
+            "name": "⑧ 短毛刺（8 个刻度 < 20）被消抖滤掉：o_rst 全程保持 '0'",
+            "ok": true,
+            "detail": "毛刺窗口内 o_rst 采样 = ['0', '0', '0', '0', '0', '0', '0', '0', '0', '0']；窗口内出现的 '1' 次数 = 0"
+          },
+          {
+            "name": "⑨ 中间信号 c1：每拍 +1、数到 9 回绕（每值保持恰 1 个 clk 周期 = 20 ns）",
+            "ok": true,
+            "detail": "c1 取值集合 = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]；最大值 = 9；稳态每值保持 [20.0] ns；每拍 +1 = True"
+          },
+          {
+            "name": "⑩ 中间信号 bcnt：按住期间每刻度 +1，满 20 就饱和（不回绕）；松开立刻归零",
+            "ok": true,
+            "detail": "按住窗口内 bcnt 前 24 个 = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 20, 20, 20, 20]；最大值 = 20（期望 20）；松开后 o_rst = 0"
+          }
+        ]
+      },
+      "disp_format": {
+        "module": "disp_format",
+        "round": 27,
+        "rounds_total": 27,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:47",
+        "duration_ns": 7800.0,
+        "passed": 16,
+        "total": 16,
+        "all_pass": true,
+        "record_json": "sim/rounds/disp_format/r27.json",
+        "record_md": "sim/rounds/disp_format/r27.md",
+        "tb": "sim/tb_disp_format.py",
+        "vwf": "sim/disp_format.vwf",
+        "assertions": [
+          {
+            "name": "⓪ 激励自检：16+ 个采样窗口的 i_state 实测值 == 期望值（防止`测错了对象`）",
+            "ok": true,
+            "detail": "全部一致（78 个窗口）"
+          },
+          {
+            "name": "① B1 自检态 + i_blink='0' → o_data 八位全 '8'(0x88888888)，o_blank=0xFF（整排灭）",
+            "ok": true,
+            "detail": "o_data=0x88888888  o_blank=0xFF"
+          },
+          {
+            "name": "② B1 自检态 + i_blink='1' → o_data 八位全 '8'，o_blank=0x00（整排亮）—— 与 ① 合起来即 2 Hz 闪烁（半周期亮/半周期灭）",
+            "ok": true,
+            "detail": "o_data=0x88888888  o_blank=0x00"
+          },
+          {
+            "name": "③ B2/B3 待机态 → DISP7='5'、DISP0=关卡号(1 / 2 / 3)，DISP1~6 全灭（o_blank=0x7E）",
+            "ok": true,
+            "detail": "IDLE1: o_data=0x50000001 o_blank=0x7E（DISP7=5 DISP0=1）\nIDLE2: o_data=0x50000002 o_blank=0x7E（DISP7=5 DISP0=2）\nIDLE3: o_data=0x50000003 o_blank=0x7E（DISP7=5 DISP0=3）"
+          },
+          {
+            "name": "④ B4 预览态 → DISP7 = 倒计时秒数(单数字)，DISP0 = 关卡号(1/2/3)，其余灭",
+            "ok": true,
+            "detail": "PREV4: DISP7=4（期望 4） DISP0=1 o_blank=0x7E\nPREV5: DISP7=5（期望 5） DISP0=2 o_blank=0x7E\nPREV3: DISP7=4（期望 4） DISP0=3 o_blank=0x7E"
+          },
+          {
+            "name": "⑤ B5 游戏中(第一关, t=27) → DISP4=2 DISP3=7（两位都亮）、DISP0=1，DISP2 灭（o_blank=0xE6）",
+            "ok": true,
+            "detail": "o_data=0x00027001 o_blank=0xE6"
+          },
+          {
+            "name": "⑥ 口径 C 游戏中(第二关, t=27) → DISP4:DISP3=27、DISP0=关卡号 2、**DISP2 熄灭**（o_blank=0xE6，与第一关同形；B9 已按用户裁决作废）",
+            "ok": true,
+            "detail": "o_data=0x00027002 o_blank=0xE6（DISP2=0，bit2 掩码=1 应为 1=灭）"
+          },
+          {
+            "name": "⑥b 游戏中(第三关, t=27) → DISP4:DISP3=27、DISP0=关卡号 3、**DISP2 熄灭**（o_blank=0xE6，与第一关同形）",
+            "ok": true,
+            "detail": "o_data=0x00027003 o_blank=0xE6（DISP2=0，bit2 掩码=1 应为 1=灭）"
+          },
+          {
+            "name": "⑥c ⭐ 口径 C 全局：除自检态外，全部 76 个窗口的 DISP2 恒为**熄灭**（o_blank bit2 == 1；自检态豁免 —— B1 明文要求八位全显 '8'）",
+            "ok": true,
+            "detail": "全部熄灭（76 个窗口）"
+          },
+          {
+            "name": "⑦ B5 倒计时十位/个位拆分（那张 64 项 case 表）：16 个进位边界值全部等于 独立算出的 t//10 与 t%10（0/9/10/19/20/29/30/39/40/49/50/59/60/63）—— 全表 64 个取值的逐项验收见 ⑦b",
+            "ok": true,
+            "detail": "t= 0→00 t= 1→01 t= 9→09 t=10→10 t=11→11 t=19→19 t=20→20 t=29→29 t=30→30 t=39→39 t=40→40 t=49→49 t=50→50 t=59→59 t=60→60 t=63→63"
+          },
+          {
+            "name": "⑦b ⭐ 倒计时 case 表**逐项**验收：t = 0..63 全部 64 个取值（40 条显式臂 `when 0`..`when 39` + `when others` 的 40~49/50~59/60~63 三段）都等于**逐条抄自 rtl/disp_format.vhd case 表的硬编码期望**，且同时等于独立算出的t//10、t%10；o_blank 全部 = 0xE6（原来只有 17 个 t 被激励、29 条臂从未进过）",
+            "ok": true,
+            "detail": "64 个取值全部一致（硬编码表 + 独立算术模型）：0→00 1→01 2→02 3→03 4→04 5→05 6→06 7→07 8→08 9→09 10→10 11→11 12→12 13→13 14→14 15→15 16→16 17→17 18→18 19→19 20→20 21→21 22→22 23→23 24→24 25→25 26→26 27→27 28→28 29→29 30→30 31→31 32→32 33→33 34→34 35→35 36→36 37→37 38→38 39→39 40→40 41→41 42→42 43→43 44→44 45→45 46→46 47→47 48→48 49→49 50→50 51→51 52→52 53→53 54→54 55→55 56→56 57→57 58→58 59→59 60→60 61→61 62→62 63→63"
+          },
+          {
+            "name": "⑧ S_WIN → DISP7..DISP4 = \"PASS\"（P A S S）；S_FAIL → \"FAIL\"（F A I L）；两者都只亮这四位、画面互不相同（段形由 tb_seg_scan 断言 ③⑪ 校验；7 段管里 S 与 5 同形、I 用 1 的形状 → 板上像 PA55 / FA1L）",
+            "ok": true,
+            "detail": "WIN: o_data=0xBACC0000 o_blank=0x0F | FAIL: o_data=0xDA1E0000 o_blank=0x0F"
+          },
+          {
+            "name": "⑨ 状态码 「110」/「111」（state_t 未定义值）→ 确定行为：o_blank 全 1（整排灭），不会误显示上一状态的内容",
+            "ok": true,
+            "detail": "110: o_blank=0xFF | 111: o_blank=0xFF"
+          },
+          {
+            "name": "⑩ 78 个窗口的画面 (o_data,o_blank) 互不相同 —— 仅允许两处有语义的重合：待机(第二关) vs 预览 5 秒（B2 的 '5' 与 B4 的起始值本来就是同一个画面）、两个未定义状态码同为全灭",
+            "ok": true,
+            "detail": "78 个窗口 → 76 种不同画面；重合的两组：[['IDLE2', 'PREV5'], ['UNDEF6', 'UNDEF7']]"
+          },
+          {
+            "name": "⑪ ⭐ 中间信号解释输出：网表内部节点 LessThan2~2 == o_data[18]（DISP4 的 bit2）、r~9 == o_data[13]（DISP3 的 bit1），在 17 个采样点上逐点相同（这两个数据线是从这两个中间节点送出去的；对应关系由探针跑逐点相关得到）",
+            "ok": true,
+            "detail": "LessThan2~2: ['0', '1', '1'] | r~9: ['0', '0', '0']（在 17 个采样点上与端口逐位一致）"
+          },
+          {
+            "name": "⑫ 中间信号 tens~1:0 / ones~3:0（case 表的译码中间项）在 78 个采样点上取值全部为确定 0/1，且组合随 i_state/i_time 变化（不是常量、不是 X）",
+            "ok": true,
+            "detail": "78 个窗口共出现 18 种不同组合（≥2 即说明确实随输入变化）"
+          }
+        ]
+      },
+      "dot_matrix_scan": {
+        "module": "dot_matrix_scan",
+        "round": 23,
+        "rounds_total": 23,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:43",
+        "duration_ns": 2200.0,
+        "passed": 7,
+        "total": 7,
+        "all_pass": true,
+        "record_json": "sim/rounds/dot_matrix_scan/r23.json",
+        "record_md": "sim/rounds/dot_matrix_scan/r23.md",
+        "tb": "sim/tb_dot_matrix_scan.py",
+        "vwf": "sim/dot_matrix_scan.vwf",
+        "assertions": [
+          {
+            "name": "① 显示相 o_row **恰好一位为低**、且拉低位 = 7-row（144 个采样点）",
+            "ok": true,
+            "detail": "全部 144 个采样点都是「恰一位为低」且行号映射正确"
+          },
+          {
+            "name": "② 8 个行号全部扫到且映射不重不漏（行号→拉低位是双射 {0..7}→{7..0}）",
+            "ok": true,
+            "detail": "行号→拉低位 = {0: 7, 1: 6, 2: 5, 3: 4, 4: 3, 5: 2, 6: 1, 7: 0}"
+          },
+          {
+            "name": "③ 消隐相全灭：i_en='0'（W8，16 点）与 i_rst 期间 → o_row=0xFF、o_colr=0x00、o_colg=0x00",
+            "ok": true,
+            "detail": "W8 的 16 个采样点全灭；rst 期间 t=30ns：row=0xFF colr=0x00 colg=0x00"
+          },
+          {
+            "name": "④ o_colr / o_colg 互斥：单色内容下任何一列都不同时为高（160 个采样点，含 3 组交错图案）",
+            "ok": true,
+            "detail": "全部 160 个采样点的 colr & colg = 0"
+          },
+          {
+            "name": "⑤ 直通与同拍更新（+40ns 稳态采样点，160 点）：o_colr==i_colr、o_colg==i_colg，且 (o_row,o_colr,o_colg) 逐点等于本窗口期望三元组",
+            "ok": true,
+            "detail": "全部 160 个采样点三元组与期望完全一致"
+          },
+          {
+            "name": "⑤b ⭐ 早采样点（起点+20ns，180 点）无鬼影：三元组只能是「本窗口期望」或「上一窗口期望」两种纯净状态；行号与列数据来自不同窗口的混合态一律失败（实测：同拍 180 点、整体晚一拍 0 点、混合 0 点）",
+            "ok": true,
+            "detail": "180 个早采样点**全部**等于本窗口期望三元组 ⇒ **实测无错位**（行号与列数据在同一 clk 沿一起更新）"
+          },
+          {
+            "name": "⑥ 中间信号：内部寄存器节点（o_row[7]~reg0 / o_row[0]~reg0 / o_colr[0]~reg0 / o_colg[7]~reg0）逐点 == 输出端口对应位（640 次比对）",
+            "ok": true,
+            "detail": "四个内部寄存器节点与端口逐点一致；process_0~0（rst/en 熄灭控制）取值 = ['0', '1']"
+          }
+        ]
+      },
+      "game_fsm": {
+        "module": "game_fsm",
+        "round": 36,
+        "rounds_total": 36,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:51",
+        "duration_ns": 222000.0,
+        "passed": 30,
+        "total": 30,
+        "all_pass": true,
+        "record_json": "sim/rounds/game_fsm/r36.json",
+        "record_md": "sim/rounds/game_fsm/r36.md",
+        "tb": "sim/tb_game_fsm.py",
+        "vwf": "sim/game_fsm.vwf",
+        "assertions": [
+          {
+            "name": "① 复位后进自检，恰好 8 个 tick_4hz（= 2 s，B1/B2）后进待机",
+            "ok": true,
+            "detail": "t=1000ns 状态=0（期望 0 自检）；进入待机时刻=4010 ns（期望 4020 ns = 8 个 250 ms 拍）"
+          },
+          {
+            "name": "② 待机时按【开始】→ 预览状态，且 o_time = 5（B4：预览 5 秒）",
+            "ok": true,
+            "detail": "进预览时刻=5010 ns，o_time=5（期望 5）"
+          },
+          {
+            "name": "③ ★ 预览结束进对局时 o_time 被加载为 30（B5：一关 30 秒）—— ERR-005 的回归判据（限时从未加载会让对局不到 1 秒就判负）",
+            "ok": true,
+            "detail": "进对局时刻=14010 ns，o_time=30（期望 30）"
+          },
+          {
+            "name": "④ 一关对局中 6 个控制键各产生恰好一次动作脉冲（选择/确认各 1 次，方向键 4 次 o_move）",
+            "ok": true,
+            "detail": "o_sel@17010 o_up@19010 o_conf@21010 o_down@23010 o_left@25010 o_right@27010，o_move 共 4 次"
+          },
+          {
+            "name": "⑤ 对局开始前（自检 2400 按旋转、待机 4600 按上 / 4800 按旋转、预览 7000 按确认 / 8000 按旋转）**不产生**任何动作脉冲（含 o_rot）",
+            "ok": true,
+            "detail": "对局前出现的动作脉冲：无"
+          },
+          {
+            "name": "⑥ ★ o_go 每局只上升一次，且次数 == 进入对局的次数（从状态轨迹独立数出）；ERR-006：散落握手必须有'完成'记忆，否则会无限重复散落、清掉选中/锁定，按键全部失效",
+            "ok": true,
+            "detail": "o_go 上升沿时刻：14030, 86030, 98030, 110030, 134030, 158030, 172030, 196030, 210030（共 9 次）| 进入对局 9 次（时刻 14010, 86010, 98010, 110010, 134010, 158010, 172010, 196010, 210010）"
+          },
+          {
+            "name": "⑦ 一关对局 30 秒（30 个 1 Hz 节拍）到 → 失败状态（B9 超时判负）",
+            "ok": true,
+            "detail": "进失败时刻=74010 ns，期望 74020 ns（= 进对局那一拍 + 30 个节拍）"
+          },
+          {
+            "name": "⑧ 超时失败后按【开始】可重开新一轮，且关卡回到第一关（B11；o_level=0、o_time=5）",
+            "ok": true,
+            "detail": "重开时刻=76010 ns，o_level=0，o_time=5"
+          },
+          {
+            "name": "⑨ 一关对局中 i_solved=1 → 关卡变 1 并回到预览（B9：拼对进入第二关，预览仍 5 秒）",
+            "ok": true,
+            "detail": "二关预览时刻=88010 ns，o_level=1，o_time=5"
+          },
+          {
+            "name": "⑩ 第二关对局 o_time 被加载为 40（B10：二关 40 秒）",
+            "ok": true,
+            "detail": "二关对局时刻=98010 ns，o_time=40（期望 40）"
+          },
+          {
+            "name": "⑪ 第二关对局中 i_solved=1 → 进入**第三关预览**（A2『增加游戏关数』）：o_level=1 且 o_lvl3=1、o_time=5（预览仍是 5 秒）",
+            "ok": true,
+            "detail": "三关预览时刻=100010 ns（o_level=1 o_lvl3=1 o_time=5）"
+          },
+          {
+            "name": "⑪b 第三关对局 o_time 被加载为 60（A2 第三关自拟 60 s = pkg.T_LEVEL3；第 18 工作阶段由 40 s 加长——第三关最难，用户要求倒计时更长）",
+            "ok": true,
+            "detail": "三关对局时刻=110010 ns，o_time=60（期望 60）、o_lvl3=1"
+          },
+          {
+            "name": "⑪c 第三关对局中 i_solved=1 → **胜利**状态（A2：第三关是最后一关，这是胜利图案真正的出口；D2 之前出口在第二关）",
+            "ok": true,
+            "detail": "进胜利状态时刻=116010 ns（必须晚于第三关对局起点 110020 ns）"
+          },
+          {
+            "name": "⑫ 胜利后按【开始】再次进入预览，且 o_level=0、o_lvl3=0（B11：游戏结束后可开新一轮）",
+            "ok": true,
+            "detail": "胜利后的预览时刻：['124010', '148010', '162010', '174070', '186010', '200010']；o_level=0 o_lvl3=0"
+          },
+          {
+            "name": "⑬ 对局中 i_all_lock=1 且 i_shuf_busy=0 → 判负（B9：全部锁定但位置形状不对）",
+            "ok": true,
+            "detail": "i_all_lock 置位后的状态 = 5（期望 5 失败）"
+          },
+          {
+            "name": "⑭ SW7=0 立刻回到自检并清零（B1：开关关掉时全部不显示）；o_time = 自检倒计数初值 7（ERR-051 修法后 `cnt` 被自检复用，见 RTL 注释）",
+            "ok": true,
+            "detail": "SW 拉低后 o_state=0（期望 0）、o_level=0、o_lvl3=0、o_time=7（期望 7）"
+          },
+          {
+            "name": "⑮ o_blink 是**真正的 2 Hz 方波**：在 4 Hz 节拍上翻转一次，高电平持续半个 2 Hz 周期（= 250 ms = 4 Hz 节拍周期，本 tb 折算 500 ns），不是'单时钟脉冲当闪烁电平'（ERR-011 / ERR-038）",
+            "ok": true,
+            "detail": "上升沿 222 次（期望约 222）；高电平宽度中位数=500 ns"
+          },
+          {
+            "name": "⑯ ★【ERR-024】新一局对局刚开始、散落还没起来时，上一局残留的 i_all_lock=1 **不得**判负：状态机必须在 S_PLAYING 里等散落（忙→闲）之后才判决",
+            "ok": true,
+            "detail": "对局开始后 3 拍仍是 3（期望 3 对局）；本轮首次判负时刻=160070 ns（必须晚于散落结束 160060 ns）"
+          },
+          {
+            "name": "⑰ ★【ERR-024】新一局对局刚开始时残留的 i_solved=1 **不得**立刻推进关卡：必须先看到散落（忙→闲），之后才允许按 i_solved 进第二关预览（o_level=1）",
+            "ok": true,
+            "detail": "对局开始后 4 拍仍是 3（期望 3 对局）；进第二关预览时刻=174070 ns（必须晚于散落结束 174060 ns）、此刻 o_level=1"
+          },
+          {
+            "name": "⑱ ★【B11】**对局中**按【开始】→ 立刻回到预览，并**完整重开一轮**（预览 5 秒后再次散落）；此前只测了'失败后重开''胜利后重开'",
+            "ok": true,
+            "detail": "按下后进预览时刻=200010（比按键晚 10 ns，期望 0~4000）；此后再次散落时刻=210030（距进预览 10020 ns，期望约 10000）"
+          },
+          {
+            "name": "⑲ ★A4 对局中按【旋转】（原始键号 11）→ **恰好一个 1 个时钟宽**的 o_rot 脉冲（与 o_sel/o_conf/o_move 同为 1 拍命令）；同一次按键不产生 o_sel/o_conf/o_move/o_up/o_down/o_left/o_right 中任何一个",
+            "ok": true,
+            "detail": "o_rot 上升沿（对局窗口内）=['29010']（期望 1 个，约 29020 ns）；脉冲宽度=20 ns（期望 1 拍 = 20 ns）；同窗口内其它动作脉冲=无"
+          },
+          {
+            "name": "⑳ ★A4 【旋转】键在**每一个其它状态**（自检/待机/预览/失败/胜利）按下都**不产生** o_rot 脉冲，整个仿真里 o_rot 只出现过 ⑲ 的那一个（命令只在 S_PLAYING 生效）",
+            "ok": true,
+            "detail": "全时间线 o_rot 上升沿=['29010']（共 1 个）| 自检：t=2400 时 o_state=0（期望 0），o_rot 电平=0，±200 ns 内脉冲=无；待机：t=4800 时 o_state=1（期望 1），o_rot 电平=0，±200 ns 内脉冲=无；预览：t=8000 时 o_state=2（期望 2），o_rot 电平=0，±200 ns 内脉冲=无；失败：t=75000 时 o_state=5（期望 5），o_rot 电平=0，±200 ns 内脉冲=无；胜利：t=118000 时 o_state=4（期望 4），o_rot 电平=0，±200 ns 内脉冲=无"
+          },
+          {
+            "name": "㉑ ★A4 原始键号译码没有被新键搅乱：11 → K_ROT（⑲ 已证）；**9 与 12 → K_NONE**（对局中按下去没有任何动作脉冲）；**10 → 仍是 K_UP**（o_up 与 o_move 各一次）",
+            "ok": true,
+            "detail": "键号 9（t=30000）动作脉冲=无；键号 12（t=32000）动作脉冲=无；键号 10（t=197500）o_up=['197510']、o_move=['197510']、o_rot=无（都期望各 1 / 1 / 0）"
+          },
+          {
+            "name": "㉒ ★A4 复位（i_rst=1，本 tb 为 [0,100] ns）期间 o_rot 恒 '0'",
+            "ok": true,
+            "detail": "t=40 ns 电平=0、t=90 ns 电平=0；100 ns 之前的 o_rot 上升沿=无"
+          },
+          {
+            "name": "㉓ ★A1v2 六个常驻场景的音效码：自检=0001（POST 单声短鸣）、待机=0000、预览=0010、**第一关对局=1000（背景音乐 1）**、胜利=0110、失败=0111（与 puzzle_pkg.SND_* 逐条一致）；⚠️ 采样点刻意避开「过关/失败」事件码的 2 步保持窗口（这正是 ㉔ 要证明的行为）",
+            "ok": true,
+            "detail": "自检 = POST 单声短鸣（行业标准）：t=1000 码=1（期望 1）；待机静音：t=4500 码=0（期望 0）；预览提示音：t=6000 码=2（期望 2）；★ 第一关对局中**背景音乐 1**（马里奥 Overworld 主题）：t=16000 码=8（期望 8）；通关胜利号角：t=117900 码=6（期望 6）；失败 / Game Over：t=75500 码=7（期望 7）"
+          },
+          {
+            "name": "㉔ ★【瞬时事件保持】一关拼对（t=88000，i_solved=1）后，音效码变成 0011（过关）并**保持 ≥1 个旋律步（250 ms）**，随后回到按状态决定的码（此时已进第二关预览 ⇒ 0010）—— 旧实现只有 1 个时钟的脉冲（~20 ns），蜂鸣器来不及发声。⚠️ 第 18 工作阶段起按键不再产生事件码，故本条改用【过关】验证",
+            "ok": true,
+            "detail": "t=88200 码=3（期望 3）；snd_hold=2（期望非 0）；t=90500 码=2（期望 2）"
+          },
+          {
+            "name": "㉕ ★【第 18 工作阶段】对局中【确认】【旋转】【选择】【上】**四个按键全都不发声** —— 采样点必须仍是背景音乐码 1000（用户：「确认、旋转没必要有特殊音效来打扰背景音乐」）",
+            "ok": true,
+            "detail": "t=17200 选择=8；t=19200 上=8；t=21200 确认=8；t=29200 旋转=8（全部期望 8=背景音乐）"
+          },
+          {
+            "name": "㉗ ★A1v3 **每一关一首不同的背景音乐**：第一关=1000、第二关=1001、第三关=1011（`sound_p <= \"10\" & lvl3 & level` 纯拼线，0 逻辑单元）",
+            "ok": true,
+            "detail": "第一关：t=16000 码=8（期望 8）；第二关：t=99000 码=9（期望 9）；第三关：t=112000 码=11（期望 11）"
+          },
+          {
+            "name": "㉖ ★A1v2 一关对局全程（t=15200~68000，每 500 ns 采一次）音效码**从不为 0000**（背景音乐兜底 + 事件码覆盖）—— 上板「全程没声音」这条不可能再出现",
+            "ok": true,
+            "detail": "采样 106 次，静音采样点=无"
+          },
+          {
+            "name": "㉘ ★【ERR-051 回归】SW7 关→开（与 1 Hz 网格错开 700 ns）后，自检窗口 = **恰好 8 个 tick_4hz**（8 x 250 ms = 2 s，B2）",
+            "ok": true,
+            "detail": "SW7 在 t=216700 拉高；o_state 回待机 t=220510；其间 i_tick_4hz 上升沿 **8** 个（期望 8）"
+          }
+        ]
+      },
+      "keypad_scan": {
+        "module": "keypad_scan",
+        "round": 27,
+        "rounds_total": 27,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:47",
+        "duration_ns": 1792000.0,
+        "passed": 9,
+        "total": 9,
+        "all_pass": true,
+        "record_json": "sim/rounds/keypad_scan/r27.json",
+        "record_md": "sim/rounds/keypad_scan/r27.md",
+        "tb": "sim/tb_keypad_scan.py",
+        "vwf": "sim/keypad_scan.vwf",
+        "assertions": [
+          {
+            "name": "① 复位后无键：o_key = 0（K_NONE）且 o_press 无脉冲",
+            "ok": true,
+            "detail": "t=24100.0 时 o_key=0；全程 o_press 脉冲数=2（期望 2：KEY1 与 KEY2 各一次）"
+          },
+          {
+            "name": "② 按下 (行1,列2) 后 o_key = 4*1+2 = 6（键码 = 4*行+列，ERR-004 的防线）",
+            "ok": true,
+            "detail": "实测 o_key = 6，期望 6"
+          },
+          {
+            "name": "③ o_press 脉冲**恰好 2 次**且**每次宽度 = 1 个时钟周期**(20 ns)",
+            "ok": true,
+            "detail": "脉冲时刻/宽度：88010ns..88030ns(20ns), 824010ns..824030ns(20ns)"
+          },
+          {
+            "name": "④ 按键保持不放时不再产生新的 o_press（按住只动作一次）",
+            "ok": true,
+            "detail": "按住期间(280100 ns 起)新增脉冲数=0，o_key=6"
+          },
+          {
+            "name": "⑤ 松开后 o_key 归 0，并且 o_release 恰好 2 次、每次 1 个时钟宽",
+            "ok": true,
+            "detail": "release 脉冲：504010ns, 1144010ns；松开后 o_key=0"
+          },
+          {
+            "name": "⑥ 换 (行3,列0) 的键仍得到 o_key = 12（第 0 列也能定列，不是只对某列有效）",
+            "ok": true,
+            "detail": "实测 o_key = 12（期望 12）"
+          },
+          {
+            "name": "⑦ 短按 3 轮（< 消抖 4 轮）不产生 o_press，o_key 保持 0（消抖有效）",
+            "ok": true,
+            "detail": "短按后 o_key=0；全程 press 脉冲总数仍为 2"
+          },
+          {
+            "name": "⑨ ★ 消抖时长 = **4 个连续相同样 = 40 ms 板上**（DEBOUNCE_MAX=3；ERR-031：一轮扫描 = 2 个 tick_200 = 10 ms，旧文档的「16 轮 = 80 ms」把 2 倍算漏了，真实曾是 **160 ms**）。实测 o_press 在 11T（上电首键）/103T、o_release 在 63T/143T（改 stable 后再晚一个采样拍出脉冲）—— 上电首键现在是**同样 4 个连续样**，不再被 ERR-036 的幻影候选少算一轮",
+            "ok": true,
+            "detail": "实测 press=['88010', '824010']（期望 ['88000', '824000']）、release=['504010', '1144010']（期望 ['504000', '1144000']）；T = 8 us 仿真 = 5 ms 板上"
+          },
+          {
+            "name": "⑧ 列驱动自洽：出现'四列全拉低'相，且其余所有相恰好一位为低",
+            "ok": true,
+            "detail": "见到全低相=True；非法相 0 个"
+          }
+        ]
+      },
+      "pattern_rom": {
+        "module": "pattern_rom",
+        "round": 21,
+        "rounds_total": 21,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:48",
+        "duration_ns": 1200.0,
+        "passed": 8,
+        "total": 8,
+        "all_pass": true,
+        "record_json": "sim/rounds/pattern_rom/r21.json",
+        "record_md": "sim/rounds/pattern_rom/r21.md",
+        "tb": "sim/tb_pattern_rom.py",
+        "vwf": "sim/pattern_rom.vwf",
+        "assertions": [
+          {
+            "name": "① i_level='0', i_pat=0 时 o_mask 精确等于图 4-1（第 2~5 行 x 第 2~4 列实心矩形）",
+            "ok": true,
+            "detail": "实测 0x00001C1C1C1C0000，期望 0x00001C1C1C1C0000"
+          },
+          {
+            "name": "② i_level='0', i_pat=3 时 **仍是图 4-1**（第一关忽略图案库 —— B4 明文指定图 4-1，A2 的图案库加在自拟的第二/三关：第二关恒 PAT3、第三关随机）",
+            "ok": true,
+            "detail": "实测 0x00001C1C1C1C0000，期望与 i_pat=0 完全相同 0x00001C1C1C1C0000"
+          },
+          {
+            "name": "③ 第一关图案面积 = 12 格（= 三块零片 3+6+3，面积守恒的前提）",
+            "ok": true,
+            "detail": "实测 popcount = 12，期望 12"
+          },
+          {
+            "name": "④ ★ i_level='1' 时 o_mask = 图案库第 i_pat 幅（**4 幅逐幅精确匹配**；期望值由 tb 里的 8x8 ASCII 图独立生成，不是抄 64 位字面量）",
+            "ok": true,
+            "detail": "pat0 实测 0x00003C3C3C3C0000 期望 0x00003C3C3C3C0000；pat1 实测 0x00001C3E3E1C0000 期望 0x00001C3E3E1C0000；pat2 实测 0x00001E78781E0000 期望 0x00001E78781E0000；pat3 实测 0x0000383C3E1E0000 期望 0x0000383C3E1E0000"
+          },
+          {
+            "name": "⑤ 第二关 4 幅图案面积都 = 16 格（= 四块异形零片 3+2+5+6 = 16）",
+            "ok": true,
+            "detail": "实测 popcount = {0: 16, 1: 16, 2: 16, 3: 16}"
+          },
+          {
+            "name": "⑥ 图 4-1 是图案 0 的真子集（两关共用同一区域，第二关右扩一列）",
+            "ok": true,
+            "detail": "m1 & ~m2 = 0x0000000000000000"
+          },
+          {
+            "name": "⑦ 第二关 4 幅图案都**连通且无洞**（轮廓一眼可读；有洞或散点就拼不出来）",
+            "ok": true,
+            "detail": "逐幅 连通={0: True, 1: True, 2: True, 3: True} 无洞={0: True, 1: True, 2: True, 3: True}"
+          },
+          {
+            "name": "⑧ 4 幅图案互不相同（重复项会让\"随机\"有概率白换一幅）",
+            "ok": true,
+            "detail": "去重后 4 幅"
+          }
+        ]
+      },
+      "piece_rom": {
+        "module": "piece_rom",
+        "round": 23,
+        "rounds_total": 23,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:49",
+        "duration_ns": 400.0,
+        "passed": 10,
+        "total": 10,
+        "all_pass": true,
+        "record_json": "sim/rounds/piece_rom/r23.json",
+        "record_md": "sim/rounds/piece_rom/r23.md",
+        "tb": "sim/tb_piece_rom.py",
+        "vwf": "sim/piece_rom.vwf",
+        "assertions": [
+          {
+            "name": "① 第一关 o_n=3；未用槽 o_mask[3]=0；三块格数 3+6+3 = 12 = 目标图案格数 12（面积守恒）",
+            "ok": true,
+            "detail": "o_n=3  槽3掩码=0x0000000000000000  各块格数=[3, 6, 3, 0]"
+          },
+          {
+            "name": "② 第一关三块形状与课程 PDF 图 4-2 的逐像素解码（.ref/solve_l1.py）逐格相同",
+            "ok": true,
+            "detail": "P1=1x3 横条(3) P2=6 格阶梯 P3=L 形(3)：全部一致"
+          },
+          {
+            "name": "③ 第二关 o_n=4；四块**形状互不相同**的异形（格数 [3, 2, 5, 6]，共 16 = 目标图案格数 16），且逐格 == 设计意图 Q0 横条/Q1 竖条/Q2 J 形/Q3 六格块",
+            "ok": true,
+            "detail": "o_n=4  各块格数=[3, 2, 5, 6]  四块互不相同：True"
+          },
+          {
+            "name": "④ 每块零片的 o_h/o_w 都等于其掩码的**实际**包围盒，且均 <= PIECE_MAX_DIM=3",
+            "ok": true,
+            "detail": "两关 8 块全部自洽（L1 高=[1, 3, 2, 0] 宽=[3, 3, 2, 0]；L2 高=[1, 2, 3, 3] 宽=[3, 1, 3, 3]）"
+          },
+          {
+            "name": "⑤ 每块零片都是**相对**形状：掩码里 min 行 = min 列 = 0（左上角对齐）",
+            "ok": true,
+            "detail": "两关 7 块（L1 槽3 空）全部左上角对齐"
+          },
+          {
+            "name": "⑥ ⭐ 可解性：第一关三块实测掩码在 4x3 目标（第 2~5 行 x 第 2~4 列）内恰好 2 种合法铺法（参考仓库 .ref/solve_l1.py 的独立结论也是 2）",
+            "ok": true,
+            "detail": "铺法数 = 2；锚点=[(2, 2), (3, 2), (4, 3)]；锚点=[(5, 2), (2, 2), (3, 3)]"
+          },
+          {
+            "name": "⑦ ⭐ 按 puzzle_pkg 的 L1_TGT0/1/2 摆这三块实测零片 → 不重叠且并集 == 4x3 目标图案（「pkg 给的答案」必须是真实解之一）",
+            "ok": true,
+            "detail": "锚点 [(2, 2), (3, 2), (4, 3)]；并集格数 = 12（目标 12）"
+          },
+          {
+            "name": "⑧ ⭐ 可解性：i_level='1' 的四块实测异形零片在 4x4 田（= 图案库 PAT0，现在只出现在**第三关的随机池**里；第二关固定的是 PAT3 阶梯）内**恰好 1 种**铺法，且 == pkg 的 L2_TGT0..3（旧实现四块同形 2x2 有 24 种等价摆法 → 玩法只是搬运）",
+            "ok": true,
+            "detail": "铺法数 = 1；唯一铺法 = [(5, 3), (4, 2), (2, 3), (2, 2)]（pkg L2_TGT = [(5, 3), (4, 2), (2, 3), (2, 2)]）"
+          },
+          {
+            "name": "⑨ i_level='0' 与 '1' 的零片确实不同（i_level 真的参与选择，不是常量输出）",
+            "ok": true,
+            "detail": "两关掩码不同的槽 = [1, 2, 3]；L1 槽0=0x0000000000000007  L2 槽0=0x0000000000000007"
+          },
+          {
+            "name": "⑩ （参考模型自检）两张目标图案的几何关系：第二关 = 第一关**右扩一列**（第 5 列 4 格），面积 12 -> 16 —— 这一条校验的是 tb 自己的参考模型，不依赖 RTL（RTL 侧由 ⑥⑦⑧ 的可解性断言覆盖）",
+            "ok": true,
+            "detail": "|T1|=12 |T2|=16 差集=[(2, 5), (3, 5), (4, 5), (5, 5)]（应为第 5 列 4 格）"
+          }
+        ]
+      },
+      "puzzle_ctrl": {
+        "module": "puzzle_ctrl",
+        "round": 37,
+        "rounds_total": 37,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:30:14",
+        "duration_ns": 2830700.0,
+        "passed": 28,
+        "total": 28,
+        "all_pass": true,
+        "record_json": "sim/rounds/puzzle_ctrl/r37.json",
+        "record_md": "sim/rounds/puzzle_ctrl/r37.md",
+        "tb": "sim/tb_puzzle_ctrl.py",
+        "vwf": "sim/puzzle_ctrl.vwf",
+        "assertions": [
+          {
+            "name": "⓪ 形状数据自检：三块零片格数 3/6/3 = 12，与目标图案（12 格）面积守恒",
+            "ok": true,
+            "detail": "格数 = [3, 6, 3]；目标图案格数 = 12"
+          },
+          {
+            "name": "① i_go 后 o_busy 置起并**回到 0**（散落一定会结束，不会卡在忙态）",
+            "ok": true,
+            "detail": "o_busy 见到=True，回到 0 的时刻=13710（须早于 85000 ns；一次检查 ≤ 320 ns，最坏 33 次检查 ≈ 11 us）"
+          },
+          {
+            "name": "② ★ 随机散落后三块零片**两两不重叠**且都在 8x8 内（B5：位置随机但不能重叠） —— 独立几何模型逐格验算（ERR-016/017 的回归判据）；朝向必须等于 puzzle_pkg.PIECE_ORI_INIT = [1, 1, 2]（第 14 工作阶段：散落不再把朝向清零）",
+            "ok": true,
+            "detail": "实测锚点 P0=(1, 4) P1=(2, 1) P2=(5, 5)；ori=[1, 1, 2]（期望 [1, 1, 2] = PIECE_ORI_INIT 前 3 位）；无重叠、无越界"
+          },
+          {
+            "name": "③ rnd_val 恒 0（候选恒为 (0,0)，必然 16 次失败）时落到三个确定性回退锚点、朝向 = PIECE_ORI_INIT —— 后续边界/重叠/锁定/拼合判据的基准（⚠️ 回退锚点是 RTL 里写死的四角，**与朝向无关**，所以第 14 工作阶段没变）",
+            "ok": true,
+            "detail": "实测 P0=(0, 0) P1=(0, 4) P2=(4, 0)（期望 [(0, 0), (0, 4), (4, 0)]）；ori=[1, 1, 2]（期望 [1, 1, 2]）"
+          },
+          {
+            "name": "④ 越界被拒：P2(2x2) 从第 4 行下移到第 6 行为止，第 3/4 次下移被拒（B7 不能移出 8x8）",
+            "ok": true,
+            "detail": "P2 最终锚点 = (6, 0)（期望 (6,0)：第 7 行放不下 2 行高的零片）"
+          },
+          {
+            "name": "⑤ 重叠被拒：P0（初始朝向 1 = **3x1 竖条**）从 (0,0) 右移 3 格到 (0,3) 都合法，第 4 次右移就压到 P1(楼梯形, (0,4)) 的 (0,4) 格上而被拒（B7；几何按「列 = 位号」独立算出。⚠️ 第 14 工作阶段零片初始朝向变了，所以停下来的锚点是 (0,3) 而不是旧版的 (0,1)）",
+            "ok": true,
+            "detail": "P0 最终锚点 = (0, 3)（期望 (0,3)：竖条占列 3 的第 0~2 行；再右移一列就与 (0,4) 冲突）"
+          },
+          {
+            "name": "⑥ 确认锁定后 P0 **锚点不再变化**（B8：不可移动）；同时未锁定的 P1 仍可被移动 —— 修复「跳过锁定零片」不能把普通移动一起卡死",
+            "ok": true,
+            "detail": "锁定并执行 1 次移动后：P0=(0, 3)（期望 (0,3) 不变）、P1=(1, 4)（期望 (1,4)：它是被选中的未锁定块）；o_lock = 0001"
+          },
+          {
+            "name": "⑦ 一关只有 3 块零片：选择索引只在 0..2 之间循环（不出现 3）",
+            "ok": true,
+            "detail": "出现过的选择索引 = [0, 1, 2]"
+          },
+          {
+            "name": "⑲ ★【ERR-035 / B8 回归】P0 确认锁定后，【选择】键**永远不再选中它**（o_sel_idx 全程 != 0），但仍能在未锁定的 P1/P2 之间循环 —— 修复前 sel 会绕回 0、把黄块显示成绿色（B8 明文「不可再选择及移动」）",
+            "ok": true,
+            "detail": "锁定后窗口内出现过的选择索引 = [1, 2]；命中锁定块 0 的采样数 = 0"
+          },
+          {
+            "name": "⑧ 着色逐格与模型一致：选中零片=**纯绿**（红必须为 0，ERR-007 回归）、已锁定零片=黄(红=绿=1)、其余零片=红，且**不画目标鬼影**（未覆盖的目标格子不亮 —— ERR-023 的引擎侧判据）",
+            "ok": true,
+            "detail": "着色：t=966000 pos=[(0, 3), (1, 4), (6, 0)] ori=[1, 1, 2] lock=001 sel=2；整帧 64 格一致；选中零片 3 格；未覆盖目标格 11 个、其中被点亮的 0 个"
+          },
+          {
+            "name": "⑨ 三块零片拼成图 4-1 的 4x3 矩形（**并集**逐格一致；终点锚点 = 最优计划的 (2,2)(3,2)(3,2)、朝向 (2,2,2)）后逐块确认 → o_solved = 1（B9：位置和形状与初始拼图一致 —— 判据看**画面**，不看零片编号；⚠️ 这组锚点不是 pkg 里写的那组见证锚点，而是一组**等价铺法**）",
+            "ok": true,
+            "detail": "锚点 P0=(2, 2) P1=(3, 2) P2=(3, 2)（期望 [(2, 2), (3, 2), (3, 2)]）；朝向=[2, 2, 2]（期望 [2, 2, 2]）；并集 12 格 == 目标 = True；o_solved=1；o_lock=0111"
+          },
+          {
+            "name": "⑩ 只锁定 2 块时 o_solved = 0、o_all_lock = 0（成功判据必须是「全部锁定」）",
+            "ok": true,
+            "detail": "锁 2 块时 o_solved=0 o_all_lock=0；锁 3 块后 o_all_lock=1"
+          },
+          {
+            "name": "⑪ 行扫描渲染：o_scanrow 在 0..7 之间轮转（整帧由 8 行拼出，不是一次性写入）",
+            "ok": true,
+            "detail": "20~60 us 内出现过的行号 = [0, 1, 2, 3, 4, 5, 6, 7]（一关一行 5 拍 = 1000 ns，整帧 8000 ns）"
+          },
+          {
+            "name": "⑫ ★ 重叠引擎串行化后的**扫描不变量**（替代已不存在的 ERR-016 流水对齐判据）：每次检查里 (chk_sr, chk_slot) 恰好走遍 (本块行 0..chk_srmax) x (邻块 0..npc-1) 每一种组合**一次**（每行先 1 拍 load 再 npc 拍逐块比较、不跳号不错行），每拍 chk_crow 等于用**独立模型**重算的候选本行掩码，检查结束那一拍的 chk_hit 等于模型算出的「是否有任何一次真实比较命中」（slot == chk_me 自己那一拍按 RTL 语义不比较）；旋转请求（chk_rot=1）必须走**同一套**流水且 chk_ori = 该块 ori+1 —— 既查扫描结构、也端到端查重叠判定与 A4 的流水复用",
+            "ok": true,
+            "detail": "四个窗口共核对 125 次检查（其中旋转请求 8 次）、536 次邻块比较、判定命中 98 次（另有 0 次检查被窗口边缘截断、已跳过）；全部一致"
+          },
+          {
+            "name": "⑯【已知残余缺陷 ERR-018b，如实记录、未修复】16 次尝试都失败后启用硬编码回退锚点，而回退锚点**不再做重叠检查** → 与别的零片的随机落位重叠",
+            "ok": true,
+            "detail": "散落①(rnd_val 恒 12) 实测 P0=(4, 1) P1=(0, 4) P2=(4, 0)；命中回退锚点的零片=[1, 2]；P2@(4, 0) 与 P0 在格子 (4, 1) 重叠"
+          },
+          {
+            "name": "旋转①/⑥ ★【A4】一关（只有三块零片时同样有效）：选中 P1(楼梯形) 按【旋转】一次 → o_ori 该块 **1 -> 2**（初始朝向就是 1，不再是 0）、**o_pos 一格都不动**、整帧逐格等于独立模型算出的「绕零片中心顺时针转 90°」后的形状",
+            "ok": true,
+            "detail": "旋转①：t=1069000 pos=[(0, 0), (0, 4), (4, 0)] ori=[1, 2, 2] lock=000 sel=1；整帧 64 格一致；ori=10101001（P1=2）；pos 前=[(0, 0), (0, 4), (4, 0)] 后=[(0, 0), (0, 4), (4, 0)]（必须相同）"
+          },
+          {
+            "name": "旋转② ★ 连按 4 次【旋转】= 360°：o_ori 回到**初始朝向 1**，且**整帧 o_rowr/o_rowg 与旋转前逐位相同**（4 次都提交、没有丢步或方向累积错误）",
+            "ok": true,
+            "detail": "ori=10100101（P1=1，期望 1）；旋转前 frame=(0x101010003010000,0x7060400000000000) 4 次后=(0x101010003010000,0x7060400000000000) 逐位相同=True；旋转②(模型)：t=1123000 pos=[(0, 0), (0, 4), (4, 0)] ori=[1, 1, 2] lock=000 sel=1；整帧 64 格一致"
+          },
+          {
+            "name": "旋转④ ★ 重叠被拒：P1(楼梯形 @(0,4)，朝向 1) 转 90° 后的格子会压到 P2(L 形 @(2,4)，朝向 2) 上（交集格子见实测），因此这次旋转必须**什么都不改** —— o_pos / o_ori / 整帧全部与旋转请求之前逐位相同",
+            "ok": true,
+            "detail": "独立模型算出冲突格 = [(2, 4), (2, 5)]；P1 的 ori=1（必须仍为 1）；pos=[(0, 0), (0, 4), (2, 4)]；整帧不变=True"
+          },
+          {
+            "name": "旋转⑤ ★ 出界被拒：1x3 横条 P0（当前朝向 2）移到**第 7 行**后再按【旋转】—— 转 90° 后包围盒变成 3 行高，锚点行 + 3 = 10 > 8（教科书旋转同样出界，两种解释都判越界），必须被拒：o_ori / o_pos / 整帧全部不变",
+            "ok": true,
+            "detail": "P0 锚点 = (7, 0)（期望 (7,0) 不变）；P0 的 ori=2（必须仍为 2）；整帧不变=True"
+          },
+          {
+            "name": "旋转⑦ ★ 非方形零片的旋转**归一化到自身紧包围盒**（第一版 RTL 的真实缺陷，已被 rot_off_r/rot_off_c 修掉）：1x3 横条 P0 @(4,0) 从朝向 2 转 90° 到朝向 3 后必须画成**同一列**的竖条 (4,0)(5,0)(6,0)、o_pos 不变；再转 90°（朝向 0）必须回到原横条 (4,0)(4,1)(4,2)。判据是**逐格与独立教科书模型比对**，不是「看着像」",
+            "ok": true,
+            "detail": "ori=3：实测绿格 = [(4, 0), (5, 0), (6, 0)]，教科书模型 = [(4, 0), (5, 0), (6, 0)]（未归一化的旧实现会画在 [(4, 2), (5, 2), (6, 2)]）；ori=0：实测绿格 = [(4, 0), (4, 1), (4, 2)]，教科书模型 = [(4, 0), (4, 1), (4, 2)]"
+          },
+          {
+            "name": "旋转⑥ ★ 旋转**已锁定**的零片什么都没发生（B8「确认后不可再选择及移动」对旋转同样成立）：把 P1/P2/P0 依次确认锁定（此时 sel 停在**已锁定的 P0** 上 —— 全锁时 next_unlocked 无处可去，这是 ERR-035 的边角），再按【旋转】：o_ori / o_pos / 整帧全部不变。**同一锚点**上未锁定时旋转是被接受的（旋转⑦ 的 (4,0) 朝向 2->3->0），所以这次「没变化」只能归因于锁定",
+            "ok": true,
+            "detail": "o_lock=0111 o_sel_idx=0（0 = 停在已锁定的 P0 上）；ori=10100100（与旋转前 10100100 相同）；pos 不变=True；整帧不变=True；同锚点未锁定时该旋转被接受过=True"
+          },
+          {
+            "name": "⑬ 第二关（i_level=1，4 块异形 3+2+5+6 格）散落完成：四块落在确定性回退锚点、互不重叠（16 格）、朝向 = PIECE_ORI_INIT = [1, 1, 2, 2]，且未锁定时 o_solved = 0",
+            "ok": true,
+            "detail": "锚点 = [(0, 0), (0, 4), (4, 0), (4, 4)]（期望 [(0, 0), (0, 4), (4, 0), (4, 4)]）；并集 16 格；并集==目标 = False；ori=[1, 1, 2, 2]（期望 [1, 1, 2, 2]）；o_solved = 0"
+          },
+          {
+            "name": "旋转③ ★【A4 / ⑥】第二关（四块零片、i_level=1）旋转同样有效：选中 Q2(J 形) 转一次 → 该块朝向 **2 -> 3**、o_pos 不变、整帧等于独立模型；再转 3 次回到初始朝向 2 且整帧与旋转前逐位相同（转完 sel 回到 0，所以后面 ⑭ 的拼图计划不受影响）",
+            "ok": true,
+            "detail": "旋转③：t=1855000 pos=[(0, 0), (0, 4), (4, 0), (4, 4)] ori=[1, 1, 3, 2] lock=0000 sel=2；整帧 64 格一致；ori 一次后=10110101（Q2=3）、四次后=10100101（Q2=2）；pos 前=[(0, 0), (0, 4), (4, 0), (4, 4)] 后=[(0, 0), (0, 4), (4, 0), (4, 4)]（必须相同）；旋转前后整帧逐位相同=True"
+          },
+          {
+            "name": "⑭ ★【ERR-021 回归判据】第二关把四块摆成图案 3（阶梯）的**第二种**铺法（画面与目标图案逐格一致、四块全锁）→ o_solved = 1。任何「第 k 块的锚点 == 写死的第 k 个位置」的判据都会在这里判错",
+            "ok": true,
+            "detail": "锚点 = [(2, 2), (2, 1), (3, 3), (3, 2)]、朝向 = [2, 2, 0, 0]（= 本 tb 摆的那一种）；**另一种等价铺法** = [(5, 3), (2, 1), (2, 2), (2, 3)] （sim/tb_puzzle_top.py 摆的就是它 —— RTL 里**不再有任何锚点常量**，判据只看画面）；并集==目标图案 = True（16 格）；o_lock = 1111；o_solved = 1；frm_ok = 1、frm_valid = 1（整帧画面判据）"
+          },
+          {
+            "name": "⑮ 反例：第二关四块**原地全锁定**（不摆到目标位置上），画面并集 != 目标图案 → o_solved = 0 且 o_all_lock = 1（必须判失败；防止修 ERR-021 时把判据放宽成永远成功）",
+            "ok": true,
+            "detail": "锚点 = [(0, 0), (0, 4), (4, 0), (4, 4)]；并集 16 格（目标 16 格、不同）；o_lock = 1111；o_solved = 0；o_all_lock = 1"
+          },
+          {
+            "name": "⑰ ★【A2/S1】图案库下标 i_pat 变化 → 在途整帧判据立即作废（o_all_lock/o_solved 归 0），再渲染一整帧干净画面后重新发布 —— 「干净帧」必须同时跟踪 pos / level / **pat**。（翻转 12 次、相位互不相同，避免单次翻转正好落进「帧尾→帧头」那一行的缝里而变成概率性断言）",
+            "ok": true,
+            "detail": "i_pat 在这串时间里翻转 12 次（期望 12）；此后 43700 ns（≥ 2 帧）内 o_all_lock/o_solved 归 0 的采样数 = 960（必须 > 0）；再等 3 帧（t=2662700 ns）后 o_all_lock=1、o_solved=1；同期 frm_valid = 0 的采样数 = 960（必须 > 0，一帧 = 9600 ns）"
+          },
+          {
+            "name": "⑱ ★【A4 端到端 / 用户上板反馈的回归】零片从 PIECE_ORI_INIT = [1, 1, 2] 开始散落，**一次都不按【旋转】就拼不出目标**：同一条拼图计划里【旋转】2 次，按它走 → 0 次被拒且并集 == 图 4-1；把 rot 全部删掉再走 → 被拒 3 次且并集 != 目标（用本 tb 自己的独立几何模型离线算，与波形无关）",
+            "ok": true,
+            "detail": "计划 19 条：按计划走 被拒 0 次、并集 12 格 == 目标 = True、终点朝向 [2, 2, 2]（初始 [1, 1, 2]）；删掉旋转后 被拒 3 次、并集 12 格 == 目标 = False、终点朝向 [1, 1, 2]、终点锚点 [(2, 2), (3, 3), (3, 0)]"
+          },
+          {
+            "name": "⑳ ★【主路径竞态】o_all_lock/o_solved 依据的整帧判据必须是 pos/ori 提交**之后**重算的：对每一个提交拍 c，窗口 [c, 下一次帧尾拍) 内 o_all_lock 必须**全为 0**（否则 alllock_r 一旦拉高，game_fsm 在 S_PLAYING 里每拍都在看 i_solved/i_all_lock，i_all_lock='1' 而 i_solved 还是上一帧的 '0' 就当场判 S_FAIL）；同时要求窗口内确实出现过 frm_valid=1（陈旧判据仍然有效），否则这条断言就是同义反复",
+            "ok": true,
+            "detail": "提交拍 97 个（pos_cnt 变化 / o_pos / o_ori 变化）、帧尾拍 330 个；逐提交窗口 [提交拍, 下一次帧尾拍) 共 18763 个采样拍，其中 frm_valid=1（陈旧判据**仍然有效**）15746 个 —— 窗口真实存在；**o_all_lock=1 的采样 0 个（必须 0）**；窗口长度 7~451 个 i_clk 拍（一帧 = 400/480 拍）；事件模型自校验：frm_valid/frm_ok 共 147 次跳变，不在还原出的帧尾拍上的 0 次"
+          }
+        ]
+      },
+      "puzzle_top": {
+        "module": "puzzle_top",
+        "round": 57,
+        "rounds_total": 54,
+        "first_round": 1,
+        "timestamp": "2026-10-15 16:13:12",
+        "duration_ns": 125272000.0,
+        "passed": 28,
+        "total": 28,
+        "all_pass": true,
+        "record_json": "sim/rounds/puzzle_top/r57.json",
+        "record_md": "sim/rounds/puzzle_top/r57.md",
+        "tb": "sim/tb_puzzle_top.py",
+        "vwf": "sim/puzzle_top.vwf",
+        "assertions": [
+          {
+            "name": "① B1 自检：点阵**全黄**并以 2 Hz 方波闪烁（亮/灭各占约一半，ERR-011 回归），8 位数码管**每个位槽都同时出现过 \"8\"(0x7F) 与消隐(0x00)**（即数码管也真的在 2 Hz 闪；只查 0x7F 时顶层 `i_blink` 这根线在整机层无判据）",
+            "ok": true,
+            "detail": "采样 141 个：全黄 75、全灭 66、其它 0；8 位数码管都出现过 '8' = True；都出现过消隐 0x00 = True（未见消隐的位槽 = 无）；各位槽段码集合 = {0: [' ', '8'], 1: [' ', '8'], 2: [' ', '8'], 3: [' ', '8'], 4: [' ', '8'], 5: [' ', '8'], 6: [' ', '8'], 7: [' ', '8']}"
+          },
+          {
+            "name": "② B2 待机：点阵全灭，DISP7='5'、DISP0='1'，其余位空白",
+            "ok": true,
+            "detail": "点阵点亮格数=0；数码管 DISP7=5 DISP6..1=[' ', ' ', ' ', ' ', ' ', ' '] DISP0=1"
+          },
+          {
+            "name": "③ B4 预览：点阵显示完整图 4-1（第 2~5 行 x 第 2~4 列，每行 0x1C，共 12 格），且 DISP7 出现 1~5 的倒计时",
+            "ok": true,
+            "detail": "实测每行红掩码=['0x0', '0x0', '0x1c', '0x1c', '0x1c', '0x1c', '0x0', '0x0']（期望 ['0x0', '0x0', '0x1c', '0x1c', '0x1c', '0x1c', '0x0', '0x0']）；绿=['0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0']；共 12 格；DISP7 出现过的值=['1', '2', '3', '4', '5']"
+          },
+          {
+            "name": "④ B5 预览结束进入对局：点阵出现零片（3+6+3 = 12 格，且不再是完整 4x3 矩形 → 说明真的散落了），DISP4:DISP3 显示限时倒计时（本 tb 把第一关限时补丁成 17 s，所以读数是 16；**B5 的 30 s 由 tb_game_fsm ⑪b + check_plans 守卫**）",
+            "ok": true,
+            "detail": "点亮格数=12（期望 12）；每行红=['0x70', '0x60', '0x40', '0x0', '0x3', '0x1', '0x0', '0x0']；DISP4:DISP3 = 15 = 15（期望 12~17）"
+          },
+          {
+            "name": "⑤ B6 按【选择】后：绿色零片从一块切换到另一块（选中零片变绿、且未被选中的仍是红色）；两次点亮总格数都保持 12（面积守恒，散落不重叠的整机回归）",
+            "ok": true,
+            "detail": "按选择前绿色格数=3（第一块 = 1x3 横条）、之后=6（第二块 = 6 格楼梯形）；绿色集合已改变；之后点亮总格数=12"
+          },
+          {
+            "name": "⑥ B1 SW7=0：点阵全灭、8 位数码管全部熄灭（\"所有显示器件不显示\"）",
+            "ok": true,
+            "detail": "点阵点亮格数=0；数码管读数=[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']"
+          },
+          {
+            "name": "⑦ 整机状态序列按需求推进：自检 → 待机 → 预览 → 对局（按【开始】启动）",
+            "ok": true,
+            "detail": "状态序列 = 自检 → 待机 → 预览 → 对局 → 自检 → 待机 → 预览 → 对局 → 预览 → 对局 → 预览 → 对局 → 胜利 → 预览 → 对局 → 失败"
+          },
+          {
+            "name": "⑧ ★ 方向协议不变量：FSM 每发出一次方向脉冲，引擎都必须在 2 拍内锁进非 0 的 mv_dir（ERR-020 的回归判据；与键位映射无关）",
+            "ok": true,
+            "detail": "方向脉冲 4 次；每次都在 2 拍内锁进非 0 方向"
+          },
+          {
+            "name": "⑨ 方向键按下后，引擎的候选锚点 chk_pos 至少出现过 1 个**与当前锚点不同**的值（说明方向真的参与了「夹紧 + 边界/重叠判定」，而不是原地重算）",
+            "ok": true,
+            "detail": "方向窗口内 chk_pos 出现过的值 = ['0x0', '0x13', '0x14', '0x4']；当前各块锚点 = ['0x0', '0x4', '0x40']"
+          },
+          {
+            "name": "⑩ ★【整机·第一关】用真实矩阵按键把三块拼成图 4-1 的 4x3 矩形（并集逐格一致；终点锚点 (2,2)(3,2)(3,2) 是**等价铺法**，不是 pkg 里写的那组见证锚点）并逐块确认后，状态机必须进入**第二关预览**（o_level=1、o_lvl3=0）—— 修复前这里是判负出叉（ERR-023：对局态喂给引擎的目标图案被置零，成功判据永远不可能成立）",
+            "ok": true,
+            "detail": "确认后锚点=0x22323200（期望 0x22323200）、locked=0111；1 ms 后 o_state=2（2=预览）、o_level=1 o_lvl3=0"
+          },
+          {
+            "name": "⑩b ★【D2/A2】第二关拼完并全部确认后 → 状态机进入**第三关预览**（o_state=2 预览、**o_lvl3=1**）—— D2 之前这里直接是胜利；「增加游戏关数」正是提高要求 2 的前半句",
+            "ok": true,
+            "detail": "1 ms 后 o_state=2（期望 2 预览）、o_lvl3=1（期望 1）"
+          },
+          {
+            "name": "⑯ ★【B10 第二关 = 固定图案】第二关预览逐行显示 **PAT3（阶梯）**（共 16 格，只点红列）—— D2 之后第二关图案**不随随机源变化**（随机选择属提高要求 2，已移到第三关）",
+            "ok": true,
+            "detail": "实测红=['0x0', '0x0', '0x1e', '0x3e', '0x3c', '0x38', '0x0', '0x0']\n期望红=['0x0', '0x0', '0x1e', '0x3e', '0x3c', '0x38', '0x0', '0x0']（PAT3）\n绿=['0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0']"
+          },
+          {
+            "name": "⑯b ★【A2 第三关 = 随机图案】第三关预览逐行显示**图案库第 2 幅**（本 tb 把随机值钉在 2；共 16 格，只点红列）—— 证明「进入第三关时锁存 rnd_val → pattern_rom 按 (level,pat) 选图」真的作用到了预览画面",
+            "ok": true,
+            "detail": "实测红=['0x0', '0x0', '0x1e', '0x78', '0x78', '0x1e', '0x0', '0x0']\n期望红=['0x0', '0x0', '0x1e', '0x78', '0x78', '0x1e', '0x0', '0x0']（图案 2）\n绿=['0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0']"
+          },
+          {
+            "name": "⑪ ★【整机·第二关 = 固定 PAT3】四块异形零片（3+2+5+6 格）拼成 PAT3 阶梯的**第 0 种等价铺法**（画面与目标图案逐格一致）并全部确认 → 状态机推进到第三关（ERR-021 的整机回归：判据只看画面，RTL 里没有任何锚点常量；PAT3 有 2 种铺法都被判成功）",
+            "ok": true,
+            "detail": "确认后锚点=0x53212223（期望 0x53212223）、locked=1111"
+          },
+          {
+            "name": "⑪b ★【整机·第三关 = 随机图案 2】四块异形零片拼成**图案 2**（S/Z 锯齿）的唯一铺法并全部确认 → **胜利状态**（A2「增加游戏关数 + 多种拼图图案随机选择」的整机出口；换一幅图案照样能玩通、判据照样成立）",
+            "ok": true,
+            "detail": "确认后锚点=0x21443124（期望 0x21443124）、locked=1111；1 ms 后 o_state=4（4=胜利）"
+          },
+          {
+            "name": "⑫ 第三场景的状态序列 = 自检 → 待机 → 预览 → 对局 → 预览 → 对局 → **预览 → 对局** → 胜利（即真的**连过三关**：D2 在原来的两关之间插入了第三关；也说明没有「还没散落就判胜/判负」的残留状态跳变）",
+            "ok": true,
+            "detail": "状态序列 = 自检 → 待机 → 预览 → 对局 → 预览 → 对局 → 预览 → 对局 → 胜利 → 预览 → 对局 → 失败"
+          },
+          {
+            "name": "⑬ ★ 胜利结算画面 = **绿色粗对勾**（8 行逐行比对；**只点绿列、红列不亮**——\"绿对勾 / 红叉\"交通灯配色，颜色本身即判读线索），数码管最左四位拼出 **PASS**。演进：细对勾 → 黄笑脸 → 粗红对勾 → **粗绿对勾**（2026-10-09 用户拍板）；数码管原来是随意挑的 \"75\"",
+            "ok": true,
+            "detail": "实测红=['0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0']\n绿=['0x80', '0xc0', '0xe0', '0x70', '0x31', '0x1b', '0x1f', '0xe']\n期望红=全 0、绿=['0x80', '0xc0', '0xe0', '0x70', '0x31', '0x1b', '0x1f', '0xe']\n数码管 DISP7..DISP4 段码 = [[115], [119], [109], [109]]（读作 'PASS'）"
+          },
+          {
+            "name": "⑭ ★ 结算画面节奏：**先按 2 Hz 闪 2 个周期**（抓注意力）再**常亮**（远距离可读）—— 自拟改进项 S5；一直闪反而不利于判读",
+            "ok": true,
+            "detail": "胜利态持续 5.50 ms（须 > 4.6 ms，否则常亮窗口落在下一个场景里）；前 2.6 ms 采样 26 次：亮 20、灭 6（有'灭'说明真的在闪）；3.6~4.4 ms 采样 9 次：亮 9（应全亮 = 常亮）"
+          },
+          {
+            "name": "⑮ ★ 失败结算画面 = 原来的**红色叉**（逐行比对 FAIL_MASK；只点红列、绿列不亮），数码管最左四位拼出 **FAIL**——第四场景：开新一局后三块直接确认（不摆位）→ 全部锁定但画面不对 → 判负（B9/B10 的失败图案；改版前这条路径无断言覆盖）",
+            "ok": true,
+            "detail": "进入失败态时刻=118960090 ns；实测红=['0x0', '0xc3', '0x66', '0x3c', '0x3c', '0x66', '0xc3', '0x0']\n绿=['0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0', '0x0']\n期望红=['0x0', '0xc3', '0x66', '0x3c', '0x3c', '0x66', '0xc3', '0x0']、绿=全 0\n数码管 DISP7..DISP4 段码 = [[113], [119], [6], [56]]（读作 'FAIL'）"
+          },
+          {
+            "name": "⑰ ★【A4 旋转 · 整机】按 KEY8 三次：朝向每次要么不变、要么恰好 +1（mod 4）；锚点 o_pos 全程不变；点亮格数守恒",
+            "ok": true,
+            "detail": "第1次 sel=2 ori 2->3(OK) pos不变 格数12；第2次 sel=2 ori 3->0(OK) pos不变 格数12；第3次 sel=2 ori 0->1(OK) pos不变 格数12（参考格数 12）"
+          },
+          {
+            "name": "⑱ ★【音效 · 整机】六个常驻场景的音效码经 `game_fsm.sound_p → buzzer_ctrl.i_sel` 真的走到了蜂鸣器：自检 0001 / 待机 0000 / 预览 0010 / 一关 1000 / 胜利 0110 / 失败 0111",
+            "ok": true,
+            "detail": "自检 = POST 单声短鸣（0001） t=500000 码=1（期望 0001）；待机 = 静音（0000） t=3305000 码=0（期望 0000）；预览 = 金币音（0010） t=7650000 码=2（期望 0010）；第一关对局 = BGM1（1000） t=13450000 码=8（期望 1000）；通关胜利 = 过关号角（0110） t=105244000 码=6（期望 0110）；失败 = Game Over（0111） t=121772000 码=7（期望 0111）"
+          },
+          {
+            "name": "⑲ ★【音效 · 整机】**每一关一首不同的背景音乐**：一关 1000（⑱ 已测）、二关 1001、三关 1011 —— A1 的『不同情况播放不同音乐』在整机上成立（**扫描整段对局窗口**，对按键事件码免疫）",
+            "ok": true,
+            "detail": "第二关 对局窗口内音效码集合 = ['0011', '1001']（应含 1001）；第三关 对局窗口内音效码集合 = ['0011', '1011']（应含 1011）"
+          },
+          {
+            "name": "⑳ ★【音效 · 整机】对局中**【选择】【上/下/左/右】【确认】【旋转】四个按键全都不发声** —— 采样点必须仍是背景音乐码 1000（第 18 工作阶段把最后的确认/旋转音效也去掉，只留背景音乐）",
+            "ok": true,
+            "detail": "选择后=1000；方向后=1000；确认后=1000；旋转后=1000（**全部**期望 1000=背景音乐）"
+          },
+          {
+            "name": "㉑ ★【音效 · 整机】SW7=0 期间 `buzz` 恒为 '0'（B1：开关关掉时全部不显示，蜂鸣器也由 `i_en` 一起门控）",
+            "ok": true,
+            "detail": "在 [23400000, 24200000] 内采样 41 点，高电平点 无"
+          },
+          {
+            "name": "㉒ ★【ERR-051 回归 · 整机】SW7 关→开之后自检窗口内蜂鸣器**恰好响一声**，且窗口中段仍在自检态（窗口恒 8 个旋律步 ⇒ 必含第 0 或第 8 步之一）",
+            "ok": true,
+            "detail": "扫描窗口 [27050000, 30400000]：`u_buzz|on_now` 连续区间 **1** 个（期望 1）；t=29500000 时状态=0（期望 0 自检）"
+          },
+          {
+            "name": "㉓ ★【第 18 工作阶段新功能 / 第 22 工作阶段改判据】倒计时 ≤10 s 时显示『目标幽灵』：**目标图案的每一格，在跨相位的窗口内至少被点亮过一次**（拼对的格子被零片盖住 ⇒ 常亮；空着的格子 ⇒ 幽灵在闪亮的半个相位点亮它）；而『倒计时 >10 s 时不画』由已有的断言 ④（点亮格数恰为 12）与 ㉕（cnt=11 全灭）守住",
+            "ok": true,
+            "detail": "窗口 [22.50, 22.98] ms（宽 0.480 ms，要求 ≥ 0.400 ms 即跨过 ≥1 个闪烁半周期；对局中、倒计时=10）：目标 12 格里**全程没亮过**的 = 无（该画的都画出来了）"
+          },
+          {
+            "name": "㉔ ★【第 22 工作阶段】告急幽灵**确实在闪、而且只闪绿色**（用户上板反馈的整改）：① 存在会变状态的格子（真在闪）；② 会变的格子**全在目标图案里**；③ 每个会变的格子遇到过的状态**恰好是 {(0,0) 灭, (0,1) 绿}**（**不变红** = 不再像红零片、**不变黄** = 不会被误认成已锁定）；④ 跳变 1~3 次（窗口约 0.48 ms、2 Hz 半周期 0.4 ms ⇒ 期望 1~2 次）",
+            "ok": true,
+            "detail": "窗口 [22.50, 22.98] ms（宽 0.480 ms）：会变状态的格子 **12** 个（[(2, 2), (2, 3), (2, 4), (3, 2), (3, 3), (3, 4), (4, 2), (4, 3), (4, 4), (5, 2), (5, 3), (5, 4)]）；不在目标图案里的 = 无；状态集合超出 {(0,0),(0,1)} 的 = 无；跳变次数不在 1~3 的 = 无"
+          },
+          {
+            "name": "㉕ ★【第 22 工作阶段】**「只在倒计时 ≤10 s 才画」的阈值本身**：倒计时 = **11** 时（幽灵还没使能）目标图案的格子必须**全灭** —— 阈值若被改成 ≤11~14，本条立刻挂（原来这条只由 ④ 在 cnt=15~17 上弱覆盖）",
+            "ok": true,
+            "detail": "采样 t=20.90 ms、窗口宽 0.900 ms（要求 ≥ 0.400 ms，否则若阈值被放宽、幽灵的亮相位可能整段落在窗外而**假通过**；对局中、倒计时=11）：目标 12 格里**亮过的** = 无（阈值正确：11 s 时还不画）"
+          }
+        ]
+      },
+      "rng_lfsr": {
+        "module": "rng_lfsr",
+        "round": 23,
+        "rounds_total": 23,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:50",
+        "duration_ns": 5800.0,
+        "passed": 10,
+        "total": 10,
+        "all_pass": true,
+        "record_json": "sim/rounds/rng_lfsr/r23.json",
+        "record_md": "sim/rounds/rng_lfsr/r23.md",
+        "tb": "sim/tb_rng_lfsr.py",
+        "vwf": "sim/rng_lfsr.vwf",
+        "assertions": [
+          {
+            "name": "① 复位后 o_val == puzzle_pkg 的 SEED_DEFAULT(0x5A) 且 ≠ 0（未落在全零吸收态）",
+            "ok": true,
+            "detail": "实测 0x5A；pkg 的 SEED_DEFAULT = 0x5A；是否为零 = False"
+          },
+          {
+            "name": "② 实测 255 拍状态序列与【tb 独立推演】的 x^8+x^6+x^5+x^4+1（抽头 bit7/5/4/3）逐拍完全一致",
+            "ok": true,
+            "detail": "逐拍比对 256 个状态：全部一致"
+          },
+          {
+            "name": "③ 周期恰为 255：第 255 拍回到初值，且第 1~254 拍都没有回到初值",
+            "ok": true,
+            "detail": "第 255 拍 = 0x5A（期望 0x5A）；1~254 拍中提前回到初值的次数 = 0"
+          },
+          {
+            "name": "④ 最大长度序列性质：255 个状态两两不同、全程不出现 0、每个 bit 恰 128 个 1",
+            "ok": true,
+            "detail": "不同状态数 = 255/255；出现 0 的拍号 = 无；各 bit 的 1 计数(bit7→bit0) = [128, 128, 128, 128, 128, 128, 128, 128]"
+          },
+          {
+            "name": "⑤ i_step='0' 时状态**保持**（255 拍跑完后 3 个时钟沿不动；单拍脉冲后再 2 个沿不动）",
+            "ok": true,
+            "detail": "跑完后 3 点 = ['0x5A', '0x5A', '0x5A']（应保持 0x5A）；脉冲后 2 点 = ['0xB4', '0xB4']（应保持 0xB4）"
+          },
+          {
+            "name": "⑥ 单拍 i_step='1'（恰好覆盖 1 个上升沿）→ 恰好推进 1 步：0x5A → 0xB4",
+            "ok": true,
+            "detail": "实测 0xB4，期望 next(0x5A) = 0xB4（若没推进会是 0x5A）"
+          },
+          {
+            "name": "⑦ 中间信号 sr（8 位状态寄存器）与端口 o_val 逐拍相同（o_val 是它的组合拷贝）",
+            "ok": true,
+            "detail": "256 拍全部一致（sr == o_val）"
+          },
+          {
+            "name": "⑧ ⭐ 中间信号 fb~0 在全部 256 个采样点上都 == sr(7) ^ sr(5)（反馈异或树第一级；对应关系由波形穷举抽头组合实测得到，不是照抄 RTL 表达式）",
+            "ok": true,
+            "detail": "256 点全部满足；fb~0 出现过的电平 = ['0', '1']（两种，说明反馈位真的在变）"
+          },
+          {
+            "name": "⑨ 复位后 256 个采样点 o_val 全部为确定值（无 X/Z）—— 复位真的把状态拉出来了",
+            "ok": true,
+            "detail": "含 X 的采样点 = 无"
+          },
+          {
+            "name": "⑩ ⭐ 复位分支真的被激励：LFSR 跑开之后在 5480~5520 ns 补一次复位脉冲（覆盖上升沿 5490/5510），复位后 o_val 与 sr 必须都回到 SEED_DEFAULT(0x5A)",
+            "ok": true,
+            "detail": "脉冲前(t=5460) o_val=0xB4（应 ≠ 0x5A，证明状态确实动过）；复位后(t=5540) o_val=0x5A、sr=0x5A（应都 = 0x5A）"
+          }
+        ]
+      },
+      "seg_scan": {
+        "module": "seg_scan",
+        "round": 31,
+        "rounds_total": 31,
+        "first_round": 1,
+        "timestamp": "2026-10-15 15:18:45",
+        "duration_ns": 7800.0,
+        "passed": 12,
+        "total": 12,
+        "all_pass": true,
+        "record_json": "sim/rounds/seg_scan/r31.json",
+        "record_md": "sim/rounds/seg_scan/r31.md",
+        "tb": "sim/tb_seg_scan.py",
+        "vwf": "sim/seg_scan.vwf",
+        "assertions": [
+          {
+            "name": "① 位选低有效且**互不重叠**：复位后每个状态下 o_cat 恰一位为低（共 193 个状态）",
+            "ok": true,
+            "detail": "193 个状态全部恰一位低（不重叠）"
+          },
+          {
+            "name": "② 8 个位选轮流出现且不重叠：位号 +1(mod 8) 连续推进、每次切换恰隔 1 个 i_tick（= 40 ns）、8 位全出现",
+            "ok": true,
+            "detail": "位号序列前 16 个 = [0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7]；切换间隔集合 = [40.0] ns；出现过的位号 = [0, 1, 2, 3, 4, 5, 6, 7]；异常相邻对 = 无"
+          },
+          {
+            "name": "③ 位选↔段码同源：选中位 k 时 o_seg == 该窗口下 DISPk 的段码（108 个显示状态逐点比对）",
+            "ok": true,
+            "detail": "全部 108 个显示状态段码与位选一致"
+          },
+          {
+            "name": "④ 段码表 0~9 逐值（共阴高有效，由 a~g 段集合独立生成）＋译码模式下 AP(bit7) 恒 0",
+            "ok": true,
+            "detail": "数字0→0x3F✓  数字1→0x06✓  数字2→0x5B✓  数字3→0x4F✓  数字4→0x66✓  数字5→0x6D✓  数字6→0x7D✓  数字7→0x07✓  数字8→0x7F✓  数字9→0x6F✓；译码模式下 seg(bit7)='1' 的状态 = 0；raw 模式下的段码集合 = ['0x00', '0x5A', '0xC3']（bit7 跟随 i_raw）"
+          },
+          {
+            "name": "⑤ 未定义字位码 0xF 全灭：W3 的 DISP7=F → 该位段码恒 0x00（0xA..0xE 现为结算字母，见 ③⑪）",
+            "ok": true,
+            "detail": "W3 DISP7（F）在整个窗口内段码恒 0x00，其余位正常"
+          },
+          {
+            "name": "⑥ 熄灭掩码：W4 熄灭 DISP3、W5 熄灭 DISP0/DISP7 → 该位全灭、其余位段码照旧",
+            "ok": true,
+            "detail": "W4 blank=0x08 → 熄灭位 [3]；W5 blank=0x81 → 熄灭位 [0, 7]；其余位段码全部正确"
+          },
+          {
+            "name": "⑦ i_raw_en 直通：o_seg == i_raw（8 位逐位，bit7=AP 也在内）；W7 里 i_blank(4) 仍把 DISP4 压成全灭",
+            "ok": true,
+            "detail": "W6（raw=0x5A）全部 8 位 o_seg=0x5A；W7（raw=0xC3）除 DISP4 全灭外全部 0xC3"
+          },
+          {
+            "name": "⑧ i_en='0' → 全灭（o_seg ≡ 0x00）但位选照常扫描；i_en 回 '1' → 段码恢复",
+            "ok": true,
+            "detail": "W8(en=0) 出现过的段码 = ['0x00']（应只有 0x00），同窗口位选出现 8 种；W9(en=1) 恢复后出现过的段码种类 = 8"
+          },
+          {
+            "name": "⑧b ⭐ i_en='0' 压过 i_raw_en='1'：W12（en=0, raw_en=1, raw=0xFF）→ o_seg ≡ 0x00（raw 被 i_en 门控为全灭），且位选仍照常扫完 8 位（此前该组合从未被激励 → 这条声称原本没有判据）",
+            "ok": true,
+            "detail": "W12 逐点采样 64 点：o_seg 取值集合 = ['0x00']（应只有 0x00）；o_cat 取值 8 种（应 8 种：['0x7F', '0xBF', '0xDF', '0xEF', '0xF7', '0xFB', '0xFD', '0xFE']）"
+          },
+          {
+            "name": "⑨ 复位：i_rst 期间 o_seg=0x00、o_cat=0xFF（位选低有效 → 全高 = 全灭）",
+            "ok": true,
+            "detail": "t=20 o_seg=0x00 o_cat=0xFF；t=35 o_seg=0x00 o_cat=0xFF"
+          },
+          {
+            "name": "⑩ 中间信号：idx 按 +1(mod 8) 推进、8 值全出现；每个 clk 沿上 cat_r == 0xFF^(1<<idx)、seg_r == 该 idx 对应半字节的段码（共核对 384 拍）",
+            "ok": true,
+            "detail": "idx 取值 [0, 1, 2, 3, 4, 5, 6, 7]、每拍 +1（True）；384 个 clk 沿的 cat_r / seg_r 全部与 idx、输入一致"
+          },
+          {
+            "name": "⑪ ★ 结算画面拼字：W10（胜利）→ 数码管最左四位读作 **PASS**、W11（失败）→ **FAIL**（把每位实际点亮的段反解成字母；注：7 段管里 'S' 与 '5' 同形、'I' 用 '1' 的形状，故板上分别看着像 PA55 / FA1L）",
+            "ok": true,
+            "detail": "W10 读作 'PASS'、W11 读作 'FAIL'（期望 'PASS' / 'FAIL'）"
+          }
+        ]
+      }
+    },
+    "totals": {
+      "modules": 12,
+      "assertions": 184,
+      "passed": 184,
+      "all_pass": true
+    }
+  },
+  "build": {
+    "device": "EPM1270T144C5",
+    "family": "MAX II",
+    "provenance": {
+      "path": "quartus/build_provenance.json",
+      "timestamp": "2026-10-15 16:59:42",
+      "pof": {
+        "mtime": "2026-10-15 15:13:21",
+        "sha256": "cc3c69b3419f40a20eaf310eb3259d25ff342b56f3b0d52ab270a6ca7e41aea3",
+        "bytes": 27312
+      },
+      "sources": {
+        "rtl/board_test_top.vhd": "0ab5453b4a33",
+        "rtl/buzzer_ctrl.vhd": "b7cdd04fb134",
+        "rtl/clk_gen.vhd": "2756e6c4f754",
+        "rtl/disp_format.vhd": "ae5861335b09",
+        "rtl/dot_matrix_scan.vhd": "ac4a6dd96573",
+        "rtl/game_fsm.vhd": "906529034696",
+        "rtl/keypad_diag_top.vhd": "a6eba030ff81",
+        "rtl/keypad_raw_top.vhd": "1b0eba85463b",
+        "rtl/keypad_scan.vhd": "c4cbd4410516",
+        "rtl/pattern_rom.vhd": "24d892df7834",
+        "rtl/piece_rom.vhd": "3ccd01f494de",
+        "rtl/puzzle_ctrl.vhd": "024d726a5074",
+        "rtl/puzzle_pkg.vhd": "d121fab78f36",
+        "rtl/puzzle_top.vhd": "777b6c2aa454",
+        "rtl/rng_lfsr.vhd": "17e3ea9932c6",
+        "rtl/seg_scan.vhd": "89ea0f1ec6f8"
+      },
+      "sources_logic": {
+        "rtl/board_test_top.vhd": "e773df872148",
+        "rtl/buzzer_ctrl.vhd": "b9a9da739302",
+        "rtl/clk_gen.vhd": "f0244017372b",
+        "rtl/disp_format.vhd": "20d7d58bb8f7",
+        "rtl/dot_matrix_scan.vhd": "4c5e119844ca",
+        "rtl/game_fsm.vhd": "7fbaa620e52b",
+        "rtl/keypad_diag_top.vhd": "f6a39026ef37",
+        "rtl/keypad_raw_top.vhd": "8aad5e0c0580",
+        "rtl/keypad_scan.vhd": "5b76940a8d9c",
+        "rtl/pattern_rom.vhd": "cea49bfa76b2",
+        "rtl/piece_rom.vhd": "0421731c0d94",
+        "rtl/puzzle_ctrl.vhd": "40efa82e51d0",
+        "rtl/puzzle_pkg.vhd": "a2c60c2c3281",
+        "rtl/puzzle_top.vhd": "19ad7396e424",
+        "rtl/rng_lfsr.vhd": "c394a1957138",
+        "rtl/seg_scan.vhd": "aa8642b3a503"
+      }
+    },
+    "fit": {
+      "status": "Successful - Thu Oct 15 15:13:20 2026",
+      "le": "1,264 / 1,270 ( 100 % )",
+      "lab": "127 / 127 ( 100 % )",
+      "pins": "52 / 116 ( 45 % )"
+    },
+    "sta": {
+      "setup_slack": 1.572,
+      "hold_slack": 1.078
+    },
+    "constraint": {
+      "sdc": "quartus/puzzle.sdc",
+      "period_ns": 20.0,
+      "fmax_mhz": 50.0
+    },
+    "pins": [
+      {
+        "pin": "PIN_18",
+        "signal": "clk"
+      },
+      {
+        "pin": "PIN_125",
+        "signal": "sw7"
+      },
+      {
+        "pin": "PIN_61",
+        "signal": "btn"
+      },
+      {
+        "pin": "PIN_60",
+        "signal": "buzz"
+      },
+      {
+        "pin": "PIN_111",
+        "signal": "kp_row[0]"
+      },
+      {
+        "pin": "PIN_112",
+        "signal": "kp_row[1]"
+      },
+      {
+        "pin": "PIN_113",
+        "signal": "kp_row[2]"
+      },
+      {
+        "pin": "PIN_114",
+        "signal": "kp_row[3]"
+      },
+      {
+        "pin": "PIN_117",
+        "signal": "kp_col[0]"
+      },
+      {
+        "pin": "PIN_118",
+        "signal": "kp_col[1]"
+      },
+      {
+        "pin": "PIN_119",
+        "signal": "kp_col[2]"
+      },
+      {
+        "pin": "PIN_120",
+        "signal": "kp_col[3]"
+      },
+      {
+        "pin": "PIN_8",
+        "signal": "dot_row[0]"
+      },
+      {
+        "pin": "PIN_7",
+        "signal": "dot_row[1]"
+      },
+      {
+        "pin": "PIN_6",
+        "signal": "dot_row[2]"
+      },
+      {
+        "pin": "PIN_5",
+        "signal": "dot_row[3]"
+      },
+      {
+        "pin": "PIN_4",
+        "signal": "dot_row[4]"
+      },
+      {
+        "pin": "PIN_3",
+        "signal": "dot_row[5]"
+      },
+      {
+        "pin": "PIN_2",
+        "signal": "dot_row[6]"
+      },
+      {
+        "pin": "PIN_1",
+        "signal": "dot_row[7]"
+      },
+      {
+        "pin": "PIN_22",
+        "signal": "dot_colr[0]"
+      },
+      {
+        "pin": "PIN_21",
+        "signal": "dot_colr[1]"
+      },
+      {
+        "pin": "PIN_16",
+        "signal": "dot_colr[2]"
+      },
+      {
+        "pin": "PIN_15",
+        "signal": "dot_colr[3]"
+      },
+      {
+        "pin": "PIN_14",
+        "signal": "dot_colr[4]"
+      },
+      {
+        "pin": "PIN_13",
+        "signal": "dot_colr[5]"
+      },
+      {
+        "pin": "PIN_12",
+        "signal": "dot_colr[6]"
+      },
+      {
+        "pin": "PIN_11",
+        "signal": "dot_colr[7]"
+      },
+      {
+        "pin": "PIN_45",
+        "signal": "dot_colg[0]"
+      },
+      {
+        "pin": "PIN_44",
+        "signal": "dot_colg[1]"
+      },
+      {
+        "pin": "PIN_43",
+        "signal": "dot_colg[2]"
+      },
+      {
+        "pin": "PIN_42",
+        "signal": "dot_colg[3]"
+      },
+      {
+        "pin": "PIN_41",
+        "signal": "dot_colg[4]"
+      },
+      {
+        "pin": "PIN_40",
+        "signal": "dot_colg[5]"
+      },
+      {
+        "pin": "PIN_39",
+        "signal": "dot_colg[6]"
+      },
+      {
+        "pin": "PIN_38",
+        "signal": "dot_colg[7]"
+      },
+      {
+        "pin": "PIN_62",
+        "signal": "seg[0]"
+      },
+      {
+        "pin": "PIN_59",
+        "signal": "seg[1]"
+      },
+      {
+        "pin": "PIN_58",
+        "signal": "seg[2]"
+      },
+      {
+        "pin": "PIN_57",
+        "signal": "seg[3]"
+      },
+      {
+        "pin": "PIN_55",
+        "signal": "seg[4]"
+      },
+      {
+        "pin": "PIN_53",
+        "signal": "seg[5]"
+      },
+      {
+        "pin": "PIN_52",
+        "signal": "seg[6]"
+      },
+      {
+        "pin": "PIN_51",
+        "signal": "seg[7]"
+      },
+      {
+        "pin": "PIN_63",
+        "signal": "cat[0]"
+      },
+      {
+        "pin": "PIN_66",
+        "signal": "cat[1]"
+      },
+      {
+        "pin": "PIN_67",
+        "signal": "cat[2]"
+      },
+      {
+        "pin": "PIN_68",
+        "signal": "cat[3]"
+      },
+      {
+        "pin": "PIN_69",
+        "signal": "cat[4]"
+      },
+      {
+        "pin": "PIN_70",
+        "signal": "cat[5]"
+      },
+      {
+        "pin": "PIN_30",
+        "signal": "cat[6]"
+      },
+      {
+        "pin": "PIN_31",
+        "signal": "cat[7]"
+      }
+    ],
+    "pins_locked": 52
+  },
+  "images": [
+    {
+      "path": "docs/图/GUI-buzzer_ctrl.png",
+      "name": "GUI-buzzer_ctrl.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 79875,
+      "module": "buzzer_ctrl",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-clk_gen.png",
+      "name": "GUI-clk_gen.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 88248,
+      "module": "clk_gen",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-disp_format.png",
+      "name": "GUI-disp_format.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 111295,
+      "module": "disp_format",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-dot_matrix_scan.png",
+      "name": "GUI-dot_matrix_scan.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 104503,
+      "module": "dot_matrix_scan",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-game_fsm.png",
+      "name": "GUI-game_fsm.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 108653,
+      "module": "game_fsm",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-keypad_scan.png",
+      "name": "GUI-keypad_scan.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 99383,
+      "module": "keypad_scan",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-pattern_rom.png",
+      "name": "GUI-pattern_rom.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 104326,
+      "module": "pattern_rom",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-piece_rom.png",
+      "name": "GUI-piece_rom.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 60614,
+      "module": "piece_rom",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-puzzle_ctrl.png",
+      "name": "GUI-puzzle_ctrl.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 111376,
+      "module": "puzzle_ctrl",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-puzzle_top.png",
+      "name": "GUI-puzzle_top.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 122460,
+      "module": "puzzle_top",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-rng_lfsr.png",
+      "name": "GUI-rng_lfsr.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 74008,
+      "module": "rng_lfsr",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/GUI-seg_scan.png",
+      "name": "GUI-seg_scan.png",
+      "ext": ".png",
+      "kind": "quartus_gui_screenshot",
+      "bytes": 114505,
+      "module": "seg_scan",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/README.md",
+      "name": "README.md",
+      "ext": ".md",
+      "kind": "other",
+      "bytes": 20171,
+      "module": null,
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-buzzer_ctrl.svg",
+      "name": "SIM-buzzer_ctrl.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 135090,
+      "module": "buzzer_ctrl",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-clk_gen.svg",
+      "name": "SIM-clk_gen.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 73114,
+      "module": "clk_gen",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-disp_format.svg",
+      "name": "SIM-disp_format.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 19516,
+      "module": "disp_format",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-dot_matrix_scan.svg",
+      "name": "SIM-dot_matrix_scan.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 11294,
+      "module": "dot_matrix_scan",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-game_fsm.svg",
+      "name": "SIM-game_fsm.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 41181,
+      "module": "game_fsm",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-keypad_scan.svg",
+      "name": "SIM-keypad_scan.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 126697,
+      "module": "keypad_scan",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-pattern_rom.svg",
+      "name": "SIM-pattern_rom.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 1813,
+      "module": "pattern_rom",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-piece_rom.svg",
+      "name": "SIM-piece_rom.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 5540,
+      "module": "piece_rom",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-puzzle_ctrl.svg",
+      "name": "SIM-puzzle_ctrl.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 114627,
+      "module": "puzzle_ctrl",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-puzzle_top.svg",
+      "name": "SIM-puzzle_top.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 427240,
+      "module": "puzzle_top",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-rng_lfsr.svg",
+      "name": "SIM-rng_lfsr.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 49894,
+      "module": "rng_lfsr",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/SIM-seg_scan.svg",
+      "name": "SIM-seg_scan.svg",
+      "ext": ".svg",
+      "kind": "script_waveform_svg",
+      "bytes": 81586,
+      "module": "seg_scan",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/dld-架构.drawio",
+      "name": "dld-架构.drawio",
+      "ext": ".drawio",
+      "kind": "editable_diagram_source",
+      "bytes": 23905,
+      "module": "架构",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/演示-跑一局.gif",
+      "name": "演示-跑一局.gif",
+      "ext": ".gif",
+      "kind": "demo_animation",
+      "bytes": 296561,
+      "module": "跑一局",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/演示-首帧.png",
+      "name": "演示-首帧.png",
+      "ext": ".png",
+      "kind": "rendered_figure",
+      "bytes": 58143,
+      "module": "首帧",
+      "tracked": true
+    },
+    {
+      "path": "docs/图/结算画面-预览.png",
+      "name": "结算画面-预览.png",
+      "ext": ".png",
+      "kind": "rendered_figure",
+      "bytes": 22132,
+      "module": "预览",
+      "tracked": true
+    }
+  ],
+  "errors": [
+    {
+      "id": "ERR-001",
+      "title": "`btn`（复位键）引脚漏配 —— 静默落错脚",
+      "line": 47
+    },
+    {
+      "id": "ERR-002",
+      "title": "键盘诊断固件漏配键盘引脚 —— **本次最长的一次误判**",
+      "line": 58
+    },
+    {
+      "id": "ERR-003",
+      "title": "键盘轮次结果被提前清零（**主因**）",
+      "line": 70
+    },
+    {
+      "id": "ERR-004",
+      "title": "键码编码与比较表不一致",
+      "line": 80
+    },
+    {
+      "id": "ERR-005",
+      "title": "拼图限时从未加载",
+      "line": 89
+    },
+    {
+      "id": "ERR-006",
+      "title": "`o_go` 握手无\"完成\"记忆 → 无限重复散落",
+      "line": 98
+    },
+    {
+      "id": "ERR-007",
+      "title": "选中零片**永远显示不出绿色**（要求 B6 未达成）",
+      "line": 107
+    },
+    {
+      "id": "ERR-008",
+      "title": "第二关目标图案比零片位置低一行",
+      "line": 116
+    },
+    {
+      "id": "ERR-009",
+      "title": "待机/预览的点阵内容错误",
+      "line": 125
+    },
+    {
+      "id": "ERR-010",
+      "title": "胜负图案上下镜像",
+      "line": 134
+    },
+    {
+      "id": "ERR-011",
+      "title": "2 Hz 闪烁信号是单时钟脉冲（\"自检什么都不显示\"）",
+      "line": 143
+    },
+    {
+      "id": "ERR-012",
+      "title": "点阵刷新率只有 ~3 Hz（明显闪烁）+ 显示与渲染不同源",
+      "line": 152
+    },
+    {
+      "id": "ERR-013",
+      "title": "预览后矩形底图不消失，挡住零片",
+      "line": 162
+    },
+    {
+      "id": "ERR-014",
+      "title": "`.qsf` 用 VHDL 风格注释 → Quartus 打不开工程",
+      "line": 227
+    },
+    {
+      "id": "ERR-015",
+      "title": "`.qsf` 里用了不被支持的赋值名",
+      "line": 236
+    },
+    {
+      "id": "ERR-016",
+      "title": "重叠检查的行号流水没对齐",
+      "line": 323
+    },
+    {
+      "id": "ERR-017",
+      "title": "散落时\"跳过自己\"用错变量",
+      "line": 356
+    },
+    {
+      "id": "ERR-018",
+      "title": "散落重试不再抽新候选（a）＋ 回退锚点不查重叠（b）",
+      "line": 397
+    },
+    {
+      "id": "ERR-019",
+      "title": "`srl8` 移位方向反了（本条另外见 `AI_LOG.md` 的\"AI 结论被人工驳回\"记录）",
+      "line": 435
+    },
+    {
+      "id": "ERR-020",
+      "title": "方向键失效：方向比移动请求晚一拍锁存",
+      "line": 511
+    },
+    {
+      "id": "ERR-021",
+      "title": "成功判据选了\"内部编号\"，而不是\"玩家看得见的画面\"",
+      "line": 621
+    },
+    {
+      "id": "ERR-022",
+      "title": "测试激励陈旧常量导致的\"假通过\"（陈旧绿）",
+      "line": 685
+    },
+    {
+      "id": "ERR-023",
+      "title": "对局态把目标图案置零，害死了 ERR-021 的新判据",
+      "line": 738
+    },
+    {
+      "id": "ERR-024",
+      "title": "新一局开头拿上一局的残留状态判决",
+      "line": 798
+    },
+    {
+      "id": "ERR-025",
+      "title": "测试激励类缺陷四则（SW7 区间被吃掉 / 同键间隔不足 / 散落忙窗缺漏 / 观察窗起点）",
+      "line": 855
+    },
+    {
+      "id": "ERR-027",
+      "title": "刷新率只有 25 Hz + 注释里写错的\"闪烁融合\"假设",
+      "line": 1023
+    },
+    {
+      "id": "ERR-028",
+      "title": "同一个模块的仿真被并发跑 → 波形互相覆盖（测试/工具类）",
+      "line": 1079
+    },
+    {
+      "id": "ERR-029",
+      "title": "`vwf.py` 的查询是 O(n²) → 编译一次阶梯表 + `bisect`（工具类·好消息）",
+      "line": 1120
+    },
+    {
+      "id": "ERR-040",
+      "title": "A4 第一版旋转没补\"紧包围盒偏移\"（**已修，留档**）",
+      "line": 1862
+    },
+    {
+      "id": "ERR-041",
+      "title": "\"干净帧\"快照窗口有一条缝（**已记录，未修**）",
+      "line": 1871
+    },
+    {
+      "id": "ERR-050",
+      "title": "照抄原谱的休止 → 单音蜂鸣器上就是\"断断续续\"",
+      "line": 2625
+    }
+  ]
+}

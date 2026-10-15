@@ -18,6 +18,7 @@ import { Evidence } from './sections/Evidence';
 import { Tradeoffs } from './sections/Tradeoffs';
 import { DocsNav } from './sections/DocsNav';
 import { Footer } from './sections/Footer';
+import { DOCS_SITE_URL } from './data/facts';
 
 const NAV: readonly { readonly href: string; readonly label: string }[] = [
   { href: '#demo', label: '01 玩法' },
@@ -63,6 +64,10 @@ export function App(): JSX.Element {
                 {n.label}
               </a>
             ))}
+            {/* 技术文档站是**另一个站点**（同一套工程事实），用绝对地址跳转 */}
+            <a href={DOCS_SITE_URL} className="masthead__docs">
+              技术文档 ↗
+            </a>
             <ThemeToggle />
           </nav>
         </div>

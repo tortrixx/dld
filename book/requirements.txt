@@ -1,0 +1,23 @@
+# ============================================================================
+#  book/requirements.txt —— Material for MkDocs 文档站的 Python 依赖
+# ----------------------------------------------------------------------------
+#  为什么锁到具体版本：这个文档站要能被**任何一台机器**一条命令重建出来。
+#  只写 `mkdocs-material` 会让半年后的构建装到 10.x 而行为不同（例如
+#  `mkdocs.yml` 里某个配置键被改名），而这份文档是要交课程、要给答辩现场用的，
+#  不允许"昨天能构建、今天不能"。
+#
+#  使用（在仓库根目录）：
+#      python -m venv book/.venv                  # Windows
+#      book/.venv/Scripts/python -m pip install -r book/requirements.txt
+#      python book/scripts/book.py serve          # 一条命令：生成 + 起本地服务
+#
+#  版本是 2026-10-15 在 Python 3.14.6 上实际安装并构建通过的版本
+#  （见 docs-site-plan.md §验收）。
+# ============================================================================
+
+mkdocs==1.6.1
+mkdocs-material==9.7.7
+pymdown-extensions==12.3
+# 中文站内搜索需要分词：Material 的 search 插件在语言含 zh 时 import jieba，
+# 没装也不报错，但搜索会把整句中文当成一个词 ⇒ "搜得到"变成"搜不到"。
+jieba==0.42.1

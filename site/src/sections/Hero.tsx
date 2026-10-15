@@ -9,7 +9,7 @@
 import { useEffect, useState } from 'react';
 
 import { Src, Tag } from '../components/ui';
-import { PROJECT, REPO, SITE_URL, blob, figure } from '../data/facts';
+import { PROJECT, REPO, SIM_TOTAL_ASSERTIONS, SITE_URL, blob, figure } from '../data/facts';
 
 const HERO_SPEC: readonly { readonly k: string; readonly v: string }[] = [
   { k: '器件', v: 'MAX II EPM1270T144C5 (1270 LE / 127 LAB / 144 脚 TQFP)' },
@@ -18,7 +18,8 @@ const HERO_SPEC: readonly { readonly k: string; readonly v: string }[] = [
   { k: 'RTL', v: 'VHDL-93 · 12 个设计模块 + 1 个包 · 纯 RTL（无 CPU、无 IP 核、无软核）' },
   { k: '输入', v: '4×4 矩阵键盘（8 个功能键，右下 3×3 标准十字）' },
   { k: '显示', v: '8×8 双色点阵（灭 / 红 / 绿 / 黄）+ 8 位数码管 + 蜂鸣器' },
-  { k: '验证', v: '12 个模块/场景 · 179 条仿真断言全过 · 固件已烧录并读回校验 · 已上板复测' },
+  // ⚠️ 条数由 facts.ts 的 SIM_COVERAGE 求和得到，不许手打（手打的 "179" 已经过期过）
+  { k: '验证', v: `12 个模块/场景 · ${SIM_TOTAL_ASSERTIONS} 条仿真断言全过 · 固件已烧录并读回校验 · 已上板复测` },
 ];
 
 /**
@@ -117,7 +118,7 @@ export function Hero(): JSX.Element {
               <Tag accent>纯 RTL · 无 CPU</Tag>
               <Tag>VHDL-93</Tag>
               <Tag>Quartus II 9.1</Tag>
-              <Tag>179 条断言全过</Tag>
+              <Tag>{SIM_TOTAL_ASSERTIONS} 条断言全过</Tag>
               <Tag>已上板复测</Tag>
             </div>
 

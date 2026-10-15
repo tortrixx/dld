@@ -238,6 +238,62 @@ samp {
   color: var(--acc);
 }
 
+/* 技术文档站入口：与站内锚点不同，它是**跳去另一个站点**（同一套工程事实的"深读"层），
+   所以在窄屏也保留 —— 否则手机上看这个展示站就找不到文档站的入口了。
+   选择器比 `.masthead__nav a` 多一个类，宽度不受下面 @media 的 display:none 影响。 */
+.masthead__nav a.masthead__docs {
+  display: inline-flex;
+  align-items: center;
+  color: var(--acc);
+  border: var(--hair);
+  border-radius: var(--radius);
+  padding: 2px var(--s2);
+}
+
+.masthead__nav a.masthead__docs:hover {
+  background: var(--acc-wash);
+}
+
+/* 文档站深链卡片：复用 navlist 的排版，但整块本身不是链接（内部条目才是） */
+.docscard {
+  margin-top: var(--s6);
+  border: var(--hair);
+  border-radius: var(--radius);
+  padding: var(--s5);
+  background: hsl(var(--muted) / 0.4);
+}
+
+.docscard__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s3);
+  margin-bottom: var(--s2);
+}
+
+.docscard__title {
+  font-family: var(--font-mono);
+  font-size: var(--fs-mono-xs);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  color: var(--acc);
+  margin: 0;
+}
+
+.docscard__lede {
+  margin: 0 0 var(--s4);
+  color: hsl(var(--muted-foreground));
+  font-size: var(--fs-note);
+  line-height: var(--lh-body);
+}
+
+/* 窄屏：卡片内边距缩一点，但仍然完整可读 */
+@media (max-width: 900px) {
+  .docscard {
+    padding: var(--s4);
+  }
+}
+
 /* 主题切换按钮（参照站是同款图标按钮：无边框、hover 才显形） */
 .icon-btn {
   display: inline-flex;

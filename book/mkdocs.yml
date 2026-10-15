@@ -1,0 +1,267 @@
+# ============================================================================
+#  book/mkdocs.yml —— Material for MkDocs 技术文档站
+# ----------------------------------------------------------------------------
+#  定位（与 site/ 分工，见 docs-site-plan.md §2）：
+#    · site/  = 工程**展示**站（首屏观感、交互点阵、时序播放器、演示动画）
+#    · book/  = 技术**文档**站（架构、接口契约、数据字典、时序、证据、答辩）
+#  两者共用同一套事实源 `facts/facts.json`（由 scripts/extract_facts.py 生成）。
+#
+#  三条硬纪律都落在配置里，不靠人自觉：
+#    1. `--strict`：任何导航缺页、内部死链、图片缺失、锚点失效都是**构建失败**。
+#    2. `hooks/facts.py`：页面里 `{{fact:...}}` / `{{src:path:line}}` 解析不了就炸，
+#       杜绝"同一个数字在十个页面各写一遍、改漏九处"。
+#    3. `pymdownx.snippets` + `check_paths`：`--8<-- "_generated/xxx.md"` 引用的
+#       机械生成页缺失就炸（提醒先跑 book/scripts/gen_pages.py）。
+#
+#  构建：python book/scripts/book.py build      （先生成事实页，再 mkdocs build）
+#  本地：python book/scripts/book.py serve      （http://127.0.0.1:8000/）
+# ============================================================================
+
+site_name: 简易拼图游戏 · 工程技术文档
+site_description: >-
+  MAX II EPM1270T144C5 上的 8×8 双色点阵拼图游戏 —— 纯 VHDL-93 RTL 的系统架构、
+  模块接口契约、数据流与时序、仿真证据与工程取舍。
+site_author: tortrixx
+site_url: https://tortrixx.github.io/dld/docs/
+docs_dir: docs
+# 站点产物目录可由环境变量覆盖：CI 里直接构建到展示站的 dist/docs 下，
+# 避免"先 build 后拷贝"顺序颠倒导致 Vite 把文档清掉（见 docs-site-plan.md §6）。
+site_dir: !ENV [BOOK_SITE_DIR, "site"]
+
+repo_url: https://github.com/tortrixx/dld
+repo_name: tortrixx/dld
+edit_uri: edit/main/book/docs/
+copyright: >-
+  课程设计文档 · 仓库代码为本人原创；<code>refs/</code> 下课程原始资料的版权与
+  处理说明见 <a href="https://github.com/tortrixx/dld/blob/main/refs/README.md">refs/README.md</a>。
+
+# ----------------------------------------------------------------------------
+# 主题：克制、工程化。不用 Google Fonts（外部 CDN 不可作为核心依赖），
+# 字体走系统栈，见 docs/stylesheets/extra.css。
+# ----------------------------------------------------------------------------
+theme:
+  name: material
+  language: zh
+  font: false
+  logo: assets/brand/mark.svg
+  favicon: assets/brand/mark.svg
+  icon:
+    repo: fontawesome/brands/github
+  features:
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.indexes
+    - navigation.top
+    - navigation.footer
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - content.action.edit
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: 切换到深色
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: 切换到浅色
+
+extra_css:
+  - stylesheets/extra.css
+
+# ----------------------------------------------------------------------------
+# 事实注入钩子：{{fact:...}} / {{src:path:line}} / {{tree:path}} / {{repo}} / {{showcase}}
+# ----------------------------------------------------------------------------
+hooks:
+  - hooks/facts.py
+
+# ----------------------------------------------------------------------------
+# 插件
+# ----------------------------------------------------------------------------
+plugins:
+  - search:
+      lang:
+        - zh
+        - en
+      # 中文没有空格，必须让 jieba 分词（requirements.txt 里已锁版本）；
+      # separator 保留 C/C++/VHDL 标识符与 `ERR-001` 这类编号的边界。
+      separator: '[\s\u200b\-,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      effect: zoom
+      slide_effect: none
+      width: 100%
+      height: auto
+      zoomable: true
+      draggable: false
+
+# ----------------------------------------------------------------------------
+# Markdown 扩展
+# ----------------------------------------------------------------------------
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 3
+      # ⚠️ 这里**故意不写** `slugify:`。
+      #    pymdown-extensions 12.x 把 `uslugify` 去掉了（只剩 `slugify`，且默认
+      #    会剥掉非 ASCII），照抄旧文档的 `!!python/name:pymdownx.slugs.uslugify`
+      #    会直接构建失败。MkDocs 自带的 slugify 用 `re.sub(r'[^\w\s-]', ...)`，
+      #    而 Python 3 的 `\w` 是 Unicode 感知的 ⇒ 中文标题能生成可用的锚点。
+      #    所以"不配置"才是这里的正确配置。
+  - pymdownx.betterem
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  # 机械生成页的包含机制：--8<-- "_generated/ports/clk_gen.md"
+  # ⚠️ **故意不写 `base_path`**：pymdownx 用 `os.path.abspath()` 解析 base_path，
+  #    也就是相对**当前工作目录**；而构建可能从仓库根发起，`docs` 在那里不存在
+  #    ⇒ `SnippetMissingError`。`hooks/facts.py` 会在解析前把包含路径改写成
+  #    绝对路径，与工作目录无关，作者仍然只写简洁的相对路径。
+  #    `check_paths: true` 保留：片段缺失必须继续是**构建失败**。
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+# ----------------------------------------------------------------------------
+# 校验策略：strict 模式下 warn 即 error。这里是"哪些不算错"的白名单，
+# 每一条都写清楚为什么 —— 不允许为了过检查而把标准调低。
+# ----------------------------------------------------------------------------
+validation:
+  nav:
+    omitted_files: warn
+    not_found: warn
+    absolute_links: ignore      # 站外绝对 URL（GitHub / 展示站）由 check_book.py 单独核对
+  links:
+    not_found: warn
+    absolute_links: ignore
+    unrecognized_links: warn
+    anchors: warn
+
+# `_generated/` 是机械生成的**片段**，只被 --8<-- 引用，不该成为独立页面。
+exclude_docs: |
+  _generated/
+
+# 这两个文件**有意**存在但**有意**不进导航：
+#   · assets/SYNCED.md        —— sync_assets.py 写的"同步了什么"清单（给维护者看）
+#   · assets/hardware/README.md —— 说明"真实硬件照片缺失"（给往仓库里放照片的人看）
+# 不写 not_in_nav 的话，`--strict` 会把它们当成"遗漏页面"直接构建失败。
+not_in_nav: |
+  /assets/SYNCED.md
+  /assets/hardware/README.md
+
+# ----------------------------------------------------------------------------
+# 站外常量：只在一处定义，页面里用 {{repo}} / {{showcase}} 引用
+# ----------------------------------------------------------------------------
+extra:
+  generator: false
+  showcase_url: https://tortrixx.github.io/dld/
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/tortrixx/dld
+      name: 源码仓库
+
+# ----------------------------------------------------------------------------
+# 导航：项目是什么 → 系统如何划分 → 模块如何协作 → 信号如何流动 →
+#       如何验证 → 如何实现到 FPGA → 为什么这样设计 → 如何答辩
+# ----------------------------------------------------------------------------
+nav:
+  - 总览: index.md
+  - 一、项目:
+      - 项目概览: 01-project/overview.md
+      - 题目要求与验收: 01-project/requirements.md
+      - 功能清单与实现状态: 01-project/features.md
+      - 核心亮点: 01-project/highlights.md
+      - 已知限制与取舍: 01-project/limitations.md
+  - 二、系统架构:
+      - 系统总体架构: 02-architecture/system-overview.md
+      - RTL 层级与实例: 02-architecture/hierarchy.md
+      - 数据通路与控制通路: 02-architecture/dataflow.md
+      - 时钟、复位与节拍: 02-architecture/timing.md
+      - 资源与面积预算: 02-architecture/resource-budget.md
+  - 三、模块设计:
+      - 模块总览: 03-modules/index.md
+      - 时钟与复位（clk_gen）: 03-modules/clock-reset.md
+      - 键盘输入（keypad_scan）: 03-modules/keypad-input.md
+      - 游戏控制（game_fsm）: 03-modules/game-control.md
+      - 拼图引擎（puzzle_ctrl）: 03-modules/puzzle-engine.md
+      - 图案 / 零片 / 随机数: 03-modules/pattern-random.md
+      - 显示输出（disp_format / seg_scan / dot_matrix_scan）: 03-modules/display.md
+      - 音效（buzzer_ctrl）: 03-modules/audio.md
+      - 整机顶层（puzzle_top）: 03-modules/top-level.md
+      - 诊断顶层: 03-modules/diagnostic-tops.md
+      - 设计包 puzzle_pkg: 03-modules/design-package.md
+  - 四、接口与信息传递:
+      - 接口怎么读: 04-interfaces/index.md
+      - 跨模块连接总表: 04-interfaces/module-ports.md
+      - 控制信号与握手: 04-interfaces/control-signals.md
+      - 数据字典与位序约定: 04-interfaces/data-encoding.md
+      - 接口时序契约: 04-interfaces/timing-contracts.md
+      - 端到端事件追踪: 04-interfaces/event-traces.md
+  - 五、游戏流程:
+      - 上电与自检: 05-gameplay/startup.md
+      - 一局的生命周期: 05-gameplay/round-lifecycle.md
+      - 键盘操作: 05-gameplay/keypad-operation.md
+      - 移动与旋转: 05-gameplay/movement-rotation.md
+      - 胜负判定: 05-gameplay/win-fail.md
+      - 音效与背景音乐: 05-gameplay/sound-effects.md
+  - 六、验证与证据:
+      - 验证策略: 06-verification/strategy.md
+      - 模块级测试: 06-verification/module-tests.md
+      - 整机测试: 06-verification/integration-tests.md
+      - 断言清单: 06-verification/assertions.md
+      - 波形与图注: 06-verification/waveforms.md
+      - 上板验证与缺失证据: 06-verification/board-validation.md
+  - 七、实现到 FPGA:
+      - 编译流程: 07-implementation/compilation.md
+      - 资源报告: 07-implementation/resource-report.md
+      - 时序报告: 07-implementation/timing-report.md
+      - 引脚分配: 07-implementation/pin-assignment.md
+      - 可复现性: 07-implementation/reproducibility.md
+  - 八、调试与取舍:
+      - 故障索引: 08-debugging/index.md
+      - 典型故障复盘: 08-debugging/representative-bugs.md
+      - 工程取舍: 08-debugging/engineering-tradeoffs.md
+  - 九、答辩:
+      - 项目介绍（3 分钟）: 09-defense/presentation-outline.md
+      - 现场演示脚本: 09-defense/demo-script.md
+      - 高频问答 24 问: 09-defense/faq.md
+      - 技术深挖: 09-defense/technical-deep-dive.md

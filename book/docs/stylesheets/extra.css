@@ -1,0 +1,156 @@
+/* ==========================================================================
+   book/docs/stylesheets/extra.css
+   --------------------------------------------------------------------------
+   文档站的视觉方向：**克制、精确、工程化**。
+   只做五件事，不加任何装饰性动画：
+
+     1. 自持字体栈（`font: false`，不依赖 Google Fonts 这类外部 CDN）
+     2. 正文行距与字号：中文技术文档的舒适区（正文 16px / 行高 1.75）
+     3. 表格可读性：这是本项目的重头戏（大量端口表、连接表、断言表）
+     4. 代码块与行号：VHDL 标识符要一眼可辨
+     5. 图注与图片：波形图必须能被点开放大，且必须有编号可引用
+   ========================================================================== */
+
+:root {
+  /* 中文优先的系统字体栈：Windows / macOS / Linux 三平台都能落到合适的中文字体。
+     不写 `Inter` 之类的下载字体，避免"离线/内网环境下排版崩掉"。 */
+  --md-text-font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB",
+    "Microsoft YaHei", "Source Han Sans SC", "Noto Sans CJK SC", sans-serif;
+  --md-code-font-family: "JetBrains Mono", "Cascadia Mono", "Consolas",
+    "SFMono-Regular", "Menlo", monospace;
+}
+
+.md-typeset {
+  font-size: 0.8rem;
+  line-height: 1.75;
+}
+
+/* 中文段落两端对齐会拉开字距（没有西文断词），这里保持左对齐。 */
+.md-typeset p,
+.md-typeset li {
+  text-align: left;
+}
+
+/* --------------------------------------------------------------------------
+   2. 标题层级：三级以内要能一眼分层，但不要巨大
+   -------------------------------------------------------------------------- */
+.md-typeset h1 {
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.md-typeset h2 {
+  font-weight: 650;
+  margin-top: 2.2em;
+  padding-bottom: 0.3em;
+  border-bottom: 1px solid var(--md-default-fg-color--lightest);
+}
+.md-typeset h3 {
+  font-weight: 600;
+  margin-top: 1.6em;
+}
+.md-typeset h4 {
+  font-weight: 600;
+  color: var(--md-default-fg-color--light);
+}
+
+/* --------------------------------------------------------------------------
+   3. 表格：本项目有大量长表格，默认样式在中文下会挤成一团
+   -------------------------------------------------------------------------- */
+.md-typeset table:not([class]) {
+  font-size: 0.72rem;
+  line-height: 1.55;
+  display: table;
+  width: 100%;
+}
+.md-typeset table:not([class]) th {
+  font-weight: 600;
+  white-space: nowrap;
+  background-color: var(--md-default-fg-color--lightest);
+}
+.md-typeset table:not([class]) td {
+  vertical-align: top;
+}
+/* 让"信号名/端口名"这类代码单元格不换行，方便竖着扫一列 */
+.md-typeset table:not([class]) td code {
+  white-space: nowrap;
+}
+
+/* --------------------------------------------------------------------------
+   4. 代码：VHDL 里 `<=`、`=>`、位宽是阅读重点
+   -------------------------------------------------------------------------- */
+.md-typeset code {
+  font-size: 0.78em;
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+  word-break: break-word;
+}
+.md-typeset pre > code {
+  font-size: 0.72rem;
+  line-height: 1.6;
+  word-break: normal;
+}
+.md-typeset .highlighttable .linenos {
+  font-size: 0.68rem;
+  opacity: 0.55;
+}
+
+/* --------------------------------------------------------------------------
+   5. 图片：波形图要能被点开放大，并且**必须**有编号可引用
+   -------------------------------------------------------------------------- */
+.md-typeset figure,
+.md-typeset img {
+  border: 1px solid var(--md-default-fg-color--lightest);
+  border-radius: 4px;
+  background-color: #fff; /* 波形截图是白底，深色主题下给个白衬底而不是反色 */
+}
+/* 点阵/数码管这类示意图不要白衬底 */
+.md-typeset img[alt^="无衬底"] {
+  background: none;
+  border: none;
+}
+.md-typeset figure > figcaption {
+  font-size: 0.7rem;
+  color: var(--md-default-fg-color--light);
+  text-align: left;
+  border-top: 1px dashed var(--md-default-fg-color--lightest);
+  padding-top: 0.4em;
+}
+/* 图注里放 `图 6.1` 这样的编号，用等宽体便于正文引用 */
+.md-typeset figcaption strong {
+  font-family: var(--md-code-font-family);
+  font-size: 0.95em;
+}
+
+/* Mermaid 图：居中、允许横向滚动（架构图比正文宽是正常的） */
+.md-typeset .mermaid {
+  overflow-x: auto;
+  text-align: center;
+  margin: 1.2em 0;
+  padding: 0.6em 0;
+}
+
+/* --------------------------------------------------------------------------
+   6. 提示框：本项目大量使用 note/warning/danger 区分"事实/待核实/缺失"
+   -------------------------------------------------------------------------- */
+.md-typeset .admonition,
+.md-typeset details {
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+
+/* 引用源码行号的链接用等宽体，扫起来快 */
+.md-typeset a code {
+  text-decoration: underline;
+}
+
+/* --------------------------------------------------------------------------
+   7. 打印：答辩时可能要打印几页带走
+   -------------------------------------------------------------------------- */
+@media print {
+  .md-typeset table:not([class]) {
+    font-size: 0.6rem;
+  }
+  .md-typeset h2 {
+    page-break-after: avoid;
+  }
+}
