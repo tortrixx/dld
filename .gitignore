@@ -108,6 +108,9 @@ output/
 book/.venv/
 book/site/
 book/_smoke/
+# 审图截图（book/scripts/shoot.py 的产物）—— "当前状态"的证据，每次重拍即覆盖，
+# 混进旧图就会骗人，所以不入库。
+book/review/
 book/docs/_generated/
 book/docs/assets/waveforms/
 book/docs/assets/figures/

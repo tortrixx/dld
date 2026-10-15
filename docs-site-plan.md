@@ -289,6 +289,69 @@ book/
 - [x] 站点产物里**没有外部 CDN 的 `<script src>`**（Mermaid 自持）
 
 **诚实性**
-- [ ] 全文没有把脚本渲染图说成 Quartus 截图、没有把仿真说成实测
-- [ ] 缺失的证据（硬件照片）显式标注，并给出补拍清单
-- [ ] 无法核实的说法标 **待核实** 并给出核实路径
+- [x] 全文没有把脚本渲染图说成 Quartus 截图、没有把仿真说成实测
+- [x] 缺失的证据（硬件照片）显式标注，并给出补拍清单
+- [x] 无法核实的说法标 **待核实** 并给出核实路径
+
+---
+
+## 9. 视觉系统（第 27 工作阶段后期追加）
+
+### 9.1 为什么追加
+
+第一版站点用的是 Material 的**默认观感**（indigo/teal、圆角卡片、默认字体）。
+用户看过之后判定"还是不太好"，并给了一个参照：
+[`bojieli.github.io/ai-agent-book/astro`](https://bojieli.github.io/ai-agent-book/astro/)。
+那是一个 **Astro + 完全自制排版系统**的书站。
+
+读它源码得到的结论（逐条都能在它的 `web-astro/src/styles/global.css` 里对上）：
+
+| 维度 | 它的做法 | 本站的落地 |
+|---|---|---|
+| 字体 | `Manrope Variable`（无衬线）+ `Newsreader Variable`（衬线斜体，只用于标题强调半句） | 同样两套，**woff2 入库自持**（`book/docs/assets/fonts/`），中文交给系统字体 |
+| 字号 | 首页 h1 `clamp(4rem, 6.5vw, 6.5rem)`、`letter-spacing −0.065em`、`line-height 0.97` | `clamp(2.6rem, 4.6vw, 4.6rem)`（中文按字距调过，避免任意断行） |
+| 配色 | 暖白 `#fcfcf9` / surface `#f2f3ed` / 墨 `#20231e` / 发丝线 `#dedfd7` / 强调柠檬绿 `#d8ed7a`；深色换 `#18191c` + 长春花蓝 `#aac7ff` | 逐色采纳为设计令牌 |
+| 分隔 | 一律 `1px` 发丝线，**不用卡片、不用阴影、不用圆角** | 同（表格、章节栅格、事实条、强调条全用细线） |
+| 版式 | 页宽 1400 / 头部 1600、`padding-inline: 64px`、`padding-block: 76px`、eyebrow 大写小字 + 状态点 | 同 |
+| 中文 | `:root:lang(zh-CN)` 换字体栈、`:lang(zh) .prose { line-height: 1.95 }` | 同（`--sans`/`--serif` 的回退栈 + `:lang(zh)` 行高） |
+| 动效 | 只有 `0.18s` 颜色过渡，`prefers-reduced-motion` 全关 | 同 |
+
+**用户裁决：只重做视觉层，保留 MkDocs**（不引入 Astro）——
+这样搜索、事实注入、`--strict` 门禁、CI 全部不动，风险最低。
+
+### 9.2 具体改了什么
+
+* `book/docs/stylesheets/extra.css` **整份重写**（约 1300 行，分 12 节：字体 / 令牌 / 报头 /
+  导航 / 正文 / 表格 / 代码 / 提示框 / 图注 / 页脚 / 首页 / 打印）。
+* `book/mkdocs.yml`：`primary: custom` + `accent: custom`（颜色交给 CSS），
+  `font: false` 保持（不连 Google Fonts）。
+* `book/docs/index.md`：首页改写成**裸 HTML 的编辑式着陆页** ——
+  hero（含一枚手绘 8×8 双色点阵 SVG）+ 事实条 + 9 章发丝线栅格 + 两条强调条；
+  配 `hide: [navigation, toc]`。
+* `book/docs/assets/brand/mark.svg`：重画成与令牌同色的点阵标记。
+* `book/docs/assets/fonts/`：4 个 woff2 子集 + `PROVENANCE.txt`（来源 / sha256 / OFL 授权）。
+
+### 9.3 靠"看图"才抓到的三个真缺陷
+
+`mkdocs --strict` 对版式一无所知，所以这一步是**新增的视觉回归**：
+`book/scripts/shoot.py`（无头 Chrome/Edge，浅色 + 深色各拍一遍，产物在 `book/review/`，不入库）。
+
+1. **深色主题下"深色报头 + 浅色正文"**：自定义属性只在**声明它的元素**上求值 ——
+   `--md-*` 映射写在 `:root` 上，取到的就永远是浅色 `--paper`，而 `.md-header`
+   在 body 上求值拿到深色 ⇒ 报头与正文分裂。改成 `:root, [data-md-color-scheme]` 后一致。
+2. **同一页里两张表宽度不一致**：Material 的 JS 把表格包进 `.md-typeset__table`
+   （shrink-to-fit），窄内容的表就缩成半宽；只给 `table` 写 `width:100%` 没用
+   （100% 的参照物就是那个收缩后的盒子）。靠**注入 outline 逐层定位**找到真凶。
+3. **表格里的 `<code>` 几乎读不出来**：浅色主题下渲成 ~`#b9b9b9`，
+   而本项目几乎每张表的每格都是代码（引脚名 / 端口名 / 位宽）。
+
+⇒ 结论：**改了 CSS 就要重拍一遍截图**，这条已写进 `book/README.md`。
+
+### 9.4 仍受 MkDocs 限制的地方（如实记）
+
+* 报头/侧栏/目录的 DOM 是 Material 的，只能"改样式"不能"改结构"；
+  纯编辑式的**单栏阅读页**（像参照站的章节页那样）在 Material 里做不到。
+* 参照站的阅读器功能（阅读进度、划词高亮、笔记、图片查看器）本站**没有** ——
+  那些是它在 `src/scripts/` 里自己写的，属于"完全自制"，不在本次范围内。
+* 首页之外的页面仍是"文档版式"：左侧导航 + 正文 + 右侧目录。
+  本次把它做得克制、精确，但**没有**伪装成书。

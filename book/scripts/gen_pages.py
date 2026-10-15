@@ -80,11 +80,40 @@ def esc(text) -> str:
     return s.strip()
 
 
+def demote_headings(text: str) -> str:
+    """把**片段里**的标题层级整体下沉 2 级。
+
+    为什么必须做：这些生成物是被 `--8<--` **内联**到别人页面里的，而页面自己
+    已经有 `## 二、端口契约` 这样的章节标题。片段如果再带一个 `# 一级标题`，
+    页面就会出现**两个 H1**、而且嵌套是倒的（h2 → h1）——文档大纲和目录都不对，
+    视觉上那个大标题也会把页面结构压垮。
+
+    下沉 2 级之后：片段的 `# 标题` → `###`（页面 h2 的子节，进目录 ✓）、
+    片段里的 `## 小节` → `####`、`### 条目` → `#####`。
+    代码围栏里的 `#` 注释不动（按 ``` 状态跳过）。
+    """
+    out = []
+    fence = False
+    for line in text.splitlines():
+        if line.lstrip().startswith("```"):
+            fence = not fence
+            out.append(line)
+            continue
+        if not fence:
+            m = re.match(r"^(#{1,6})(\s+)", line)
+            if m:
+                level = min(6, len(m.group(1)) + 2)
+                out.append("#" * level + m.group(2) + line[m.end():])
+                continue
+        out.append(line)
+    return "\n".join(out)
+
+
 def w(path: str, text: str) -> None:
     full = os.path.join(GEN, path)
     os.makedirs(os.path.dirname(full), exist_ok=True)
     with open(full, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write(BANNER + "\n" + text)
+        fh.write(BANNER + "\n" + demote_headings(text))
 
 
 # ==========================================================================

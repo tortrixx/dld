@@ -80,17 +80,22 @@ theme:
     - content.tooltips
     - content.action.edit
   palette:
+    # ⚠️ `primary: custom` / `accent: custom` 的意思是"**颜色由
+    #    stylesheets/extra.css 给**"——这是 Material 认可的定制方式，
+    #    比去 fork 主题模板稳得多。对应的 `--md-primary-*` / `--md-accent-*`
+    #    变量在 extra.css §1 里定义（浅色：暖白纸 + 柠檬绿强调；
+    #    深色：近黑 + 长春花蓝强调）。
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: 切换到深色
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: 切换到浅色

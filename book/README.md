@@ -55,14 +55,22 @@ CI（GitHub Actions）不需要代理。
 
 ```bash
 python book/scripts/book.py gen                  # 只生成（不构建）
-python book/scripts/book.py build                # 生成 + mkdocs build --strict
+python book/scripts/book.py build                # 生成 + mkdocs build --strict + 产物自证
 python book/scripts/book.py check                # 生成 + 一致性门禁（不构建）
 python book/scripts/check_book.py <页面...>       # 只查指定页面（写文档时自检用）
+
+# 改了 CSS / 版式之后**必须**跑这个：无头浏览器按浅色/深色各拍一遍
+python book/scripts/book.py build && python book/scripts/shoot.py
+python book/scripts/shoot.py --all               # 每个一级章节各挑一页
 
 # 产物默认落在 book/site/（相对 book/mkdocs.yml 所在目录）
 # 要放到别处验证：给 --site-dir 传**相对 book/ 的路径**
 python book/scripts/book.py build --site-dir ../somewhere-else
 ```
+
+> `mkdocs --strict` 只检查**链接与锚点**，对版式一无所知。
+> 视觉回归靠 `shoot.py`（产物在 `book/review/`，不入库）——
+> 本轮两个真缺陷（深色主题"黑报头 + 白正文"、片段里的表缩成半宽）都是它抓到的。
 
 ---
 

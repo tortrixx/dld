@@ -1,24 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="8×8 双色点阵拼图">
-  <!-- 8×8 双色点阵：红=目标图案，绿=散落的零片，黄=已锁定。纯几何图形，无外部依赖。 -->
-  <rect width="64" height="64" rx="8" fill="#1a237e"/>
-  <g fill="none" stroke="#3949ab" stroke-width="1">
-    <path d="M12 12h40M12 20h40M12 28h40M12 36h40M12 44h40M12 52h40"/>
-    <path d="M12 12v40M20 12v40M28 12v40M36 12v40M44 12v40M52 12v40"/>
+  <!-- 品牌标记：8×8 双色点阵的一角。
+       配色跟随站点的设计令牌（墨底 + 柠檬绿强调），几何形状不依赖任何外部字体。
+       颜色写死在这里而不是用 CSS 变量：favicon 是独立请求的 SVG，拿不到页面的
+       CSS 自定义属性。深色主题下墨底与页面背景接近，但它是"标记"不是"插图"，
+       在两种主题下都要保持同一枚印章的观感。 -->
+  <rect width="64" height="64" rx="10" fill="#20231e"/>
+  <g fill="none" stroke="#3a3f36" stroke-width="1">
+    <path d="M11 11h42M11 19h42M11 27h42M11 35h42M11 43h42M11 51h42"/>
+    <path d="M11 11v42M19 11v42M27 11v42M35 11v42M43 11v42M51 11v42"/>
   </g>
-  <g fill="#ef5350">
-    <rect x="13" y="21" width="6" height="6"/>
-    <rect x="21" y="21" width="6" height="6"/>
-    <rect x="29" y="29" width="6" height="6"/>
-    <rect x="37" y="29" width="6" height="6"/>
-    <rect x="45" y="37" width="6" height="6"/>
-  </g>
-  <g fill="#66bb6a">
-    <rect x="13" y="37" width="6" height="6"/>
-    <rect x="21" y="37" width="6" height="6"/>
-    <rect x="37" y="13" width="6" height="6"/>
-  </g>
-  <g fill="#ffee58">
-    <rect x="29" y="45" width="6" height="6"/>
-    <rect x="37" y="45" width="6" height="6"/>
-  </g>
+  <!-- 已锁定的零片（黄） -->
+  <rect x="12" y="28" width="6" height="6" fill="#e0b53c"/>
+  <rect x="20" y="28" width="6" height="6" fill="#e0b53c"/>
+  <rect x="12" y="36" width="6" height="6" fill="#e0b53c"/>
+  <!-- 当前选中的零片（绿） -->
+  <rect x="28" y="36" width="6" height="6" fill="#5cc46b"/>
+  <rect x="36" y="36" width="6" height="6" fill="#5cc46b"/>
+  <rect x="36" y="44" width="6" height="6" fill="#5cc46b"/>
+  <!-- 未锁定的零片（红） -->
+  <rect x="12" y="12" width="6" height="6" fill="#ff6a56"/>
+  <rect x="44" y="12" width="6" height="6" fill="#ff6a56"/>
+  <rect x="44" y="44" width="6" height="6" fill="#ff6a56"/>
 </svg>

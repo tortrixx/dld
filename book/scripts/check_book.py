@@ -47,6 +47,8 @@ DOCS = os.path.join(BOOK, "docs")
 FACTS_PATH = os.path.join(ROOT, "facts", "facts.json")
 
 REL_DOC_LINK = re.compile(r"(?<!!)\[[^\]]*\]\(([^)\s]+)\)")
+# 裸 HTML 里的链接（首页 `.home` 整块是 HTML，Markdown 语法检查扫不到它）
+HTML_HREF = re.compile(r'href="([^"{}]+)"')
 IMG_LINK = re.compile(r"!\[[^\]]*\]\(([^)\s]+)")
 SNIPPET = re.compile(r"--8<--\s*[\"']([^\"']+)[\"']")
 FACT = re.compile(r"\{\{fact:([A-Za-z0-9_.\[\]-]+)\}\}")
@@ -175,6 +177,30 @@ def check_page(path: str, facts: dict, tracked: set[str]) -> None:
     if left:
         err("%s: 残留未识别的占位符 %s（钩子只认 {{fact:}} / {{src:}} / {{tree:}} / {{repo}} / {{docs_site}}）" % (rel, left[:3]))
 
+    # ---- 裸 HTML 里的链接 ----
+    # ⚠️ 首页（`docs/index.md`）是整块 HTML，`[文字](路径)` 那条规则扫不到它。
+    #    而 MkDocs 也**不会**校验 HTML 里的 `href`，所以这里是唯一一道闸：
+    #    `xx/yy/` 必须对应 `docs/xx/yy.md` 或 `docs/xx/yy/index.md`。
+    for m in HTML_HREF.finditer(text):
+        href = m.group(1)
+        if re.match(r"^(https?:)?//|^mailto:|^#|^data:|^javascript:", href):
+            continue
+        target_part = href.split("#")[0]
+        if not target_part:
+            continue
+        if target_part.endswith((".md", ".html", ".txt", ".png", ".svg", ".gif", ".drawio")):
+            # 明确写了文件名：按普通相对路径查
+            cand = os.path.normpath(os.path.join(os.path.dirname(path), target_part))
+            if not os.path.exists(cand):
+                err("%s: HTML 链接 %s 不存在（对应 %s）" % (rel, href, os.path.relpath(cand, ROOT)))
+            continue
+        # 目录形式（MkDocs 的 use_directory_urls 输出形态）
+        base = os.path.normpath(os.path.join(os.path.dirname(path), target_part.rstrip("/")))
+        cands = [base + ".md", os.path.join(base, "index.md")]
+        if not any(os.path.exists(c) for c in cands):
+            err("%s: HTML 链接 %s 找不到对应页面（试过 %s）"
+                % (rel, href, "、".join(os.path.relpath(c, ROOT) for c in cands)))
+
 
 def nav_pages() -> list[str]:
     text = open(os.path.join(BOOK, "mkdocs.yml"), encoding="utf-8").read()
@@ -301,9 +327,25 @@ def main() -> int:
             err("book/site 不存在（先跑 python book/scripts/book.py build）")
         else:
             for need in ("index.html", "search/search_index.json", "sitemap.xml",
-                         "assets/javascripts/mermaid.min.js"):
+                         "assets/javascripts/mermaid.min.js",
+                         "assets/fonts/manrope-latin-wght-normal.woff2",
+                         "assets/fonts/newsreader-latin-wght-italic.woff2"):
                 if not os.path.exists(os.path.join(dist, *need.split("/"))):
                     err("站点产物缺少 %s" % need)
+            # ⚠️ `extra_css` 保持它相对 docs_dir 的路径原样输出（本站是
+            #    `stylesheets/extra.css`），**不会**被挪到 `assets/` 下、也不加哈希。
+            #    所以这里两种位置都接受，避免以后改了配置就误报。
+            sheet_candidates = [
+                os.path.join(dist, "stylesheets", "extra.css"),
+                os.path.join(dist, "assets", "stylesheets", "extra.css"),
+            ]
+            sheets_dir = os.path.join(dist, "assets", "stylesheets")
+            hashed = []
+            if os.path.isdir(sheets_dir):
+                hashed = [f for f in os.listdir(sheets_dir)
+                          if f.startswith("extra.") and f.endswith(".css")]
+            if not (any(os.path.exists(p) for p in sheet_candidates) or hashed):
+                err("站点产物里找不到 extra.css（期望 stylesheets/extra.css 或 assets/stylesheets/extra.*.css）")
             # ---- GitHub Pages 子路径检查 ----
             # ⚠️ 这里**不能**简单 grep `/dld/assets/`：Material 生成的资源引用是
             #    **相对路径**（`assets/brand/mark.svg`），那在任何子路径下都对，

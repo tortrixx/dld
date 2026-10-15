@@ -1,0 +1,56 @@
+fonts/ —— 自持的变量字体（不依赖任何外部 CDN）
+================================================================
+
+为什么放进仓库
+--------------
+站点的排版是"编辑式"的：无衬线 `Manrope Variable` 负责正文与 UI，
+衬线 `Newsreader Variable`（斜体）只用在标题的强调半句上。
+
+这两个字体族是以 **npm 包**（`@fontsource-variable/*`）发布的，
+而本站的构建是 Python + MkDocs —— 不想为了两个字体在 CI 里再装一遍 Node，
+也不允许运行时去 `fonts.gstatic.com` / `cdn.jsdelivr.net` 拉（本项目的硬约束：
+**不使用无法稳定访问的外部 CDN 作为核心资源依赖**）。
+
+所以：**把需要的 4 个 woff2 子集入库**，用 `@font-face` 直接引用，
+`unicode-range` 按子集切分，浏览器只下真正用到的那一份。
+
+文件清单（2026-10-15 从 unpkg 取，逐字节原样，未改动）
+------------------------------------------------------
+| 文件 | 字节 | sha256（前 16 位） |
+|---|---|---|
+| `manrope-latin-wght-normal.woff2` | 24836 | `a30ddcd349703aff` |
+| `manrope-latin-ext-wght-normal.woff2` | 15120 | `3911b66d9f2e005a` |
+| `newsreader-latin-wght-normal.woff2` | 58084 | `62981321d9a3cc7a` |
+| `newsreader-latin-wght-italic.woff2` | 64520 | `48bc8861b9b2ca93` |
+
+取文件的命令（可复现）：
+
+    curl -L -o book/docs/assets/fonts/manrope-latin-wght-normal.woff2 \
+      https://unpkg.com/@fontsource-variable/manrope/files/manrope-latin-wght-normal.woff2
+    # 其余三个把包名/文件名替换即可（manrope-latin-ext / newsreader-latin / newsreader-latin 斜体）
+    # 校验：sha256sum book/docs/assets/fonts/*.woff2
+
+`unicode-range` 的取值逐条抄自这两个包的 `index.css`，
+写在 `book/docs/stylesheets/extra.css` §0 的 `@font-face` 里 ——
+**两边必须一致**，改字体版本时两处一起改。
+
+授权
+----
+* Manrope —— **SIL Open Font License 1.1**，作者 Mikhail Sharanda。
+* Newsreader —— **SIL Open Font License 1.1**，作者 Production Type。
+
+OFL 允许随产品再分发（保留授权声明即可）。本仓库**未修改**字体文件，
+只做再分发；字体本身的版权归原作者所有。
+
+中文怎么办
+----------
+这两个字体的子集里**只有拉丁字形**，中文由**系统字体**承担 ——
+`extra.css` 的 `--sans` / `--serif` 里排在后面的是
+`PingFang SC` / `Hiragino Sans GB` / `Microsoft YaHei` / `Songti SC` / `SimSun`。
+这样中文站点在 Windows / macOS / Linux 上都落到原生黑体与宋体，
+既不下载几 MB 的中文字体，也不会出现"中文用拉丁字体渲染"的错配。
+
+校验
+----
+    python book/scripts/book.py build      # 产物里应出现 assets/fonts/*.woff2
+    python book/scripts/check_book.py --site   # 会检查这 4 个文件在产物里存在
