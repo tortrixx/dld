@@ -2750,630 +2750,630 @@
           "name": "MASK_ZERO",
           "type": "std_logic_vector(63 downto 0)",
           "value": "(others => '0')",
-          "comment": "* 全部时序常量与状态编码",
-          "line": 27
+          "comment": null,
+          "line": 28
         },
         {
           "name": "L1_TARGET_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000111000001110000011100000111000000000000000000\"",
           "comment": null,
-          "line": 147
+          "line": 155
         },
         {
           "name": "L1_P0",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000000000000111\"",
           "comment": null,
-          "line": 157
+          "line": 160
         },
         {
           "name": "L1_P1",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000010000001100000111\"",
-          "comment": "下一个朝向（每次按【旋转】键转 90°，4 次回到原样）",
-          "line": 162
+          "comment": null,
+          "line": 170
         },
         {
           "name": "L1_P2",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000001100000010\"",
-          "comment": "占据点阵第 2..5 行、第 2..4 列  -> 12 格",
-          "line": 172
+          "comment": null,
+          "line": 173
         },
         {
           "name": "L2_TARGET_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000001111000011110000111100001111000000000000000000\"",
-          "comment": "P1 ：1x3 横条        （3 格）",
-          "line": 175
+          "comment": null,
+          "line": 189
         },
         {
           "name": "L2_PAT0",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000001111000011110000111100001111000000000000000000\"",
-          "comment": null,
-          "line": 191
+          "comment": "田（= 原图案）",
+          "line": 240
         },
         {
           "name": "L2_PAT1",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000111000011111000111110000111000000000000000000\"",
-          "comment": "实测：PAT0/PAT1/PAT2 各 **1 种**铺法、PAT3 **2 种**（见 docs/02 §9.2）。",
+          "comment": "十（胖十字）",
           "line": 242
         },
         {
           "name": "L2_PAT2",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000111100111100001111000000111100000000000000000\"",
-          "comment": "升级成真的要**拼出**轮廓。40 秒够用：散落最大位移 14 步、平均约 9 步/块。",
+          "comment": "S/Z 锯齿",
           "line": 244
         },
         {
           "name": "L2_PAT3",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000001110000011110000111110000111100000000000000000\"",
-          "comment": "【面积账】零片与图案仍然全是**编译期常量**：piece_rom 0 LE、pattern_rom 4 LE",
+          "comment": "阶梯",
           "line": 246
         },
         {
           "name": "L2_PATS",
           "type": "pat_arr_t",
           "value": "(L2_PAT0, L2_PAT1, L2_PAT2, L2_PAT3)",
-          "comment": "· **第二关**（level='1' 且 lvl3='0'）→ 恒锁 `L2_FIXED_PAT`（PAT3 阶梯，固定）",
+          "comment": null,
           "line": 251
         },
         {
           "name": "L2_PAT_N",
           "type": "integer",
           "value": "4",
-          "comment": "· **第三关**（lvl3='1'，A2 新增）  → 锁 rng_lfsr 低 2 位 → 四幅里随机选",
+          "comment": null,
           "line": 252
         },
         {
           "name": "L2_FIXED_PAT",
           "type": "std_logic_vector(1 downto 0)",
           "value": "\"11\"",
-          "comment": "第一关按 B4 恒为图 4-1（pattern_rom 在 level='0' 时忽略 i_pat）。",
-          "line": 253
+          "comment": "3 == L2_PAT3（阶梯）",
+          "line": 273
         },
         {
           "name": "L2_P0",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000000000000111\"",
-          "comment": "而\"**多种拼图图案随机选择**\"是**提高要求 2**里的内容，且与\"**增加游戏关数**\"",
-          "line": 274
+          "comment": "Q0 1x3 横条 3 格",
+          "line": 277
         },
         {
           "name": "L2_P1",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000000100000001\"",
-          "comment": "第三关 = 从 L2_PATS 四幅里**随机选**（A2：增加关数 + 多种图案随机选择，见",
+          "comment": "Q1 1x2 竖条 2 格",
           "line": 279
         },
         {
           "name": "L2_P2",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000001000000010000000111\"",
-          "comment": "rtl/game_fsm.vhd 的 lvl3 与 rtl/puzzle_top.vhd 的 pat_sel 锁存）",
+          "comment": "Q2 J 形 5 格",
           "line": 281
         },
         {
           "name": "L2_P3",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000001100000011100000001\"",
-          "comment": "① 用户明确要求\"第二关的固定图案不要用原来的 4x4\"；",
+          "comment": "Q3 六格块 6 格",
           "line": 283
         },
         {
           "name": "PIECE_ORI_INIT",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"10\" & \"10\" & \"01\" & \"01\"",
-          "comment": "② PAT3 是四幅里**唯一有 2 种**等价铺法的图案（PAT0/PAT1/PAT2 各只有 1 种），",
-          "line": 285
+          "comment": null,
+          "line": 310
         },
         {
           "name": "L1_TGT0",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0010\"",
-          "comment": "旋转参考模型），要求同时满足",
-          "line": 311
+          "comment": "(2,2)",
+          "line": 323
         },
         {
           "name": "L1_TGT1",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0011\" & \"0010\"",
-          "comment": "端到端证明：sim/tb_puzzle_ctrl.py / sim/tb_puzzle_top.py 的走法计划里**必须出现",
+          "comment": "(3,2)",
           "line": 324
         },
         {
           "name": "L1_TGT2",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0100\" & \"0011\"",
-          "comment": "【旋转】按键**才铺得满（把计划里的旋转删掉就会失败）。",
+          "comment": "(4,3)",
           "line": 325
         },
         {
           "name": "L1_TGT3",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0000\" & \"0000\"",
-          "comment": "编码：块 k 占 ori(2k+1 downto 2k)；\"01\" = 顺时针 90°，\"10\" = 180°，\"11\" = 270°。",
+          "comment": "未使用",
           "line": 326
         },
         {
           "name": "L2_TGT0",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0101\" & \"0011\"",
-          "comment": "编码：块 k 占 ori(2k+1 downto 2k)；\"01\" = 顺时针 90°，\"10\" = 180°，\"11\" = 270°。",
-          "line": 327
+          "comment": "Q0 @ (5,3)",
+          "line": 332
         },
         {
           "name": "L2_TGT1",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0100\" & \"0010\"",
-          "comment": "⚠️ ERR-021：这些常量**不再**是成功判据。把每块零片的锚点与",
+          "comment": "Q1 @ (4,2)",
           "line": 333
         },
         {
           "name": "L2_TGT2",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0011\"",
-          "comment": "下面的值比较会否掉每一种等价铺法：第二关以前是四块",
+          "comment": "Q2 @ (2,3)",
           "line": 334
         },
         {
           "name": "L2_TGT3",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0010\"",
-          "comment": "**完全相同**的 2x2 方块（24 种等价摆位，只接受 1 种），",
+          "comment": "Q3 @ (2,2)",
           "line": 335
         },
         {
           "name": "L2_PAT3_TGT0",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0010\"",
-          "comment": "第一关的矩形有 2 种等价铺法（只接受 1 种），所以",
-          "line": 336
+          "comment": "Q0 @ (2,2)",
+          "line": 344
         },
         {
           "name": "L2_PAT3_TGT1",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0001\"",
-          "comment": "第二关见证：四块自拟零片恰好铺满 PAT0（4x4 方块，",
+          "comment": "Q1 @ (2,1)",
           "line": 345
         },
         {
           "name": "L2_PAT3_TGT2",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0011\" & \"0011\"",
-          "comment": "第 2..5 行 x 第 2..5 列），Q0..Q3 分别位于 (5,3) (4,2) (2,3) (2,2)。",
+          "comment": "Q2 @ (3,3)",
           "line": 346
         },
         {
           "name": "L2_PAT3_TGT3",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0011\" & \"0010\"",
-          "comment": "PAT0 的铺法是唯一的（check_geometry.py 枚举过），所以这组见证",
+          "comment": "Q3 @ (3,2)",
           "line": 347
         },
         {
           "name": "WIN_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000111000011111000110110011000101110000111000001100000010000000\"",
-          "comment": "Q0 @ (5,3)",
-          "line": 348
+          "comment": null,
+          "line": 374
         },
         {
           "name": "FAIL_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000011000011011001100011110000111100011001101100001100000000\"",
-          "comment": "⚠️ 颜色：胜利 = **绿**（只点绿列）、失败 = **红**（只点红列），互为反色，",
-          "line": 376
+          "comment": null,
+          "line": 378
         },
         {
           "name": "PIECE_MAX_DIM",
           "type": "integer",
           "value": "3",
-          "comment": "⚠️ 方向：对勾是**斜的、左右/上下都不对称**，所以它同时是 ERR-015",
-          "line": 380
+          "comment": null,
+          "line": 385
         },
         {
           "name": "CLK_HZ",
           "type": "integer",
           "value": "50_000_000",
-          "comment": "........######..   row3 = 0x70",
-          "line": 386
+          "comment": null,
+          "line": 394
         },
         {
           "name": "CNT_1K",
           "type": "integer",
           "value": "CLK_HZ / 1_000 - 1",
-          "comment": "FAIL ：一个叉（红色；与绿色的胜利对勾互为反色 —— 交通灯配色）",
-          "line": 395
+          "comment": null,
+          "line": 397
         },
         {
           "name": "CNT_200",
           "type": "integer",
           "value": "1_000 / 200 - 1",
-          "comment": "每块零片的包围盒上限：所有零片（第一关与第二关，包括新自拟的",
-          "line": 398
+          "comment": null,
+          "line": 400
         },
         {
           "name": "CNT_100",
           "type": "integer",
           "value": "200 / 100 - 1",
-          "comment": "散落算法「有界候选」算术的前提。",
-          "line": 401
+          "comment": "原\"100 Hz 时基\"：无使用者",
+          "line": 406
         },
         {
           "name": "CNT_2HZ",
           "type": "integer",
           "value": "100 / 2 - 1",
-          "comment": "并从 FREQ LED 那一行读出。本设计假定选在 50 MHz 档。",
+          "comment": "原\"闪烁 / 自检闪示\"：无使用者",
           "line": 407
         },
         {
           "name": "CNT_1HZ",
           "type": "integer",
           "value": "100 / 1 - 1",
-          "comment": "计数器链是有意级联的：只有第一级见到 50 MHz，",
-          "line": 408
+          "comment": "原\"秒计数器\"：无使用者",
+          "line": 410
         },
         {
           "name": "CNT_4HZ",
           "type": "integer",
           "value": "100 / 4 - 1",
-          "comment": "--------------------------------------------------------------------------",
-          "line": 411
+          "comment": null,
+          "line": 421
         },
         {
           "name": "T_POR_MS",
           "type": "integer",
           "value": "10",
-          "comment": "级联链\"结构**已不存在**，下面几条的\"级/角色\"描述一并作废。",
-          "line": 422
+          "comment": null,
+          "line": 427
         },
         {
           "name": "CNT_POR",
           "type": "integer",
           "value": "T_POR_MS - 1",
-          "comment": "⚠️ 第 6 级 ：100 Hz -> **4 Hz**（除以 25，= 250 ms 一个脉冲）",
+          "comment": "饱和值：计到它就释放",
           "line": 428
         },
         {
           "name": "T_BTN_MS",
           "type": "integer",
           "value": "20",
-          "comment": "2026-10-09 第 11 工作阶段（全项目审计发现，ERR-038）：B1 要求自检\"以 **2 Hz**",
-          "line": 429
+          "comment": null,
+          "line": 431
         },
         {
           "name": "CNT_BTN",
           "type": "integer",
           "value": "T_BTN_MS - 1",
-          "comment": "（与 ERR-031 同类的\"2 倍算错\"）。2 Hz 方波需要**每 250 ms 翻转一次**，",
-          "line": 432
+          "comment": null,
+          "line": 434
         },
         {
           "name": "T_SELFTEST",
           "type": "integer",
           "value": "2",
-          "comment": "早先这么写，不成立）：蜂鸣器的换步时钟是 **i_t4 = tick_4hz**",
-          "line": 435
+          "comment": "B1/B2 ：自检持续 2 s",
+          "line": 439
         },
         {
           "name": "T_SELFTEST_T4",
           "type": "integer",
           "value": "7",
-          "comment": "上电复位 ：数 tick_1k 脉冲，所以只需要一个 4 位计数器",
-          "line": 440
+          "comment": "倒计数初值：8 拍 x 250 ms（≤2 s，见上）",
+          "line": 458
         },
         {
           "name": "T_PREVIEW",
           "type": "integer",
           "value": "5",
-          "comment": "与 FSM 入口无关）⇒ 从入口到第 8 个脉冲 = 7~8 个 250 ms 周期，即复位路径 ≈2.000 s、",
+          "comment": "B4/B10：预览持续 5 s",
           "line": 459
         },
         {
           "name": "T_LEVEL1",
           "type": "integer",
           "value": "30",
-          "comment": "SW7 重入路径 **(1.75, 2.0] s**。所以只能说\"窗口恒为 8 个旋律步\"，**不要说\"恒为 2 s\"**",
+          "comment": "B5    ：第一关限时 30 s",
           "line": 460
         },
         {
           "name": "T_LEVEL2",
           "type": "integer",
           "value": "40",
-          "comment": "（ERR-051 自己总结的\"绝对说法要逐路径验\"）。",
+          "comment": "B10   ：第二关限时 40 s",
           "line": 461
         },
         {
           "name": "T_LEVEL3",
           "type": "integer",
           "value": "60",
-          "comment": "为什么必须改：旧实现数 **tick_1hz**（`selfc` 2 位，`selfc = 1` 时退出），",
-          "line": 462
+          "comment": "A2    ：第三关限时 60 s（自拟）",
+          "line": 474
         },
         {
           "name": "DEBOUNCE_MAX",
           "type": "integer",
           "value": "3",
-          "comment": "倒计数初值：8 拍 x 250 ms（≤2 s，见上）",
-          "line": 475
+          "comment": null,
+          "line": 503
         },
         {
           "name": "SEED_DEFAULT",
           "type": "std_logic_vector(7 downto 0)",
           "value": "x\"5A\"",
-          "comment": "各吃一个 200 Hz 周期，所以**消抖级每 10 ms 才采一个样**。仿真测试台独立",
-          "line": 504
+          "comment": null,
+          "line": 506
         },
         {
           "name": "S_SELF_TEST",
           "type": "state_t",
           "value": "\"000\"",
-          "comment": "\"按下 → 接受\"才是 4 轮 = 40 ms）；脉冲本身还要**再晚一个采样拍**（RTL 里脉冲判定",
-          "line": 512
+          "comment": null,
+          "line": 513
         },
         {
           "name": "S_IDLE",
           "type": "state_t",
           "value": "\"001\"",
-          "comment": "**按下 → o_press 实测约 45 ms**（原来 16 轮 = 165 ms），松开同样约 50 ms；",
+          "comment": null,
           "line": 514
         },
         {
           "name": "S_PREVIEW",
           "type": "state_t",
           "value": "\"010\"",
-          "comment": "连按可达 ~12 次/秒（原来 ~3 次/秒）。证据：sim/tb_keypad_scan.py ⑨",
+          "comment": null,
           "line": 515
         },
         {
           "name": "S_PLAYING",
           "type": "state_t",
           "value": "\"011\"",
-          "comment": "（实测 o_press 在 9T、o_release 在 63T；T = 8 us 仿真 = 5 ms 板上）。",
+          "comment": null,
           "line": 516
         },
         {
           "name": "S_WIN",
           "type": "state_t",
           "value": "\"100\"",
-          "comment": "40 ms 的确认窗口对廉价矩阵键盘的接触抖动（典型几 ms）仍很宽裕。",
+          "comment": null,
           "line": 517
         },
         {
           "name": "S_FAIL",
           "type": "state_t",
           "value": "\"101\"",
-          "comment": "⚠️ 改这个常量必须同步改 sim/tb_puzzle_top.py 的 DB_ROUNDS（按键计划按轮排期）",
+          "comment": null,
           "line": 518
         },
         {
           "name": "K_NONE",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0000\"",
-          "comment": "与 sim/tb_keypad_scan.py 的断言 ⑨。",
-          "line": 519
+          "comment": null,
+          "line": 523
         },
         {
           "name": "K_START",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0001\"",
-          "comment": null,
+          "comment": "\"start\"",
           "line": 524
         },
         {
           "name": "K_SELECT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0010\"",
-          "comment": "--------------------------------------------------------------------------",
+          "comment": "\"select\"",
           "line": 525
         },
         {
           "name": "K_CONFIRM",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0011\"",
-          "comment": "7. 主状态机的状态编码（3 位，6 个状态）",
+          "comment": "\"confirm\"",
           "line": 526
         },
         {
           "name": "K_UP",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0100\"",
-          "comment": "--------------------------------------------------------------------------",
+          "comment": "\"up\"",
           "line": 527
         },
         {
           "name": "K_DOWN",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0101\"",
-          "comment": "--------------------------------------------------------------------------",
+          "comment": "\"down\"",
           "line": 528
         },
         {
           "name": "K_LEFT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0110\"",
-          "comment": null,
+          "comment": "\"left\"",
           "line": 529
         },
         {
           "name": "K_RIGHT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0111\"",
-          "comment": null,
+          "comment": "\"right\"",
           "line": 530
         },
         {
           "name": "K_ROT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1000\"",
-          "comment": null,
-          "line": 531
+          "comment": "\"rotate\" 顺时针 90°",
+          "line": 534
         },
         {
           "name": "SND_NONE",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0000\"",
-          "comment": null,
-          "line": 535
+          "comment": "静音（待机）",
+          "line": 564
         },
         {
           "name": "SND_SELF",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0001\"",
-          "comment": "⚠️ 这些码是 **game_fsm 与 buzzer_ctrl 之间的接口**：两边的码表必须一一对应，",
+          "comment": "自检：POST 单声短鸣",
           "line": 565
         },
         {
           "name": "SND_PREVIEW",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0010\"",
-          "comment": "改这里必须同时改 rtl/buzzer_ctrl.vhd 的 MEL_* 表与记录它的",
+          "comment": "预览倒计时\"准备\"声",
           "line": 566
         },
         {
           "name": "SND_CLEAR",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0011\"",
-          "comment": "sim/tb_buzzer_ctrl.py（该 tb 会逐条核对音高/节奏）。",
+          "comment": "过关（短上行号角）",
           "line": 567
         },
         {
           "name": "SND_WRONG",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0100\"",
-          "comment": "sim/tb_buzzer_ctrl.py（该 tb 会逐条核对音高/节奏）。",
+          "comment": "拼错（下行警示）",
           "line": 568
         },
         {
           "name": "SND_KEY",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0101\"",
-          "comment": "⚠️ 2026-10-09（第 15 工作阶段，用户实机确认\"音乐功能正常\"后的**内容升级**）：",
+          "comment": "按键（短促）",
           "line": 569
         },
         {
           "name": "SND_WIN",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0110\"",
-          "comment": "用户要求\"不同场景的音乐要适配内容\"：自检用**行业标准音效**、每关不同的",
+          "comment": "通关长号角（胜利）",
           "line": 570
         },
         {
           "name": "SND_FAIL",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0111\"",
-          "comment": "**热门游戏背景曲**、胜负音效要独特且符合行业习惯。于是本版：",
+          "comment": "失败 / Game Over",
           "line": 571
         },
         {
           "name": "SND_BGM1",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1000\"",
-          "comment": "· 自检 = **单声 ~1 kHz 短鸣**（PC 的 POST\"一短声 = 自检通过\"惯例）；",
+          "comment": "第一关背景音乐",
           "line": 572
         },
         {
           "name": "SND_BGM2",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1001\"",
-          "comment": "· **背景音乐按关卡分三首**（码 1000/1001/**1011**）——",
+          "comment": "第二关背景音乐",
           "line": 573
         },
         {
           "name": "SND_BGM3",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1011\"",
-          "comment": "这个 2 位选择**直接用现有寄存器拼线**：`\"10\" & lvl3 & level`",
+          "comment": "第三关背景音乐",
           "line": 574
         },
         {
           "name": "SND_ROT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1010\"",
-          "comment": "（第一关 1000 / 第二关 1001 / 第三关 1011），**0 个逻辑单元**；",
+          "comment": "旋转 90°",
           "line": 575
         },
         {
           "name": "SND_CONF",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1100\"",
-          "comment": "· 原 `SND_NAK`（被拒绝音，代码里已撤销生成）与 `SND_LVL`（从未使用）",
+          "comment": "确认 / 变黄锁定",
           "line": 576
         },
         {
           "name": "SND_SEL",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1101\"",
-          "comment": "让位给第二/第三关的背景曲，码表仍是 16 个、不增位宽。",
+          "comment": "选择零片",
           "line": 577
         },
         {
           "name": "SND_MOVE",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1110\"",
-          "comment": "⚠️ 改码表必须同步 `rtl/buzzer_ctrl.vhd`、`sim/tb_buzzer_ctrl.py`、",
+          "comment": "移动一步",
           "line": 578
         },
         {
           "name": "SND_TIME",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1111\"",
-          "comment": "`sim/tb_game_fsm.py` 三处（本项目 ERR-022 的教训：码表漂移 = 陈旧绿）。",
+          "comment": "⚠️ 预留：原\"最后 5 秒催促\"，",
           "line": 579
         },
         {
           "name": "DIG_BLANK",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1111\"",
-          "comment": "--------------------------------------------------------------------------",
-          "line": 580
+          "comment": null,
+          "line": 608
         },
         {
           "name": "DIG_A",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1010\"",
-          "comment": "⚠️ 试过把 1010/1011 对调（让码表更好看），结果整机装箱从 127 LAB 掉到",
+          "comment": "A: a b c e f g",
           "line": 609
         },
         {
           "name": "DIG_P",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1011\"",
-          "comment": "128 LAB **装不下** —— 99% 占用率下改常量值本身就会扰动装箱，",
+          "comment": "P: a b e f g",
           "line": 610
         },
         {
           "name": "DIG_S",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1100\"",
-          "comment": "所以码表按\"能装下\"为准，负结果见 docs/05 §1.4。",
+          "comment": "S: a c d f g（= '5'）",
           "line": 611
         },
         {
           "name": "DIG_F",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1101\"",
-          "comment": "所以码表按\"能装下\"为准，负结果见 docs/05 §1.4。",
+          "comment": "F: a e f g",
           "line": 612
         },
         {
           "name": "DIG_L",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1110\"",
-          "comment": "--------------------------------------------------------------------------",
+          "comment": "L: d e f",
           "line": 613
         },
         {
           "name": "DIG_I",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0001\"",
-          "comment": "10. DISP 字位码：disp_format 往 i_data 里放的 4 位码 == seg_scan 的译码输入",
+          "comment": "I: 用 '1' 的形状",
           "line": 614
         }
       ],
@@ -3386,14 +3386,14 @@
         {
           "name": "pat_arr_t",
           "def": "array (0 to 3) of std_logic_vector(63 downto 0)",
-          "line": 248
+          "line": 250
         }
       ],
       "subtypes": [
         {
           "name": "state_t",
           "def": "std_logic_vector(2 downto 0)",
-          "line": 507
+          "line": 511
         }
       ],
       "functions": [
@@ -5014,16 +5014,16 @@
     "family": "MAX II",
     "provenance": {
       "path": "quartus/build_provenance.json",
-      "timestamp": "2026-10-15 16:59:42",
+      "timestamp": "2026-10-15 19:34:55",
       "pof": {
-        "mtime": "2026-10-15 15:13:21",
+        "mtime": "2026-10-15 19:06:41",
         "sha256": "cc3c69b3419f40a20eaf310eb3259d25ff342b56f3b0d52ab270a6ca7e41aea3",
         "bytes": 27312
       },
       "sources": {
         "rtl/board_test_top.vhd": "0ab5453b4a33",
         "rtl/buzzer_ctrl.vhd": "b7cdd04fb134",
-        "rtl/clk_gen.vhd": "2756e6c4f754",
+        "rtl/clk_gen.vhd": "b258219c8e82",
         "rtl/disp_format.vhd": "ae5861335b09",
         "rtl/dot_matrix_scan.vhd": "ac4a6dd96573",
         "rtl/game_fsm.vhd": "906529034696",
@@ -5058,14 +5058,17 @@
       }
     },
     "fit": {
-      "status": "Successful - Thu Oct 15 15:13:20 2026",
+      "status": "Successful - Thu Oct 15 19:06:40 2026",
       "le": "1,264 / 1,270 ( 100 % )",
       "lab": "127 / 127 ( 100 % )",
       "pins": "52 / 116 ( 45 % )"
     },
     "sta": {
       "setup_slack": 1.572,
-      "hold_slack": 1.078
+      "hold_slack": 1.078,
+      "fmax_mhz": 54.27,
+      "restricted_fmax_mhz": 54.27,
+      "fmax_clock": "clk"
     },
     "constraint": {
       "sdc": "quartus/puzzle.sdc",

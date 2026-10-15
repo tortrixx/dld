@@ -1,14 +1,17 @@
-# `book/` —— 技术文档站（Material for MkDocs）
+# `book/` —— 项目网站 + 技术文档（Material for MkDocs）
 
-这是 `tortrixx/dld` 的**技术文档站**源码。它与 [`../site/`](../site/README.md)
-（Vite + React 的**工程展示站**）是**两层互补**的站点，两者共用同一套工程事实
-（`../facts/facts.json`），互相链接。
+这是 `tortrixx/dld` 的**对外网站**，也是项目的技术文档本体：线下与线上的地址都是
 
-| | 展示站 `site/` | 文档站 `book/` |
-|---|---|---|
-| 在线地址 | `https://tortrixx.github.io/dld/` | `https://tortrixx.github.io/dld/docs/` |
-| 面向 | 答辩现场的**整体观感** | **系统性阅读**与逐条查证 |
-| 内容 | 首屏、交互点阵、时序播放器、演示动画 | 架构、接口契约、数据字典、时序、证据、答辩稿 |
+**<https://tortrixx.github.io/dld/>**
+
+> ⚠️ **站点取舍（2026-10-15 第 27 工作阶段）**：本工作阶段最初建的是**两层**站点 ——
+> `site/`（Vite + React 的工程**展示**站，挂在 `/dld/`）与本站（挂在 `/dld/docs/`）。
+> 随后**用户决定去掉展示站、只保留本站并让它占用根路径 `/dld/`**，于是：
+> * `site/` 整个目录已删除（连同它的交互点阵、时序播放器、演示动画与前端测试）；
+> * `book/mkdocs.yml` 的 `site_url` 改为 `https://tortrixx.github.io/dld/`；
+> * `.github/workflows/pages.yml` 只剩"构建 `book/` → 上传 `book/site`"一条线。
+>
+> 好处是**只有一份事实、一个构建、一个门禁**，不再有"两个站点互相打架"的可能。
 
 ---
 
@@ -56,8 +59,9 @@ python book/scripts/book.py build                # 生成 + mkdocs build --stric
 python book/scripts/book.py check                # 生成 + 一致性门禁（不构建）
 python book/scripts/check_book.py <页面...>       # 只查指定页面（写文档时自检用）
 
-# 构建到"和展示站合并"的布局（本地复现线上）：
-python book/scripts/book.py build --site-dir ../site/dist/docs
+# 产物默认落在 book/site/（相对 book/mkdocs.yml 所在目录）
+# 要放到别处验证：给 --site-dir 传**相对 book/ 的路径**
+python book/scripts/book.py build --site-dir ../somewhere-else
 ```
 
 ---
@@ -118,13 +122,16 @@ book/
 
 ## 部署
 
-线上是**一个** GitHub Pages 站点，两个入口：
+线上是**一个**站点：
 
 ```
-https://tortrixx.github.io/dld/         ← site/ 展示站
-https://tortrixx.github.io/dld/docs/    ← book/ 文档站
+https://tortrixx.github.io/dld/
 ```
 
-合并方式见 `.github/workflows/pages.yml`：**先** `vite build`（它会清空 `site/dist`），
-**再** `BOOK_SITE_DIR=site/dist/docs mkdocs build`，最后上传 `site/dist`。
-顺序反过来文档会被 Vite 清掉 —— 这一点在工作流里也写了注释。
+见 `.github/workflows/pages.yml`：装 Python 依赖 → `extract_facts.py --check` →
+`book.py check` → `book.py build`（含 `--strict`）→ 自证产物完整且**没有外部 CDN
+脚本引用** → 上传 `book/site`。
+
+> ⚠️ `site_url` 必须是 `https://tortrixx.github.io/dld/`：Material 由它推出
+> `base_url = /dld/`，所有静态资源引用都带这个前缀。写错会表现为"本地好、线上
+> CSS/JS 全 404"。

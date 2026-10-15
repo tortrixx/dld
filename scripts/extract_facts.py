@@ -125,14 +125,31 @@ def join_logical(text: str, sep: str = ";") -> list[tuple[int, str]]:
 
     深度只跟踪圆括号：VHDL 的端口/常量声明里唯一会嵌套的就是
     `std_logic_vector(63 downto 0)` 这种子类型指示。
+
+    ⚠️ 行号必须**每个语句单独维护**，不能用"buf 非空就沿用旧 start"这种写法。
+    2026-10-15 第 27 工作阶段修的就是这个：一条语句在同一行里以 `;` 结束后，
+    还可能有"尾巴"（`a <= b; c <= d;` 这种一行两句），旧实现把尾巴塞回 `buf`
+    却**没有重置 `start`** ⇒ 下一条语句继承了**上一条的起始行**。
+    后果是 `puzzle_pkg.vhd` 的常量行号系统性偏移（`CLK_HZ` 被记成 386，真实 394；
+    `DEBOUNCE_MAX` 记成 475，真实 503），连带 `_generated/pkg-constants.md` 与
+    8 个页面里的 `{{src:rtl/puzzle_pkg.vhd:NNN}}` 全部点偏。
+    是文档站作者按源码逐条核对时发现的。
+
+    ⚠️ 另有一条**口径**要写清楚：`start` 取的是"**第一条有实际代码的行**"，
+    也就是 `constant` / `type` / `function` 这些关键字所在的那一行，
+    **不含前面那一段注释块**。理由：页面里生成的链接形如
+    `{{src:rtl/puzzle_pkg.vhd:394}}`，读者点开应当直接看到 `constant CLK_HZ : ...`。
+    早先的实现会把"紧邻的注释块首行"当成语句起始行（`L1_TARGET_MASK` 记成 147，
+    而那行是注释），于是链接落在注释上、且与 `DEBOUNCE_MAX` 这类长注释块一样
+    偏离真实的声明行最多 28 行。
     """
     out: list[tuple[int, str]] = []
     buf: list[str] = []
     depth = 0
-    start = 1
+    start: int | None = None
     for idx, raw in enumerate(text.splitlines(), start=1):
         code, _ = split_vhdl_comment(raw)
-        if not buf:
+        if start is None and code.strip():
             start = idx
         depth += code.count("(") - code.count(")")
         if sep in code and depth <= 0:
@@ -140,16 +157,19 @@ def join_logical(text: str, sep: str = ";") -> list[tuple[int, str]]:
             buf.append(head)
             stmt = "\n".join(buf).strip()
             if stmt:
-                out.append((start, stmt))
+                out.append((start or idx, stmt))
             buf = []
-            if tail.strip():
-                buf.append(tail)
+            start = None
             depth = 0
+            if tail.strip():
+                # 尾巴是**同一行**的下一条语句 ⇒ 起始行就是这一行
+                buf.append(tail)
+                start = idx
             continue
         buf.append(code)
     tail_stmt = "\n".join(buf).strip()
     if tail_stmt:
-        out.append((start, tail_stmt))
+        out.append((start or 1, tail_stmt))
     return out
 
 
@@ -426,8 +446,14 @@ def parse_package(rel: str) -> dict[str, Any]:
         if not m:
             continue
         name, vtype, value = m.group(1), norm_ws(m.group(2)), norm_ws(m.group(3))
+        # ⚠️ 行号换算：`join_logical(decl)` 给的是**相对 `decl` 文本**的行号，
+        #    而 `decl` 是从文件第 `pkg_line` 行开始截的 ⇒ 文件行号 = start + pkg_line - 1。
+        #    2026-10-15 第 27 工作阶段：这里原来漏了这一个偏移，
+        #    结果"注释"列整整错位 18 行（`CNT_1K` 那行显示的是 `FAIL` 叉图案的注释），
+        #    是文档站作者核对生成页时发现的。**行号与数值一直是对的，只有注释贴错了行。**
+        f_start = start + pkg_line - 2
         com = None
-        for ln in lines[start - 1 : start + len(raw.splitlines())]:
+        for ln in lines[f_start : f_start + len(raw.splitlines())]:
             _, c = split_vhdl_comment(ln)
             if c:
                 com = c

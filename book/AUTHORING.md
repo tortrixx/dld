@@ -29,8 +29,7 @@
 | `{{src:rtl/puzzle_top.vhd}}` | GitHub 该文件的链接 | 可点 |
 | `{{tree:sim/rounds}}` | GitHub 该目录的链接 | 可点 |
 | `{{repo}}` | `https://github.com/tortrixx/dld` | |
-| `{{showcase}}` | 工程展示站地址 | |
-| `{{docs_site}}` | 本文档站地址 | |
+| `{{docs_site}}` | 本站线上地址（也是项目唯一的站点） | |
 
 **规则**：
 - `{{fact:...}}` 的路径写错 ⇒ **构建失败**（这是故意设计的）。
@@ -211,8 +210,9 @@ python book/scripts/check_book.py book/docs/03-modules/clock-reset.md book/docs/
 ## 10. 绝对不要做的事
 
 1. 不要改 `rtl/`、`sim/`、`quartus/`、`docs/`（除 Leader 明确指派）。
-2. 不要改 `site/`（前端展示站）——那由专门的人负责。
-3. 不要改 `facts/facts.json`（它是生成的）。
-4. 不要写自己没有核实过的断言、时序、位宽、硬件现象。
-5. 不要为了让检查通过而删掉链接或降低标准 —— 报告问题，而不是掩盖。
-6. 不要留占位页（`<!-- PLACEHOLDER`）——门禁会 FAIL。
+2. 不要改 `facts/facts.json`（它是生成的）。
+3. 不要写自己没有核实过的断言、时序、位宽、硬件现象。
+4. 不要为了让检查通过而删掉链接或降低标准 —— 报告问题，而不是掩盖。
+5. 不要留占位页（`<!-- PLACEHOLDER`）——门禁会 FAIL。
+6. 不要引用 `site/` —— 那是一个已删除的目录（2026-10-15 第 27 工作阶段，
+   原 Vite 展示站被去掉，只留本站并占用根路径 `/dld/`）。

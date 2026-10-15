@@ -65,7 +65,17 @@ def read_fit(qdir=OUT):
 
 
 def read_sta(qdir=OUT):
-    """读 sta.rpt -> {setup_slack, hold_slack}（取 `Setup: 'clk'` 表的第一行 = 最差）。"""
+    """读 sta.rpt -> {setup_slack, hold_slack, fmax_mhz, restricted_fmax_mhz}。
+
+    * `setup_slack` / `hold_slack`：取 `Setup: 'clk'` / `Hold: 'clk'` 表的第一行（= 最差路径）。
+    * `fmax_mhz`：取 `Fmax Summary` 表的 `Fmax` 列（第 1 行 = `clk`）。
+
+    ⭐ 2026-10-15 第 27 工作阶段补 `fmax_mhz` 的原因：文档站需要一个**可机读的实测 Fmax**。
+    在此之前它只能靠人在文档里抄字面量，或者用 `1/(period − slack)` **反推** ——
+    而反推值（54.28）与 TimeQuest 报的 `Fmax Summary`（**54.27**）并不相等
+    （STA 自己还会算时钟不确定度/抖动）。两个数字同时出现在文档里就是新的漂移源。
+    ⇒ 实测值就该从实测报告里读，并且**入库**（`quartus/output_files/` 是 .gitignore 的）。
+    """
     p = pathlib.Path(qdir) / "puzzle.sta.rpt"
     if not p.exists():
         return {}
@@ -79,6 +89,16 @@ def read_sta(qdir=OUT):
             m = re.match(r"^;\s*(-?[\d.]+)\s*;", ln)
             if m:
                 out[key] = float(m.group(1))
+                break
+    # Fmax Summary 表：`; 54.27 MHz ; 54.27 MHz       ; clk        ;      ;`
+    idx = t.find("Fmax Summary")
+    if idx >= 0:
+        for ln in t[idx:].splitlines():
+            m = re.match(r"^;\s*([\d.]+)\s*MHz\s*;\s*([\d.]+)\s*MHz\s*;\s*(\S+)\s*;", ln)
+            if m:
+                out["fmax_mhz"] = float(m.group(1))
+                out["restricted_fmax_mhz"] = float(m.group(2))
+                out["fmax_clock"] = m.group(3)
                 break
     return out
 

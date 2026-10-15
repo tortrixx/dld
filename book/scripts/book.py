@@ -22,7 +22,10 @@ book/scripts/book.py —— 文档站的**唯一入口**（生成 / 构建 / 校
 用法
 ----
     python book/scripts/book.py serve
-    python book/scripts/book.py build --site-dir ../site/dist/docs
+    python book/scripts/book.py build
+    # 产物默认落在 book/site/（site_dir 由 mkdocs.yml 定义，相对该配置文件所在目录）；
+    # 想放别处就传一个**相对 book/ 的路径**：
+    python book/scripts/book.py build --site-dir ../somewhere-else
     python book/scripts/book.py check
 """
 
@@ -106,6 +109,12 @@ def main() -> int:
     if args.cmd == "build":
         gen()
         mkdocs("build", *(["--strict"] if not args.no_strict else []), site_dir=args.site_dir)
+        # 构建完立刻**自证产物**：canonical 是否等于 site_url、sitemap 是否都在
+        # /dld/ 下、有没有绕开子路径的绝对路径引用、有没有外部 CDN 的 <script src>。
+        # 只有在用默认产物目录（book/site）时才有意义 —— 传了 --site-dir 的话
+        # check_book 找不到它，所以跳过（那一档由工作流自己断言）。
+        if not args.site_dir:
+            run([PY, os.path.join("book", "scripts", "check_book.py"), "--site"])
         return 0
     return 1
 

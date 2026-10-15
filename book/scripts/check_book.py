@@ -54,7 +54,7 @@ SRC = re.compile(r"\{\{src:([^:}\s]+)(?::\d+)?\}\}")
 TREE = re.compile(r"\{\{tree:([^}\s]+)\}\}")
 # 合法的占位符形态（含无冒号的那三个）。**必须**与 hooks/facts.py 的实现一致：
 # 钩子认得的一律不算"残留"，只有钩子不认得的才算错。
-LEGIT_PLACEHOLDER = re.compile(r"^\{\{\s*(?:fact:[A-Za-z0-9_.\[\]-]+|src:[^:}\s]+(?::\d+)?|tree:[^}\s]+|repo|showcase|docs_site)\s*\}\}$")
+LEGIT_PLACEHOLDER = re.compile(r"^\{\{\s*(?:fact:[A-Za-z0-9_.\[\]-]+|src:[^:}\s]+(?::\d+)?|tree:[^}\s]+|repo|docs_site)\s*\}\}$")
 LEFTOVER = re.compile(r"\{\{[^}]*\}\}")
 PLACEHOLDER = "<!-- PLACEHOLDER"
 
@@ -173,7 +173,7 @@ def check_page(path: str, facts: dict, tracked: set[str]) -> None:
 
     left = [x for x in LEFTOVER.findall(text) if not LEGIT_PLACEHOLDER.match(x)]
     if left:
-        err("%s: 残留未识别的占位符 %s（钩子只认 {{fact:}} / {{src:}} / {{tree:}} / {{repo}} / {{showcase}} / {{docs_site}}）" % (rel, left[:3]))
+        err("%s: 残留未识别的占位符 %s（钩子只认 {{fact:}} / {{src:}} / {{tree:}} / {{repo}} / {{docs_site}}）" % (rel, left[:3]))
 
 
 def nav_pages() -> list[str]:
@@ -224,13 +224,32 @@ def site_checks(facts: dict) -> None:
         if m["record_json"] not in blob_text and ("sim/rounds/%s" % mod) not in blob_text and ("r%d" % m["round"]) not in blob_text:
             warn("仿真模块 %s 的最新轮次记录 %s 在正文里没有被引用" % (mod, m["record_json"]))
 
-    # 关键数字不得与 facts.json 冲突：检查是否出现了"同一指标的不同值"
+    # 关键数字不得与 facts.json 冲突：同一个指标不许出现**两个当前值**。
+    #
+    # ⚠️ 但不能把**如实记录的历史值**也判错 —— 这个项目的文档大量写"当时那一轮
+    #    是 1268/1270 LE（当前读数是 {{fact:build.fit.le}}）"，那是正确的写法。
+    #    所以豁免条件是**两条同时成立**：
+    #      · 该行有明确的历史标记（当时 / 历史 / 此前 / 曾经 / 上一轮 …）
+    #      · 该行同时给出了当前值（引用 {{fact:build.fit.le}} 或直接写出当前数）
+    #    否则一律 FAIL —— 不允许拿"这是历史"当挡箭牌糊弄过去。
+    HIST_MARKERS = ("当时", "历史", "此前", "曾经", "上一轮", "旧版", "早期", "那一次")
     fit = facts["build"]["fit"]
     le = re.sub(r"[^\d]", "", fit["le"].split("/")[0])
     for p, text in allmd.items():
-        for bad in re.findall(r"(\d{4})\s*/\s*1270", text):
-            if bad != le:
-                err("%s: 写了 LE %s/1270，但 build_provenance.json 是 %s/1270" % (p, bad, le))
+        for lineno, line in enumerate(text.splitlines(), start=1):
+            for bad in re.findall(r"(\d{3,4})\s*/\s*1270", line):
+                if bad == le:
+                    continue
+                historical = any(h in line for h in HIST_MARKERS) and (
+                    "{{fact:build.fit.le}}" in line or le in line
+                )
+                if historical:
+                    warn("%s:%d 出现历史值 %s/1270（同行已标明历史并给出当前值 %s）—— 允许，仅提示"
+                         % (p, lineno, bad, le))
+                    continue
+                err("%s:%d 写了 LE %s/1270，但 build_provenance.json 是 %s/1270；"
+                    "若这是历史值，请在**同一行**标明“当时/历史”并同时给出当前值"
+                    % (p, lineno, bad, le))
 
     # 页面里引用的 GitHub 源码/目录链接必须已入库
     tracked = git_tracked()
@@ -275,13 +294,54 @@ def main() -> int:
         site_checks(facts)
 
     if args.site:
-        dist = os.path.join(ROOT, "site", "dist")
+        # ⚠️ 2026-10-15 第 27 工作阶段：站点从"两个"（site/ 展示站 + book/ 文档站）
+        #    变成"一个"（book/ 文档站占用根路径 /dld/），所以产物目录是 `book/site/`。
+        dist = os.path.join(BOOK, "site")
         if not os.path.isdir(dist):
-            err("site/dist 不存在（先跑 npm run build）")
+            err("book/site 不存在（先跑 python book/scripts/book.py build）")
         else:
-            for need in ("index.html", "docs/index.html", "docs/search/search_index.json"):
+            for need in ("index.html", "search/search_index.json", "sitemap.xml",
+                         "assets/javascripts/mermaid.min.js"):
                 if not os.path.exists(os.path.join(dist, *need.split("/"))):
-                    err("合并产物缺少 %s" % need)
+                    err("站点产物缺少 %s" % need)
+            # ---- GitHub Pages 子路径检查 ----
+            # ⚠️ 这里**不能**简单 grep `/dld/assets/`：Material 生成的资源引用是
+            #    **相对路径**（`assets/brand/mark.svg`），那在任何子路径下都对，
+            #    比写死 `/dld/` 更健壮。真正能证明"子路径配对了"的是这三条：
+            #      ① canonical 链接等于 site_url（MkDocs 由 site_url 推出）
+            #      ② sitemap.xml 里的 URL 都带 /dld/ 前缀
+            #      ③ 页面里不存在**绕开子路径的绝对路径**引用
+            #         （`/assets/...` 这种才会在 /dld/ 下 404）
+            idx = os.path.join(dist, "index.html")
+            if os.path.exists(idx):
+                html = open(idx, "r", encoding="utf-8").read()
+                m = re.search(r'<link rel="canonical" href="([^"]+)"', html)
+                if not m:
+                    err("产物 index.html 里没有 canonical 链接")
+                elif not m.group(1).startswith("https://tortrixx.github.io/dld/"):
+                    err("canonical 是 %s，与 mkdocs.yml 的 site_url（/dld/）不符" % m.group(1))
+                else:
+                    print("  OK    canonical = %s" % m.group(1))
+                bad_abs = [
+                    r
+                    for r in re.findall(r'(?:href|src)="(/[^"/][^"]*)"', html)
+                    if not r.startswith("/dld/")
+                ]
+                if bad_abs:
+                    err("产物里有绕开子路径的绝对路径引用（在 /dld/ 下会 404）：%s" % bad_abs[:5])
+                if re.search(r'src="https?://', html):
+                    err("产物里出现了外部 CDN 的 <script src>（违反'不用外部 CDN 作核心依赖'）")
+                else:
+                    print("  OK    没有外部 CDN 的 <script src>（Mermaid 自持）")
+
+            sm = os.path.join(dist, "sitemap.xml")
+            if os.path.exists(sm):
+                locs = re.findall(r"<loc>([^<]+)</loc>", open(sm, "r", encoding="utf-8").read())
+                bad_loc = [u for u in locs if not u.startswith("https://tortrixx.github.io/dld/")]
+                if bad_loc:
+                    err("sitemap 里有不带头路径的 URL：%s" % bad_loc[:3])
+                elif locs:
+                    print("  OK    sitemap %d 条 URL 全部在 /dld/ 下" % len(locs))
 
     print("check_book: 检查 %d 个页面" % checked)
     for x in warnings:

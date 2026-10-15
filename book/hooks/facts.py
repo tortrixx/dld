@@ -17,7 +17,7 @@ Material for MkDocs 原生支持 `hooks:`，**不需要额外依赖**，而且�
     {{src:rtl/puzzle_top.vhd}}          -> GitHub 上该文件的链接
     {{tree:sim/rounds}}                 -> GitHub 上该目录的链接
     {{repo}}                            -> https://github.com/tortrixx/dld
-    {{showcase}}                        -> 工程展示站地址
+    {{docs_site}}                       -> 本站地址（也就是项目唯一的站点）
 
 纪律
 ----
@@ -42,8 +42,11 @@ _FACTS_PATH = os.path.join(_REPO_ROOT, "facts", "facts.json")
 
 REPO = "https://github.com/tortrixx/dld"
 BRANCH = "main"
-SHOWCASE = "https://tortrixx.github.io/dld/"
-DOCS_SITE = "https://tortrixx.github.io/dld/docs/"
+# ⚠️ 2026-10-15 第 27 工作阶段：原来是"展示站 + 文档站"两个地址，
+#    用户决定去掉展示站（`site/`）只留本站 ⇒ 两个常量现在指向同一个根地址。
+#    保留 `DOCS_SITE` 这个名字，是因为页面里用 `{{docs_site}}` 表达
+#    "本站的线上地址"；`SHOWCASE` 已删除（不再有第二个站点可指）。
+DOCS_SITE = "https://tortrixx.github.io/dld/"
 
 with open(_FACTS_PATH, "r", encoding="utf-8") as _fh:
     FACTS = json.load(_fh)
@@ -151,7 +154,6 @@ def expand(markdown: str, page: str, warnings: list[str]) -> str:
     markdown = _RE_SRC.sub(src_sub, markdown)
     markdown = _RE_TREE.sub(tree_sub, markdown)
     markdown = markdown.replace("{{repo}}", REPO)
-    markdown = markdown.replace("{{showcase}}", SHOWCASE)
     markdown = markdown.replace("{{docs_site}}", DOCS_SITE)
 
     # 收尾：正文里不允许残留未识别的 `{{...}}`（写错前缀是最常见的笔误）

@@ -1,0 +1,68 @@
+mermaid.min.js —— 自持（self-hosted）的第三方库
+================================================================
+
+为什么要把它放进仓库
+--------------------
+文档站用 Mermaid 画系统框图、状态图与时序图 —— 这是架构文档的核心表达手段。
+Material for MkDocs 9.7.7 的 `bundle.min.js` 里，Mermaid 是**从外部 CDN 动态加载**的：
+
+    function as(){
+      return typeof mermaid=="undefined" || mermaid instanceof Element
+        ? _t("https://unpkg.com/mermaid@11/dist/mermaid.min.js")   // ← CDN
+        : $(void 0);
+    }
+
+本项目有一条硬约束："**不使用无法稳定访问的外部 CDN 作为核心资源依赖**"。
+Mermaid 是核心依赖（没有它整章架构文档就成了代码块），所以不能靠 CDN。
+
+怎么做到既自持、又不用改 Material
+---------------------------------
+上面那段代码的分支条件是 `typeof mermaid == "undefined"`。只要**在 bundle 之前**
+让页面里已经存在全局 `mermaid`，Material 就会走 `$(void 0)` 那条分支，
+**完全不去碰 CDN**。
+
+`mkdocs.yml` 里因此有一行：
+
+    extra_javascript:
+      - assets/javascripts/mermaid.min.js
+
+Material 的 `base.html` 先输出 `bundle.<hash>.min.js`、紧接着输出 `extra_javascript`
+（见 `partials/javascripts` 的包含位置），两个都是同步 `<script>`，
+所以 `mermaid.min.js` 在 bundle 之后、但在任何渲染回调之前执行完毕 ——
+Mermaid 图形的渲染发生在 DOM ready 之后，那时全局 `mermaid` 已经在了。
+
+版本与来源（可复现）
+--------------------
+    包名     mermaid
+    版本     11.17.2      （与 Material 9.7.7 内部期望的大版本一致：mermaid@11）
+    文件     dist/mermaid.min.js
+    来源     https://unpkg.com/mermaid@11.17.2/dist/mermaid.min.js
+    大小     3572661 字节
+    sha256   581ed7d74bd9048d0e3a91363927d72ef22942d7722546b27f7cc29e35390eb8
+
+该文件末尾一行是：
+
+    globalThis["mermaid"] = globalThis.__esbuild_esm_mermaid_nm["mermaid"].default;
+
+也就是它会把 `mermaid` 挂到全局 —— 这正是上面那条分支能生效的原因。
+
+重新获取（升级时改版本号并重算 sha256）：
+
+    curl -L -o book/docs/assets/javascripts/mermaid.min.js \
+      https://unpkg.com/mermaid@11.17.2/dist/mermaid.min.js
+    sha256sum book/docs/assets/javascripts/mermaid.min.js
+
+许可
+----
+Mermaid 以 **MIT License** 发布，版权归 Mermaid 项目贡献者所有。
+许可证全文见 https://github.com/mermaid-js/mermaid/blob/develop/LICENSE
+本仓库**未修改**该文件（逐字节原样），仅作再分发。
+
+校验
+----
+    python book/scripts/check_book.py --site   # 站点级门禁
+    并可用 sha256 与上面记录的哈希逐个比对
+
+⚠️ 不要用 `@latest` 或 `mermaid@12`：v12 的 `dist/mermaid.min.js` 是 ESM 构建，
+不挂全局（本仓库实测 mermaid@12.2.0 的构建里没有全局赋值），
+直接当普通 `<script>` 加载会失效。请保持 `11.x`。

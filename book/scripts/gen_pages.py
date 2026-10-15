@@ -109,10 +109,12 @@ def gen_metrics() -> None:
         "| 逻辑单元 LE | `%s` | `quartus/build_provenance.json` → `fit.le` |" % esc(fit["le"]),
         "| 逻辑阵列块 LAB | **`%s`**（真正的瓶颈） | `quartus/build_provenance.json` → `fit.lab` |" % esc(fit["lab"]),
         "| 引脚 | `%s`（全部显式锁定） | `quartus/build_provenance.json` → `fit.pins` |" % esc(fit["pins"]),
-        "| 时钟约束 | %s MHz（周期 %s ns） | `quartus/puzzle.sdc` |"
+        "| 时钟约束（`create_clock`） | %s MHz（周期 %s ns） | `quartus/puzzle.sdc` |"
         % (b["constraint"]["fmax_mhz"], b["constraint"]["period_ns"]),
-        "| Fmax（TimeQuest） | **%s MHz** | `docs/05-资源利用与编译报告.md` + `quartus/build_provenance.json` |"
-        % b["constraint"]["fmax_mhz"],
+        "| **实测 Fmax（TimeQuest `Fmax Summary`）** | **%s MHz** | `quartus/build_provenance.json` → `sta.fmax_mhz` |"
+        % sta.get("fmax_mhz", "待核实"),
+        "| Restricted Fmax | %s MHz | `quartus/build_provenance.json` → `sta.restricted_fmax_mhz` |"
+        % sta.get("restricted_fmax_mhz", "待核实"),
         "| Setup slack | `%+g` ns | `quartus/build_provenance.json` → `sta.setup_slack` |" % sta["setup_slack"],
         "| Hold slack | `%+g` ns | `quartus/build_provenance.json` → `sta.hold_slack` |" % sta["hold_slack"],
         "| Fitter 编译状态 | %s | `quartus/build_provenance.json` → `fit.status` |" % esc(fit["status"]),
@@ -788,13 +790,23 @@ def gen_sim() -> None:
     idx = [
         "# 断言索引（机械抽取）",
         "",
-        "共 **%d** 条断言，全部通过。逐条明细见各模块页。" % sim["totals"]["assertions"],
+        "共 **%d** 条断言，全部通过。" % sim["totals"]["assertions"],
         "",
-        "| 模块 | 条数 | 明细页 |",
-        "|---|---|---|",
+        "!!! note \"为什么这一页里的路径是纯文本、不做成链接\"",
+        "    本页位于 `_generated/`，而 `_generated/` 在 `mkdocs.yml` 的 `exclude_docs` 里",
+        "    —— 它**不是一个页面**，只是被别的页面用 `--8<--` 内联的片段。",
+        "    片段里的相对链接会**以内联它的那个页面**为基准解析：",
+        "    例如 `assertions/clk_gen.md` 被内联进 `06-verification/assertions.md` 之后，",
+        "    会解析成 `06-verification/assertions/clk_gen.md` ⇒ **死链**。",
+        "    所以这里只列路径；要做链接，内联方按自己的位置拼。",
+        "",
+        "| 模块 | 条数 | 最新轮次 | 明细片段（相对 `_generated/`） |",
+        "|---|---|---|---|",
     ]
     for mod, m in sorted(sim["modules"].items()):
-        idx.append("| `%s` | %d | [断言明细](assertions/%s.md) |" % (mod, m["total"], mod))
+        idx.append(
+            "| `%s` | %d | r%d | `assertions/%s.md` |" % (mod, m["total"], m["round"], mod)
+        )
     idx.append("")
     w("assertions-index.md", "\n".join(idx) + "\n")
 
@@ -882,6 +894,8 @@ def gen_figures() -> None:
         "    硬件上的效果目前只有**文字记录**（`docs/06-硬件调试记录.md`）与**上板复测结论**，",
         "    没有影像证据。这是**已知缺失**，不补拍就不存在。",
         "    补拍方法见 [缺失的证据](../06-verification/board-validation.md#待补拍清单)。",
+        "    <!-- 注：本页只在 `06-verification/` 下被内联，所以这个相对路径是对的；",
+        "         若要挪到别处内联，必须跟着改。 -->",
         "",
         "!!! warning \"不要把脚本渲染的图当成硬件效果\"",
         "    `演示-跑一局.gif` / `演示-首帧.png` / `结算画面-预览.png` 是**浏览器里**",

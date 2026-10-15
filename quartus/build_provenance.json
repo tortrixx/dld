@@ -1,11 +1,11 @@
 {
-  "timestamp": "2026-10-15 16:59:42",
-  "git_head": "c6c5f6a77aaee238216429ca79c684b2e6c7f9be",
+  "timestamp": "2026-10-15 19:34:55",
+  "git_head": "be941e37b00fb973fbd5195a3e456ebf8654c52a",
   "git_dirty": true,
   "sources": {
     "rtl/board_test_top.vhd": "0ab5453b4a33",
     "rtl/buzzer_ctrl.vhd": "b7cdd04fb134",
-    "rtl/clk_gen.vhd": "2756e6c4f754",
+    "rtl/clk_gen.vhd": "b258219c8e82",
     "rtl/disp_format.vhd": "ae5861335b09",
     "rtl/dot_matrix_scan.vhd": "ac4a6dd96573",
     "rtl/game_fsm.vhd": "906529034696",
@@ -39,18 +39,21 @@
     "rtl/seg_scan.vhd": "aa8642b3a503"
   },
   "pof": {
-    "mtime": "2026-10-15 15:13:21",
+    "mtime": "2026-10-15 19:06:41",
     "sha256": "cc3c69b3419f40a20eaf310eb3259d25ff342b56f3b0d52ab270a6ca7e41aea3",
     "bytes": 27312
   },
   "fit": {
-    "status": "Successful - Thu Oct 15 15:13:20 2026",
+    "status": "Successful - Thu Oct 15 19:06:40 2026",
     "le": "1,264 / 1,270 ( 100 % )",
     "lab": "127 / 127 ( 100 % )",
     "pins": "52 / 116 ( 45 % )"
   },
   "sta": {
     "setup_slack": 1.572,
-    "hold_slack": 1.078
+    "hold_slack": 1.078,
+    "fmax_mhz": 54.27,
+    "restricted_fmax_mhz": 54.27,
+    "fmax_clock": "clk"
   }
 }

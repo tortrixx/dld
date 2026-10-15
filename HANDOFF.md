@@ -15,6 +15,13 @@
 > （那 1 条 WARN = LAB 已满，是事实）。整机当前轮次 **`r56`（模式 A）/ `r57`（模式 B）**，各 **28/28**。
 > ✅ **本轮改动已提交并推送**：`9a16685`（`origin/main` 已同步；`git show --stat 9a16685` = **132 文件：37 改 + 95 增**）。
 > 📌 **剩下的事**：写实验报告（12 张 GUI 实测图**已全部入库**，流程见 `docs/图/README.md`）。
+>
+> ⭐⭐ **第 27 工作阶段（2026-10-15）新增：站点已建**——`book/` Material 站点
+> **就是项目唯一的站点**（`https://tortrixx.github.io/dld/`），事实源是 `facts/facts.json`。
+> ⚠️ 本阶段最初建的是"展示站 + 文档站"两层，**后期按用户裁决删掉了 `site/`**
+> （见下面「第 27 工作阶段」§① 第 10 条）。
+> **本阶段不改 RTL、不重新编译、不重新烧录**；启动与门禁命令见下面「第 27 工作阶段」§②。
+> 设计与审计结论见 `docs-site-plan.md`。
 > **读数（LE / LAB / Fmax / slack / `SEED` / `.pof` 身份）的唯一所有者 = `docs/05` §1A''''' +
 > `quartus/build_provenance.json`**（已按 2026-10-15 15:13:21 那次编译重记）—— 本文只留指针，不复述。
 > 下一轮按顶部「下一轮开工清单」（§0~§6）动手，**先读下面的「第 26 工作阶段」**。
@@ -26,6 +33,56 @@
 >
 > 📚 **历史阶段（第 19~25 工作阶段：可移植性 / 逻辑指纹与注释守卫 / 上板实测 / 告急幽灵 / 文档终审 / DISP2 口径裁决）
 > 的逐段记录已折叠** —— 见下面各阶段小节、`PROGRESS.md` 阶段表与 `docs/06` 对应章节。
+
+---
+
+# ⭐⭐⭐ 第 27 工作阶段（2026-10-15）—— **双层站点：`facts/` 唯一事实模型 + `book/` Material 技术文档站 + 展示站整合 + Pages 合并发布**
+
+> **本段最新，先看这段。** 本阶段**完全不动 RTL / 不改硬件行为**：
+> `rtl/`、`sim/`、`quartus/` 下的源文件一个都没改，**不需要重新编译、不需要重新烧录**，
+> 板上那份 `puzzle.pof`（sha256 `cc3c69b3…`）依旧是当前固件。
+
+## ① 本阶段做了什么
+
+| # | 交付 | 位置 |
+|---|---|---|
+| 1 | **唯一机读事实模型**：从 `rtl/` / `sim/rounds/` / `quartus/` 抽出的 15 实体、11 游戏子模块、3 诊断顶层、1 设计包、184 条断言、52 引脚、29 张图、31 条 ERR 索引 | `scripts/extract_facts.py` → `facts/facts.json` |
+| 2 | **Material for MkDocs 技术文档站**（52 个内容页：项目 / 架构 / 模块 / 接口 / 流程 / 验证 / 实现 / 调试 / 答辩） | `book/` |
+| 3 | **机械生成的表格页**（端口契约、跨模块连接、层级、引脚、断言明细、图片清单、ERR 索引）—— 手写等于抄源码，抄错就是 ERR-022 那类缺陷 | `book/scripts/gen_pages.py` → `book/docs/_generated/`（不入库，构建前重生成） |
+| 4 | **事实注入 + 门禁**：页面里写 `{{fact:build.fit.le}}`，解析不了就**构建失败**；`mkdocs --strict` + `check_book.py` 六类检查 | `book/hooks/facts.py`、`book/scripts/check_book.py` |
+| 5 | **自持 Mermaid**：Material 默认从 `unpkg.com` 拉 mermaid，违反"不用外部 CDN"约束 ⇒ 改为本地 `assets/javascripts/mermaid.min.js`（11.17.2，附 sha256 与来源） | `book/docs/assets/javascripts/` |
+| 6 | **展示站跨站整合**（只做加法）：顶栏「技术文档 ↗」、`DocsNav` 文档卡片、页尾入口；`verify:facts` 增加与 `facts/facts.json` 的交叉核对 | `site/src/`、`site/scripts/verify-facts.mjs` |
+| 7 | **修掉一处真实不一致**：`Hero.tsx` / `Footer.tsx` 手写的"179 条断言"已过期（真实 **184**）⇒ 改为由 `SIM_COVERAGE` **派生**，从此不可能再漂移 | `site/src/data/facts.ts` |
+| 8 | **Pages 合并发布**：先 `vite build` → 再 `mkdocs build` 到 `site/dist/docs` → 一次上传；新增 `book/**` / `facts/**` 触发路径与三重对账 | `.github/workflows/pages.yml` |
+| 9 | 实施计划与审计结论 | `docs-site-plan.md` |
+| 10 | ⭐ **站点取舍（本阶段后期 · 用户裁决）**：**删除 `site/` 整个目录（41 个跟踪文件）**，只保留 `book/` 并让它占用根路径 `/dld/` —— `site_url` 改为 `https://tortrixx.github.io/dld/`，工作流改为"只构建并上传 `book/site`"，`{{showcase}}` 占位符删除，`.gitignore` 的 `site/` 一节删除，页面里 6 处"展示站"引用改为措辞如实的"**原**展示站"。**代价**：交互点阵 / 时序播放器 / 演示动画与 74 个前端单测不再提供（静态产物仍归档在 `docs/图/`）；**收益**：只有一份事实、一个构建、一个门禁 | `.github/workflows/pages.yml`、`book/mkdocs.yml`、`book/hooks/facts.py`、`.gitignore`、`README.md`、`docs-site-plan.md` §2/§6 |
+
+## ② 怎么跑（三条命令）
+
+```bash
+# 站点（唯一站点；构建前必须先生成事实页与素材，所以用 book.py 而不是 mkdocs）
+python -m venv book/.venv
+book/.venv/Scripts/python -m pip install -r book/requirements.txt    # Windows
+# book/.venv/bin/python      -m pip install -r book/requirements.txt # Linux/macOS
+python book/scripts/book.py serve        # → http://127.0.0.1:8000/
+
+# 一致性门禁（改完文档必跑）
+python book/scripts/book.py check
+```
+
+> ⚠️ **不要**直接 `mkdocs serve` / `mkdocs build`：文档站有三类内容必须**构建前先生成**
+> （`facts/facts.json` → `docs/_generated/` → `docs/assets/`），`book/scripts/book.py`
+> 会按这个顺序做完再交给 MkDocs。直接跑 MkDocs 会缺片段或拿到**陈旧的表格**。
+
+## ③ 本阶段的边界（如实记）
+
+* **不碰硬件**：`rtl/` `sim/` `quartus/` 零改动 ⇒ `puzzle.pof` 逐字节未变 ⇒ **无需重烧**。
+* **无 Quartus 复跑**：本阶段没有重新编译、没有跑仿真 —— 所有资源/时序/断言读数**沿用**
+  `quartus/build_provenance.json`（`2026-10-15 16:59:42`）与 `sim/rounds/` 里第 26 工作阶段
+  的那一轮（`r56`/`r57`，各 28/28）。文档站里的数字由 `facts/facts.json` 派生，
+  而 `facts.json` 由这些文件机械抽出 ⇒ 不会"写错"。
+* **缺真实硬件照片**：仓库里 **0 张**开发板实拍。文档站把这一点写成显式缺失，
+  `book/docs/assets/hardware/` 有意为空，并给出补拍清单；不用网页渲染图冒充。
 
 ---
 
@@ -76,9 +133,11 @@
 ## ④ 编译与固件：清洁重编译**逐字节复现** ⇒ 不需要重新烧录
 
 删 `db`/`output_files`/`incremental_db` 后清洁重编译：**1264 / 1270 LE、LAB 127/127、52 引脚、
-Fmax 54.27 MHz、setup +1.572 ns、hold +1.078 ns、0 errors**；`puzzle.pof` **2026-10-15 15:13:21 生成**、
+Fmax 54.27 MHz、setup +1.572 ns、hold +1.078 ns、0 errors**；`puzzle.pof` **2026-10-15 19:06:41 生成**、
 **sha256 与 10-12 那份逐字节相同**（`cc3c69b3…`）⇒ `quartus/build_provenance.json` 已按这次编译重记
-（**timestamp `2026-10-15 16:59:42`、`git_head c6c5f6a`**）。完整面积/时序账见 **`docs/05` §1A'''''**。
+（⚠️ **第 27 工作阶段又重记了一次**以补上机读的 `sta.fmax_mhz` =
+**54.27 MHz**：现为 **timestamp `2026-10-15 19:34:55`、`git_head be941e37`**；
+`.pof` 逐字节未变 ⇒ 只是记录更新）。完整面积/时序账见 **`docs/05` §1A'''''**。
 
 ## ⑤ 12 张 Quartus GUI 实测仿真图（**已全部入库**）
 

@@ -88,39 +88,22 @@ sim/*.history
 output/
 
 # ============================================================
-# 展示站（site/）—— 前端构建产物与临时目录
+# 站点构建产物 —— 2026-10-15 第 27 工作阶段
 # ------------------------------------------------------------
-# ⚠️ 这一节是 2026-10-12 新增的**唯一**改动，理由：
-#    · 仓库原 .gitignore **没有** node_modules/ 规则（此前没有任何前端）；
-#      而本项目最怕的一类事故就是"被 .gitignore 静默挡掉/或反过来把几十万个
-#      依赖文件一并入库"，所以这里显式写清楚哪几类要挡。
-#    · 要入库的是 **site/ 的源码**（package.json / src/ / scripts/ / README.md）；
-#      要挡的是依赖目录、构建产物与临时截图。
-#    · `site/public/figures/` 必须挡：那些图是 `docs/图/` 里已入库文件的**副本**，
-#      由 `site/scripts/sync-figures.mjs` 在每次 dev/build 前同步生成。
-#      同一张图不能有两份真值源（见 site/README.md §4）。
-# ============================================================
-site/node_modules/
-site/dist/
-site/public/figures/
-site/.shots/
-site/.serve/
-site/*.local
-site/.vite/
-
-# ============================================================
-# 技术文档站（book/，Material for MkDocs）—— 2026-10-15 第 27 工作阶段新增
-# ------------------------------------------------------------
-# ⚠️ 这一节挡的是**三类可再生内容**，一类都不能多挡：
-#   · book/.venv/            Python 虚拟环境（几百 MB，pip install 即得）
+# ⚠️ 历史：这里原本还有一整节 `site/`（Vite + React 的工程展示站）的忽略规则。
+#    **用户决定去掉展示站、只保留 `book/`（Material 文档站）并让它占用根路径
+#    `/dld/`**，所以 `site/` 整个目录已删除，本节随之精简。
+#
+# 要挡的三类：
+#   · book/.venv/            Python 虚拟环境（pip install 即得）
 #   · book/site/             mkdocs build 的产物
 #   · book/docs/_generated/  由 book/scripts/gen_pages.py 从 facts/facts.json
 #                            生成的表格页 —— **必须**每次构建前重新生成，
 #                            否则就会出现"源码改了、文档表还是老的"这种
 #                            最难发现的过期（本项目最怕的一类事故）
 #   · book/docs/assets/      从 docs/图/ 同步来的素材副本（真值源只有 docs/图/）
-#     ⚠️ 只挡子目录，不挡 book/docs/assets/brand/ 与 hardware/README.md
-#        —— 那两个是**手写**的品牌图标与"缺失证据"说明，要入库。
+#     ⚠️ 只挡子目录，不挡 assets/brand/、assets/javascripts/ 与 hardware/README.md
+#        —— 那些是**手写/自持**的品牌图标、本地 Mermaid 与"缺失证据"说明，要入库。
 # ============================================================
 book/.venv/
 book/site/

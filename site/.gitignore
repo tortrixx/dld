@@ -1,6 +1,0 @@
-# 站点自己的构建产物与临时目录（上游仓库的 .gitignore 不含这几条）
-node_modules/
-dist/
-public/figures/
-*.local
-.vite/
