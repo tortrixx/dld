@@ -87,18 +87,18 @@ quartus_sim <工程> --mode=functional --overwrite_waveform=on
 
 ### 2.1 拍图前自检：12 个 `.vwf` 里都真的有波形吗？
 
-⭐ **本仓库里的 12 个 `.vwf` 都是 2026-10-12 那一轮全量重跑时由 Quartus 回写的**
+⭐ **本仓库里的 12 个 `.vwf` 都是 2026-10-15 那一轮全量重跑时由 Quartus 回写的**
 （对应当前固件：口径 C / `SEED 8` / 1264 LE），**打开就是最新波形**，不需要重新仿真。
 `.vwf` 的回写格式是嵌套的 `TRANSITION_LIST { NODE { REPEAT=n; LEVEL … FOR …; } }`，
 所以"内容很多"会体现为**段数（`TRANSITION_LIST` 块）**，而不是行数。实测：
 
 | 模块 | `.vwf` 大小 | `TRANSITION_LIST` 段数 | 模块 | `.vwf` 大小 | `TRANSITION_LIST` 段数 |
 |---|---|---|---|---|---|
-| `clk_gen` | 20 737 B | 40 | `disp_format` | 31 899 B | 60 |
+| `clk_gen` | 20 737 B | 40 | `disp_format` | 36 959 B | 60 |
 | `keypad_scan` | 42 842 B | 47 | `game_fsm` | 66 611 B | 54 |
-| `seg_scan` | 64 890 B | 88 | `puzzle_ctrl` | 1 029 641 B | 584 |
+| `seg_scan` | 66 190 B | 88 | `puzzle_ctrl` | 1 029 641 B | 592 |
 | `dot_matrix_scan` | 28 079 B | 51 | `buzzer_ctrl` | 388 246 B | 34 |
-| `rng_lfsr` | 54 254 B | 20 | `puzzle_top` | 646 571 B | 1271 |
+| `rng_lfsr` | 54 549 B | 20 | `puzzle_top` | 646 571 B | 1271 |
 | `pattern_rom` | 29 540 B | 67 | `piece_rom` | 123 855 B | 284 |
 
 > 一个 `TRANSITION_LIST` 段就是一个被观察节点的完整波形（`REPEAT` 会把重复段压紧，
@@ -155,10 +155,14 @@ quartus_sim <工程> --mode=functional --overwrite_waveform=on
    - **不需要手动添加节点**：测试台要观察的中间信号（`OBSERVE` 里那些 `BURIED` 节点，
      如 `buzzer_ctrl` 的 `pre_cnt` / `cnt` / `tone_sel` / `on_now`）**已经写进 `.vwf` 的
      节点表**，打开就在列表里。
-5. **截图**（抓活动窗口，别抓全屏；**拍完把标题栏裁掉**，见 §0.1）
-   - 推荐：**`Alt + PrintScreen`** → 打开"画图" → `Ctrl+V` → **用选择框只框菜单栏以下的部分**
-     → `Ctrl+Shift+X` 裁剪 → 另存为 PNG
-   - 或：**`Win + Shift + S`** 框选（**从菜单栏上沿开始框，别框到标题栏**）→ 到画图里 `Ctrl+V` → 另存为 PNG
+5. **截图**（抓活动窗口，别抓全屏；**按 §0.1 只留 `MDIClient` 那一片**，本机实测成品 **1461×686**）
+   - 先按 §0.1 量出波形编辑器所在的 **MDI 客户区**矩形（本机实测 `MDIClient (246,74)-(1707,760)`）
+   - 推荐：**`Alt + PrintScreen`** → 打开"画图" → `Ctrl+V` → **用选择框按上面那个矩形框住波形编辑器那一片**
+     （⚠️ **不是"只框菜单栏以下"** —— 菜单栏、工具栏、左侧 `Project Navigator` 与 `Tasks/Flow`、
+     底部 `Messages`、状态栏**都不进框**；要保留的只有 `.vwf` 文档标题条/标签栏、`Master Time Bar` 一行、
+     `Name` 节点列表、波形网格 + 时间刻度）→ `Ctrl+Shift+X` 裁剪 → 另存为 PNG
+   - 或：**`Win + Shift + S`** 框选（**框 §0.1 说的 `MDIClient` 那一片**，**别从菜单栏上沿开始** ——
+     菜单栏本身就要裁掉）→ 到画图里 `Ctrl+V` → 另存为 PNG
    - ❌ 不要用单独的 `PrintScreen`（全屏）：会把桌面、浏览器窗口一起拍进去。
 6. **另存为 `<仓库>\docs\图\GUI-<模块>.png`** —— 文件名必须与 §2 表里一致
    （模块名、下划线都要对；`docs/03` §3.1 是按 `GUI-*.png` 通配引用的）

@@ -188,7 +188,7 @@ export const EXTRA_CHECKS: readonly { name: string; result: string; what: string
   },
   {
     name: 'audit_evidence.py',
-    result: '0 FAIL / 1 WARN / 30 OK',
+    result: '0 FAIL / 1 WARN / 31 OK（git 干净树下；脏树时 30 OK）',
     what: '证据链审计：文档里的每个数字是否都能在入库文件里找到。唯一那条 WARN 是"LAB 已满 127/127"——这是事实，不是缺陷',
     path: 'scripts/audit_evidence.py',
   },
@@ -696,7 +696,7 @@ export const SOURCE_ENTRIES: readonly SourceEntry[] = [
   { path: 'sim/rounds/', title: 'sim/rounds/ · 仿真轮次记录', summary: '每一轮的机读 JSON + 人读 Markdown：断言明细、实测值、RTL 指纹、波形指纹。当前全绿的那一轮就是"当前证据"。' },
   { path: 'sim/puzzle_top.vwf', title: 'sim/*.vwf · 12 份波形文件', summary: 'Quartus 内置仿真器会把结果**回写进激励文件本身** ⇒ 这些 .vwf 既是激励也是结果，是入库的交付物。' },
   { path: 'scripts/check_geometry.py', title: 'scripts/check_geometry.py', summary: '几何穷举证明：图案 == 零片并集、精确铺法数量、旋转必需性、旋转实现与独立参考模型逐格全等。' },
-  { path: 'scripts/audit_evidence.py', title: 'scripts/audit_evidence.py', summary: '证据链审计：文档里的每个数字是否都能在入库文件里找到。当前 0 FAIL / 1 WARN / 30 OK。' },
+  { path: 'scripts/audit_evidence.py', title: 'scripts/audit_evidence.py', summary: '证据链审计：文档里的每个数字是否都能在入库文件里找到。当前 0 FAIL / 1 WARN / 31 OK（git 干净树下；脏树时 30 OK，差的正是 F 段"工作树干净"那一条）。' },
   { path: 'quartus/build_provenance.json', title: 'quartus/build_provenance.json', summary: '入库的机读溯源：RTL 逐文件哈希 + 逻辑指纹、固件 sha256、LE / LAB / 引脚、setup / hold slack。这是所有资源与时序数字的**唯一真值源**。' },
 ];
 
@@ -717,43 +717,43 @@ export const RESOURCE_EVOLUTION = [
     label: 'v1 初始',
     le: 958,
     fmax: 42.24,
-    note: '早期版本：四块 2x2 方块的阶段（docs/05:600-603）',
+    note: '早期版本：四块 2x2 方块的阶段（docs/05:604-607）',
   },
   {
     label: '修正移位方向',
     le: 1201,
     fmax: 41.39,
-    note: 'ERR-019：把 srl8 的方向改对之后 958 → 1201 LE；Fmax 42.24 → 41.39 MHz（docs/05:538/603）',
+    note: 'ERR-019：把 srl8 的方向改对之后 958 → 1201 LE；Fmax 42.24 → 41.39 MHz（docs/05:542/607）',
   },
   {
     label: '异形零片',
     le: 1246,
     fmax: 36.68,
-    note: 'ERR-032 之前：换成异形零片后真的实例化了两个变除数除法器，Fmax 掉到 36.68 MHz（docs/05:470）',
+    note: 'ERR-032 之前：换成异形零片后真的实例化了两个变除数除法器，Fmax 掉到 36.68 MHz（docs/05:474）',
   },
   {
     label: '条件相减',
     le: 1254,
     fmax: 50.06,
-    note: 'ERR-032：用"比较 + 条件相减"替掉取模 ⇒ 50.06 MHz，但余量只剩 +0.023 ns（docs/05:471）',
+    note: 'ERR-032：用"比较 + 条件相减"替掉取模 ⇒ 50.06 MHz，但余量只剩 +0.023 ns（docs/05:475）',
   },
   {
     label: '两拍流水 + 资源复用',
     le: 1200,
     fmax: 51.44,
-    note: 'ERR-033：先切两拍流水再打开 AUTO_RESOURCE_SHARING ⇒ 1200 LE / 51.44 MHz，净省 54 LE（docs/05:473）',
+    note: 'ERR-033：先切两拍流水再打开 AUTO_RESOURCE_SHARING ⇒ 1200 LE / 51.44 MHz，净省 54 LE（docs/05:477）',
   },
   {
     label: '功能补齐',
     le: 1268,
     fmax: 54.34,
-    note: '第 22 工作阶段：幽灵改绿 + 2 Hz 闪等改动后的读数（docs/05:17/274）',
+    note: '第 22 工作阶段：幽灵改绿 + 2 Hz 闪等改动后的读数（docs/05:21/278）',
   },
   {
     label: '当前',
     le: 1264,
     fmax: 54.27,
-    note: '2026-10-15 清洁重编译（逐字节复现 10-12 那份固件）：1264 / 1270 LE、LAB 127/127、setup +1.572 ns（build_provenance.json / docs/05:7-8）',
+    note: '2026-10-15 清洁重编译（逐字节复现 10-12 那份固件）：1264 / 1270 LE、LAB 127/127、setup +1.572 ns（build_provenance.json / docs/05:11-12）',
   },
 ] as const;
 

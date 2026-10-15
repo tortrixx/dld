@@ -248,7 +248,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '命令与方向必须同拍锁存（ERR-020 的教训）',
         detail:
           '方向脉冲与移动请求都只有**一个时钟宽（20 ns）**。当初把方向锁存放在引擎流水的第二级，第 T+1 拍采方向时脉冲已经撤销 ⇒ mv_dir 恒为 0、四个方向键全部失效，而上板"看起来没事"。修法：搬进 i_move = \'1\' 那一拍。',
-        cite: 'docs/06-硬件调试记录.md（ERR-020）· rtl/game_fsm.vhd:433',
+        cite: 'docs/06-硬件调试记录.md（ERR-020）· rtl/puzzle_ctrl.vhd:783 · rtl/game_fsm.vhd:412-415',
         active: [5],
         busyLinks: [4],
         holdMs: 1300,
@@ -350,7 +350,7 @@ export const FLOW_SCENARIOS: readonly FlowScenario[] = [
         title: '散落：请求/应答握手（不是单拍脉冲）',
         detail:
           '进入对局时 req_go 置起并**保持**，直到引擎报告 o_busy；go_done 保证一局只请求一次（没有它会不断反复散落、按键全部失效）。散落用拒绝采样，候选锚点范围 ch = 9 − hh、cw = 9 − ww。',
-        cite: 'rtl/game_fsm.vhd:416 · rtl/puzzle_ctrl.vhd:897',
+        cite: 'rtl/game_fsm.vhd:421-438 · rtl/puzzle_ctrl.vhd:897',
         active: [3],
         busyLinks: [2],
         holdMs: 1400,
