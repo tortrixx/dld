@@ -112,10 +112,14 @@ quartus_sim <工程> --mode=functional --overwrite_waveform=on
 | `keypad_scan` | 42 842 B | 47 | `game_fsm` | 66 611 B | 54 |
 | `seg_scan` | 66 190 B | 88 | `puzzle_ctrl` | 1 038 407 B | 592 |
 | `dot_matrix_scan` | 28 079 B | 51 | `buzzer_ctrl` | 388 246 B | 34 |
-| `rng_lfsr` | 54 549 B | 20 | `puzzle_top` | 646 571 B | 1271 |
+| `rng_lfsr` | 54 549 B | 20 | `puzzle_top` | 646 571 B | 1271（⚠️ **8 段子仿真拼接**，见下注） |
 | `pattern_rom` | 29 540 B | 67 | `piece_rom` | 123 855 B | 284 |
 
-> 一个 `TRANSITION_LIST` 段就是一个被观察节点的完整波形（`REPEAT` 会把重复段压紧，
+> ⚠️ **"段数"要分两种读**：**不含子仿真的 `.vwf`**（如 `puzzle_ctrl`：592 段 = 592 个观测节点）里，**一个 `TRANSITION_LIST` 段就是一个被观察节点的完整波形**；
+> 但 **`puzzle_top.vwf` 是 8 段子仿真拼接的**（注释 `/*transitions from sub-simulation number 2..8*/`，连同第 1 段共 **8 段**）——
+> **第 1 段 165 个节点、其余 7 段各 158 个节点**（多出的 7 个是只在第 1 段出现的激励：`clk` / `sw7` / `btn` / `kp_row[0..3]`）
+> ⇒ **1271 段 = 158 × 8 + 7**，而**唯一节点名只有 165 个** ⇒ **在这个文件上"段数 ≠ 节点数"**。
+> 另外，`REPEAT` 会把重复段压紧，
 > 所以段数不多不代表内容少 —— 例如 `i_clk` 只有 1 段，但里面是 `REPEAT = 23000` 的 10 ns 翻转）。
 > 想自己复核：`Select-String -Path sim\*.vwf -Pattern "TRANSITION_LIST" | Group-Object Filename`。
 

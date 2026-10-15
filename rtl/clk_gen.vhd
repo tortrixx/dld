@@ -55,7 +55,7 @@ entity clk_gen is
         o_tick_1k  : out std_logic;                    -- 1 ms 脉冲
         o_tick_200 : out std_logic;                    -- 5 ms 脉冲
         o_tick_100 : out std_logic;                    -- 10 ms 脉冲（当前无人使用）
-        o_tick_2hz : out std_logic;                    -- 500 ms 脉冲（音效节奏）
+        o_tick_2hz : out std_logic;                    -- 500 ms 脉冲（**不是**音效节奏：见文件头 21-23 行；唯一实读者是 board_test_top）
         o_tick_4hz : out std_logic;                    -- 250 ms 脉冲（翻转 → 2 Hz 方波）
         o_tick_1hz : out std_logic;                    -- 1 s 脉冲
         -- 200 Hz / 5 = 40 Hz。
