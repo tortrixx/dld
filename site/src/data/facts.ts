@@ -367,7 +367,7 @@ export const DIAG_TOPS: readonly { entity: string; file: string; when: string; w
     entity: 'board_test_top',
     file: 'rtl/board_test_top.vhd',
     when: '上板第一步：烧进去先确认引脚级假设（位序 / 极性 / 键盘 / 时钟档位）',
-    what: '只实例化 clk_gen / keypad_scan / dot_matrix_scan / seg_scan；自带 1 kHz 蜂鸣器方波；测试序号每 3 s 自动前进、BTN0 短按冻结（RTL 的 `test_idx` 是 **4 位：15→0 回绕，共 16 槽**；其中 **0~10 有定义** —— 第 26 工作阶段新增测试 10「CAT」：8 位数码管各显示自己的位号，读出位选顺序）',
+    what: '只实例化 clk_gen / keypad_scan / dot_matrix_scan / seg_scan；自带 500 Hz 蜂鸣器方波（`rtl/board_test_top.vhd` 第 700~701 行在 `t_1k` 的**单拍脉冲**上翻转 `buzz_r`，`rtl/clk_gen.vhd` 每 1 ms 给一个该脉冲 ⇒ 半周期 1 ms ⇒ **500 Hz** 方波；与 ERR-038 同类的"2 倍算错"）；测试序号每 3 s 自动前进、BTN0 短按冻结（RTL 的 `test_idx` 是 **4 位：15→0 回绕，共 16 槽**；其中 **0~10 有定义** —— 第 26 工作阶段新增测试 10「CAT」：8 位数码管各显示自己的位号，读出位选顺序）',
   },
   {
     entity: 'keypad_diag_top',
