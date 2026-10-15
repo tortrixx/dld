@@ -124,6 +124,10 @@ desktop.ini
 .DS_Store
 *.tmp
 *.log
+# 一次性临时文件（写提交信息、探针脚本等）：`.tmp` 前缀是**文件**的，
+# 上面那两条只挡 `*.tmp` 后缀与 `.tmp/` 目录，挡不住根目录的 `.tmp_xxx.txt`。
+# 2026-10-15 第 27 工作阶段就误提交过一个 `.tmp_commit_msg.txt`。
+.tmp_*
 ~$*
 .vscode/
 .idea/
