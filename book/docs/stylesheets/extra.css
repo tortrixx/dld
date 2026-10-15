@@ -922,6 +922,9 @@ body:has(.home) .md-grid {
   color: var(--muted);
   font-size: 0.98rem;
   line-height: 1.85;
+  /* 中文段落最常见的排版瑕疵是**末行只剩一两个字**（"孤儿行"）。
+     `pretty` 会为最后一行多留几个字，浏览器不支持时自动退回 `auto`。 */
+  text-wrap: pretty;
 }
 .md-typeset .home-actions {
   display: flex;
@@ -1283,6 +1286,20 @@ body:has(.home) .md-grid {
   }
 }
 @media (max-width: 480px) {
+  /* 真实手机宽度（360~430）比无头浏览器能设的最小窗口（512）还窄，
+     所以这几档只能靠推算：把标题下限再压一档，保证"简易拼图游戏"六个字不断行。 */
+  .md-typeset .home-hero h1 {
+    font-size: clamp(2rem, 9vw, 2.7rem);
+  }
+  .md-typeset .home-hero h1 .serif {
+    font-size: 0.8em;
+  }
+  .md-typeset .home-sub {
+    font-size: 1.14rem;
+  }
+  .md-typeset .facts b {
+    font-size: 1.02rem;
+  }
   .md-typeset .home-actions {
     gap: 16px;
   }
