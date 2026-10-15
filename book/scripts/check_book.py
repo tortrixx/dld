@@ -334,6 +334,19 @@ def main() -> int:
                 else:
                     print("  OK    没有外部 CDN 的 <script src>（Mermaid 自持）")
 
+                # 自持 Mermaid 的**机制**检查：Material 的 bundle 只会在
+                # `typeof mermaid == "undefined"` 时才去拉 CDN，所以自持的这份
+                # **必须**把全局 `mermaid` 挂上。挂不上 ⇒ 运行时会静默去 CDN，
+                # 而 grep `<script src>` 是看不出来的（那行字符串在 bundle 里）。
+                mm = os.path.join(dist, "assets", "javascripts", "mermaid.min.js")
+                if os.path.exists(mm):
+                    tail = open(mm, "r", encoding="utf-8", errors="replace").read()[-400:]
+                    if "globalThis[" not in tail or "mermaid" not in tail:
+                        err("自持的 mermaid.min.js 末尾没有把 `mermaid` 挂到全局 —— "
+                            "Material 会退回从 unpkg 拉取（违背'不用外部 CDN'）")
+                    else:
+                        print("  OK    自持 Mermaid 会把 `mermaid` 挂到全局（不会退回 CDN）")
+
             sm = os.path.join(dist, "sitemap.xml")
             if os.path.exists(sm):
                 locs = re.findall(r"<loc>([^<]+)</loc>", open(sm, "r", encoding="utf-8").read())
