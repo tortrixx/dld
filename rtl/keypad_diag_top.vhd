@@ -18,6 +18,7 @@
 --      DISP4      = 目前见过的不同键号个数（上限 9）
 --      DISP3      = 译码后的游戏键数字
 --                      1=UP 2=START 3=DOWN 4=LEFT 5=RIGHT 6=SELECT 7=CONFIRM
+--                      8=ROT（KEY8，A4 顺时针 90°）
 --                      0=无键 / 未映射
 --      DISP2..DISP0 = 行线 ROW1 ROW2 ROW3 的实时二进制值（原始
 --                     电气状态，便于发现悬空的行）
@@ -77,6 +78,9 @@ architecture rtl of keypad_diag_top is
     -- 译码表（与 game_fsm.key_of 一致，这样显示的是同一张映射表）。
     -- ⚠️ 这两处必须一致：以前这里和 game_fsm 不是同一张表，DISP3 会给出误导性的
     --    "功能"读数（DISP7 = 原始键号才是权威读数，与映射无关）。
+    -- ⚠️ 2026-10-15：本表原来**缺 K_ROT**（game_fsm 有 `"1011" => K_ROT`），
+    --    于是按 KEY8（原始键号 11）时 DISP3 显示 0 = "未映射"，与本文件
+    --    自称的"同一张表"矛盾。现在补齐（含下面的 key_digit）。
     -- 物理对照见 rtl/game_fsm.vhd 的注释（板子丝印 KEY1..KEY16）。
     function key_of(idx : std_logic_vector(3 downto 0))
         return std_logic_vector is
@@ -89,6 +93,7 @@ architecture rtl of keypad_diag_top is
             when "0101" => return K_LEFT;     -- KEY10
             when "0111" => return K_RIGHT;    -- KEY12
             when "0110" => return K_CONFIRM;  -- KEY11
+            when "1011" => return K_ROT;      -- KEY8（A4 旋转，与 game_fsm.key_of 一致）
             when others => return K_NONE;     -- 含 "0000" = 无键（KEY13 不可用）
         end case;
     end function;
@@ -105,6 +110,7 @@ architecture rtl of keypad_diag_top is
             when K_RIGHT   => return "0101";
             when K_SELECT  => return "0110";
             when K_CONFIRM => return "0111";
+            when K_ROT     => return "1000";   -- 【旋转】= 8（K_ROT = "1000"）
             when others    => return "0000";
         end case;
     end function;

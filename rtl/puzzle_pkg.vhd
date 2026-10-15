@@ -42,20 +42,21 @@ package puzzle_pkg is
     -- '1' 的个数 —— 仅用于自检 / 离线验证
     function popcount(m : std_logic_vector(63 downto 0)) return integer;
 
-    -- mask_to_px ：把绝对 8x8 掩码转换成 dot_matrix_scan 使用的 64 位像素掩码。
-    -- 位序号 = 8*row + col，bit0 = 左上角。
-    -- 注意这两种约定是**不同**的：
-    --   * 拼图掩码（本包，来自 PDF 图）用 bit0 = 左上角，
-    --     并且写成位串时最左边的点位于 bit63。
-    --   * 显示的像素掩码也用 bit0 = 左上角，但它的构造方式
-    --     保证一次普通移位就能安全地在行内向右移动。
-    --   本函数是两者唯一的交汇处。
+    -- mask_to_px(row, col) ：把**一个格子**的绝对坐标变成"只含该格"的 64 位掩码
+    -- （位序号 = 8*row + col，bit0 = 左上角）—— 签名是 (row, col)、函数体就是
+    -- 一次**独热编码**（见下面的函数体，与它自己的注释一致）。
+    -- ⚠️ 本注释早先写"转换成 dot_matrix_scan 使用的 64 位像素掩码""是两种约定
+    --    唯一的交汇处"，**两处都不成立**：`dot_matrix_scan` 的端口只有两条 **8 位**
+    --    行平面 `i_colr`/`i_colg`（rtl/dot_matrix_scan.vhd:63-68），**全设计不存在
+    --    64 位像素掩码**；位序约定在本包与各模块里本来就是同一套，没有"交汇"问题。
+    -- ⚠️ **本函数当前无调用者**（全工程只有这里的声明与函数体），保留作离线核对。
     function mask_to_px(row : integer; col : integer) return std_logic_vector;
 
     -- shift_mask ：把掩码平移 (dr, dc) 个格子，任何会离开
     -- 8x8 区域的位都被清除。不能直接用 "sll"：把掩码左移
     -- 1 位会让第 r 行最右边的格子绕回
     -- 第 r+1 行最左边的格子（经典的「像素穿墙」bug）。
+    -- ⚠️ **本函数当前无调用者**（全工程只有这里的声明与函数体），保留作教学/离线核对。
     function shift_mask(m : std_logic_vector(63 downto 0);
                         dr : integer; dc : integer)
         return std_logic_vector;
@@ -75,8 +76,13 @@ package puzzle_pkg is
     --           （bit 7..0 = 第 0 行，15..8 = 第 1 行，23..16 = 第 2 行）
     --   sr    ：要取出零片自身的哪一行（0..2）
     -- 返回这一行落在面板行上时贡献的 8 位。
-    -- 用于精确的重叠检测：包围盒检测对第一关用到的
-    -- 十字和 L 形三格块会过度近似，导致合法走法被拒绝。
+    -- ⚠️ **本函数当前无调用者**（全工程只有这里的声明与函数体）：主路径的重叠判定是
+    --    `puzzle_ctrl` 内的局部函数 `row_mask`（多了朝向参数、并补回旋转的锚点偏移，
+    --    见 rtl/puzzle_ctrl.vhd:140-152，在 979/1019 行被调用）；本函数保留作
+    --    教学/离线核对（docs/02 §4 的"主路径不使用"表）。
+    -- 精确重叠检测的动机仍然成立：包围盒检测对第一关用到的
+    -- 1x3 横条、6 格**阶梯形**（3-2-1，见下面 L1_P1 的更正说明）与 L 形三格块
+    -- 会过度近似，导致合法走法被拒绝。
     function row24(shp24 : std_logic_vector(23 downto 0);
                    sr    : integer;
                    ac    : integer) return std_logic_vector;
@@ -389,21 +395,29 @@ package puzzle_pkg is
 
     -- 第 1 级 ：50 MHz -> 1 kHz   （除以 50_000）
     constant CNT_1K  : integer := CLK_HZ / 1_000 - 1;
-    -- 第 2 级 ：1 kHz  -> 200 Hz  （除以 5）      ：点阵 / 键盘扫描
+    -- 第 2 级 ：1 kHz  -> 200 Hz  （除以 5）      ：键盘扫描轮次
+    --   ⚠️ 点阵**行扫描**已改走 tick_1k（`puzzle_top` 的 mrow），不再由 tick_200 驱动。
     constant CNT_200 : integer := 1_000 / 200 - 1;
-    -- 第 3 级 ：200 Hz -> 100 Hz  （除以 2）      ：100 Hz 时基
-    constant CNT_100 : integer := 200 / 100 - 1;
-    -- 第 4 级 ：100 Hz -> 2 Hz    （除以 50）     ：闪烁 / 自检闪示
-    constant CNT_2HZ : integer := 100 / 2 - 1;
-    -- 第 5 级 ：100 Hz -> 1 Hz    （除以 100）    ：秒计数器
-    constant CNT_1HZ : integer := 100 / 1 - 1;
+    -- ⚠️ 以下四个常量**当前无使用者**（保留作历史/参考）：
+    --    `clk_gen` 只用到 CNT_1K / CNT_200 / CNT_4HZ（rtl/clk_gen.vhd:124/132/154）；
+    --    第 4/5/6 级早已**合并成一条链**（一个 25 分频计数器 c25 + 2 位计数，
+    --    见 rtl/clk_gen.vhd:70-85 与 153-174），所以早先这里写的"第 3/4/5 级
+    --    级联链"结构**已不存在**，下面几条的"级/角色"描述一并作废。
+    constant CNT_100 : integer := 200 / 100 - 1;   -- 原"100 Hz 时基"：无使用者
+    constant CNT_2HZ : integer := 100 / 2 - 1;     -- 原"闪烁 / 自检闪示"：无使用者
+                                                   --   （ERR-038 后自检闪烁改由 tick_4hz
+                                                   --    承担，见下面 CNT_4HZ）
+    constant CNT_1HZ : integer := 100 / 1 - 1;     -- 原"秒计数器"：无使用者
     -- ⚠️ 第 6 级 ：100 Hz -> **4 Hz**（除以 25，= 250 ms 一个脉冲）
     --    2026-10-09 第 11 工作阶段（全项目审计发现，ERR-038）：B1 要求自检"以 **2 Hz**
     --    闪烁"。原来的做法是"每个 tick_2hz（500 ms）翻转一次 blink_r"，得到的是
     --    **1 s 周期 = 1 Hz** 的方波 —— 只有要求的一半，而且四处注释/文档都按 2 Hz 记账
     --    （与 ERR-031 同类的"2 倍算错"）。2 Hz 方波需要**每 250 ms 翻转一次**，
     --    所以这里加一路 4 Hz 节拍：game_fsm 在它上面翻转 → 真正的 2 Hz、50% 占空。
-    --    tick_2hz 继续保留（蜂鸣器节奏、旧断言都用它），语义不再当"闪烁"。
+    --    tick_2hz 继续保留，语义不再当"闪烁"。⚠️ 它**不是**"蜂鸣器节奏"（本注释
+    --    早先这么写，不成立）：蜂鸣器的换步时钟是 **i_t4 = tick_4hz**
+    --    （rtl/buzzer_ctrl.vhd:125、rtl/puzzle_top.vhd:827）；tick_2hz 目前只有
+    --    `board_test_top` 的自检在数它。
     constant CNT_4HZ : integer := 100 / 4 - 1;
 
     -- 上电复位 ：数 tick_1k 脉冲，所以只需要一个 4 位计数器
@@ -415,6 +429,8 @@ package puzzle_pkg is
 
     -- 复位按键消抖（数 tick_1k = 1 ms）
     constant T_BTN_MS  : integer := 20;
+    -- ⚠️ **当前无使用者**（保留作参考）：`clk_gen` 的 bcnt 直接与 T_BTN_MS 比较
+    --    （rtl/clk_gen.vhd:214/221），没有用这个"减一"常量。
     constant CNT_BTN   : integer := T_BTN_MS - 1;
 
     ----------------------------------------------------------------------------
@@ -634,10 +650,13 @@ package body puzzle_pkg is
     end function;
 
     -- 把 m 中的每个 '1' 平移 (dr, dc) 个格子。任何被推出 8x8
-    -- 区域的位都会被**丢弃**，这正是要求 B7（「零片不得离开
-    -- 8x8 区域」）所依赖的：调用方可以检测丢失，而不必
-    -- 预先钳位，而且朴素地对整条向量做 "sll" 绝不会把一个格子从
+    -- 区域的位都会被**丢弃**，而且朴素地对整条向量做 "sll" 绝不会把一个格子从
     -- 一行的末尾漏到下一行的开头。
+    -- ⚠️ 本注释早先写"这正是要求 B7（「零片不得离开 8x8 区域」）所依赖的：
+    --    调用方可以检测丢失" —— **不成立**：本函数当前**无调用者**，也不存在那个
+    --    "调用方"。B7 的实际守卫在 `puzzle_ctrl`：移动前的**夹紧**
+    --    （rtl/puzzle_ctrl.vhd:806-814）加上解析式边界判定
+    --    `(cr+hh <= 8) and (cc+ww <= 8)`（同文件 850 行，用的是**旋转之后**的高宽）。
     function shift_mask(m : std_logic_vector(63 downto 0);
                         dr : integer; dc : integer)
         return std_logic_vector is

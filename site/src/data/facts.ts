@@ -65,7 +65,7 @@ export const STACK: readonly { label: string; value: string }[] = [
 ];
 
 /* ================================================================== *
- * 一、真实读数（当前固件：2026-10-12 19:54 清洁重编译）
+ * 一、真实读数（当前固件：2026-10-15 15:13:21 清洁重编译；sha256 与 10-12 那份逐字节相同）
  * ================================================================== */
 
 export interface Metric {
@@ -121,10 +121,10 @@ export const HEADLINE_METRICS: readonly Metric[] = [
   },
   {
     label: '仿真断言',
-    value: '179',
+    value: '184',
     unit: '条全过',
-    note: '12 个模块/场景；整机两种场景各 28 条。见下方断言分布表',
-    source: { path: 'HANDOFF.md', line: 1007, note: '第 25 工作阶段全量重跑记录' },
+    note: '12 个模块/场景（整机两种场景各 28 条）；轮次与条数的所有者是 docs/03 §2。见下方断言分布表',
+    source: { path: 'docs/03-仿真验证方案.md', note: '§2 覆盖情况总览（唯一所有者）' },
   },
   {
     label: 'Fitter seed',
@@ -135,11 +135,11 @@ export const HEADLINE_METRICS: readonly Metric[] = [
 ];
 
 export const BUILD_PROVENANCE = {
-  timestamp: '2026-10-12 19:55:09',
-  gitHead: '06686b6a',
+  timestamp: '2026-10-15 16:59:42',
+  gitHead: 'c6c5f6a7',
   quartus: 'Quartus II 9.1 Build 222 10/21/2009 SJ Full Version',
   pofBytes: 27312,
-  pofMtime: '2026-10-12 19:54:53',
+  pofMtime: '2026-10-15 15:13:21',
   pofSha256: 'cc3c69b3419f40a20eaf310eb3259d25ff342b56f3b0d52ab270a6ca7e41aea3',
   clockConstraint: 'create_clock -name clk -period 20.000 → 50 MHz / 20 ns',
   ioDelay: 'set_input_delay / set_output_delay 各 5.000 ns（外设全是慢速人机接口器件）',
@@ -157,21 +157,21 @@ export interface SimRow {
 }
 
 export const SIM_COVERAGE: readonly SimRow[] = [
-  { module: 'puzzle_top', round: 'r52 / r53', assertions: 28, note: '整机模式 A / B 各 28 条（三关流程、胜负画面、幽灵、音效链路）' },
-  { module: 'game_fsm', round: 'r34', assertions: 30, note: '主状态机与倒计时、关卡切换、命令译码' },
-  { module: 'puzzle_ctrl', round: 'r34', assertions: 27, note: '引擎：重叠判定、选中/锁定、旋转、整帧判据（该轮"RTL 补丁：无"）' },
-  { module: 'buzzer_ctrl', round: 'r35', assertions: 16, note: '音高表、方波计数、16 步乐句' },
-  { module: 'disp_format', round: 'r22', assertions: 15, note: '状态 → 数码管内容；含口径 C 的 DISP2 全局熄灭钉子' },
-  { module: 'seg_scan', round: 'r25', assertions: 11, note: '位选扫描与 7 段译码（含 A/P/S/F/L 字母）' },
-  { module: 'clk_gen', round: 'r22', assertions: 10, note: '分频链与复位计数' },
-  { module: 'piece_rom', round: 'r20', assertions: 10, note: '形状库与包围盒、每关零片数' },
-  { module: 'keypad_scan', round: 'r24', assertions: 9, note: '四相扫描 + 消抖 40 ms' },
-  { module: 'rng_lfsr', round: 'r19', assertions: 9, note: 'x⁸+x⁶+x⁵+x⁴+1，周期 255' },
-  { module: 'pattern_rom', round: 'r18', assertions: 8, note: '图案库按 i_pat 查表' },
-  { module: 'dot_matrix_scan', round: 'r19', assertions: 6, note: '8 行扫描与行序' },
+  { module: 'puzzle_top', round: 'r56 / r57', assertions: 28, note: '整机模式 A / B 各 28 条（三关流程、胜负画面、幽灵、音效链路；① 已加强为"每位槽段码集合同时含 0x7F 与 0x00"）' },
+  { module: 'game_fsm', round: 'r36', assertions: 30, note: '主状态机与倒计时、关卡切换、命令译码' },
+  { module: 'puzzle_ctrl', round: 'r37', assertions: 28, note: '引擎：重叠判定、选中/锁定、旋转、整帧判据（含 ⑳ 主路径竞态；该轮"RTL 补丁：无"）' },
+  { module: 'buzzer_ctrl', round: 'r37', assertions: 16, note: '音高表、方波计数、16 步乐句' },
+  { module: 'disp_format', round: 'r27', assertions: 16, note: '状态 → 数码管内容；含口径 C 的 DISP2 全局熄灭钉子与 ⑦b（t=0..63 全表逐项）' },
+  { module: 'seg_scan', round: 'r31', assertions: 12, note: '位选扫描与 7 段译码（含 A/P/S/F/L 字母、⑧b en 压过 raw_en）' },
+  { module: 'clk_gen', round: 'r25', assertions: 10, note: '分频链与复位计数' },
+  { module: 'piece_rom', round: 'r23', assertions: 10, note: '形状库与包围盒、每关零片数' },
+  { module: 'keypad_scan', round: 'r27', assertions: 9, note: '四相扫描 + 消抖 40 ms' },
+  { module: 'rng_lfsr', round: 'r23', assertions: 10, note: 'x⁸+x⁶+x⁵+x⁴+1，周期 255；⑩ 跑开后复位回 SEED_DEFAULT' },
+  { module: 'pattern_rom', round: 'r21', assertions: 8, note: '图案库按 i_pat 查表' },
+  { module: 'dot_matrix_scan', round: 'r23', assertions: 7, note: '8 行扫描与行序；⑤b 早采样点（+20 ns）无混合态' },
 ];
 
-export const SIM_TOTAL_ASSERTIONS = 179;
+export const SIM_TOTAL_ASSERTIONS = 184;
 
 export const EXTRA_CHECKS: readonly { name: string; result: string; what: string; path: string }[] = [
   {
@@ -182,7 +182,7 @@ export const EXTRA_CHECKS: readonly { name: string; result: string; what: string
   },
   {
     name: 'check_plans.py',
-    result: 'ALL PLAN CHECKS PASSED（⚠️ 长期未复跑，见局限）',
+    result: 'ALL PLAN CHECKS PASSED',
     what: '用带旋转的 A* 从零重解四份走法计划（19 / 34 / 24 / 30 条按键），并验证删掉全部 rot 命令后无解',
     path: 'scripts/check_plans.py',
   },
@@ -591,16 +591,22 @@ export const LIMITATIONS: readonly Limitation[] = [
     source: 'docs/06 §21（ERR-055）· §22',
   },
   {
-    title: '12 张 Quartus GUI 实测波形图只拍了 1 张',
+    title: '12 张 Quartus GUI 实测波形图已入库',
     detail:
-      '报告用的"实测仿真截图"必须以 Quartus 界面截图为准（带菜单栏、工程名、节点表、时间刻度），脚本画的矢量波形只能当辅助对照。目前入库的是 clk_gen 那一张，其余 11 张在 docs/图/README.md 的清单里标着"待拍"。',
+      '报告用的"实测仿真截图"必须以 Quartus 界面截图为准（带工程名、节点表、时间刻度），脚本画的矢量波形只能当辅助对照。**12 张 `docs/图/GUI-*.png` 已全部入库**（2026-10-15 拍摄，逐张对应关系与用途由 `docs/图/README.md` 拥有）；`docs/图/SIM-*.svg` 是脚本渲染的辅助图，不是实测截图。',
     source: 'docs/图/README.md §2',
   },
   {
-    title: '两份离线检查的复跑欠账',
+    title: '诊断顶层 BTN0 的松手抖动未做消抖',
     detail:
-      'check_plans.py（拼图规划与可解性穷举）长期未复跑；此前还有一处"注释改动导致固件严格指纹不一致"，已随本轮清洁重编译 + 重记溯源一并清掉。',
-    source: 'HANDOFF.md · docs/06',
+      '`board_test_top` 的"短按 BTN0 冻结 / 长按复位"靠 `clk_gen` 的 20 ms 复位滤波分开，但**没有对 BTN0 的松手抖动做消抖**（只保留两级同步器）⇒ 一次松手抖动可能被当成多次"松手沿"、把冻结状态来回切。彻底修需在该顶层加 4~8 个寄存器的消抖，当时判定超出范围、未加 —— 这只影响诊断顶层的手感，不影响主固件与游戏逻辑。',
+    source: 'HANDOFF.md · docs/06 §11（ERR-039 相关）',
+  },
+  {
+    title: '两条已知但未补的测试台覆盖缺口',
+    detail:
+      '深审列出、当时未动：(a) `tb_game_fsm` 的自检窗口判据对**相位**仍有依赖（只覆盖了与 1 Hz 网格错开 700 ns 的一种相位）；(b) `tb_keypad_scan` 的扫描相窗口只在有限几个相位上取样。两条都不影响已有结论，但"没覆盖到的相位"不等于"没问题"。',
+    source: 'HANDOFF.md · .tmp 深审结论（2026-10-15）',
   },
 ];
 
@@ -633,7 +639,7 @@ export const DOC_ENTRIES: readonly DocEntry[] = [
     path: 'docs/03-仿真验证方案.md',
     title: '03 · 仿真验证方案',
     summary:
-      '验证方案与覆盖总览的**所有者**（12 个模块/场景、179 条断言）：每条断言在验什么、怎么激励、边界条件怎么造、波形图在哪。',
+      '验证方案与覆盖总览的**所有者**（12 个模块/场景、184 条断言）：每条断言在验什么、怎么激励、边界条件怎么造、波形图在哪。',
     tag: '验证',
   },
   {
@@ -686,7 +692,7 @@ export interface SourceEntry {
 export const SOURCE_ENTRIES: readonly SourceEntry[] = [
   { path: 'rtl/', title: 'rtl/ · 16 个 VHDL 源文件', summary: '12 个设计模块 + 3 个诊断顶层 + 1 个包（puzzle_pkg）。整机顶层 puzzle_top 是唯一做引脚绑定的文件。' },
   { path: 'sim/tb_puzzle_top.py', title: 'sim/tb_puzzle_top.py', summary: '整机测试台：三关完整流程、真实矩阵键号、胜负画面、幽灵提示与音效链路（28 条断言）。' },
-  { path: 'sim/tb_puzzle_ctrl.py', title: 'sim/tb_puzzle_ctrl.py', summary: '引擎测试台：重叠判定、选中/锁定、旋转、整帧判据（27 条断言）。' },
+  { path: 'sim/tb_puzzle_ctrl.py', title: 'sim/tb_puzzle_ctrl.py', summary: '引擎测试台：重叠判定、选中/锁定、旋转、整帧判据（28 条断言，含 ⑳ 主路径竞态）。' },
   { path: 'sim/rounds/', title: 'sim/rounds/ · 仿真轮次记录', summary: '每一轮的机读 JSON + 人读 Markdown：断言明细、实测值、RTL 指纹、波形指纹。当前全绿的那一轮就是"当前证据"。' },
   { path: 'sim/puzzle_top.vwf', title: 'sim/*.vwf · 12 份波形文件', summary: 'Quartus 内置仿真器会把结果**回写进激励文件本身** ⇒ 这些 .vwf 既是激励也是结果，是入库的交付物。' },
   { path: 'scripts/check_geometry.py', title: 'scripts/check_geometry.py', summary: '几何穷举证明：图案 == 零片并集、精确铺法数量、旋转必需性、旋转实现与独立参考模型逐格全等。' },
@@ -747,7 +753,7 @@ export const RESOURCE_EVOLUTION = [
     label: '当前',
     le: 1264,
     fmax: 54.27,
-    note: '第 25 工作阶段清洁重编译：1264 / 1270 LE、LAB 127/127、setup +1.572 ns（build_provenance.json / docs/05:7-8）',
+    note: '2026-10-15 清洁重编译（逐字节复现 10-12 那份固件）：1264 / 1270 LE、LAB 127/127、setup +1.572 ns（build_provenance.json / docs/05:7-8）',
   },
 ] as const;
 

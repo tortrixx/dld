@@ -274,6 +274,21 @@ def do_check(module, round_no=None, quiet=False, record=False, fingerprint=None)
         _write_round(module, round_no, results, fingerprint)
     elif not quiet:
         print("  （只读复核：未写轮次记录、未重画波形图；要落盘请加 --record）")
+    # ⚠️⚠️ 2026-10-15 深审（对抗验证确认）：原来是 `n_pass == len(results)` ——
+    #    **空断言列表也满足 0 == 0** ⇒ 一条断言都没跑会被判成"全部通过"，
+    #    退出码 0、轮次记录里 all_pass=true，`audit_evidence.py` 还会把它当新鲜绿证。
+    #    对"把断言写在采样/窗口循环里"的 tb（本仓库大量如此）尤其危险：
+    #    循环体一次都不执行时，正是这个假绿。
+    #    ⇒ 现在要求 **results 非空**，并且由 tb 声明 EXPECTED_ASSERTIONS 时还要条数相符。
+    want = getattr(tb, "EXPECTED_ASSERTIONS", None)
+    if not results:
+        if not quiet:
+            print("  ✗ **一条断言都没有产生** —— 这不算通过（见 sim.py 里这条守卫的注释）")
+        return False, results
+    if isinstance(want, int) and want != len(results):
+        if not quiet:
+            print("  ✗ 断言条数不符：tb 声明 %d 条，实际产生 %d 条" % (want, len(results)))
+        return False, results
     return n_pass == len(results), results
 
 

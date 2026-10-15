@@ -4,7 +4,8 @@
 【这一轮要回答什么】
     前面 11 个模块各自验过之后，最后要回答的是**整机**问题：
     「把按键真的按下去，整条链路会不会按需求走完？」
-      · B1  SW7=1 → 点阵全黄 2 Hz 闪 + 8 位数码管全显 "8"
+      · B1  SW7=1 → 点阵全黄 2 Hz 闪 + 8 位数码管全显 "8"（且**同一 2 Hz 相位**在
+            0x7F「8」与 0x00 消隐之间交替 —— 顶层 `i_blink` 的整机判据，见断言 ①）
       · B2  2 秒后待机：点阵全灭、DISP7='5'、DISP0='1'、其余全灭
       · B4  按【开始】→ 点阵显示完整图 4-1（第 2~5 行 x 第 2~4 列 = 12 格）、DISP7 倒计时
       · B5  预览 5 秒后散落：点阵出现零片、DISP4:DISP3 出现 30 秒倒计时
@@ -632,13 +633,27 @@ def check(vf):
                 n_other += 1
         t += 20_000.0                       # 20 us 一个采样点（远小于 400 us 半周期）
     _, _, _, dig_s = scan_panel(vf, T_SELFTEST[0], T_SELFTEST[1], 2000.0)
-    all8 = all("8" in [DIGITS.get(s, "?") for s in dig_s.get(i, set())] for i in range(8))
+    # ⚠️ 2026-10-15 补：原来这里只判"每个位槽出现过 '8'（段码 0x7F）"，**不检查消隐
+    #    0x00** ⇒ 顶层 `i_blink => gblink`（rtl/puzzle_top.vhd:582）这根线在**整机层
+    #    没有任何判据**：把它接成常数 '1'，数码管就从"2 Hz 闪"变成"常亮 8"，
+    #    而原来这条断言照样全绿（"断言不可能失败"）。
+    #    ⇒ 现在同时要求每个位槽的段码集合里**既有 0x7F 又有 0x00**（真的在闪）。
+    #    实测（现有波形复核）：8 个位槽全部 {0x7F, 0x00}；且 0x7F 只出现在点阵
+    #    "全黄"的那些采样点上、0x00 只出现在点阵"全灭"的采样点上 —— 与 gblink
+    #    同一个 2 Hz 相位（同一份相位探针见交付说明）。
+    dig_vals = {i: {DIGITS.get(s, "?") for s in dig_s.get(i, set())} for i in range(8)}
+    all8 = all("8" in v for v in dig_vals.values())
+    no_blank = sorted(i for i, v in dig_vals.items() if " " not in v)
     res.append((
         "① B1 自检：点阵**全黄**并以 2 Hz 方波闪烁（亮/灭各占约一半，ERR-011 回归），"
-        "8 位数码管全部出现 \"8\"",
-        n_yellow > 5 and n_dark > 5 and n_other == 0 and all8,
-        "采样 %d 个：全黄 %d、全灭 %d、其它 %d；8 位数码管都出现过 '8' = %s"
-        % (n_yellow + n_dark + n_other, n_yellow, n_dark, n_other, all8),
+        "8 位数码管**每个位槽都同时出现过 \"8\"(0x7F) 与消隐(0x00)**"
+        "（即数码管也真的在 2 Hz 闪；只查 0x7F 时顶层 `i_blink` 这根线在整机层无判据）",
+        n_yellow > 5 and n_dark > 5 and n_other == 0 and all8 and not no_blank,
+        "采样 %d 个：全黄 %d、全灭 %d、其它 %d；8 位数码管都出现过 '8' = %s；"
+        "都出现过消隐 0x00 = %s（未见消隐的位槽 = %s）；各位槽段码集合 = %s"
+        % (n_yellow + n_dark + n_other, n_yellow, n_dark, n_other, all8,
+           not no_blank, no_blank or "无",
+           {i: sorted(dig_vals[i]) for i in range(8)}),
     ))
 
     # ② B2 待机
@@ -1052,7 +1067,12 @@ def check(vf):
         (T_WIN + 1_500_000.0, 0x6, "通关胜利 = 过关号角（0110）"),
         (T_FAIL_SCREEN + 1_500_000.0, 0x7, "失败 = Game Over（0111）"),
     ]
-    bad = ["%s：实测 %s" % (nm, ("%04d" % bin(v)[2:]) if v is not None else "缺观测点")
+    # ⚠️ 2026-10-15：这里原来是 `("%04d" % bin(v)[2:])` —— `%d` 收到的是**字符串**
+    #    ⇒ 只要有一个音效码对不上（`bad` 非空），check() 就**抛 TypeError 崩掉**，
+    #    而不是如实报"⑱ 失败"。也就是说：⑱ 的**失败路径从来没跑通过**
+    #    （判据一失败就变成异常，`sim.py check` 连"合计：N / N 通过"都打不出来）。
+    #    改成 `format(v, "04b")`（None 由前面的 `if v is not None` 挡住）。
+    bad = ["%s：实测 %s" % (nm, (format(v, "04b")) if v is not None else "缺观测点")
            for (t, want, nm) in cases for v in [_snd(t)] if v != want]
     res.append((
         "⑱ ★【音效 · 整机】六个常驻场景的音效码经 `game_fsm.sound_p → buzzer_ctrl.i_sel` "

@@ -67,6 +67,13 @@
       一行有缝 —— 帧头才拍 pos/level/pat 快照、帧尾才发布判据，两者之间只覆盖
       7 行；变化正好落进那一行时，那一帧仍被判为"干净"。因此断言 ⑰ 用**一串
       相位互不相同的翻转**（12 次、间隔与帧长互质），而不是翻一次。
+    · ⑳（2026-10-15 新增）：`o_all_lock = alllock_r and frm_valid` 与
+      `o_solved = frm_ok and alllock_r` 都是**组合**输出，而 `frm_ok/frm_valid` 只在
+      **帧尾**刷新 ⇒ 理论上存在"pos/ori 提交之后、下一次帧尾之前 o_all_lock 已经
+      拉高、而依据的还是上一帧判据"的窗口（消费端 game_fsm 在 S_PLAYING 里每拍都在
+      看 i_solved/i_all_lock）。⑳ 把这条钉成断言：**逐提交窗口**要求 o_all_lock 全 0，
+      并同时报出窗口内 frm_valid=1 的采样数，防止它退化成同义反复。
+      实测（本 tb 现有激励）：窗口真实存在、但 o_all_lock 从未为 1 —— 见 ⑳ 的实测值。
 
 【端口位序的一个不一致，本 tb 必须按实际约定读】
     掩码类端口（i_target / i_sh*）用 `bit = 8*行 + 列`（bit0 = 左上角）；
@@ -75,6 +82,7 @@
     功能上自洽 —— 但同一模块里两套位序是**易错点**，本 tb 按实际约定取样。
 """
 
+import bisect
 import pathlib
 import re
 
@@ -436,6 +444,13 @@ HAS_FRAME_VERDICT = "frm_ok" in _CTRL_SRC
 # ⚠️ pos_frm 不再观测：渲染器改成两拍流水后综合器把这份"本帧锚点快照"并进了别的
 #    网（综合后网表里找不到节点），而断言只需要 frm_ok/frm_valid/frm_bad。
 VERDICT_NODES = ["frm_ok", "frm_valid", "frm_bad"]
+# ⑳（2026-10-15）：为了把「pos/ori 提交 → 整帧判据重算」这条**时序**钉死，还要三个
+#    **已存在**的内部节点（都在综合后网表的节点表里，`.tmp/sim_puzzle_ctrl/output_files/
+#    puzzle.sim.rpt` 里是 regout 节点）：
+#      · pos_cnt   —— RTL 自己的"本帧 pos 变过没有"计数器（每次提交 +1，见 CH_DONE）；
+#      · row_new / row_a —— 第一拍进程的"发布整行"握手，第二拍进程靠它写帧尾判据。
+if HAS_FRAME_VERDICT:
+    VERDICT_NODES = VERDICT_NODES + ["pos_cnt", "row_new", "row_a"]
 if HAS_FRAME_VERDICT:
     OBSERVE = OBSERVE + VERDICT_NODES
 
@@ -732,6 +747,13 @@ def build(b):
             else:
                 b.output_bus(n, w)
             _buried(b, n, w)
+        # ⑳：提交/帧尾事件的观测点（同样是"内部节点"，用 BURIED 声明）
+        for n, w in (("pos_cnt", 4), ("row_new", 1), ("row_a", 3)):
+            if w == 1:
+                b.output_bit(n)
+            else:
+                b.output_bus(n, w)
+            _buried(b, n, w)
 
     b.clock("i_clk", CLK)
     b.segments("i_rst", [(500.0, 1), (DURATION - 500.0, 0)])
@@ -954,6 +976,46 @@ def _engine_walk(vf, t0, t1, tag):
         n_hit += exp_hit
         i = j + 1
     return errs, n_checks, n_cmp, n_hit, n_rot, n_edge
+
+
+def _tick_of(t):
+    """i_clk 上升沿在 10 + 20k（低起、50% 占空）；采样点取 20m + 15 = 沿后 5 ns。"""
+    return int(round((t - 10.0) / CLK))
+
+
+def _commit_and_tail_ticks(vf):
+    """⑳ 用 OBSERVE 里的**真实节点**还原两串事件（拍号 m ⇔ 时刻 20m + 15）：
+
+      · **提交拍** = `pos_cnt` 变化的那一拍。RTL 里 pos/ori 的每一次提交（散落落位、
+        被接受的移动、被接受的旋转、16 次失败后的兜底回退）都执行
+        `pos_cnt <= pos_cnt + 1`（puzzle_ctrl 的 CH_DONE 分支）—— 这正是它自己
+        "本帧 pos 变过没有"的依据。o_pos / o_ori 的变化**也**并进来做双保险。
+      · **帧尾拍** = 第二拍进程写 frm_valid/frm_ok 的那一拍，由 row_new/row_a 精确
+        还原：第一拍进程在发布拍 E 把 row_new 置 1、row_a 置 7，而第二拍进程由
+        i_tick 门控（200 ns = 10 个 i_clk 拍）⇒ 判据写在 **E + 10**。
+        （这条模型在断言里会**自校验**：frm_valid/frm_ok 的每一次跳变都必须落在
+          还原出的帧尾拍上 —— 否则"事件模型错了 ⇒ 断言退化成同义反复"。）
+
+    返回 (提交拍列表, 帧尾拍列表)，均升序去重。
+    """
+    commits = set()
+    for b in range(4):
+        for (t, _lv) in vf.trace("pos_cnt[%d]" % b)[1:]:
+            commits.add(_tick_of(t))
+    for nm in (["o_pos[%d]" % b for b in range(32)]
+               + ["o_ori[%d]" % b for b in range(8)]):
+        for (t, _lv) in vf.trace(nm)[1:]:
+            commits.add(_tick_of(t))
+    tails = set()
+    for (t, lv) in vf.trace("row_new"):
+        if lv != "1":
+            continue
+        m = _tick_of(t)
+        if m < 0:
+            continue
+        if vf.bus_value_at("row_a", 10.0 + CLK * m + 5.0) == 7:
+            tails.add(m + 10)
+    return sorted(c for c in commits if c > 0), sorted(tails)
 
 
 def check(vf):
@@ -1482,5 +1544,86 @@ def check(vf):
         % (len(SOLVE_PLAN), rejX, len(uX), uX == tgtL1, oriX, list(ORI_INIT[:NP]),
            rejY, len(uY), uY == tgtL1, oriY, posY),
     ))
+
+    # ================================================================
+    # ⑳ ★【主路径竞态】o_all_lock / o_solved 依据的整帧判据，必须是
+    #    "该次 pos/ori 提交**之后**重新算出来的"
+    #
+    # 症状（本轮要钉住的性质）：`frm_ok/frm_valid` 只在**帧尾**（rb=7 分支）刷新，
+    # 而 `o_all_lock = alllock_r and frm_valid`、`o_solved = frm_ok and alllock_r`
+    # 是**组合**输出（alllock_r 又是 locked 的纯组合）。于是"最后一次 pos/ori 提交"
+    # 之后、下一次帧尾之前，frm_valid/frm_ok 还是**上一帧**的值；alllock_r 一旦
+    # 因最后一次【确认】拉高，o_all_lock 就当场为 1 —— 而 game_fsm 在 S_PLAYING 里
+    # **每拍**都在看 i_solved/i_all_lock（rtl/game_fsm.vhd 的 337/350 行）：
+    # i_all_lock='1' 而 i_solved 还是旧的 '0' 就直接判 S_FAIL（拼对了出叉）；
+    # 反向（frm_ok 旧值 =1）则是假胜。
+    #
+    # 判据：对**每一个**提交拍 c，在窗口 [c, 下一次帧尾拍) 的**每一个**采样拍上，
+    #       o_all_lock 都必须为 0。
+    # 非平凡性（防同义反复）：同时报出窗口内 frm_valid=1（= 陈旧判据**仍然有效**）
+    #       的采样数，它必须 > 0；否则说明窗口根本没被激励到，这条断言没有测到东西。
+    # ================================================================
+    if not HAS_FRAME_VERDICT:
+        res.append((
+            "⑳ ★【主路径竞态】o_all_lock/o_solved 依据的整帧判据必须是 pos/ori 提交"
+            "**之后**重算的（提交后、下一次帧尾之前 o_all_lock 不得为 1）",
+            True,
+            "该版 RTL 没有整帧判据（frm_valid/frm_ok）⇒ 本判据不适用；"
+            "当前仓库的 rtl/puzzle_ctrl.vhd 有，本断言在它上面是**实跑**的",
+        ))
+    else:
+        commits, tails = _commit_and_tail_ticks(vf)
+        tails_set = set(tails)
+        # ---- 事件模型自校验：判据寄存器的每一次跳变都必须落在还原出的帧尾拍上
+        n_tr, bad_tr = 0, []
+        for nm in ("frm_valid", "frm_ok"):
+            for (t, _lv) in vf.trace(nm)[1:]:
+                if _tick_of(t) < 1:          # 跳过复位沿（t=10）
+                    continue
+                n_tr += 1
+                if _tick_of(t) not in tails_set:
+                    bad_tr.append((nm, t))
+        # ---- 逐提交窗口检查
+        viol, n_win, n_stale, min_w, max_w = [], 0, 0, None, 0
+        for c in commits:
+            i = bisect.bisect_right(tails, c)     # 严格晚于 c 的**第一个**帧尾拍
+            if i >= len(tails):
+                continue                          # 提交之后仿真就结束了：没有窗口
+            T = tails[i]
+            min_w = (T - c) if min_w is None else min(min_w, T - c)
+            max_w = max(max_w, T - c)
+            for m in range(c, T):
+                t = 10.0 + CLK * m + 5.0
+                n_win += 1
+                if _v(vf, "frm_valid", t) == "1":
+                    n_stale += 1
+                if _v(vf, "o_all_lock", t) == "1":
+                    viol.append((t, c, T))
+        ok20 = ((not viol) and (not bad_tr) and n_tr > 0 and len(commits) > 0
+                and len(tails) > 0 and n_win > 0 and n_stale > 0)
+        det20 = ("提交拍 %d 个（pos_cnt 变化 / o_pos / o_ori 变化）、帧尾拍 %d 个；"
+                 "逐提交窗口 [提交拍, 下一次帧尾拍) 共 %d 个采样拍，其中 frm_valid=1"
+                 "（陈旧判据**仍然有效**）%d 个 —— 窗口真实存在；**o_all_lock=1 的采样 "
+                 "%d 个（必须 0）**；窗口长度 %d~%d 个 i_clk 拍（一帧 = %d/%d 拍）；"
+                 "事件模型自校验：frm_valid/frm_ok 共 %d 次跳变，不在还原出的帧尾拍上的 "
+                 "%d 次"
+                 % (len(commits), len(tails), n_win, n_stale, len(viol),
+                    min_w or 0, max_w,
+                    8 * ROW_TICKS_L1 * int(TICK / CLK), 8 * ROW_TICKS_L2 * int(TICK / CLK),
+                    n_tr, len(bad_tr)))
+        if viol:
+            det20 += ("；**首次违反** t=%.0f ns（提交拍 %d、下一次帧尾拍 %d —— "
+                      "o_all_lock 提前拉高，依据的是提交前那一帧的判据）" % viol[0])
+        if bad_tr:
+            det20 += "；事件模型失配（前 3 条）：%s" % bad_tr[:3]
+        res.append((
+            "⑳ ★【主路径竞态】o_all_lock/o_solved 依据的整帧判据必须是 pos/ori 提交"
+            "**之后**重算的：对每一个提交拍 c，窗口 [c, 下一次帧尾拍) 内 o_all_lock "
+            "必须**全为 0**（否则 alllock_r 一旦拉高，game_fsm 在 S_PLAYING 里每拍都在看 "
+            "i_solved/i_all_lock，i_all_lock='1' 而 i_solved 还是上一帧的 '0' 就当场判 "
+            "S_FAIL）；同时要求窗口内确实出现过 frm_valid=1（陈旧判据仍然有效），"
+            "否则这条断言就是同义反复",
+            ok20, det20,
+        ))
 
     return res

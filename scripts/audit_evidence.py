@@ -137,14 +137,38 @@ def audit_rounds():
         n_mod += 1
         rel_round = "sim/rounds/%s/%s.json" % (module, js[-1].stem)
         last = json.loads(js[-1].read_text(encoding="utf-8"))
-        tot_pass += last["passed"]
-        tot_all += last["total"]
-
-        # ---- 最新一轮是否全过
-        if not last["all_pass"]:
-            add("FAIL", "B", "%s 最新一轮 %s **不是全过**（%d/%d）"
-                % (module, js[-1].stem, last["passed"], last["total"]))
+        # ---- 最新一轮是否全过（⭐ 2026-10-15 深审：**重算**，不再只读记录自报的 all_pass）
+        #    ⚠️ 原来只信 `last["all_pass"]` 这一个布尔值，而**同一条记录里**
+        #       `passed` / `total` / `assertions`（sim.py 逐条写入的 ok 标志）三个可互校字段
+        #       全被忽略（`assertions` 在本文件里 0 次引用）。
+        #       对抗验证实测：一份 `passed=3 / total=4 / all_pass=true / assertions 里有 ok=false`
+        #       的自相矛盾记录会被判成"最新一轮全过"、退出码 0。
+        asserts = last.get("assertions")
+        n_as = len(asserts) if isinstance(asserts, list) else None
+        ok_as = (sum(1 for a in asserts if isinstance(a, dict) and a.get("ok"))
+                 if isinstance(asserts, list) else None)
+        p, t = last.get("passed"), last.get("total")
+        bad = []
+        if not isinstance(p, int) or not isinstance(t, int) or t <= 0:
+            bad.append("passed/total 缺失或非正数（passed=%r total=%r）" % (p, t))
+        if n_as is None:
+            bad.append("记录里没有 assertions 列表（无法重算）")
+        elif n_as == 0:
+            bad.append("**assertions 为空：一条断言都没跑**")
+        elif ok_as != n_as:
+            bad.append("assertions 里有 %d 条 ok=false" % (n_as - ok_as))
+        if isinstance(p, int) and isinstance(t, int) and isinstance(n_as, int) \
+                and (p != ok_as or t != n_as):
+            bad.append("passed/total（%s/%s）与 assertions 重算值（%s/%s）不一致"
+                       % (p, t, ok_as, n_as))
+        if bad or not last["all_pass"]:
+            add("FAIL", "B", "%s 最新一轮 %s **不是全过**（记录自称 %s/%s；按 assertions 重算 %s/%s）"
+                % (module, js[-1].stem, p, t, ok_as, n_as),
+                "；".join(bad) if bad else "记录里 all_pass=false")
             continue
+        # 合计用**重算值**（与上面同一口径），避免"记录自报"与"逐条重算"两套数
+        tot_pass += ok_as if isinstance(ok_as, int) else last["passed"]
+        tot_all += n_as if isinstance(n_as, int) else last["total"]
 
         # ---- 陈旧绿判定：首选"轮次记录里的源码指纹"（精确）
         src = last.get("sources")
@@ -158,8 +182,38 @@ def audit_rounds():
             curl = sim.logic_fingerprint(module)
             changed = sorted(k for k in set(src or {}) | set(cur) if (src or {}).get(k) != cur.get(k))
             if src and not changed:
+                # ⭐ 2026-10-15 深审补强：上面这条判据比的是「记录里的 sources vs **当前工作树**」，
+                #    抓"陈旧绿"没问题，但**挡不住整份记录被伪造** —— 把 sources/sources_logic
+                #    按当前文件重算一遍写回 rNN.json 就能拿到"逐文件精确比对通过"。
+                #    记录里现成有 `git_head` / `git_dirty`（sim.py 落盘时写的），用它做独立交叉验证：
+                #      · 记录是在**干净工作树**下产生的 ⇒ 逐文件比 `git rev-parse <head>:<rel>`
+                #        与 sources[rel]，对不上就 FAIL（伪造 / 错记 / head 根本不存在）；
+                #      · 脏工作树（或没有可用 head）⇒ 无法独立复核，**如实写在 detail 里**
+                #        （不给 WARN：本仓库的证据大多产生于脏工作树，全报 WARN 会淹没真告警）。
+                head = last.get("git_head")
+                dirty = last.get("git_dirty")
+                if head and not dirty:
+                    if not sim._git("rev-parse", "--verify", head):
+                        add("FAIL", "A", "%s 绿证 %s 里的 git_head=%s **在本仓库不存在**"
+                            % (module, js[-1].stem, str(head)[:12]),
+                            "记录自称是在干净工作树下产生的，却指向一个取不到的提交 ⇒ 不可信")
+                        continue
+                    wrong = sorted(k for k, v in src.items() if _blob_at(head, k)[:12] != v)
+                    if wrong:
+                        add("FAIL", "A", "%s 绿证 %s 的源码指纹**与记录所记提交 %s 对不上**：%s"
+                            % (module, js[-1].stem, str(head)[:8], "、".join(wrong)),
+                            "记录自称 git_dirty=false（干净工作树），但该提交处的文件内容与 "
+                            "sources 字段不一致 ⇒ 该记录不可信")
+                        continue
+                    add("OK", "A", "%s 绿证 %s 覆盖当前 RTL/tb（%d 个文件指纹一致，"
+                                   "且与记录所记提交 %s 逐文件复核一致）"
+                        % (module, js[-1].stem, len(src), str(head)[:8]))
+                    continue
                 add("OK", "A", "%s 绿证 %s 覆盖当前 RTL/tb（%d 个文件指纹一致）"
-                    % (module, js[-1].stem, len(src)))
+                    % (module, js[-1].stem, len(src)),
+                    "⚠️ 该记录产生于**脏工作树**（或记录里没有可用的 git_head）⇒ 只能按"
+                    "「记录里的 sources vs 当前工作树」判定，**无法**再用 git_head 独立复核；"
+                    "若要更强的结论，请在干净工作树上重跑该模块并重新落盘。")
                 continue
             # ⭐ 严格指纹不中时，退一步比"**逻辑**指纹"（去注释/函数 docstring/行尾）。
             #    理由见 sim.logic_fingerprint 的说明：只改注释、或只换 CRLF/LF，
@@ -407,11 +461,32 @@ def audit_reports():
         add("WARN", "D", "没能从 sta.rpt 解析出 setup slack（报告格式可能变了）")
     else:
         s = slacks["Setup"]
-        if s < 0:
-            add("FAIL", "D", "**时序违例**：setup slack = %+.3f ns（不满足 50 MHz）" % s)
+        # ⚠️ 2026-10-15 深审（对抗验证确认）：原来这里把 **20 ns / 50 MHz 写死在代码里**，
+        #    而 docstring 声称判的是"是否满足 `.sdc` 的 50 MHz 约束" —— 全文没有任何一行读
+        #    `quartus/puzzle.sdc`。实测：把 .sdc 的 `create_clock -period` 放宽到 25 ns
+        #    （40 MHz）后重跑 STA，slack 仍为正，本工具照样打印"✓ 时序满足 50 MHz"
+        #    —— 「约束被放松」恰恰是唯一没有痕迹的路径（与 ERR-053 同一类）。
+        #    ⇒ 现在从 puzzle.sdc 现读周期；读不到就明确报"未执行该对账"，绝不用字面量顶替。
+        sdc = ROOT / "quartus" / "puzzle.sdc"
+        per = None
+        if sdc.exists():
+            m = re.search(r"create_clock\b[^\n]*?-period\s+([\d.]+)",
+                          sdc.read_text(encoding="utf-8", errors="replace"))
+            per = float(m.group(1)) if m else None
+        if per is None:
+            add("WARN", "D", "读不到 quartus/puzzle.sdc 里 create_clock 的 -period ⇒ "
+                             "**50 MHz 约束对账未执行**（不能拿写死的 20 ns 顶替）",
+                "setup slack = %+.3f ns 本身仍如实报出" % s)
+            add("OK" if s >= 0 else "FAIL", "D",
+                "setup slack = %+.3f ns（相对未知周期：仅判正负，未判是否满足约束）" % s)
         else:
-            add("OK", "D", "时序满足 50 MHz：setup slack = %+.3f ns（≈%.1f MHz）"
-                % (s, 1000.0 / (20.0 - s)))
+            fmax = 1000.0 / per
+            if s < 0:
+                add("FAIL", "D", "**时序违例**：setup slack = %+.3f ns（不满足 .sdc 的 "
+                                 "%.3f ns / %.2f MHz 约束）" % (s, per, fmax))
+            else:
+                add("OK", "D", "时序满足 .sdc 约束（%.3f ns = %.2f MHz）：setup slack = %+.3f ns"
+                               "（≈%.2f MHz）" % (per, fmax, s, 1000.0 / (per - s)))
         if "Hold" in slacks:
             h = slacks["Hold"]
             add("OK" if h >= 0 else "FAIL", "D",
@@ -519,11 +594,24 @@ DOCS = ["README.md", "HANDOFF.md", "PROGRESS.md",
 
 
 def audit_doc_numbers(fit_info):
+    # ⚠️ 2026-10-15 深审（对抗验证确认）：原来第一句是 `if not fit_info: return`，
+    #    于是"本机没有 fit.rpt / 解析不出读数"时**整个 G 段一条消息都不产生**（连组标题
+    #    都不打印）—— 输出里"没检查"与"检查通过"分不出来，而 docs 把本工具写成"7 段"。
+    #    更关键的是：G 段里的 **SEED** 与 **关卡限时常量** 对账**根本不需要编译读数**，
+    #    却被这条守卫一起吞掉。⇒ 现在缺读数时明确报一条 WARN，其余两条照跑。
     if not fit_info:
-        return
-    le_u = re.match(r"([\d,]+)", fit_info["le"] or "")
-    cur_le = le_u.group(1).replace(",", "") if le_u else None
-    found_le, found_seed, found_slack = set(), set(), set()
+        add("WARN", "G", "没有本机编译读数（fit.rpt 缺失或解析不出）⇒ LE / setup slack 对账**未执行**",
+            "其余两条（SEED、关卡限时常量）不依赖编译读数，仍然执行；"
+            "要补齐读数：在本机跑一次 `quartus_sh -t scripts/build.tcl`")
+        cur_le = None
+    else:
+        le_u = re.match(r"([\d,]+)", fit_info["le"] or "")
+        cur_le = le_u.group(1).replace(",", "") if le_u else None
+    # ⚠️ 2026-10-15 深审：setup 与 hold 的 slack 原来并进**同一个**集合
+    #    （538-539 行的注释却写着"现在按 setup/hold 分开收"）⇒ 文档里只要出现过数值相同的
+    #    hold，"当前 setup slack 在文档里出现过"就能被蒙混过关。这里真的分开。
+    found_le, found_seed = set(), set()
+    found_slack = {"setup": set(), "hold": set()}
     for rel in DOCS:
         p = ROOT / rel
         if not p.exists():
@@ -538,7 +626,7 @@ def audit_doc_numbers(fit_info):
         #    而且把 setup 与 hold 的数值混进同一个集合（"当前 setup slack 在文档里"会被
         #    hold 的数字蒙混过关）。现在按 setup/hold 分开收，并允许 `= : ≈ ** ` 等修饰。
         for kind in ("setup", "hold"):
-            found_slack |= set(re.findall(
+            found_slack[kind] |= set(re.findall(
                 r"%s\s*slack\s*[=:≈]?\s*\**\s*`?\s*([+-]?[\d.]+)\s*`?\s*\**\s*ns" % kind, t, re.I))
     if cur_le and cur_le not in found_le:
         add("WARN", "G", "文档里**没有出现**当前的 LE 值 %s（出现过的是 %s）"
@@ -556,16 +644,17 @@ def audit_doc_numbers(fit_info):
         else:
             add("OK", "G", "SEED %s 与文档一致（文档提到的种子：%s）"
                 % (seed, "、".join(sorted(found_seed))))
-    if fit_info.get("slack") is not None:
+    if fit_info and fit_info.get("slack") is not None:
         s = "%.3f" % fit_info["slack"]
         # ⚠️ 文档里常带符号写（`+0.861`），收集到的集合里也是带符号的 ⇒ 比较前统一去符号。
-        found_norm = {x.lstrip("+") for x in found_slack}
+        #    ⚠️ 只查 **setup** 集合（2026-10-15 深审：以前与 hold 混在一个集合里）。
+        found_norm = {x.lstrip("+") for x in found_slack["setup"]}
         if s not in found_norm:
             add("WARN", "G", "文档里没有出现当前的 setup slack %s（出现过：%s）"
-                % (s, "、".join(sorted(found_slack))))
+                % (s, "、".join(sorted(found_slack["setup"]))))
         else:
             # ⚠️ 审查发现：这条原来**没有 OK 分支** ⇒ 输出里分不清"查过且过了"与"根本没跑"。
-            add("OK", "G", "当前 setup slack %s 在文档里出现过" % s)
+            add("OK", "G", "当前 setup slack %s 在文档里出现过（只比 setup，不含 hold）" % s)
 
     # ---- ⭐ 关卡限时常量（第 18 工作阶段补：**这条缺口让"第三关 40→60 s"的文档漂移漏网**）
     #   审查发现：G 段只对账 LE/SEED/slack，于是 HANDOFF/docs/00/docs/02 里残留的
@@ -578,8 +667,15 @@ def audit_doc_numbers(fit_info):
         mm = re.search(r"constant\s+%s\s*:\s*integer\s*:=\s*(\d+)" % n, pkg)
         times[n] = mm.group(1) if mm else None
     bad_doc = []
+    unknown = []
     for n, v in times.items():
         if v is None:
+            # ⚠️ 2026-10-15 深审（对抗验证确认）：原来 `continue` 之后仍然照报
+            #    "✓ 关卡限时常量与文档一致（T_LEVEL3=None）" —— 把 None 拼进"一致"的
+            #    结论串里，等级与退出码都不变。实测：把声明写成
+            #    `constant T_LEVEL3 : integer range 0 to 99 := 60;`（合法 VHDL）即可复现。
+            #    ⇒ 解析不到就明确报"这几条对账未执行"，绝不报 OK。
+            unknown.append(n)
             continue
         pat_fwd = re.compile(r"%s\s*(?:=|:=|为|是)\s*\**\s*`?\s*(\d{1,3})\s*(?:s\b|秒)" % re.escape(n))
         pat_rev = re.compile(r"(\d{1,3})\s*(?:s\b|秒)\s*[（(][^)）]{0,14}%s" % re.escape(n))
@@ -592,11 +688,15 @@ def audit_doc_numbers(fit_info):
                 for mm in pat.finditer(t):
                     if mm.group(1) != v:
                         bad_doc.append("%s：`%s` 写成 %s s（当前 %s）" % (rel, n, mm.group(1), v))
+    if unknown:
+        add("WARN", "G", "关卡限时常量在 rtl/puzzle_pkg.vhd 里**解析不到**：%s ⇒ 这几条对账未执行"
+            % "、".join(unknown),
+            "解析不到时**不再**把它拼进「一致」的结论串（原来是 `T_LEVEL3=None` 也报 OK）")
     if bad_doc:
         add("WARN", "G", "文档里的**关卡限时常量**与 RTL 不一致（当前 %s）"
             % "、".join("%s=%s" % (k, v) for k, v in times.items()),
             "；".join(sorted(set(bad_doc))[:8]))
-    else:
+    elif not unknown:
         add("OK", "G", "关卡限时常量与文档一致（%s）"
             % "、".join("%s=%s" % (k, v) for k, v in times.items()))
 

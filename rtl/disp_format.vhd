@@ -83,7 +83,12 @@ begin
         bl := (others => '1');            -- 默认全部消隐
         t  := to_integer(unsigned(i_time));
 
-        -- B3：DISP0 始终显示当前关卡 —— 1、2 或（A2 的）3。
+        -- B3：DISP0 显示当前关卡 —— 1、2 或（A2 的）3。
+        --   ⚠️ 本注释早先写"DISP0 **始终**显示当前关卡"，**不成立**：
+        --      · 自检态（S_SELF_TEST）DISP0 显的是 '8'（B1 要求八位全显）；
+        --      · S_WIN / S_FAIL 两个分支**不给 DISP0 赋值**，`bl(0)` 保持默认的
+        --        '1' ⇒ DISP0 是**消隐**的（见下面 215-225 行的两条分支）。
+        --      所以"显示关卡"只对 S_IDLE / S_PREVIEW / S_PLAYING 三个分支成立。
         if (i_level = '0') then
             lvlv := 1;
         elsif (i_lvl3 = '1') then

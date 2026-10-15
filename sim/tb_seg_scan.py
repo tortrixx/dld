@@ -31,6 +31,14 @@
       W9 5200~5840  data=0x12345678 en=1               恢复显示（两个方向都测）
       W10 5840~6480 data=0xBACC0000 blank=0x0F         结算拼字 "PASS"（P A S S）
       W11 6480~7120 data=0xDA1E0000 blank=0x0F         结算拼字 "FAIL"（F A I L）
+      W12 7120~7760 data=0x12345678 blank=0 en=0 raw_en=1 raw=0xFF
+                                                        ⭐ 2026-10-15 补：`i_en='0'`
+                                                        必须**压过** `i_raw_en='1'`
+                                                        （raw 被 en 门控为全灭）——
+                                                        这个组合此前从未被激励，
+                                                        文件头声称的"raw 仍受 i_en
+                                                        约束"因此**没有任何判据**
+                                                        （见断言 ⑧b）
 
 ⚠️ **复位必须显式给**：综合后网表寄存器初值是 X，idx / seg_r / cat_r 不复位即永远 X。
 """
@@ -38,7 +46,7 @@
 CLK_PERIOD = 20.0
 TICK_PERIOD = 40.0       # i_tick：1 clk 高 + 1 clk 低
 RST_END = 40.0
-DURATION = 7160.0        # = 11 窗口 × 640ns + 40ns（且是 clk 周期的整数倍）
+DURATION = 7800.0        # = 80（W1 起点）+ 12 窗口 × 640ns + 末尾 40ns
 GRID_PERIOD = 10.0
 SAMPLE_STEP = 10.0
 SAMPLE_OFFSET = 5.0      # 采样点取 ≡5 mod 10，避开 clk 沿
@@ -90,6 +98,10 @@ WINDOWS = [
     #   字位码 = puzzle_pkg 的 DIG_*（P=0xB A=0xA S=0xC / F=0xD A=0xA I=0x1 L=0xE）
     dict(name="W10", start=5840.0, end=6480.0, data=0xBACC0000, blank=0x0F, en=1, raw_en=0, raw=0x00),
     dict(name="W11", start=6480.0, end=7120.0, data=0xDA1E0000, blank=0x0F, en=1, raw_en=0, raw=0x00),
+    # W12：**en=0 且 raw_en=1** —— 此前从未被激励的组合（原来 en=0 的那个窗口
+    #      raw_en=0，两个 raw_en=1 的窗口 en=1）。raw 取 0xFF（最坏值：若 en 不门控
+    #      raw，段线会整排全亮），用来把"raw 仍受 i_en 约束"这条声称钉死。
+    dict(name="W12", start=7120.0, end=7760.0, data=0x12345678, blank=0x00, en=0, raw_en=1, raw=0xFF),
 ]
 
 
@@ -416,6 +428,44 @@ def check(vf):
         "W8(en=0) 出现过的段码 = %s（应只有 0x00），同窗口位选出现 %d 种；"
         "W9(en=1) 恢复后出现过的段码种类 = %d"
         % ([_hx(s) for s in sorted(off_segs)], len(cats8), len(on_segs)),
+    ))
+
+    # ---------------------------------------------------------
+    # ⑧b ⭐ `i_en='0'` **压过** `i_raw_en='1'`（rtl/seg_scan.vhd:159-167 的实际优先级：
+    #     `if (i_en='1') and (i_blank(idx)='0') then ... raw/decoded ... else 全 0`）
+    #     ⚠️ 2026-10-15 补这一条的原因：`(i_en='0', i_raw_en='1')` 这个组合**从未被
+    #        激励**（W8 是 en=0/raw_en=0、W6/W7 是 en=1/raw_en=1）⇒ 文件头声称的
+    #        "raw 仍受 i_en 约束"在仿真里**没有任何判据**：把外层条件改成
+    #        `if (i_blank(idx)='0') and ((i_en='1') or (i_raw_en='1'))`
+    #        （= **raw 通路绕过 i_en**、译码通路照旧），在原激励下 11 条断言**照样全过**
+    #        （W6/W7 的 en=1 不变、W8 的 raw_en=0 不变）。
+    #        ⚠️ 注意：直接把 `(i_en='1') and` 整段删掉**不算**——那会连译码通路一起
+    #           放开，W8 立刻被 ⑧/③ 抓住；真正"零判据"的只有 **raw 这一支**。
+    #     W12 用 raw=0xFF（最坏值）：若 en 不门控 raw，段线会整排全亮 → 本条立刻失败。
+    #     （变异实测：打上上面那处"raw 绕过 en"的变异后，⑧b + ③ + ⑩ 三条一起挂。）
+    # ---------------------------------------------------------
+    w12 = next(x for x in WINDOWS if x["name"] == "W12")
+    # ⚠️ 这里**不能**用 `seg_live`（= o_seg 的**跳变点**表）来判：段码在整个 W12 里
+    #    恒为 0x00，跳变点表在这个区间里是**空的**（最后一个跳变落在 W11 里某个亮位
+    #    上），`{seg for ...} == {0}` 会因此报"失败"—— 第一版判据就是这么写错的
+    #    （实测：`W12 出现过的段码 = []`）。⇒ 改成在 W12 里**逐点直接采样**。
+    s12, c12 = set(), set()
+    t = w12["start"]
+    while t < w12["end"]:
+        s12.add(_busv(vf, "o_seg", t))
+        c12.add(_busv(vf, "o_cat", t))
+        t += SAMPLE_STEP
+    c12.discard(None)
+    res.append((
+        "⑧b ⭐ i_en='0' 压过 i_raw_en='1'：W12（en=0, raw_en=1, raw=0xFF）→ "
+        "o_seg ≡ 0x00（raw 被 i_en 门控为全灭），且位选仍照常扫完 8 位"
+        "（此前该组合从未被激励 → 这条声称原本没有判据）",
+        s12 == {0} and len(c12) == 8,
+        "W12 逐点采样 %d 点：o_seg 取值集合 = %s（应只有 0x00）；"
+        "o_cat 取值 %d 种（应 8 种：%s）"
+        % (int((w12["end"] - w12["start"]) // SAMPLE_STEP),
+           [_hx(s) for s in sorted(s12, key=lambda x: -1 if x is None else x)],
+           len(c12), sorted(_hx(v) for v in c12)),
     ))
 
     # ---------------------------------------------------------

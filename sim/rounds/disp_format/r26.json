@@ -1,0 +1,134 @@
+{
+  "module": "disp_format",
+  "round": 26,
+  "timestamp": "2026-10-15 15:07:47",
+  "duration_ns": 7800.0,
+  "rtl_patches": [],
+  "sources": {
+    "rtl/board_test_top.vhd": "904e611eb2e7",
+    "rtl/buzzer_ctrl.vhd": "b7cdd04fb134",
+    "rtl/clk_gen.vhd": "2756e6c4f754",
+    "rtl/disp_format.vhd": "ae5861335b09",
+    "rtl/dot_matrix_scan.vhd": "ac4a6dd96573",
+    "rtl/game_fsm.vhd": "906529034696",
+    "rtl/keypad_diag_top.vhd": "a6eba030ff81",
+    "rtl/keypad_raw_top.vhd": "1b0eba85463b",
+    "rtl/keypad_scan.vhd": "c4cbd4410516",
+    "rtl/pattern_rom.vhd": "24d892df7834",
+    "rtl/piece_rom.vhd": "3ccd01f494de",
+    "rtl/puzzle_ctrl.vhd": "024d726a5074",
+    "rtl/puzzle_pkg.vhd": "d121fab78f36",
+    "rtl/puzzle_top.vhd": "777b6c2aa454",
+    "rtl/rng_lfsr.vhd": "17e3ea9932c6",
+    "rtl/seg_scan.vhd": "89ea0f1ec6f8",
+    "sim/tb_disp_format.py": "18e4e0c0e03e"
+  },
+  "sources_logic": {
+    "rtl/board_test_top.vhd": "e773df872148",
+    "rtl/buzzer_ctrl.vhd": "b9a9da739302",
+    "rtl/clk_gen.vhd": "f0244017372b",
+    "rtl/disp_format.vhd": "20d7d58bb8f7",
+    "rtl/dot_matrix_scan.vhd": "4c5e119844ca",
+    "rtl/game_fsm.vhd": "7fbaa620e52b",
+    "rtl/keypad_diag_top.vhd": "f6a39026ef37",
+    "rtl/keypad_raw_top.vhd": "8aad5e0c0580",
+    "rtl/keypad_scan.vhd": "5b76940a8d9c",
+    "rtl/pattern_rom.vhd": "cea49bfa76b2",
+    "rtl/piece_rom.vhd": "0421731c0d94",
+    "rtl/puzzle_ctrl.vhd": "40efa82e51d0",
+    "rtl/puzzle_pkg.vhd": "a2c60c2c3281",
+    "rtl/puzzle_top.vhd": "19ad7396e424",
+    "rtl/rng_lfsr.vhd": "c394a1957138",
+    "rtl/seg_scan.vhd": "aa8642b3a503",
+    "sim/tb_disp_format.py": "13fe0d29dfd4"
+  },
+  "stimulus_vwf": "e6c5e0ed7c32",
+  "fingerprint_captured": "run-start",
+  "git_head": "c6c5f6a77aaee238216429ca79c684b2e6c7f9be",
+  "git_dirty": true,
+  "passed": 16,
+  "total": 16,
+  "all_pass": true,
+  "assertions": [
+    {
+      "name": "⓪ 激励自检：16+ 个采样窗口的 i_state 实测值 == 期望值（防止`测错了对象`）",
+      "ok": true,
+      "detail": "全部一致（78 个窗口）"
+    },
+    {
+      "name": "① B1 自检态 + i_blink='0' → o_data 八位全 '8'(0x88888888)，o_blank=0xFF（整排灭）",
+      "ok": true,
+      "detail": "o_data=0x88888888  o_blank=0xFF"
+    },
+    {
+      "name": "② B1 自检态 + i_blink='1' → o_data 八位全 '8'，o_blank=0x00（整排亮）—— 与 ① 合起来即 2 Hz 闪烁（半周期亮/半周期灭）",
+      "ok": true,
+      "detail": "o_data=0x88888888  o_blank=0x00"
+    },
+    {
+      "name": "③ B2/B3 待机态 → DISP7='5'、DISP0=关卡号(1 / 2 / 3)，DISP1~6 全灭（o_blank=0x7E）",
+      "ok": true,
+      "detail": "IDLE1: o_data=0x50000001 o_blank=0x7E（DISP7=5 DISP0=1）\nIDLE2: o_data=0x50000002 o_blank=0x7E（DISP7=5 DISP0=2）\nIDLE3: o_data=0x50000003 o_blank=0x7E（DISP7=5 DISP0=3）"
+    },
+    {
+      "name": "④ B4 预览态 → DISP7 = 倒计时秒数(单数字)，DISP0 = 关卡号(1/2/3)，其余灭",
+      "ok": true,
+      "detail": "PREV4: DISP7=4（期望 4） DISP0=1 o_blank=0x7E\nPREV5: DISP7=5（期望 5） DISP0=2 o_blank=0x7E\nPREV3: DISP7=4（期望 4） DISP0=3 o_blank=0x7E"
+    },
+    {
+      "name": "⑤ B5 游戏中(第一关, t=27) → DISP4=2 DISP3=7（两位都亮）、DISP0=1，DISP2 灭（o_blank=0xE6）",
+      "ok": true,
+      "detail": "o_data=0x00027001 o_blank=0xE6"
+    },
+    {
+      "name": "⑥ 口径 C 游戏中(第二关, t=27) → DISP4:DISP3=27、DISP0=关卡号 2、**DISP2 熄灭**（o_blank=0xE6，与第一关同形；B9 已按用户裁决作废）",
+      "ok": true,
+      "detail": "o_data=0x00027002 o_blank=0xE6（DISP2=0，bit2 掩码=1 应为 1=灭）"
+    },
+    {
+      "name": "⑥b 游戏中(第三关, t=27) → DISP4:DISP3=27、DISP0=关卡号 3、**DISP2 熄灭**（o_blank=0xE6，与第一关同形）",
+      "ok": true,
+      "detail": "o_data=0x00027003 o_blank=0xE6（DISP2=0，bit2 掩码=1 应为 1=灭）"
+    },
+    {
+      "name": "⑥c ⭐ 口径 C 全局：除自检态外，全部 76 个窗口的 DISP2 恒为**熄灭**（o_blank bit2 == 1；自检态豁免 —— B1 明文要求八位全显 '8'）",
+      "ok": true,
+      "detail": "全部熄灭（76 个窗口）"
+    },
+    {
+      "name": "⑦ B5 倒计时十位/个位拆分（那张 64 项 case 表）：16 个进位边界值全部等于 独立算出的 t//10 与 t%10（0/9/10/19/20/29/30/39/40/49/50/59/60/63）—— 全表 64 个取值的逐项验收见 ⑦b",
+      "ok": true,
+      "detail": "t= 0→00 t= 1→01 t= 9→09 t=10→10 t=11→11 t=19→19 t=20→20 t=29→29 t=30→30 t=39→39 t=40→40 t=49→49 t=50→50 t=59→59 t=60→60 t=63→63"
+    },
+    {
+      "name": "⑦b ⭐ 倒计时 case 表**逐项**验收：t = 0..63 全部 64 个取值（40 条显式臂 `when 0`..`when 39` + `when others` 的 40~49/50~59/60~63 三段）都等于**逐条抄自 rtl/disp_format.vhd case 表的硬编码期望**，且同时等于独立算出的t//10、t%10；o_blank 全部 = 0xE6（原来只有 17 个 t 被激励、29 条臂从未进过）",
+      "ok": true,
+      "detail": "64 个取值全部一致（硬编码表 + 独立算术模型）：0→00 1→01 2→02 3→03 4→04 5→05 6→06 7→07 8→08 9→09 10→10 11→11 12→12 13→13 14→14 15→15 16→16 17→17 18→18 19→19 20→20 21→21 22→22 23→23 24→24 25→25 26→26 27→27 28→28 29→29 30→30 31→31 32→32 33→33 34→34 35→35 36→36 37→37 38→38 39→39 40→40 41→41 42→42 43→43 44→44 45→45 46→46 47→47 48→48 49→49 50→50 51→51 52→52 53→53 54→54 55→55 56→56 57→57 58→58 59→59 60→60 61→61 62→62 63→63"
+    },
+    {
+      "name": "⑧ S_WIN → DISP7..DISP4 = \"PASS\"（P A S S）；S_FAIL → \"FAIL\"（F A I L）；两者都只亮这四位、画面互不相同（段形由 tb_seg_scan 断言 ③⑪ 校验；7 段管里 S 与 5 同形、I 用 1 的形状 → 板上像 PA55 / FA1L）",
+      "ok": true,
+      "detail": "WIN: o_data=0xBACC0000 o_blank=0x0F | FAIL: o_data=0xDA1E0000 o_blank=0x0F"
+    },
+    {
+      "name": "⑨ 状态码 「110」/「111」（state_t 未定义值）→ 确定行为：o_blank 全 1（整排灭），不会误显示上一状态的内容",
+      "ok": true,
+      "detail": "110: o_blank=0xFF | 111: o_blank=0xFF"
+    },
+    {
+      "name": "⑩ 78 个窗口的画面 (o_data,o_blank) 互不相同 —— 仅允许两处有语义的重合：待机(第二关) vs 预览 5 秒（B2 的 '5' 与 B4 的起始值本来就是同一个画面）、两个未定义状态码同为全灭",
+      "ok": true,
+      "detail": "78 个窗口 → 76 种不同画面；重合的两组：[['IDLE2', 'PREV5'], ['UNDEF6', 'UNDEF7']]"
+    },
+    {
+      "name": "⑪ ⭐ 中间信号解释输出：网表内部节点 LessThan2~2 == o_data[18]（DISP4 的 bit2）、r~9 == o_data[13]（DISP3 的 bit1），在 17 个采样点上逐点相同（这两个数据线是从这两个中间节点送出去的；对应关系由探针跑逐点相关得到）",
+      "ok": true,
+      "detail": "LessThan2~2: ['0', '1', '1'] | r~9: ['0', '0', '0']（在 17 个采样点上与端口逐位一致）"
+    },
+    {
+      "name": "⑫ 中间信号 tens~1:0 / ones~3:0（case 表的译码中间项）在 78 个采样点上取值全部为确定 0/1，且组合随 i_state/i_time 变化（不是常量、不是 X）",
+      "ok": true,
+      "detail": "78 个窗口共出现 18 种不同组合（≥2 即说明确实随输入变化）"
+    }
+  ]
+}

@@ -20,7 +20,13 @@
     不是抄 RTL 的位串；这条同时把"8 行全部扫到且不重不漏（双射）"钉死。
 
 【激励时间线】clk 20ns，rst 前 60ns 为高；每窗口 200ns = 10 个 clk，
-    窗口起点都是 clk 周期的整数倍，采样从窗口起点 +40ns（2 拍）开始：
+    窗口起点都是 clk 周期的整数倍；**两个采样偏移都采**：
+      · +40ns（稳态，2 拍）—— 断言 ①~④、⑥ 用它；
+      · +20ns（跳变后第 1 个上升沿刚过）—— 断言 ⑤b 用它，专门抓"行号与列数据
+        不同拍"的混合态（鬼影）。⚠️ 2026-10-15 补这一条的原因：输入在窗口起点
+        跳变 → 第 1 个上升沿（起点+10）更新寄存器；若行译码**多打一拍**，混合态
+        只存在于 **[起点+10, 起点+30)**，而原来最早的采样点是 +40 ⇒ 旧 ⑤
+        「无鬼影」这条判据**不可能失败**（把行寄存器改成晚一拍也照样全绿）：
       W0 row=0 colr=0xAA colg=0x55   交错图案（任何错位即同列为高）
       W1 row=1 colr=0x0F colg=0x00   纯红
       W2 row=2 colr=0x00 colg=0xF0   纯绿
@@ -47,7 +53,8 @@ CLK_PERIOD = 20.0
 DURATION = 2200.0
 GRID_PERIOD = 10.0
 SAMPLE_STEP = 10.0
-SETTLE = 40.0            # 每窗口跳变后等 2 拍再采样
+SETTLE = 40.0            # 稳态采样：每窗口跳变后等 2 拍再采样
+SETTLE_EARLY = 20.0      # 早采样点：窗口起点 +20ns（跳变后第 1 个上升沿刚过 1 拍）
 RST_END = 60.0
 
 WINDOWS = [
@@ -142,11 +149,11 @@ def _busv(vf, name, t):
     return vf.value_at(name, t)
 
 
-def _samples(vf):
-    """逐窗口采样稳态输出：返回 [(窗口, 时刻, o_row, o_colr, o_colg)]。"""
+def _samples_at(vf, offset):
+    """按给定偏移逐窗口采样：返回 [(窗口, 时刻, o_row, o_colr, o_colg)]。"""
     out = []
     for w in WINDOWS:
-        t = w["start"] + SETTLE
+        t = w["start"] + offset
         while t < w["end"]:
             row = _busv(vf, "o_row", t)
             colr = _busv(vf, "o_colr", t)
@@ -155,6 +162,15 @@ def _samples(vf):
                 out.append((w, t, row, colr, colg))
             t += SAMPLE_STEP
     return out
+
+
+def _samples(vf):
+    """逐窗口采样稳态输出（偏移 = SETTLE）：返回 [(窗口, 时刻, o_row, o_colr, o_colg)]。"""
+    return _samples_at(vf, SETTLE)
+
+
+# 每个窗口的"上一个窗口"（W0 没有上一个 → 用自己，见断言 ⑤b）
+PREV_OF = {w["name"]: (WINDOWS[k - 1] if k else w) for k, w in enumerate(WINDOWS)}
 
 
 def _hex(v):
@@ -236,6 +252,10 @@ def check(vf):
     # ⑤ 直通：o_colr == i_colr、o_colg == i_colg（不改位序、不合色）
     #    ＋ 三路输出同相：每个采样点的三元组必须整体等于该窗口的期望三元组
     #      （行号或列数据若与另一拍错位，就会出现"行 i + 行 j 的数据"混合态）
+    #    ⚠️ 本条的采样点是 **窗口起点 +40ns（稳态）**，所以它证明的是"稳态没有
+    #       混合态"；"跳变瞬间有没有混合态"由 ⑤b（+20ns）单独判 —— 两条合起来
+    #       才是完整的"无鬼影"。旧版只有这一条、且只有 +40 一个采样点，
+    #       混合态窗口 [起点+10, 起点+30) 整个落在采样点之前 ⇒ 判据不可能失败。
     # ---------------------------------------------------------
     bad = []
     for (w, t, row, colr, colg) in smp:
@@ -247,10 +267,57 @@ def check(vf):
             bad.append("%s t=%.0fns o_row=%s 应=%s（行数据不同拍 → 鬼影）"
                        % (w["name"], t, _hex(row), _hex(er)))
     res.append((
-        "⑤ 直通与同拍更新：o_colr==i_colr、o_colg==i_colg，且 "
-        "(o_row,o_colr,o_colg) 逐点等于期望三元组（无鬼影混合态）",
+        "⑤ 直通与同拍更新（+%.0fns 稳态采样点，%d 点）：o_colr==i_colr、o_colg==i_colg，"
+        "且 (o_row,o_colr,o_colg) 逐点等于本窗口期望三元组"
+        % (SETTLE, len(smp)),
         not bad,
         "\n".join(bad[:5]) if bad else "全部 %d 个采样点三元组与期望完全一致" % len(smp),
+    ))
+
+    # ---------------------------------------------------------
+    # ⑤b ⭐ 早采样点（窗口起点 +20ns）：**跳变瞬间**的"无鬼影"判据
+    #     ⚠️ 这是 2026-10-15 补的判据：原来只有 +40 一个采样点，而"行寄存器晚一拍"
+    #        的混合态只存在于 [起点+10, 起点+30)（输入在窗口起点跳变 → 第 1 个上升沿
+    #        起点+10 更新寄存器；行译码若多打一拍，行要到 起点+30 才跟上）
+    #        ⇒ 旧的 ⑤ 把行改成晚一拍也照样全绿 —— **判据不可能失败**。
+    #     ⇒ 这里在 +20 再采一遍，只允许两种**纯净**状态：
+    #          · 本窗口的期望三元组（行、列同拍更新）；
+    #          · 上一窗口的期望三元组（整条通路整体晚一拍 —— 只是延迟，不是鬼影）。
+    #        任何"行号取自一个窗口、列数据取自另一个窗口"的**混合态**都判失败。
+    #        实测（本判据第一次跑）：+20 处 **全部 180 点都等于本窗口期望**，
+    #        即该 RTL 的行/列确实同拍更新、**实测无错位**（详见断言说明）。
+    # ---------------------------------------------------------
+    early = _samples_at(vf, SETTLE_EARLY)
+    bad, n_new, n_lag = [], 0, 0
+    for (w, t, row, colr, colg) in early:
+        got = (row, colr, colg)
+        cur = expected(w)
+        prv = expected(PREV_OF[w["name"]])
+        if got == cur:
+            n_new += 1
+        elif got == prv:
+            n_lag += 1
+        else:
+            bad.append("%s t=%.0fns (o_row,o_colr,o_colg)=(%s,%s,%s)：既不是本窗口期望"
+                       "(%s,%s,%s)，也不是上一窗口期望(%s,%s,%s) ⇒ 行/列**错位混合态**"
+                       % (w["name"], t, _hex(row), _hex(colr), _hex(colg),
+                          _hex(cur[0]), _hex(cur[1]), _hex(cur[2]),
+                          _hex(prv[0]), _hex(prv[1]), _hex(prv[2])))
+    if bad:
+        note = "\n".join(bad[:5])
+    elif n_lag == 0:
+        note = ("%d 个早采样点**全部**等于本窗口期望三元组 ⇒ **实测无错位**"
+                "（行号与列数据在同一 clk 沿一起更新）" % n_new)
+    else:
+        note = ("%d 点等于本窗口期望、%d 点整体晚一拍（只是延迟、无混合态）"
+                % (n_new, n_lag))
+    res.append((
+        "⑤b ⭐ 早采样点（起点+%.0fns，%d 点）无鬼影：三元组只能是「本窗口期望」或"
+        "「上一窗口期望」两种纯净状态；行号与列数据来自不同窗口的混合态一律失败"
+        "（实测：同拍 %d 点、整体晚一拍 %d 点、混合 %d 点）"
+        % (SETTLE_EARLY, len(early), n_new, n_lag, len(bad)),
+        (not bad) and len(early) > 100,
+        note,
     ))
 
     # ---------------------------------------------------------

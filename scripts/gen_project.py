@@ -68,8 +68,12 @@ TOP_PORTS = {
     # 「端口无引脚」检查捕获（那道检查只看你确实列出的端口），
     # 于是键盘引脚会悄悄变成未约束，布局布线器把它们
     # 散落到任意空闲引脚上 —— 看起来与硬件损坏一模一样。
+    # ⚠️ 2026-10-15 深审：这里原来漏了 `buzz`（rtl/keypad_raw_top.vhd:47 的实体端口有它），
+    #    于是 `python scripts/gen_project.py keypad_raw_top`（docs/05 §… 与 HANDOFF §4.1
+    #    都把它列为可用命令）会在写 .qsf **之前**被下面那道反向守卫直接 SystemExit。
+    #    与 ERR-002 同源（顶层端口清单与 entity 不一致），只是这次被守卫当场拦下。
     "keypad_raw_top": ["clk", "sw7", "btn", "kp_row", "kp_col",
-                       "dot_row", "dot_colr", "dot_colg", "seg", "cat"],
+                       "dot_row", "dot_colr", "dot_colg", "seg", "cat", "buzz"],
 }
 
 def qsf(top: str) -> str:
@@ -205,7 +209,19 @@ def qsf(top: str) -> str:
                 one("%s[%d]" % (group, i), p)
 
     L.append("")
-    return "\n".join(L) + "\n"
+    L.append("")
+    # ⚠️ 2026-10-15 深审：Quartus **每次打开/保存工程**都会往 .qsf 末尾追加这两条
+    #    （`LAST_QUARTUS_VERSION` 与 `RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND`），
+    #    而入库的 `quartus/puzzle.qsf` 正是"被 Quartus 保存过"的版本 ——
+    #    于是按文档跑 `python scripts/gen_project.py puzzle_top` 会**凭空删掉这 2 行**，
+    #    让工作树出现一个"看起来像改了什么"的假 diff（与 `.gitattributes` 的 LF 抖动同类）。
+    #    这里把它们也生成出来，让**生成器的输出与入库版逐字节一致**（幂等）。
+    L.append("set_global_assignment -name LAST_QUARTUS_VERSION 9.1")
+    L.append('set_global_assignment -name RESERVE_ALL_UNUSED_PINS_NO_OUTPUT_GND "AS INPUT TRI-STATED"')
+    # ⚠️ **末尾刻意不加换行符**：Quartus 保存出来的 .qsf 末尾没有换行
+    #    （`git diff` 会显示 "\ No newline at end of file"）。要"生成器幂等"
+    #    就必须连这一点都一致，否则每次跑完文档流程都会多出一个假 diff。
+    return "\n".join(L)
 
 def qpf(top: str) -> str:
     return (

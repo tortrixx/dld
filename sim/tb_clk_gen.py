@@ -374,7 +374,7 @@ def check(vf):
                    for i in range(len(ct) - 1) if ct[i][0] >= 2 * CLK_PERIOD})
     res.append((
         "⑨ 中间信号 c1：每拍 +1、数到 %d 回绕（每值保持恰 1 个 clk 周期 = %.0f ns）"
-        % (top1, T1_NS),
+        % (top1, CLK_PERIOD),
         bool(cv) and max(cv) == top1 and set(cv) == set(range(top1 + 1)) and step_ok
         and durs == [CLK_PERIOD],
         "c1 取值集合 = %s；最大值 = %s；稳态每值保持 %s ns；每拍 +1 = %s"
