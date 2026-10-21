@@ -1,0 +1,37 @@
+<mxfile host="Electron" modified="2026-10-21T00:00:00.000Z" agent="Mozilla/5.0" version="21.6.8" type="device">
+  <diagram id="fsm" name="游戏主控状态机 ASM 流程图">
+    <mxGraphModel dx="1000" dy="600" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="rst" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#EF4444;strokeColor=#DC2626;" vertex="1" parent="1">
+          <mxGeometry x="50" y="65" width="30" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_init" value="&lt;b&gt;S_INIT (自检)&lt;/b&gt;&lt;br&gt;2s 全亮 / POST短鸣&lt;br&gt;数码管 88888888" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="130" y="45" width="130" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_idle" value="&lt;b&gt;S_IDLE (待机)&lt;/b&gt;&lt;br&gt;DISP7=&#39;5&#39;, DISP0=关卡&lt;br&gt;点阵全灭静默" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F0FDF4;strokeColor=#22C55E;fontColor=#15803D;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="320" y="45" width="135" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_prev" value="&lt;b&gt;S_PREVIEW (预览)&lt;/b&gt;&lt;br&gt;5s 目标图红光显示&lt;br&gt;DISP7 倒计时 5~1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;fontColor=#1D4ED8;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="515" y="45" width="145" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_play" value="&lt;b&gt;S_PLAY (对局)&lt;/b&gt;&lt;br&gt;• 倒计时 30s/45s/60s&lt;br&gt;• S2 循环切片(绿)&lt;br&gt;• S4~S7 平移 / S3 旋转&lt;br&gt;• S8 锁定零片(黄)&lt;br&gt;• 实时碰撞检测&lt;br&gt;&lt;font color=&quot;#b91c1c&quot;&gt;≤10s: 绿色幽灵 2Hz 闪烁&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FDF4FF;strokeColor=#C084FC;fontColor=#7E22CE;fontSize=11;align=center;" vertex="1" parent="1">
+          <mxGeometry x="720" y="45" width="170" height="150" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_win" value="&lt;b&gt;S_WIN (过关)&lt;/b&gt;&lt;br&gt;数码管 PASS / 胜曲&lt;br&gt;点阵闪烁 2s / level+1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DCFCE7;strokeColor=#16A34A;fontColor=#15803D;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="490" y="270" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="s_fail" value="&lt;b&gt;S_FAIL (失败)&lt;/b&gt;&lt;br&gt;数码管 FAIL / 负音&lt;br&gt;点阵闪烁 2s / 回待机" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEE2E2;strokeColor=#EF4444;fontColor=#B91C1C;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="725" y="270" width="160" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="e1" value="上电/BTN0" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;strokeColor=#334155;" edge="1" parent="1" source="rst" target="s_init"/>
+        <mxCell id="e2" value="2s 超时" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;strokeColor=#334155;" edge="1" parent="1" source="s_init" target="s_idle"/>
+        <mxCell id="e3" value="按【开始】S1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;strokeColor=#334155;fontStyle=1;fontColor=#2563EB;" edge="1" parent="1" source="s_idle" target="s_prev"/>
+        <mxCell id="e4" value="5s 届满散落" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.3;strokeColor=#334155;" edge="1" parent="1" source="s_prev" target="s_play"/>
+        <mxCell id="e5" value="拼合吻合 &amp; 全锁定" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=0;strokeColor=#16A34A;fontStyle=1;fontColor=#16A34A;" edge="1" parent="1" source="s_play" target="s_win"/>
+        <mxCell id="e6" value="倒计时超时" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0.5;entryY=0;strokeColor=#DC2626;fontStyle=1;fontColor=#DC2626;" edge="1" parent="1" source="s_play" target="s_fail"/>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
