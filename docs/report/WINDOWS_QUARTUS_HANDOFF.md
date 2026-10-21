@@ -1,95 +1,126 @@
-# Windows Quartus II 实际编译截图与报告更新实操交接指南
+# Windows Quartus II 实测编译截图与报告重建交接指南
 
-本文档专为**切换至 Windows 电脑后使用 Quartus II 软件获得真实板级资源编译截图，并一键回填到实验报告**而编写。
-
----
-
-## 一、为什么需要使用真实的 Quartus 编译截图？
-
-按照《数字电路与逻辑设计实验》课程评分标准，报告第四部分**“实际实现功能说明及资源利用情况 (5分)”**具有严格的硬性核查要求：
-1. **器件型号与容量必须真实对应**：报告必须呈现目标芯片 `Altera MAX II EPM1270T144C5`（1,270 个逻辑单元 LE，127 个 LAB，无片上 RAM）；
-2. **逻辑资源与引脚利用率可信度**：必须实测展示 `Total logic elements`（LE 占用数及百分比）与 `Total pins`（用户引脚占用数）；
-3. **静态时序收敛证明**：必须给出在 50 MHz 晶振约束下的 `Fmax`（最高工作频率）与建立/保持时间裕量（Worst-case Slack $\ge 0.000$ ns）。
-
-使用 Windows 下 Quartus II 软件实际编译出来的原图，具有不可辩驳的工程实测可信度，能确保这 5 分评分完全不被挑剔扣减。
+> **状态（2026-10-21）：本文档描述的流程已在本机执行完毕。** 报告第四部分的两张编译报告截图
+> 已经是 **Quartus II 9.1 的软件界面现场截图**（`PrintWindow` 抓窗口位图后按"报告树 + 报告正文"
+> 裁剪，未做任何重绘、补写或贴字），PDF / DOCX / MD 三种交付物与截图数字逐项一致。
 
 ---
 
-## 二、Windows 下 Quartus II 编译实操流程
+## 一、为什么必须用真实的 Quartus 编译截图
 
-### 步骤 1：打开工程
-1. 在 Windows 电脑上启动 **Quartus II**（推荐版本：Quartus II 9.1 或 13.0sp1 Web Edition）；
-2. 点击菜单栏 **`File` -> `Open Project...`**；
-3. 定位并选择本仓库目录下的工程文件：
-   ```text
-   dld\quartus\puzzle.qpf
+按照《数字电路与逻辑设计实验》课程评分标准，报告第四部分 **"实际实现功能说明及资源利用情况（5 分）"**
+有硬性核查要求：
+
+1. **器件型号与容量必须真实对应**：目标芯片 `Altera MAX II EPM1270T144C5`（1,270 个逻辑单元 LE，
+   127 个 LAB，无片上 RAM）；
+2. **逻辑资源与引脚利用率可信度**：实测展示 `Total logic elements`（LE 占用数及百分比）与
+   `Total pins`（用户引脚占用数）；
+3. **静态时序收敛证明**：50 MHz 晶振约束下的 `Fmax` 与建立/保持时间裕量（Worst-case Slack ≥ 0.000 ns）。
+
+用 Windows 下 Quartus II 实际编译出来的原图具有不可辩驳的工程实测可信度。**加工过的"仿真界面图"
+（自己补行、合并表格、加说明面板）一旦被追问就是诚信问题，比数字写错严重得多**，因此本仓库只接受真实截屏。
+
+---
+
+## 二、本机的实测数据（唯一事实源）
+
+`quartus_sh -t scripts/build.tcl`（map → fit → asm → tan → sta 全流程）清洁重编译，
+**0 error / 16 warning**，产出：
+
+| 项目 | 实测值 | 出处 |
+|---|---|---|
+| Fitter Status | `Successful - Wed Oct 21 12:38:34 2026` | `output_files/puzzle.fit.summary` |
+| Quartus II 版本 | `9.1 Build 222 10/21/2009 SJ Full Version` | 同上 |
+| 器件 / 时序模型 | `EPM1270T144C5` / `Final` | 同上 |
+| Total logic elements | **1,264 / 1,270（`fit.rpt` 显示 100%，实际 99.53%，余 6 LE）** | 同上 |
+| Total LABs | **127 / 127（100%）** | `puzzle.fit.rpt` · `Fitter Resource Usage Summary` |
+| Total pins | **52 / 116（45%）** | `puzzle.fit.summary` |
+| Total virtual pins / UFM | `0` / `0 / 1 (0%)` | 同上 |
+| Fmax（Slow 模型） | **54.27 MHz**（Restricted Fmax 同为 54.27 MHz） | `puzzle.sta.rpt` · `Fmax Summary` |
+| Setup slack | **+1.572 ns**（TNS 0.000） | `puzzle.sta.rpt` · `Setup Summary` |
+| Hold slack | **+1.078 ns**（TNS 0.000） | `puzzle.sta.rpt` · `Hold Summary` |
+| Min pulse width | **+9.734 ns**（TNS 0.000） | `puzzle.sta.rpt` · `Minimum Pulse Width Summary` |
+| 固件 | `puzzle.pof` 27,312 字节，sha256 `cc3c69b3419f…`（与入库 `build_provenance.json` **逐字节一致**） | `build_provenance.json` |
+| 装箱参数 | `SEED = 8` | `quartus/puzzle.qsf` |
+
+⚠️ **`fit.rpt` 的百分比是"以 1,270 为基数四舍五入"**：1,264/1,270 = 99.53%，Quartus 打印 `100 %`。
+引用时写"1,264 / 1,270（99.53%，fitter 显示 100%）"，不要直接抄 100% 当余量，也不要写成 82.52% 之类的旧值。
+
+---
+
+## 三、两张截图是怎么拍出来的（可复现）
+
+前提：Quartus II 9.1 已装在本机（`C:\QuartusII91\QuartusII91\quartus\bin\quartus.exe`），
+且 `quartus/output_files/` 里已有一次成功的编译报告（见 §二）。
+
+1. **命令行先做一次清洁重编译**（这一步保证报告数据库与 `.rpt` 都是本次产物）：
+   ```powershell
+   cd quartus
+   C:\QuartusII91\QuartusII91\quartus\bin\quartus_sh.exe -t ..\scripts\build.tcl
    ```
-4. 打开后，确认左上角 `Project Navigator` 中显示的顶层实体为 **`puzzle_top`**，目标器件为 **`EPM1270T144C5`**。
+   ⚠️ 必须包含 `sta` 这一步（`build.tcl` 第 5 步）：经典的 `quartus_tan` **不读** `.sdc`，
+   只有 TimeQuest 才按 `create_clock -period 20.000` 报出 Fmax / setup / hold 裕量。
+   ⚠️ **不要**在 `puzzle.qsf` 里加 `USE_TIMEQUEST_TIMING_ANALYZER ON` 再走 GUI 一键编译 ——
+   时序驱动 fitter 的行为会改变（实测 setup slack 变 +0.577 ns、`.pof` 哈希变为 `1cc9fb11…`），
+   与入库固件证据链脱钩。本仓库的正式流程始终是 `build.tcl`。
+2. **开 GUI 并打开编译报告**：`quartus.exe quartus\puzzle.qpf` → 菜单
+   `Processing → Compilation Report`（`Ctrl+R`）。报告窗标题变为
+   `Compilation Report - Flow Summary`。
+3. **截图①（资源利用率）**：左侧报告树点 `Flow Summary`，抓窗口位图，裁掉窗口边框/标题栏
+   （标题栏含本机绝对路径与用户名，**绝不能入图**），只保留"报告树 + Flow Summary 正文"，
+   存为 `docs/report/GUI-编译-面积.png`。
+4. **截图②（静态时序）**：展开报告树的 `TimeQuest Timing Analyzer`（点节点前的 `+`），
+   双击 `Fmax Summary`，同样裁剪存为 `docs/report/GUI-编译-时序.png`。
+   ⚠️ 三张姊妹页面 `Setup Summary` / `Hold Summary` / `Minimum Pulse Width Summary` 里的
+   `Slack` 分别是 1.572 / 1.078 / 9.734（TNS 均 0.000）；一张截图装不下三张表时，
+   请在正文写清"读数来自这三个页面"，**不要把三张表合并成一张**。
+5. **裁剪口径**：只保留报告面板（左报告树 + 右报告正文）。窗口标题栏、菜单栏、Project Navigator、
+   Tasks、Messages、状态栏一律裁掉 —— 既避免泄漏本机路径，也让纸面字号足够大
+   （当前成品：面积图 1010×470、时序图 700×430，PDF 内约 7 pt 字高）。
 
-### 步骤 2：执行全编译 (Full Compilation)
-1. 点击顶部菜单栏 **`Processing` -> `Start Compilation`**（或直接按快捷键 **`Ctrl + L`**）；
-2. 观察底部 `Processing` 任务栏，等待以下 4 项全流程完成：
-   - `Analysis & Synthesis` (分析与综合)
-   - `Fitter (Device Positioning & Routing)` (布局布线)
-   - `Assembler (Generate programming files)` (生成固件 `.pof`)
-   - `TimeQuest Timing Analyzer` (静态时序分析)
-3. 编译完成后，状态栏将显示：**`Quartus II ... was successful. 0 errors, ... warnings`**。
-
----
-
-## 三、截取两张核心报告截图
-
-在 Quartus II 界面左侧或弹出的 **`Compilation Report`** 窗口中截取以下两张图：
-
-### 截图 ①：资源利用率总览（覆盖替换：`GUI-编译-面积.png`）
-1. 在 `Compilation Report` 树状目录中，点击顶层的 **`Flow Summary`** 或 **`Fitter` -> `Summary`**；
-2. **截图范围要求**：
-   - 包含上方的 **Device: `EPM1270T144C5`** 和 **Timing Models: Final**；
-   - 完整截取表格中的核心指标：
-     - `Total logic elements`（例如：1,048 / 1,270 (83%)）
-     - `Total pins`（例如：38 / 116 (33%)）
-     - `Total virtual pins`（0）
-     - `UFM blocks`（0 / 1 (0%)）
-3. **保存路径**：直接保存/覆盖为：
-   ```text
-   docs\report\GUI-编译-面积.png
-   ```
-
-### 截图 ②：静态时序分析报告（覆盖替换：`GUI-编译-时序.png`）
-1. 在 `Compilation Report` 树状目录中，展开 **`TimeQuest Timing Analyzer`**（若为经典时序分析器则为 `Classic Timing Analyzer`）；
-2. 点击 **`Multicorner Timing Analysis Summary`** 或 **`Fmax Summary`**；
-3. **截图范围要求**：
-   - 截取时钟网络 `clk_50m`（或 `clk`）的 **Fmax** 汇总行（例如：`68.52 MHz` 或 `54.27 MHz`，需 $\ge 50.00 \text{ MHz}$）；
-   - 截取 **Worst-case Slack**（`Setup: +5.421 ns`，`Hold: +0.892 ns`，显示绿色 `PASSED`）；
-4. **保存路径**：直接保存/覆盖为：
-   ```text
-   docs\report\GUI-编译-时序.png
-   ```
+拍的辅助脚本（一键抓窗口位图 + 按 `MDIClient` 裁剪）见 `scripts/shoot_vwf.ps1`，
+它给仿真波形用的同一套 Win32 封装（`PrintWindow` / 附加线程抢前台 / 对话框轮询）可直接复用。
 
 ---
 
-## 四、一键重新生成最终实验报告
+## 四、重新生成三件交付物
 
-当您在 Windows 电脑上将上述两张新截图放入 `docs\report\` 目录后，无需手动调排版，直接执行以下任一方式即可一键刷新 PDF 和 Word：
+### 4.1 PDF（Typst）
 
-### 方式 1：使用 Typst 命令行（最快捷）
-若 Windows 上安装了 `typst`（可通过 `winget install --id Typst.Typst` 安装）：
+本机已把 Typst 0.15.1 解压到 `.tmp/typst/`（该目录被 `.gitignore` 覆盖，不入库）。构建：
+
 ```powershell
-cd docs\report
-typst compile 实验报告_题目4_简易拼图游戏.typ 实验报告_题目4_简易拼图游戏.pdf
+cd <仓库根>
+.tmp\typst\bin\typst-x86_64-pc-windows-msvc\typst.exe compile --root . `
+  "docs\report\实验报告_题目4_简易拼图游戏.typ" `
+  "docs\report\实验报告_题目4_简易拼图游戏.pdf"
 ```
 
-### 方式 2：使用 Python 脚本生成全套（PDF + Word + Markdown）
-若已激活 Python 环境：
-```powershell
-python scratch\build_full_academic_report.py
-python scratch\generate_docx_md.py
-```
-此时 `实验报告_题目4_简易拼图游戏.pdf` 和 `实验报告_题目4_简易拼图游戏.docx` 中的第 4 节截图将自动更新为您刚刚截取的最新真实图片！
+模板 `template.typ` 的字体栈是跨平台的：macOS 优先 `Songti SC / Heiti SC / Hiragino Sans GB / Menlo`，
+Windows 回退 `Noto Serif SC / Noto Sans SC / Consolas`，因此两边都能构建；
+构建时出现的 `unknown font family: songti sc` 只是"本机没有该字体、已按栈回退"的**正常警告**。
+
+### 4.2 DOCX 与 MD
+
+`.docx` 与 `.md` 由同一次内容修订同步产出（图片按 sha256 与 `docs/report/*.png` 逐一核对，
+表格/正文数字与 PDF 逐字对齐）。修改 `.typ` 文案后，务必同步这两份，避免出现
+"PDF 说 1,264、DOCX 说 1,048" 这类图文自相矛盾。
+
+### 4.3 重建后必须自检的三条
+
+1. **数字自洽**：`python scripts/audit_evidence.py` 必须 `0 FAIL`（当前 `0 FAIL / 1 WARN / 30 OK`，
+   唯一 WARN 是"LAB 已满 127/127"，那是事实）；
+2. **截图与表格对得上**：PDF 里 §4.2 的表格每一行都要能在两张截图或 `puzzle.sta.rpt` 里找到出处；
+3. **不漏本机路径**：`git grep` 检索本机用户目录前缀应为 0 命中（PNG 是二进制，靠人工裁剪保证）。
 
 ---
 
-## 五、代码完整性安全声明
+## 五、代码与工程完整性声明
 
-- **零代码污染原则**：整个报告编制、排版调优与文档生成过程中，**未修改 `rtl/` 目录下的任何一行 VHDL 逻辑代码，未修改 `sim/` 下的任何仿真激励，未修改 `quartus/` 下的硬件引脚与时序约束**；
-- 本地 `git status` 检查始终保持工作区干净（除 `docs/report/` 交付文档目录外，零 untracked、零 modified）。切换至 Windows 电脑后可直接使用 Git 拉取或拷贝，固件二进制特征值（Hash / POF Checksum）与硬件烧录 100% 保持严格一致！
+- **零代码污染**：报告编制、排版与截图过程中**未修改 `rtl/` 下任何一行 VHDL 逻辑，未修改 `sim/` 下任何
+  仿真激励，未修改 `quartus/puzzle.sdc` 时序约束与任何引脚约束**；
+- `quartus/output_files/` 全部为可重新生成的编译产物（`.gitignore` 已覆盖），本轮的清洁重编译
+  在数值上**逐项复现**上一版：LE 1,264、LAB 127/127、pins 52/116、Fmax 54.27 MHz、
+  setup +1.572 ns、hold +1.078 ns、`puzzle.pof` sha256 `cc3c69b3419f…` **逐字节相同**；
+- 因此固件二进制特征值与硬件烧录结果保持严格一致，报告里的每一个资源/时序数字都可回溯到
+  `quartus/build_provenance.json` 与 `quartus/output_files/*.rpt`。

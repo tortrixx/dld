@@ -14,36 +14,43 @@
   score: "__________",
   body,
 ) = {
+  // 字体栈：macOS 字面量排在最前（跨平台不回归），后接 Windows 回退
+  // 正文 serif / 标题 sans / 等宽 mono
+  let f-serif = ("Songti SC", "STSong", "Noto Serif SC", "SimSun")
+  let f-sans = ("Heiti SC", "Hiragino Sans GB", "Noto Sans SC", "Microsoft YaHei")
+  let f-mono = ("Menlo", "Consolas", "Courier New", "SimSun")
   // 页面全局设定
   set page(
     paper: "a4",
     margin: (x: 2.2cm, top: 2.3cm, bottom: 2.2cm),
-    header: context {
-      let p = counter(page).get().first()
-      // 封面与目录不显示页眉 (封面为 0, 目录为 0)
-      if p > 0 [
-        #set text(size: 8.5pt, font: ("Songti SC", "STSong", "Heiti SC"), fill: rgb("#475569"))
-        #grid(
-          columns: (1fr, auto),
-          align(left)[#course · 课程设计报告],
-          align(right)[#title]
-        )
-        #v(-5pt)
-        #line(length: 100%, stroke: 0.5pt + rgb("#94a3b8"))
-      ]
-    },
-    footer: context {
-      let p = counter(page).get().first()
-      if p > 0 [
-        #set text(size: 9pt, font: "Songti SC", fill: rgb("#64748b"))
-        #align(center)[- #p -]
-      ]
-    }
   )
+
+  // 页眉/页脚：仅正文页挂载（封面与目录通过不启用 header/footer 彻底不渲染）
+  let hdr = context {
+    let p = counter(page).get().first()
+    if p > 0 [
+      #set text(size: 8.5pt, font: f-serif, fill: rgb("#475569"))
+      #grid(
+        columns: (1fr, auto),
+        align(left)[#course · 课程设计报告],
+        align(right)[#title]
+      )
+      #v(-5pt)
+      #line(length: 100%, stroke: 0.5pt + rgb("#94a3b8"))
+    ]
+  }
+
+  let ftr = context {
+    let p = counter(page).get().first()
+    if p > 0 [
+      #set text(size: 9pt, font: f-serif, fill: rgb("#64748b"))
+      #align(center)[- #p -]
+    ]
+  }
 
   // 中文字体及段落设定
   set text(
-    font: ("Songti SC", "STSong"),
+    font: f-serif,
     size: 10pt,
     lang: "zh",
     region: "CN",
@@ -62,7 +69,7 @@
     above: 20pt,
     below: 10pt,
   )[
-    #set text(font: ("Heiti SC", "Hiragino Sans GB"), size: 14pt, weight: "bold", fill: rgb("#000000"))
+    #set text(font: f-sans, size: 14pt, weight: "bold", fill: rgb("#000000"))
     #it.body
   ]
 
@@ -71,7 +78,7 @@
     above: 14pt,
     below: 7pt,
   )[
-    #set text(font: ("Heiti SC", "Hiragino Sans GB"), size: 12pt, weight: "bold", fill: rgb("#111827"))
+    #set text(font: f-sans, size: 12pt, weight: "bold", fill: rgb("#111827"))
     #it.body
   ]
 
@@ -80,7 +87,7 @@
     above: 10pt,
     below: 5pt,
   )[
-    #set text(font: ("Heiti SC", "Hiragino Sans GB"), size: 10.5pt, weight: "bold", fill: rgb("#1f2937"))
+    #set text(font: f-sans, size: 10.5pt, weight: "bold", fill: rgb("#1f2937"))
     #it.body
   ]
 
@@ -99,10 +106,15 @@
     inset: (x: 5pt, y: 4.5pt),
   )
 
+  // 表格单元内取消两端对齐，避免窄列字距被拉开
+  show table.cell: set par(justify: false)
+  // 表格行不允许被跨页切断（避免续页出现孤立的单元格残行）
+  show table.cell: it => block(breakable: false, it)
+
   // 图表图题规范
   show figure.caption: it => [
     #v(4pt)
-    #set text(size: 9pt, font: ("Songti SC", "STSong"), fill: rgb("#4b5563"))
+    #set text(size: 9pt, font: f-serif, fill: rgb("#4b5563"))
     #it
   ]
 
@@ -115,7 +127,7 @@
     width: 100%,
     clip: true,
   )[
-    #set text(size: 7.2pt, font: ("Menlo", "Courier New"))
+    #set text(size: 7.2pt, font: f-mono)
     #it
   ]
 
@@ -127,7 +139,7 @@
     radius: 0pt,
     baseline: 0pt,
   )[
-    #set text(size: 8.5pt, font: ("Menlo", "Courier New"), fill: rgb("#000000"))
+    #set text(size: 8.5pt, font: f-mono, fill: rgb("#000000"))
     #it
   ]
 
@@ -136,18 +148,18 @@
   
   align(center)[
     #v(1.8cm)
-    #text(size: 24pt, font: "Heiti SC", weight: "bold", fill: rgb("#000000"))[#course]
+    #text(size: 24pt, font: f-sans, weight: "bold", fill: rgb("#000000"))[#course]
     #v(1.2cm)
-    #text(size: 18pt, font: "Heiti SC", weight: "bold", fill: rgb("#000000"))[#title]
+    #text(size: 18pt, font: f-sans, weight: "bold", fill: rgb("#000000"))[#title]
     #if subtitle != "" [
       #v(0.6cm)
-      #text(size: 12pt, font: "Songti SC", fill: rgb("#374151"))[#subtitle]
+      #text(size: 12pt, font: f-serif, fill: rgb("#374151"))[#subtitle]
     ]
 
     #v(4.2cm)
     #align(center)[
       #block(width: 75%)[
-        #set text(size: 11pt, font: "Songti SC")
+        #set text(size: 11pt, font: f-serif)
         #grid(
           columns: (80pt, 1fr),
           row-gutter: 15pt,
@@ -170,7 +182,7 @@
   // ==================== 目录 ====================
   block(width: 100%, below: 16pt)[
     #align(center)[
-      #text(size: 15pt, font: "Heiti SC", weight: "bold", fill: rgb("#000000"))[目    录]
+      #text(size: 15pt, font: f-sans, weight: "bold", fill: rgb("#000000"))[目    录]
     ]
     #v(12pt)
     #outline(title: none, depth: 2, indent: auto)
@@ -178,7 +190,8 @@
 
   pagebreak()
 
-  // 正文从第 1 页开始编号
+  // 正文从第 1 页开始编号，并启用页眉页脚
+  set page(header: hdr, footer: ftr)
   counter(page).update(1)
 
   body
