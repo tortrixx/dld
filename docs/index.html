@@ -2,84 +2,70 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>简易拼图游戏 · 硬件子系统设计与答辩速查</title>
+  <title>简易拼图游戏 · 大模块设计与答辩速查</title>
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="description" content="简易拼图游戏 VHDL 核心大模块硬件设计、时序仿真波形深度分析与答辩速查">
+  <meta name="description" content="简易拼图游戏 CPLD 硬件设计：六大模块的原理、仿真波形读图要点与答辩问答速查">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
-  
-  <!-- Docsify Vue 基础主题 -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
-  
-  <!-- KaTeX 数学公式渲染 CSS -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css"/>
-  
-  <!-- 极简清新绿色自定义样式 -->
+  <meta name="theme-color" content="#0f766e">
+
+  <!-- Docsify 基础主题（版本固定，避免上游更新把站点改坏） -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/themes/vue.css">
+
+  <!-- 站点自定义样式（最后加载，覆盖主题默认值） -->
   <link rel="stylesheet" href="assets/custom.css">
 </head>
 <body>
-  <div id="app">正在加载文档，请稍候...</div>
-  
+  <div id="app">正在加载文档…</div>
+
   <script>
     window.$docsify = {
-      name: '简易拼图游戏 (DLD)',
-      themeColor: '#059669',
+      name: '简易拼图游戏',
+      themeColor: '#0f766e',
+
       loadSidebar: true,
-      subMaxLevel: 3,
-      loadNavbar: false,      // 关闭顶部导航，突出专注度
-      coverpage: false,       // 关闭封面，直入主题
+      subMaxLevel: 2,          // 侧边栏只展开到二级标题，避免目录过长
       auto2top: true,
       homepage: 'README.md',
       notFoundPage: true,
-      
-      // 全文搜索配置（无 Emoji）
+      maxLevel: 4,
+
       search: {
         maxAge: 86400000,
         paths: 'auto',
-        placeholder: '搜索大模块、信号、仿真波形、答辩考点...',
-        noData: '未找到相关内容',
-        depth: 4,
+        placeholder: '搜索模块、信号、波形、答辩问题…',
+        noData: '没有找到相关内容',
+        depth: 3,
         hideOtherSidebarContent: false
       },
-      
-      // 代码复制插件
+
       copyCode: {
         buttonText: '复制',
-        errorText: '错误',
+        errorText: '复制失败',
         successText: '已复制'
       },
-      
-      // 翻页导航配置
+
       pagination: {
-        previousText: '上一大模块',
-        nextText: '下一大模块',
+        previousText: '上一个模块',
+        nextText: '下一个模块',
         crossChapter: true,
         crossChapterText: true
-      },
-      
-      // 仿真波形与图片点击缩放插件
-      zoomImage: {
-        selector: '.content img',
-        options: {
-          background: 'rgba(6, 78, 59, 0.85)',
-          scrollOffset: 40
-        }
       }
     }
   </script>
-  
-  <!-- Docsify 核心库与插件 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
-  
-  <!-- Prism 代码高亮 -->
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-vhdl.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+
+  <!-- 行为增强：把「图片 + 斜体图注」包成 figure（必须在 docsify 之前加载） -->
+  <script src="assets/custom.js"></script>
+
+  <!-- Docsify 核心与官方插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/docsify.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/search.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/zoom-image.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code@2.1.1/dist/docsify-copy-code.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination@2.10.1/dist/docsify-pagination.min.js"></script>
+
+  <!-- Prism 代码高亮：VHDL 不在默认语言包里，需要单独补 -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-vhdl.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
 </body>
 </html>

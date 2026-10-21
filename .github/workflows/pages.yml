@@ -20,6 +20,7 @@ on:
       - 'rtl/**'
       - 'sim/**'
       - 'facts/**'
+      - 'scripts/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -56,6 +57,11 @@ jobs:
           test -f docs/_sidebar.md || { echo "Missing docs/_sidebar.md"; exit 1; }
           test -f docs/.nojekyll || { echo "Missing docs/.nojekyll"; exit 1; }
           echo "All core Docsify files present and verified."
+
+      # 站点体检：链接/图片是否存在、粗体与原始 HTML 块是否会渲染失败。
+      # 这三类故障都不会报错，只会在浏览器里悄悄变丑，所以必须挡在部署之前。
+      - name: Check Docsify Site Integrity
+        run: python scripts/check_docs.py
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

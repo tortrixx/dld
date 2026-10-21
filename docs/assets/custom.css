@@ -1,360 +1,496 @@
 /* ==========================================================================
-   docs/assets/custom.css —— 极简高质感绿色技术文档站
-   专为《简易拼图游戏》分模块讲解与答辩速查定制
+   docs/assets/custom.css —— 《简易拼图游戏》硬件文档站样式
+   --------------------------------------------------------------------------
+   设计取向：白底、翡翠绿单色强调、克制的描边与阴影。
+   正文窄栏（约 780px）保证中文一行 35~40 字好读；波形图可以突破到 1000px，
+   因为仿真截图的信息全在细节里，宽度就是可读性。
+   所有数值都写成变量，改配色只需要动 :root。
    ========================================================================== */
 
 :root {
-  /* 极简清新绿色主色调 */
-  --theme-color: #059669;          /* 翡翠绿主色 */
-  --theme-color-hover: #047857;    /* 深绿悬停色 */
-  --theme-color-light: #ecfdf5;    /* 极浅绿背景 */
-  --theme-color-dark: #064e3b;     /* 墨绿标题色 */
-  --theme-border: #a7f3d0;         /* 淡绿边框 */
-  
-  --bg-primary: #ffffff;
-  --bg-secondary: #f9fafb;
-  --bg-tertiary: #f3f4f6;
-  
-  --text-primary: #111827;
-  --text-secondary: #374151;
-  --text-muted: #6b7280;
-  
-  --border-color: #e5e7eb;
-  --border-hover: #d1d5db;
-  
-  --code-bg: #f8fafc;
-  --code-color: #065f46;
-  
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+  /* 强调色：翡翠绿 */
+  --green-900: #064e3b;
+  --green-800: #065f46;
+  --green-700: #047857;
+  --green-600: #059669;
+  --green-100: #d1fae5;
+  --green-50:  #ecfdf5;
+
+  /* 中性色 */
+  --ink:      #0f172a;
+  --text:     #334155;
+  --muted:    #64748b;
+  --faint:    #94a3b8;
+  --line:     #e2e8f0;
+  --line-soft:#eef2f6;
+  --bg:       #ffffff;
+  --bg-soft:  #f8fafc;
+
+  --sidebar-w: 272px;
+  --text-w:    780px;
+  --wide-w:   1000px;
+
+  --radius:  10px;
+  --radius-s: 6px;
+  --shadow-s: 0 1px 2px rgba(15, 23, 42, .06);
+  --shadow-m: 0 4px 16px -6px rgba(15, 23, 42, .12);
 }
 
-/* 全局排版与文字 */
+/* ==========================================================================
+   1. 基础排版
+   ========================================================================== */
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
-  color: var(--text-primary);
-  line-height: 1.8;
-  font-size: 15.5px;
-  background-color: var(--bg-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+               "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  font-size: 16px;
+  line-height: 1.85;
+  color: var(--text);
+  background: var(--bg);
   -webkit-font-smoothing: antialiased;
 }
 
-/* 标题样式 */
-.content h1, .content h2, .content h3, .content h4 {
-  color: var(--text-primary);
+/* 侧边栏宽度：vue 主题默认 300px，这里收窄一点，把空间让给正文和波形图 */
+.sidebar {
+  width: var(--sidebar-w);
+  padding: 0;                       /* vue 主题默认 padding-top: 40px */
+  background: var(--bg);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+}
+.content { left: var(--sidebar-w); padding-top: 0; }
+
+/* ==========================================================================
+   2. 侧边栏
+   ========================================================================== */
+/* 搜索框由插件插在侧边栏最前面，这里用 order 把站点名提到最上面 */
+.sidebar > h1 { order: 1; flex: 0 0 auto; }
+.sidebar > .search { order: 2; flex: 0 0 auto; }
+.sidebar > .sidebar-nav { order: 3; flex: 1 1 auto; }
+
+.sidebar > h1 {
+  margin: 0;
+  padding: 22px 20px 18px;
+  font-size: 1.05rem;
   font-weight: 700;
-  letter-spacing: -0.01em;
+  letter-spacing: .01em;
+  text-align: left;
+  border-bottom: 1px solid var(--line-soft);
 }
-
-.content h1 {
-  font-size: 2rem;
-  padding-bottom: 0.6rem;
-  border-bottom: 2px solid var(--border-color);
-  margin-top: 1.2rem;
-  margin-bottom: 1.4rem;
-  color: var(--theme-color-dark);
-}
-
-.content h2 {
-  font-size: 1.45rem;
-  padding-bottom: 0.4rem;
-  border-bottom: 1px solid var(--border-color);
-  margin-top: 2.2rem;
-  margin-bottom: 1.1rem;
-  position: relative;
-  color: #1f2937;
-}
-
-.content h2::before {
+.sidebar > h1 a { color: var(--ink); text-decoration: none; }
+.sidebar > h1 a::before {
   content: "";
   display: inline-block;
-  width: 4px;
-  height: 1.1rem;
-  background: var(--theme-color);
+  width: 8px; height: 8px;
+  margin-right: 9px;
   border-radius: 2px;
-  margin-right: 10px;
-  vertical-align: -1px;
+  background: var(--green-600);
+  vertical-align: 1px;
 }
 
-.content h3 {
-  font-size: 1.2rem;
-  margin-top: 1.6rem;
-  margin-bottom: 0.8rem;
-  color: #111827;
-}
-
-.content h4 {
-  font-size: 1.05rem;
-  margin-top: 1.3rem;
-  margin-bottom: 0.5rem;
-  color: #374151;
-}
-
-/* 段落与列表 */
-.content p, .content ul, .content ol {
-  color: var(--text-secondary);
-  line-height: 1.85;
-  margin-bottom: 1.1rem;
-}
-
-.content li {
-  margin-bottom: 0.4rem;
-}
-
-.content strong {
-  color: #111827;
-  font-weight: 600;
-}
-
-/* 链接样式 */
-.content a {
-  color: var(--theme-color);
-  text-decoration: none;
-  font-weight: 500;
-  transition: all 0.2s ease;
-  border-bottom: 1px dashed var(--theme-border);
-}
-
-.content a:hover {
-  color: var(--theme-color-hover);
-  border-bottom-style: solid;
-}
-
-/* 侧边栏样式 */
-.sidebar {
-  background-color: var(--bg-secondary) !important;
-  border-right: 1px solid var(--border-color) !important;
-  padding-top: 1.5rem;
-  width: 280px;
-}
-
-.sidebar .app-name {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--theme-color-dark) !important;
-  padding: 0.8rem 1.2rem 1.2rem 1.2rem;
-  border-bottom: 1px solid var(--border-color);
-  display: block;
-}
-
+.sidebar .sidebar-nav { line-height: 1.6; padding: 14px 12px 60px; }
+.sidebar ul { margin: 0; padding: 0; }
+.sidebar ul li { margin: 1px 0; list-style: none; }
 .sidebar ul li a {
-  font-size: 14.5px;
-  color: var(--text-secondary) !important;
-  padding: 8px 16px;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-  margin: 2px 10px;
-  border-bottom: none !important;
   display: block;
+  padding: 7px 12px;
+  border-radius: var(--radius-s);
+  color: var(--text) !important;
+  font-size: 14px;
+  font-weight: 400;
+  /* vue 主题默认 nowrap+ellipsis，中文长标题会被截成"…"，这里放开换行 */
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  text-decoration: none !important;
+  transition: background .15s ease, color .15s ease;
 }
-
-.sidebar ul li a:hover {
-  color: var(--theme-color) !important;
-  background-color: var(--theme-color-light);
-}
-
+.sidebar ul li a:hover { background: var(--green-50); color: var(--green-800) !important; }
 .sidebar ul li.active > a {
-  color: var(--theme-color-dark) !important;
-  background-color: var(--theme-color-light);
+  background: var(--green-50);
+  color: var(--green-800) !important;
   font-weight: 600;
-  border-left: 3px solid var(--theme-color);
+  border-right: none;
+  box-shadow: inset 3px 0 0 var(--green-600);
 }
 
-.sidebar-nav strong {
-  color: var(--text-muted);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  padding: 12px 16px 4px 16px;
-  display: block;
+/* 分组标题（_sidebar.md 里的 **加粗** 行） */
+.sidebar ul li > p { margin: 16px 0 6px; padding: 0 12px; }
+.sidebar ul li > p strong {
+  color: var(--faint);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: .08em;
+}
+
+/* 二级目录（subMaxLevel: 2）：弱化成辅助信息 */
+.sidebar ul li ul { padding-left: 10px; margin: 2px 0 6px; }
+.sidebar ul li ul li a {
+  font-size: 12.5px;
+  color: var(--muted) !important;
+  padding: 4px 12px;
+  border-left: 1px solid var(--line);
+  border-radius: 0 var(--radius-s) var(--radius-s) 0;
+}
+.sidebar ul li ul li a:hover { border-left-color: var(--green-600); }
+.sidebar ul li ul li.active > a {
+  color: var(--green-700) !important;
+  background: transparent;
+  box-shadow: none;
+  border-left: 1px solid var(--green-600);
+  font-weight: 500;
 }
 
 /* 搜索框 */
-.search {
-  padding: 0 16px 16px 16px;
-  border-bottom: 1px solid var(--border-color);
-  margin-bottom: 10px;
-}
-
-.search input {
-  border: 1px solid var(--border-color) !important;
-  border-radius: 6px !important;
-  padding: 8px 12px !important;
-  font-size: 13.5px !important;
-  background-color: #ffffff !important;
-  color: var(--text-primary) !important;
-  transition: all 0.2s ease !important;
-  width: 100% !important;
-  box-sizing: border-box;
-}
-
-.search input:focus {
-  border-color: var(--theme-color) !important;
-  outline: none !important;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12) !important;
-}
-
-/* 引用块（Callouts / Alerts） */
-.content blockquote {
-  border-left: 4px solid var(--theme-color);
-  background: var(--theme-color-light);
-  color: var(--theme-color-dark);
-  padding: 14px 18px;
-  margin: 1.4rem 0;
-  border-radius: 0 8px 8px 0;
-}
-
-.content blockquote p {
-  color: var(--theme-color-dark);
-  margin-bottom: 0;
-}
-
-.content blockquote strong {
-  color: #064e3b;
-}
-
-/* 表格样式 */
-.content table {
+.sidebar .search { margin: 14px 12px 6px; padding: 0; border: none; }
+.sidebar .search input {
   width: 100%;
-  border-collapse: collapse;
-  margin: 1.6rem 0;
-  font-size: 14px;
-  background-color: #ffffff;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: var(--shadow-sm);
+  box-sizing: border-box;
+  padding: 9px 12px !important;
+  font-size: 13.5px !important;
+  color: var(--ink) !important;
+  background: var(--bg-soft) !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 8px !important;
+  outline: none;
 }
-
-.content table th {
-  background-color: var(--bg-tertiary);
-  color: var(--text-primary);
-  font-weight: 600;
-  padding: 11px 15px;
-  border: 1px solid var(--border-color);
-  text-align: left;
+.sidebar .search input:focus {
+  background: #fff !important;
+  border-color: var(--green-600) !important;
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, .13);
 }
+.sidebar .search .results-panel { background: #fff; }
+.sidebar .search h2 { font-size: 15px; }
+.sidebar .search a { color: var(--green-700); }
 
-.content table td {
-  padding: 10px 15px;
-  border: 1px solid var(--border-color);
-  color: var(--text-secondary);
-}
+.sidebar-toggle span { background-color: var(--green-600); }
 
-.content table tr:nth-child(even) {
-  background-color: #fafbfc;
-}
-
-.content table tr:hover {
-  background-color: var(--theme-color-light);
-}
-
-/* 行内代码与代码块 */
-.content code {
-  background: var(--code-bg);
-  color: var(--code-color);
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 13.5px;
-  border: 1px solid #e2e8f0;
-}
-
-.content pre {
-  background: #1e293b !important;
-  border-radius: 8px;
-  padding: 16px 20px;
-  margin: 1.4rem 0;
-  overflow-x: auto;
-  box-shadow: var(--shadow-md);
-  border: 1px solid #334155;
-}
-
-.content pre code {
-  background: transparent !important;
-  color: #e2e8f0 !important;
-  border: none !important;
-  padding: 0 !important;
-  font-size: 13.5px;
-  line-height: 1.65;
-}
-
-/* 仿真波形与图片容器 */
-.content img {
-  max-width: 100%;
-  border-radius: 6px;
-  border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-md);
-  margin: 1.2rem 0 0.5rem 0;
-  background: #ffffff;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  display: block;
-}
-
-.content img:hover {
-  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-}
-
-.content p > img + em,
-.content p > em {
-  display: block;
-  font-size: 13px;
-  color: var(--text-muted);
-  text-align: center;
-  margin-top: 6px;
-  margin-bottom: 1.2rem;
-}
-
-/* 问答对卡片（Q&A）样式 */
-.qa-box {
-  background-color: #ffffff;
-  border: 1px solid var(--border-color);
-  border-left: 4px solid var(--theme-color);
-  border-radius: 6px;
-  padding: 16px 20px;
-  margin: 1.2rem 0;
-  box-shadow: var(--shadow-sm);
-  transition: all 0.2s ease;
-}
-
-.qa-box:hover {
-  box-shadow: var(--shadow-md);
-  border-left-color: var(--theme-color-hover);
-}
-
-.qa-question {
-  font-weight: 600;
-  color: var(--theme-color-dark);
-  font-size: 15px;
-  margin-bottom: 8px;
-}
-
-.qa-answer {
-  color: var(--text-secondary);
-  font-size: 14.5px;
-  line-height: 1.75;
-}
-
-/* 翻页导航 */
-.docsify-pagination-container {
-  margin-top: 3rem;
-  padding-top: 1.5rem;
-  border-top: 1px solid var(--border-color);
-}
-
-.pagination-item-title {
-  color: var(--theme-color) !important;
-  font-weight: 600;
-}
-
-/* 宽度约束与居中 */
+/* ==========================================================================
+   3. 正文版心
+   正文窄、图表宽：靠 max-width + auto margin 把文字居中，图片和表格放开
+   ========================================================================== */
 .markdown-section {
-  max-width: 900px !important;
-  padding: 30px 40px !important;
+  max-width: 1100px;
+  padding: 34px 40px 96px;
+}
+.markdown-section > * { max-width: var(--text-w); margin-left: auto; margin-right: auto; }
+.markdown-section > figure,
+.markdown-section > .metrics,
+.markdown-section > .mod-grid,
+.markdown-section > table { max-width: var(--wide-w); }
+
+/* ==========================================================================
+   4. 标题
+   ========================================================================== */
+.markdown-section h1,
+.markdown-section h2,
+.markdown-section h3,
+.markdown-section h4 { color: var(--ink); font-weight: 700; letter-spacing: -.005em; }
+
+.markdown-section h1 {
+  font-size: 1.72rem;
+  line-height: 1.4;
+  margin: 0 0 1.6rem;
+  padding-bottom: .7rem;
+  border-bottom: 1px solid var(--line);
+  /* 标题下沿压一段 46px 的绿色短线，比伪元素叠加好控制 */
+  background: linear-gradient(90deg, var(--green-600) 0 46px, transparent 46px)
+              bottom left / 100% 3px no-repeat;
+}
+.markdown-section h2 {
+  font-size: 1.3rem;
+  margin: 3rem 0 1.1rem;
+  padding-left: 13px;
+  border-left: 3px solid var(--green-600);
+  line-height: 1.5;
+}
+.markdown-section h3 {
+  font-size: 1.1rem;
+  margin: 2.2rem 0 .7rem;
+  color: var(--ink);
+  font-weight: 700;
+}
+.markdown-section h4 { font-size: .98rem; margin: 1.5rem 0 .5rem; color: var(--text); }
+
+/* ==========================================================================
+   5. 段落、列表、链接
+   ========================================================================== */
+.markdown-section p,
+.markdown-section ul,
+.markdown-section ol { margin: 0 auto 1.05rem; line-height: 1.9; }
+.markdown-section li { margin-bottom: .35rem; }
+.markdown-section li > ul,
+.markdown-section li > ol { margin-top: .35rem; margin-bottom: .2rem; }
+.markdown-section strong { color: var(--ink); font-weight: 600; }
+.markdown-section a {
+  color: var(--green-700);
+  font-weight: 500;
+  text-decoration: none;
+  border-bottom: 1px solid var(--green-100);
+  transition: border-color .15s ease, color .15s ease;
+}
+.markdown-section a:hover { color: var(--green-800); border-bottom-color: var(--green-600); }
+.markdown-section hr { border: none; border-top: 1px solid var(--line); margin: 2.4rem auto; }
+
+/* ==========================================================================
+   6. 引用块 = 重点提示卡
+   站点用它承载「一句话结论」和「老师可能这样问」
+   ========================================================================== */
+.markdown-section blockquote {
+  margin: 1.3rem auto;
+  padding: 15px 20px;
+  background: var(--green-50);
+  border: 1px solid var(--green-100);
+  border-left: 3px solid var(--green-600);
+  border-radius: 0 var(--radius) var(--radius) 0;
+  color: var(--green-900);
+}
+.markdown-section blockquote p { margin: 0; color: var(--green-900); font-size: .95rem; }
+.markdown-section blockquote p + p { margin-top: .6rem; }
+.markdown-section blockquote strong { color: var(--green-800); }
+.markdown-section blockquote code {
+  background: rgba(255, 255, 255, .75);
+  border-color: var(--green-100);
+  color: var(--green-800);
 }
 
+/* ==========================================================================
+   7. 表格
+   ========================================================================== */
+.markdown-section table {
+  display: table;                /* vue 主题默认 display:block，会让圆角与边框错位 */
+  width: 100%;
+  margin: 1.5rem auto;
+  font-size: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  box-shadow: var(--shadow-s);
+}
+.markdown-section thead th {
+  background: var(--bg-soft);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: 13.5px;
+  white-space: nowrap;
+}
+.markdown-section td,
+.markdown-section th {
+  border: none;
+  border-bottom: 1px solid var(--line-soft);
+  padding: 10px 15px;
+  line-height: 1.7;
+  vertical-align: top;
+}
+.markdown-section tbody tr:last-child td { border-bottom: none; }
+.markdown-section tbody tr:nth-child(even) { background: #fcfdfe; }
+.markdown-section tbody tr:hover { background: var(--green-50); }
+.markdown-section table code { font-size: 12.5px; white-space: nowrap; }
+
+/* ==========================================================================
+   8. 代码
+   ========================================================================== */
+.markdown-section code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: var(--green-800);
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 1px 5px;
+}
+.markdown-section pre {
+  position: relative;
+  margin: 1.4rem auto;
+  padding: 18px 20px;
+  background: #0f172a;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-m);
+  overflow-x: auto;
+  line-height: 1.7;
+}
+.markdown-section pre code {
+  background: transparent;
+  border: none;
+  padding: 0;
+  color: #e2e8f0;
+  font-size: 13px;
+}
+/* 代码块左上角一条绿色装饰线，和整站呼应 */
+.markdown-section pre::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--green-600), rgba(5, 150, 105, 0));
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+.docsify-copy-code-button {
+  font-size: 12px !important;
+  background: rgba(255, 255, 255, .12) !important;
+  color: #cbd5e1 !important;
+  border-radius: 5px !important;
+  padding: 3px 9px !important;
+}
+.docsify-copy-code-button:hover { background: rgba(255, 255, 255, .22) !important; color: #fff !important; }
+
+/* ==========================================================================
+   9. 图片 / 波形图
+   波形截图信息密度高：给它一个浅灰"仪器面板"底衬 + 描边 + 题注，并允许超宽
+   ========================================================================== */
+.markdown-section .doc-figure,
+.markdown-section figure {
+  /* 图框贴着图片收缩：小图（如 640px 的演示 GIF）不会被拉伸放大。
+     max-width 必须写成 min(100%, ...)，否则 fit-content 会按图片原始宽度撑破窄屏。 */
+  width: fit-content;
+  max-width: min(100%, var(--wide-w));
+  margin: 1.8rem auto;
+  padding: 10px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-s);
+}
+.markdown-section .doc-figure img,
+.markdown-section figure img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  background: #fff;
+  cursor: zoom-in;
+}
+.markdown-section figcaption {
+  margin-top: 9px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  text-align: center;
+}
+/* 正文里的行内小图（没有包进 figure 的）*/
+.markdown-section > p > img {
+  display: block;
+  margin: 1.4rem auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-s);
+  box-shadow: var(--shadow-s);
+}
+
+/* ==========================================================================
+   10. 首页专用组件：指标条 + 模块卡片
+   ========================================================================== */
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+  margin: 1.6rem auto 2rem;
+}
+.metrics .metric {
+  padding: 14px 16px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+}
+.metrics .metric b {
+  display: block;
+  font-size: 1.32rem;
+  line-height: 1.3;
+  color: var(--green-700);
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+.metrics .metric span { display: block; font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+
+.mod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 14px;
+  margin: 1.8rem auto;
+}
+.mod-grid a.mod-card {
+  display: block;
+  padding: 18px 20px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  border-bottom: 1px solid var(--line);
+  text-decoration: none;
+  transition: border-color .16s ease, box-shadow .16s ease, transform .16s ease;
+}
+.mod-grid a.mod-card:hover {
+  border-color: var(--green-600);
+  box-shadow: var(--shadow-m);
+  transform: translateY(-2px);
+}
+.mod-card .mod-card-head {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  margin-bottom: 6px;
+}
+.mod-card .mod-card-idx {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--green-700);
+  background: var(--green-50);
+  border-radius: 4px;
+  padding: 1px 7px;
+  letter-spacing: .04em;
+}
+.mod-card .mod-card-title { font-size: 15.5px; font-weight: 700; color: var(--ink); }
+.mod-card .mod-card-entity {
+  display: block;
+  margin-bottom: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+  color: var(--faint);
+}
+.mod-card .mod-card-desc { font-size: 13.5px; line-height: 1.75; color: var(--text); }
+.mod-card .mod-card-tags { margin-top: 10px; }
+.mod-card .mod-card-tags span {
+  display: inline-block;
+  margin: 0 6px 6px 0;
+  padding: 2px 9px;
+  font-size: 11.5px;
+  color: var(--green-800);
+  background: var(--green-50);
+  border: 1px solid var(--green-100);
+  border-radius: 999px;
+}
+
+/* ==========================================================================
+   11. 翻页导航 / 回到顶部
+   ========================================================================== */
+.docsify-pagination-container { max-width: var(--text-w); margin: 3rem auto 0; }
+.pagination-item-label { color: var(--faint) !important; font-size: 12px !important; }
+.pagination-item-title { color: var(--green-700) !important; font-size: 14.5px !important; }
+
+/* ==========================================================================
+   12. 窄屏
+   ========================================================================== */
+@media screen and (max-width: 1024px) {
+  .markdown-section { padding: 28px 26px 80px; }
+}
 @media screen and (max-width: 768px) {
-  .markdown-section {
-    padding: 20px !important;
-  }
+  body { font-size: 15.5px; }
+  .content { left: 0; padding-top: 8px; }
+  .sidebar { left: calc(-1 * var(--sidebar-w)); width: var(--sidebar-w); }
+  body.close .sidebar { transform: translateX(var(--sidebar-w)); }
+  body.close .content { transform: translateX(var(--sidebar-w)); }
+  .sidebar-toggle { width: auto; padding: 22px 22px 10px 14px; }
+  body.close .sidebar-toggle { width: var(--sidebar-w); padding: 10px; }
+  .markdown-section { max-width: 100%; padding: 18px 16px 72px; }
+  .markdown-section > * { max-width: 100%; }
+  .markdown-section h1 { font-size: 1.42rem; }
+  .markdown-section h2 { font-size: 1.16rem; margin-top: 2.2rem; }
+  .markdown-section table { display: block; overflow-x: auto; white-space: nowrap; }
+  .markdown-section table td,
+  .markdown-section table th { white-space: normal; }
+  .mod-grid { grid-template-columns: 1fr; }
 }

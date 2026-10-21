@@ -1,34 +1,72 @@
-# 简易拼图游戏 · 硬件子系统设计与答辩速查
+# 简易拼图游戏 · 硬件模块与答辩速查
 
-> **目标器件**：Altera MAX II EPM1270T144C5 ｜ **综合工具**：Quartus II 9.1 (32-bit) ｜ **基准时钟**：50.000 MHz ｜ **时序收敛**：Fmax 54.27 MHz (+4.27 MHz 余量)
+> **一句话**：在一块没有 CPU、也没有片上 RAM 的 CPLD 上，用纯 VHDL 逻辑做了一个能玩的 8×8 双色点阵拼图游戏。
 
-本项目是在无嵌入式 RAM、无微处理器软核的纯硬件 CPLD 芯片上，采用 VHDL-93 语言独立实现的完整交互式双色点阵拼图游戏系统。全系统遵循**严格单时钟域与使能脉冲节拍驱动**原则，整机占用 **1,264 个逻辑单元 (LE)**（占芯片总容量 1,270 LE 的 99.53%），打满全部 **127 个逻辑阵列块 (LAB)**，通过了全部 184 条功能与时序验证断言。
+<div class="metrics">
+  <div class="metric"><b>1,264 / 1,270</b><span>逻辑单元 LE（99.53%）</span></div>
+  <div class="metric"><b>127 / 127</b><span>逻辑阵列块 LAB（100%）</span></div>
+  <div class="metric"><b>54.27 MHz</b><span>Fmax（基准时钟 50 MHz）</span></div>
+  <div class="metric"><b>52 / 116</b><span>用户 I/O 引脚（44.83%）</span></div>
+  <div class="metric"><b>184</b><span>条仿真断言，全部通过</span></div>
+</div>
 
-本站点严格依据《实验报告》§2.2 的大模块架构划分，归纳整理为 **6 大核心硬件子系统**。文档涵盖底层电路原理、信号传输时序、Quartus II 原生仿真波形逐点深度剖析与答辩标准问答。
+## 这是什么
 
----
+目标器件是 Altera MAX II EPM1270T144C5，一共 1,270 个逻辑单元，没有 CPU 软核，也没有片上 RAM。键盘扫描、游戏规则、碰撞判断、图案存储、显示扫描、音效，全部由 VHDL 描述成硬件电路，最终占掉 1,264 个逻辑单元。人机接口是 4×4 矩阵键盘，输出是 8×8 双色点阵、8 位数码管和一个蜂鸣器。
 
-## 核心硬件大模块全景索引
+![规则模型重放：从开机自检到通关的一局](assets/images/demo-run.gif)
+*规则模型重放（软件渲染，不是板子实录）：开机自检 → 预览目标图案 → 零片散落 → 拼装 → 通关*
 
-| 序号 | 核心硬件大模块 | 涵盖底层实体 | 硬件核心功能 | 关键驱动节拍 | 对应仿真波形图 | 答辩核心关注点 |
-|:---:|:---|:---|:---|:---:|:---:|:---|
-| **01** | [系统顶层集成与全局架构](subsystems/01_system_top.md) | `puzzle_top`<br>`puzzle_pkg` | 52 个管脚物理对齐、点阵红绿色彩仲裁、10 秒告急幽灵闪烁、全局真值包与 24 个纯函数（0 LE 展开） | 50 MHz 全局主频 | 图 15 顶层全流程波形 | 52 管脚分配原则、为什么 package 占用 0 LE、色彩冲突仲裁优先级、127 LAB 极限布线收敛 |
-| **02** | [时钟使能与键盘输入子系统](subsystems/02_clock_keypad.md) | `clk_gen`<br>`keypad_scan` | 级联分频链生成 7 路单周期同步使能脉冲、BTN0 复位 20 ms 滤波、4×4 矩阵双相扫描与 40 ms 滞回消抖 | 50 MHz<br>`tick_200` | 图 4 七路使能波形<br>图 5 键盘消抖波形 | 为什么严禁门控时钟、级联分频如何省触发器、40 ms 消抖参数权衡、单拍脉冲防连发机理 |
-| **03** | [游戏主控与规则状态机子系统](subsystems/03_game_fsm.md) | `game_fsm` | 6 状态 ASM 算法状态机、倒计时管理与防下溢保护、散落单拍电平握手、三关流转与安全状态回退 | 50 MHz<br>`tick_1`<br>`tick_4` | 图 6 状态机全流程波形<br>图 2 状态转移图 | 单进程状态机优势、倒计时防下溢保护、散落单脉冲握手协议、跨关卡数据驱动解耦 |
-| **04** | [核心拼图引擎微架构子系统](subsystems/04_puzzle_engine.md) | `puzzle_ctrl` | **面积优化主战场**（从 4690 LE 压缩至 1264 LE）：36 触发器紧凑模型、行流式实时渲染、串行分时碰撞检测、等效多解性判据 | 50 MHz<br>`tick_1k` | 图 7 平移旋转与碰撞波形<br>图 3 引擎微架构图 | 4690 LE 极限压缩方案、刚性碰撞硬件拦截、90° 旋转复用移动流水、等效多解全图判据 |
-| **05** | [关卡目标图案与零片数据子系统](subsystems/05_rom_random.md) | `pattern_rom`<br>`piece_rom`<br>`rng_lfsr` | 纯组合 LUT 查表（零 RAM 芯片约束）、三关几何面积严格守恒证明、零片包围盒局部截断、8 位 Galois LFSR 满周期防死锁 | 纯组合查表<br>`step` 脉冲 | 图 8 目标图案波形<br>图 9 零片几何波形<br>图 10 随机数发生波形 | 无 RAM 芯片如何实现 ROM、Galois 对比 Fibonacci 的时序优势、位切片消除除法器、全零防死锁 |
-| **06** | [显示与音效输出驱动子系统](subsystems/06_display_audio.md) | `disp_format`<br>`seg_scan`<br>`dot_matrix_scan`<br>`buzzer_ctrl` | 64 项常数 LUT 消除硬件除法器（延迟从 26 ns 降至 4.2 ns）、8 位数码管 125 Hz 超临界无频闪刷新、点阵红绿空间混黄、数控分频精确音高 | 50 MHz<br>`tick_1k`<br>`tick_4` | 图 11 字符拼装波形<br>图 12 数码管扫描波形<br>图 13 点阵行选通波形<br>图 14 蜂鸣器分频波形 | 为什么坚决不用 `/ 10`、125 Hz 刷新物理依据、动态扫描防重影机制、双色空间混色、蜂鸣器音准精度 |
+## 六个大模块
 
----
+本站按《实验报告》§2.2 的 5 大子系统划分，另加 1 页顶层集成，共 6 页。点任意一张卡片进入。
 
-## 硬件资源与静态时序量化指标
+<div class="mod-grid">
+  <a class="mod-card" href="#/subsystems/01_system_top">
+    <div class="mod-card-head"><span class="mod-card-idx">01</span><span class="mod-card-title">系统顶层集成</span></div>
+    <span class="mod-card-entity">puzzle_top.vhd · puzzle_pkg.vhd</span>
+    <div class="mod-card-desc">把六个模块接在一起，管 52 根引脚怎么接、点阵的红绿两色怎么分配。</div>
+    <div class="mod-card-tags"><span>52 引脚</span><span>双色仲裁</span><span>127 LAB 打满</span></div>
+  </a>
+  <a class="mod-card" href="#/subsystems/02_clock_keypad">
+    <div class="mod-card-head"><span class="mod-card-idx">02</span><span class="mod-card-title">时钟使能与键盘输入</span></div>
+    <span class="mod-card-entity">clk_gen.vhd · keypad_scan.vhd</span>
+    <div class="mod-card-desc">把 50 MHz 时钟切成 7 种节拍，再把人手按键变成干净的单击脉冲。</div>
+    <div class="mod-card-tags"><span>7 路节拍</span><span>40 ms 消抖</span><span>单拍脉冲</span></div>
+  </a>
+  <a class="mod-card" href="#/subsystems/03_game_fsm">
+    <div class="mod-card-head"><span class="mod-card-idx">03</span><span class="mod-card-title">游戏主控状态机</span></div>
+    <span class="mod-card-entity">game_fsm.vhd</span>
+    <div class="mod-card-desc">游戏的裁判：管自检、预览、对局、结算四个阶段，以及倒计时。</div>
+    <div class="mod-card-tags"><span>6 状态</span><span>2 s 自检</span><span>30 / 40 / 60 s</span></div>
+  </a>
+  <a class="mod-card" href="#/subsystems/04_puzzle_engine">
+    <div class="mod-card-head"><span class="mod-card-idx">04</span><span class="mod-card-title">核心拼图引擎</span></div>
+    <span class="mod-card-entity">puzzle_ctrl.vhd</span>
+    <div class="mod-card-desc">真正干活的部分：算零片往哪走、会不会撞上、有没有拼对。</div>
+    <div class="mod-card-tags"><span>4,690 → 760 LE</span><span>36 位状态</span><span>行流式渲染</span></div>
+  </a>
+  <a class="mod-card" href="#/subsystems/05_rom_random">
+    <div class="mod-card-head"><span class="mod-card-idx">05</span><span class="mod-card-title">图案库与随机数</span></div>
+    <span class="mod-card-entity">pattern_rom.vhd · piece_rom.vhd · rng_lfsr.vhd</span>
+    <div class="mod-card-desc">芯片上没有 RAM，就用组合查找表存图案，用 LFSR 造零片的随机位置。</div>
+    <div class="mod-card-tags"><span>零 RAM</span><span>8 位 LFSR</span><span>面积守恒</span></div>
+  </a>
+  <a class="mod-card" href="#/subsystems/06_display_audio">
+    <div class="mod-card-head"><span class="mod-card-idx">06</span><span class="mod-card-title">显示与音效驱动</span></div>
+    <span class="mod-card-entity">disp_format · seg_scan · dot_matrix_scan · buzzer_ctrl</span>
+    <div class="mod-card-desc">把内部数据变成数码管、点阵和蜂鸣器能直接接受的电信号。</div>
+    <div class="mod-card-tags"><span>125 Hz 刷新</span><span>红绿混黄</span><span>三关 BGM</span></div>
+  </a>
+</div>
 
-系统在 Quartus II 9.1 中全编译生成的最终物理参数如下（提取自编译报告与 TimeQuest 分析器）：
+## 硬件与工具
 
-- **逻辑单元占用**：1,264 / 1,270 LEs (**99.53%**)
-- **逻辑阵列块占用**：127 / 127 LABs (**100.00%**)
-- **用户 I/O 管脚**：52 / 116 Pins (**44.83%**)
-- **最高时钟频率 (Fmax)**：**54.27 MHz**（基准时钟 50.00 MHz，正时序余量 **+4.27 MHz**）
-- **建立时间余量 (Setup Slack)**：**+1.572 ns**（最长数据延迟 18.095 ns）
-- **保持时间余量 (Hold Slack)**：**+1.078 ns**（无竞争毛刺）
-- **片上 UFM 占用**：0 / 1（0%，全部数据由 LUT / 寄存器硬实现，零 Flash 依赖）
+| 项目 | 内容 |
+|:---|:---|
+| 目标器件 | Altera MAX II EPM1270T144C5（1,270 LE / 127 LAB，无嵌入式 RAM，无微处理器软核） |
+| 开发工具 | Quartus II 9.1 (32-bit)，VHDL-93，单时钟域设计 |
+| 基准时钟 | 板载 50.000 MHz 有源晶振，Fmax 54.27 MHz（Setup 余量 +1.572 ns） |
+| 验证方式 | 12 套 Quartus 波形仿真测试台、184 条断言，全部自动通过 |
+
+> **数据出处**：以上读数来自 `quartus/output_files/puzzle.fit.rpt` 与 TimeQuest 报告，站内每页引用的数字都可在 `facts/facts.json` 中回溯。
