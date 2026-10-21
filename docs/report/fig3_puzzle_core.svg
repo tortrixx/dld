@@ -24,7 +24,7 @@
   <text x="375" y="92" font-size="13" font-weight="bold" fill="#1d4ed8" text-anchor="middle">2. 64位几何变换处理器</text>
   <text x="375" y="115" font-size="10" fill="#2563eb" text-anchor="middle">零片 ROM 原型掩码输入</text>
   <text x="375" y="132" font-size="10" fill="#2563eb" text-anchor="middle">纯组合移位器执行二维平移</text>
-  <text x="375" y="149" font-size="9.5" fill="#1d4ed8" text-anchor="middle">S3 触发 90° 原位顺时针旋转</text>
+  <text x="375" y="149" font-size="9.5" fill="#1d4ed8" text-anchor="middle">KEY8 触发 90° 原位顺时针旋转</text>
 
   <!-- Arrow Step 2 -> Step 3 -->
   <line x1="470" y1="115" x2="525" y2="115" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
@@ -44,7 +44,7 @@
   <!-- Step 4: 锁定并集与全图比对 -->
   <rect x="760" y="60" width="165" height="110" rx="8" fill="#faf5ff" stroke="#a855f7" stroke-width="1.8"/>
   <text x="842" y="92" font-size="13" font-weight="bold" fill="#6b21a8" text-anchor="middle">4. 锁定与全图验证</text>
-  <text x="842" y="115" font-size="10" fill="#7e22ce" text-anchor="middle">S8 确认: piece 并入锁定面</text>
+  <text x="842" y="115" font-size="10" fill="#7e22ce" text-anchor="middle">KEY11 确认: piece 并入锁定面</text>
   <text x="842" y="132" font-size="10" fill="#7e22ce" text-anchor="middle">全图比对: locked == target</text>
   <text x="842" y="149" font-size="9.5" font-weight="bold" fill="#15803d" text-anchor="middle">100% 吻合即置高 match</text>
 
@@ -59,8 +59,8 @@
   <text x="480" y="305" font-size="11" font-weight="bold" fill="#16a34a">绿光平面 (Green Plane)</text>
   <text x="480" y="325" font-size="10" fill="#475569">当前选中零片 + ≤10s 幽灵闪烁辅助</text>
 
-  <text x="680" y="305" font-size="11" font-weight="bold" fill="#ca8a04">黄光合成 (Yellow)</text>
-  <text x="680" y="325" font-size="10" fill="#475569">已正确锁定的零片 (红+绿双亮)</text>
+  <text x="660" y="305" font-size="11" font-weight="bold" fill="#ca8a04">黄光合成 (Yellow)</text>
+  <text x="660" y="325" font-size="9.5" fill="#475569">已正确锁定的零片 (红+绿双亮)</text>
 
   <!-- Connect Step 4 & Display Buffer -->
   <path d="M 842 170 L 842 295 L 782 295" fill="none" stroke="#1e293b" stroke-width="1.4" marker-end="url(#arrow)"/>

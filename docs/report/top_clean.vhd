@@ -14,14 +14,14 @@ entity puzzle_top is
     port (
         clk      : in  std_logic;                       -- PIN_18 板载 50 MHz 主时钟
         sw7      : in  std_logic;                       -- PIN_125 系统总使能 (上拨='1')
-        btn      : in  std_logic;                       -- PIN_61 板载 BTN0 异步复位 (低有效)
+        btn      : in  std_logic;                       -- PIN_61 板载 BTN0 复位 (空闲低/按下高，高有效)
         kp_row   : in  std_logic_vector(3 downto 0);    -- PIN_114..111 矩阵键盘行输入
         kp_col   : out std_logic_vector(3 downto 0);    -- PIN_120..117 矩阵键盘列驱动
-        dot_row  : out std_logic_vector(7 downto 0);    -- PIN_1..8 点阵行阳极 (高有效)
-        dot_colr : out std_logic_vector(7 downto 0);    -- PIN_11..22 点阵红阴极 (低有效)
-        dot_colg : out std_logic_vector(7 downto 0);    -- PIN_38..45 点阵绿阴极 (低有效)
+        dot_row  : out std_logic_vector(7 downto 0);    -- PIN_1..8 点阵行选通 (低有效，每次只选一行)
+        dot_colr : out std_logic_vector(7 downto 0);    -- PIN_11..22 点阵红列 (高电平点亮红)
+        dot_colg : out std_logic_vector(7 downto 0);    -- PIN_38..45 点阵绿列 (高电平点亮绿)
         seg      : out std_logic_vector(7 downto 0);    -- PIN_62..51 数码管共阴段选
-        cat      : out std_logic_vector(7 downto 0);    -- PIN_31..65 数码管共阴位选
+        cat      : out std_logic_vector(7 downto 0);    -- PIN_31/30/70/69/68/67/66/63 数码管位选 (共阴，低有效)
         buzz     : out std_logic                        -- PIN_60 蜂鸣器驱动
     );
 end entity puzzle_top;

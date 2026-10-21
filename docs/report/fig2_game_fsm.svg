@@ -14,13 +14,13 @@
   <line x1="74" y1="80" x2="115" y2="80" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="95" y="72" font-size="11" font-weight="bold" fill="#ef4444" text-anchor="middle">上电 / BTN0</text>
 
-  <!-- State 1: S_INIT -->
+  <!-- State 1: S_SELF_TEST -->
   <rect x="120" y="45" width="130" height="70" rx="8" fill="#f8fafc" stroke="#64748b" stroke-width="1.8"/>
-  <text x="185" y="73" font-size="13" font-weight="bold" fill="#0f172a" text-anchor="middle">S_INIT (自检)</text>
+  <text x="185" y="73" font-size="11.5" font-weight="bold" fill="#0f172a" text-anchor="middle">S_SELF_TEST (自检)</text>
   <text x="185" y="91" font-size="10" fill="#64748b" text-anchor="middle">2s 全亮 / POST 短鸣</text>
   <text x="185" y="105" font-size="9.5" fill="#64748b" text-anchor="middle">数码管 88888888</text>
 
-  <!-- Arrow S_INIT -> S_IDLE -->
+  <!-- Arrow S_SELF_TEST -> S_IDLE -->
   <line x1="250" y1="80" x2="315" y2="80" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="282" y="72" font-size="10.5" font-weight="500" fill="#475569" text-anchor="middle">2s 超时</text>
 
@@ -32,7 +32,7 @@
 
   <!-- Arrow S_IDLE -> S_PREVIEW -->
   <line x1="455" y1="80" x2="520" y2="80" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="487" y="72" font-size="10.5" font-weight="bold" fill="#2563eb" text-anchor="middle">按【开始】S1</text>
+  <text x="487" y="38" font-size="10.5" font-weight="bold" fill="#2563eb" text-anchor="middle">按【开始】KEY14</text>
 
   <!-- State 3: S_PREVIEW -->
   <rect x="525" y="45" width="145" height="70" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.8"/>
@@ -40,25 +40,25 @@
   <text x="597" y="91" font-size="10" fill="#2563eb" text-anchor="middle">5s 目标图红光显示</text>
   <text x="597" y="105" font-size="9.5" fill="#2563eb" text-anchor="middle">DISP7 倒计时 5~1</text>
 
-  <!-- Arrow S_PREVIEW -> S_PLAY -->
+  <!-- Arrow S_PREVIEW -> S_PLAYING -->
   <line x1="670" y1="80" x2="745" y2="80" stroke="#334155" stroke-width="1.5" marker-end="url(#arrow)"/>
   <text x="708" y="72" font-size="10.5" font-weight="500" fill="#475569" text-anchor="middle">5s 届满散落</text>
 
-  <!-- State 4: S_PLAY -->
+  <!-- State 4: S_PLAYING -->
   <rect x="750" y="45" width="165" height="180" rx="8" fill="#fdf4ff" stroke="#c084fc" stroke-width="2"/>
-  <text x="832" y="75" font-size="14" font-weight="bold" fill="#7e22ce" text-anchor="middle">S_PLAY (对局)</text>
+  <text x="832" y="75" font-size="14" font-weight="bold" fill="#7e22ce" text-anchor="middle">S_PLAYING (对局)</text>
   <text x="832" y="98" font-size="10.5" fill="#9333ea" text-anchor="middle">• 倒计时 30s/40s/60s 递减</text>
-  <text x="832" y="118" font-size="10.5" fill="#9333ea" text-anchor="middle">• S2 循环切片 (高亮变绿)</text>
-  <text x="832" y="138" font-size="10.5" fill="#9333ea" text-anchor="middle">• S4~S7 平移 / S3 90° 旋转</text>
-  <text x="832" y="158" font-size="10.5" fill="#9333ea" text-anchor="middle">• S8 锁定零片 (变黄锁死)</text>
+  <text x="832" y="118" font-size="10.5" fill="#9333ea" text-anchor="middle">• KEY16 循环切片 (高亮变绿)</text>
+  <text x="832" y="138" font-size="10.5" fill="#9333ea" text-anchor="middle">• 方向键平移 / KEY8 旋转</text>
+  <text x="832" y="158" font-size="10.5" fill="#9333ea" text-anchor="middle">• KEY11 锁定零片 (变黄锁死)</text>
   <text x="832" y="178" font-size="10.5" fill="#9333ea" text-anchor="middle">• 实时碰撞检测与边界拦截</text>
   <text x="832" y="198" font-size="10" font-weight="bold" fill="#b91c1c" text-anchor="middle">≤10s: 绿色幽灵 2Hz 闪烁</text>
 
-  <!-- Arrow S_PLAY -> S_WIN (Down Left) -->
+  <!-- Arrow S_PLAYING -> S_WIN (Down Left) -->
   <path d="M 750 170 L 580 170 L 580 275" fill="none" stroke="#16a34a" stroke-width="1.8" marker-end="url(#arrow)"/>
   <text x="645" y="162" font-size="11" font-weight="bold" fill="#16a34a" text-anchor="middle">全部锁定 且 拼合==目标</text>
 
-  <!-- Arrow S_PLAY -> S_FAIL (Down Right) -->
+  <!-- Arrow S_PLAYING -> S_FAIL (Down Right) -->
   <path d="M 832 225 L 832 275" fill="none" stroke="#dc2626" stroke-width="1.8" marker-end="url(#arrow)"/>
   <text x="840" y="255" font-size="11" font-weight="bold" fill="#dc2626">倒计时超时</text>
 
@@ -67,14 +67,14 @@
   <text x="580" y="308" font-size="14" font-weight="bold" fill="#15803d" text-anchor="middle">S_WIN (过关/通关)</text>
   <text x="580" y="328" font-size="10.5" fill="#16a34a" text-anchor="middle">数码管显示 PASS</text>
   <text x="580" y="344" font-size="10.5" fill="#16a34a" text-anchor="middle">奏响 Course Clear 胜曲</text>
-  <text x="580" y="360" font-size="10" fill="#15803d" text-anchor="middle">点阵全屏 2Hz 闪烁 2s</text>
+  <text x="580" y="360" font-size="10" fill="#15803d" text-anchor="middle">点阵全屏 2Hz 闪烁 2 个周期(1s)</text>
 
   <!-- State 6: S_FAIL -->
   <rect x="750" y="280" width="160" height="90" rx="8" fill="#fee2e2" stroke="#ef4444" stroke-width="2"/>
   <text x="830" y="308" font-size="14" font-weight="bold" fill="#b91c1c" text-anchor="middle">S_FAIL (失败)</text>
   <text x="830" y="328" font-size="10.5" fill="#dc2626" text-anchor="middle">数码管显示 FAIL</text>
   <text x="830" y="344" font-size="10.5" fill="#dc2626" text-anchor="middle">奏响 Game Over 负音</text>
-  <text x="830" y="360" font-size="10" fill="#b91c1c" text-anchor="middle">点阵全屏 2Hz 闪烁 2s</text>
+  <text x="830" y="360" font-size="10" fill="#b91c1c" text-anchor="middle">点阵全屏 2Hz 闪烁 2 个周期(1s)</text>
 
   <!-- Transitions from S_WIN -->
   <!-- Level < 3: Next level -> S_PREVIEW -->
@@ -85,8 +85,9 @@
   <path d="M 540 370 L 540 430 L 387 430 L 387 120" fill="none" stroke="#16a34a" stroke-width="1.5" stroke-dasharray="4,4" marker-end="url(#arrow)"/>
   <text x="460" y="422" font-size="10" font-weight="bold" fill="#16a34a" text-anchor="middle">关卡 3 通关: 按【开始】重开</text>
 
-  <!-- Transitions from S_FAIL -> S_IDLE -->
-  <path d="M 830 370 L 830 450 L 350 450 L 350 120" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="590" y="445" font-size="10" font-weight="bold" fill="#dc2626" text-anchor="middle">2s 超时结束: 返回待机状态</text>
+  <!-- Transitions from S_FAIL: per rtl/game_fsm.vhd:361-367 the FSM leaves
+       S_WIN|S_FAIL only on K_START; there is no timed return to S_IDLE, so
+       the old dashed S_FAIL to S_IDLE edge is deliberately not drawn. -->
+  <text x="830" y="392" font-size="10.5" font-weight="bold" fill="#dc2626" text-anchor="middle">按【开始】重开新一局</text>
 
 </svg>

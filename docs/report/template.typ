@@ -44,7 +44,7 @@
     let p = counter(page).get().first()
     if p > 0 [
       #set text(size: 9pt, font: f-serif, fill: rgb("#64748b"))
-      #align(center)[- #p -]
+      #align(center)[#box[—] #p #box[—]]
     ]
   }
 
@@ -104,12 +104,14 @@
       none
     },
     inset: (x: 5pt, y: 4.5pt),
+    // 表头居中、正文列左对齐（避免窄列里多行文字被整体居中造成参差）
+    align: (col, row) => if row == 0 { center } else { left },
   )
 
   // 表格单元内取消两端对齐，避免窄列字距被拉开
   show table.cell: set par(justify: false)
   // 表格行不允许被跨页切断（避免续页出现孤立的单元格残行）
-  show table.cell: it => block(breakable: false, it)
+  show table.cell: it => block(breakable: false, width: 100%, it)
 
   // 图表图题规范
   show figure.caption: it => [
