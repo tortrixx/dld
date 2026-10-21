@@ -100,16 +100,40 @@ cd <仓库根>
 Windows 回退 `Noto Serif SC / Noto Sans SC / Consolas`，因此两边都能构建；
 构建时出现的 `unknown font family: songti sc` 只是"本机没有该字体、已按栈回退"的**正常警告**。
 
-### 4.2 DOCX 与 MD
+### 4.2 DOCX 与 MD（**已脚本化，可逐字节复现**）
 
-`.docx` 与 `.md` 由同一次内容修订同步产出（图片按 sha256 与 `docs/report/*.png` 逐一核对，
-表格/正文数字与 PDF 逐字对齐）。修改 `.typ` 文案后，务必同步这两份，避免出现
-"PDF 说 1,264、DOCX 说 1,048" 这类图文自相矛盾。
+`.docx` 与 `.md` 不再靠手改，而是由两个入库工具从 `.typ` 派生：
+
+```powershell
+# ① .typ -> .md（纯标准库，系统 Python 即可）
+python scripts\gen_report_md.py --check      # 只比对：与交付 md 逐字节一致则 PASS
+python scripts\gen_report_md.py --apply      # 写盘
+python scripts\gen_report_md.py --out x.md   # 写到别处对比
+
+# ② .typ + PNG -> .docx（幂等同步：段落/标题/七张表/媒体/extent）
+#    ⚠️ 依赖 lxml；本机系统 Python 没有 lxml，请用仓库文档里指明的捆绑解释器
+python scripts\sync_report_docx.py --check   # 只报差异：0 变更表示已收敛
+python scripts\sync_report_docx.py --apply   # 写盘（写前自动快照到 .tmp/report_sync/<时间戳>/）
+python scripts\sync_report_docx.py --no-media
+```
+
+两个脚本的头部都写清了"用途 / 为什么需要 / 用法 / 依赖 / 已知边界"。要点：
+
+- **`sync_report_docx.py` 按"表头关键字"识别表格，不按表序号** —— §2.3 加表导致表号后移那次踩过坑；
+  列数不符会拒绝改写而不是硬写；
+- 锚点失配（例如 `.typ` 某段措辞被大改）时**不会静默成功**：`--check` 返回 1、`--apply` 直接中止不写盘，
+  并提示去改 `.typ` 措辞或脚本顶部的 `PARA_JOBS` / `TBL_JOBS` 常量；
+- 已知边界：md 生成器不实现 typst 的自动图号（md 里显式写 `图 N`）；引用 `.svg/.pdf` 的图会自动改指同名 `.png`；
+  §3.2 "并排 2 图 → 12 张通栏单图"属一次性结构改造，脚本只做旧结构检测提示、不擅自重排；
+  页眉页脚/样式/编号不动。
+
+> 一轮完整的"改文档"流程：**改 `.typ` → 重建 PDF（§4.1）→ `gen_report_md.py --apply` →
+> `sync_report_docx.py --apply` → 复算四份文件 sha 并抽查页面**。四份交付物都是可复现产物，不是手改稿。
 
 ### 4.3 重建后必须自检的三条
 
-1. **数字自洽**：`python scripts/audit_evidence.py` 必须 `0 FAIL`（当前 `0 FAIL / 1 WARN / 30 OK`，
-   唯一 WARN 是"LAB 已满 127/127"，那是事实）；
+1. **数字自洽**：`python scripts/audit_evidence.py` 必须 `0 FAIL`（当前 `0 FAIL / 2 WARN / 29 OK`，
+   两条 WARN 分别是"LAB 已满 127/127"与"本地有未推提交"，都是事实）；
 2. **截图与表格对得上**：PDF 里 §4.2 的表格每一行都要能在两张截图或 `puzzle.sta.rpt` 里找到出处；
 3. **不漏本机路径**：`git grep` 检索本机用户目录前缀应为 0 命中（PNG 是二进制，靠人工裁剪保证）。
 
