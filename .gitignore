@@ -88,35 +88,8 @@ sim/*.history
 output/
 
 # ============================================================
-# 站点构建产物 —— 2026-10-15 第 27 工作阶段
+# Docsify 文档站与通用临时文件
 # ------------------------------------------------------------
-# ⚠️ 历史：这里原本还有一整节 `site/`（Vite + React 的工程展示站）的忽略规则。
-#    **用户决定去掉展示站、只保留 `book/`（Material 文档站）并让它占用根路径
-#    `/dld/`**，所以 `site/` 整个目录已删除，本节随之精简。
-#
-# 要挡的三类：
-#   · book/.venv/            Python 虚拟环境（pip install 即得）
-#   · book/site/             mkdocs build 的产物
-#   · book/docs/_generated/  由 book/scripts/gen_pages.py 从 facts/facts.json
-#                            生成的表格页 —— **必须**每次构建前重新生成，
-#                            否则就会出现"源码改了、文档表还是老的"这种
-#                            最难发现的过期（本项目最怕的一类事故）
-#   · book/docs/assets/      从 docs/图/ 同步来的素材副本（真值源只有 docs/图/）
-#     ⚠️ 只挡子目录，不挡 assets/brand/、assets/javascripts/ 与 hardware/README.md
-#        —— 那些是**手写/自持**的品牌图标、本地 Mermaid 与"缺失证据"说明，要入库。
-# ============================================================
-book/.venv/
-book/site/
-book/_smoke/
-# 审图截图（book/scripts/shoot.py 的产物）—— "当前状态"的证据，每次重拍即覆盖，
-# 混进旧图就会骗人，所以不入库。
-book/review/
-book/docs/_generated/
-book/docs/assets/waveforms/
-book/docs/assets/figures/
-book/docs/assets/diagrams/
-book/docs/assets/SYNCED.md
-# jieba（中文分词）把词典缓存写在**当前工作目录**，构建一次就冒出来
 jieba.cache
 
 # ============================================================

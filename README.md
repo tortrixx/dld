@@ -54,23 +54,20 @@ sim/         12 个 Python 测试台（tb_*.py）+ 轮次记录 rounds/<模块>/
              12 个 .vwf —— **既是激励也是结果**（Quartus 内置仿真器把波形回写进文件本身）
 scripts/     构建 / 仿真 / 审计工具（Quartus 路径探测、证据链审计、几何穷举、环境自检…）
 quartus/     工程文件（.qsf/.qpf 由脚本生成）+ 入库的 build_provenance.json
-docs/        课程交付文档（见下表）+ 图/（**Quartus GUI 实测仿真截图**与脚本辅助波形）
+docs/        ★ 项目文档站（Docsify）+ 课程交付文档 + 图/（Quartus GUI 实测仿真截图）—— 线上 https://tortrixx.github.io/dld/
 refs/        课程原始资料（实验题目 / 课程说明 / 实验板手册 / 授课讲义）—— 见 refs/README.md
 facts/       ★ 站点的**唯一机读事实模型**（由 scripts/extract_facts.py 从 rtl/sim/quartus 抽出）
-book/        ★ 项目网站 + 技术文档（Material for MkDocs）—— 线上 https://tortrixx.github.io/dld/
 ```
 
-> ⚠️ **站点取舍（2026-10-15 第 27 工作阶段）**：这里最初同时有两层站点 ——
-> `site/`（Vite + React 的工程**展示**站，挂在 `/dld/`）与 `book/`（Material **文档**站，
-> 挂在 `/dld/docs/`）。**用户决定去掉展示站，只保留文档站并让它占用根路径 `/dld/`**，
-> 于是 `site/` 整个目录已删除。原展示站的交互点阵 / 时序播放器 / 演示动画**不再提供**；
-> 站点与文档因此**只有一份事实、一个构建、一个门禁**（见 [`docs-site-plan.md`](docs-site-plan.md)）。
+> ⚠️ **文档站演进（2026-10-21）**：旧版基于 Material for MkDocs 的站点（`book/`）已全面退役删除，
+> 替换为更加轻量美观、支持零编译即时渲染的 **Docsify 技术文档与答辩速查站**（位于 `docs/`），
+> 统一由 GitHub Actions 或 GitHub Pages 原生发布到根路径 `/dld/`。
 
 ## 四、文档导航
 
 | 想了解 | 读 |
 |---|---|
-| **项目网站**（总览 · 系统架构 · 模块设计 · 接口与数据字典 · 时序 · 证据 · 答辩 FAQ） | <https://tortrixx.github.io/dld/> ｜ 源码 [`book/`](book/README.md) —— `python book/scripts/book.py serve` |
+| **项目文档站与答辩速查**（总览 · 逐模块微架构 · 仿真图分析 · 答辩高频考点） | <https://tortrixx.github.io/dld/> ｜ 本地预览：`python -m http.server 3000 --directory docs` |
 | 题目要求怎么理解、每条要求落在哪、引脚定义 | [`docs/00-规范理解与需求.md`](docs/00-规范理解与需求.md) |
 | 每个模块怎么设计（**框图与代码逐条对账**） | [`docs/02-模块详细设计.md`](docs/02-模块详细设计.md) |
 | 仿真怎么做的、**每条断言在验什么**、波形图 | [`docs/03-仿真验证方案.md`](docs/03-仿真验证方案.md) |
@@ -81,7 +78,6 @@ book/        ★ 项目网站 + 技术文档（Material for MkDocs）—— 线�
 | **怎么编译 / 仿真 / 烧录**、开工清单、已知残余 | [`HANDOFF.md`](HANDOFF.md) |
 | 进度账本与阶段表 | [`PROGRESS.md`](PROGRESS.md) |
 | 课程原始资料（题目 / 课程说明 / 实验板手册 / 讲义）与**版权声明** | [`refs/README.md`](refs/README.md) |
-| 站点怎么建、事实从哪来、怎么发布 | [`docs-site-plan.md`](docs-site-plan.md) |
 
 > 本 README 只保留"给第一次看到这个仓库的人"需要的信息；
 > **复现命令、进度记录、交接清单一律不放这里** —— 分别在 `HANDOFF.md`（操作）与 `PROGRESS.md`（进度）。

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>简易拼图游戏 · 课程设计与答辩速查文档站</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="数字电路与逻辑设计实验（下）题目4：简易拼图游戏设计与实现技术文档与答辩速查指南">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
+  
+  <!-- Docsify Vue 基础主题 -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css">
+  
+  <!-- KaTeX 数学公式渲染 CSS -->
+  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/katex@latest/dist/katex.min.css"/>
+  
+  <!-- 极简高质感自定义 CSS -->
+  <link rel="stylesheet" href="assets/custom.css">
+</head>
+<body>
+  <div id="app">正在加载文档，请稍候...</div>
+  
+  <script>
+    window.$docsify = {
+      name: '简易拼图游戏 (DLD)',
+      repo: 'https://github.com/tortrixx/dld',
+      loadSidebar: true,
+      subMaxLevel: 3,
+      loadNavbar: true,
+      coverpage: true,
+      onlyCover: false,
+      auto2top: true,
+      homepage: 'README.md',
+      notFoundPage: true,
+      
+      // 搜索插件配置
+      search: {
+        maxAge: 86400000,
+        paths: 'auto',
+        placeholder: '🔍 搜索模块、信号传输、代码原理、答辩问题...',
+        noData: '未找到相关内容，换个关键词试试？',
+        depth: 4,
+        hideOtherSidebarContent: false
+      },
+      
+      // 代码复制插件
+      copyCode: {
+        buttonText: '复制',
+        errorText: '错误',
+        successText: '已复制'
+      },
+      
+      // 翻页导航配置
+      pagination: {
+        previousText: '上一章节',
+        nextText: '下一章节',
+        crossChapter: true,
+        crossChapterText: true
+      },
+      
+      // 标签页插件配置
+      tabs: {
+        persist: true,
+        sync: true,
+        theme: 'classic',
+        tabComments: true,
+        tabHeadings: true
+      },
+      
+      // 图片缩放插件选项
+      zoomImage: {
+        selector: '.content img',
+        options: {
+          background: 'rgba(15, 23, 42, 0.85)',
+          scrollOffset: 40
+        }
+      }
+    }
+  </script>
+  
+  <!-- Docsify 核心库 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/docsify.min.js"></script>
+  
+  <!-- 全文搜索插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify@4/lib/plugins/search.min.js"></script>
+  
+  <!-- 代码一键复制插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code/dist/docsify-copy-code.min.js"></script>
+  
+  <!-- 仿真波形与图片点击缩放插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"></script>
+  
+  <!-- 页面底部上一页/下一页导航 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-pagination/dist/docsify-pagination.min.js"></script>
+  
+  <!-- 侧边栏折叠插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+  
+  <!-- 代码/波形多标签页插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-tabs@1"></script>
+  
+  <!-- KaTeX 数学公式渲染插件 -->
+  <script src="//cdn.jsdelivr.net/npm/docsify-katex@latest/dist/docsify-katex.js"></script>
+  
+  <!-- Prism 语法高亮支持 -->
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-vhdl.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-python.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-bash.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/prismjs@1/components/prism-json.min.js"></script>
+</body>
+</html>

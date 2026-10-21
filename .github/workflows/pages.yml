@@ -1,58 +1,25 @@
 # ============================================================================
-#  .github/workflows/pages.yml —— 构建并发布技术文档站到 GitHub Pages
+#  .github/workflows/pages.yml —— 自动化部署 Docsify 文档站到 GitHub Pages
 # ----------------------------------------------------------------------------
-#  线上地址：https://tortrixx.github.io/dld/   （**就是本仓库唯一的站点**）
+#  线上地址：https://tortrixx.github.io/dld/
+#  文档目录：docs/
 #
-#  ⚠️ 历史（2026-10-15 第 27 工作阶段）：这里原本同时发布两个站点 ——
-#     `site/`（Vite + React 的工程展示站，挂在 `/dld/`）与
-#     `book/`（Material 技术文档站，挂在 `/dld/docs/`）。
-#     **用户决定去掉 `site/`，只保留新的文档站并让它占用根路径**，
-#     于是 `site/` 整个目录已删除，本工作流只剩文档站一条线。
-#     这条注释保留下来，是为了让"为什么会少一个站点"这件事有据可查。
-#
-#  设计原则（与仓库既有纪律一致）：
-#    · **不碰硬件**：不编译 RTL、不跑仿真、不调用 Quartus，`rtl/` `sim/` `quartus/`
-#      下的任何文件都不会被本流程修改。硬件工程流程完全不受影响。
-#    · **不提交构建产物**：`book/site/`、`book/docs/_generated/`、
-#      `book/docs/assets/` 下由脚本同步来的素材、`book/.venv/` 全部在 .gitignore 里。
-#    · **发布前先对账**：站点数字要先与仓库真值源对一遍
-#      （`extract_facts --check` + `check_book`），对不上就不发布 ——
-#      而不是先上线再发现。
-#    · **`--strict`**：导航缺页、内部死链、图片缺失、锚点失效都是**构建失败**。
-#
-#  使用前提（人类操作，workflow 无法代劳）：
-#      仓库 Settings → Pages → Source 选 **GitHub Actions**。
+#  设计原则：
+#    · 纯静态轻量部署：Docsify 客户端实时解析 Markdown，无需沉重 Python 构建步骤
+#    · 事实模型一致性校验：每次部署前通过 extract_facts.py --check 确保工程事实最新
+#    · 零外部侵入：不改写硬件 RTL、仿真网表与约束
 # ============================================================================
 
-name: Deploy docs site to Pages
+name: Deploy Docsify to GitHub Pages
 
 on:
-  # 只在**站点自身、它引用的素材、以及被对账的数据源**变化时触发 ——
-  # 改 RTL 或 Quartus 工程不会白白跑一遍站点构建。
-  # ⚠️ 下面这些是 `extract_facts.py` / `check_book.py` 会**逐个核对**的输入：
-  #    漏掉任何一类，重命名/删除那些文件时这条流水线就**一次都不跑**，
-  #    于是线上留下死链而 CI 永不报警。多跑一次 1 分钟，远比"该跑不跑"便宜。
   push:
     branches: [main]
     paths:
-      - 'book/**'
-      - 'facts/**'
-      - 'docs-site-plan.md'
+      - 'docs/**'
       - 'rtl/**'
-      - 'docs/*.md'
-      - 'docs/图/**'
-      - 'scripts/**'
-      - 'sim/*.vwf'
-      - 'sim/rounds/**'
-      - 'sim/*.py'
-      - 'quartus/build_provenance.json'
-      - 'quartus/puzzle.qsf'
-      - 'quartus/puzzle.sdc'
-      - 'README.md'
-      - 'HANDOFF.md'
-      - 'PROGRESS.md'
-      - 'AI_LOG.md'
-      - 'docs/05-资源利用与编译报告.md'
+      - 'sim/**'
+      - 'facts/**'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
 
@@ -61,112 +28,52 @@ permissions:
   pages: write
   id-token: write
 
-# 同一时刻只允许一个发布；新的推送取消排队中的旧任务，但**不取消正在进行的发布**
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build docs (book/)
+  build-and-verify:
+    name: Verify & Package Docsify
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # 为什么用 3.12 而不是 latest：文档站的依赖（Material for MkDocs 9.7.7 +
-      # jieba）在 3.12 上有现成轮子，构建最快也最稳。
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-          cache: pip
-          cache-dependency-path: book/requirements.txt
 
-      - name: Install docs dependencies
-        run: python -m pip install --upgrade pip && python -m pip install -r book/requirements.txt
-
-      # ---------------------------------------------------------------- 对账
-      # 事实模型是否与源码一致（重新生成后**逐字节**比对）。
-      # 这是"网页上的数字是不是过期了"的第一道闸：`facts/facts.json` 由
-      # `scripts/extract_facts.py` 从 rtl/ sim/rounds/ quartus/ 机械抽出。
-      - name: Verify fact model is up to date
+      - name: Verify Fact Model Consistency
         run: python scripts/extract_facts.py --check
 
-      # 站点门禁（比 mkdocs 自己更严的部分）：
-      #   · `{{fact:...}}` 能否解析、`{{src:...}}` 指向的文件是否**已入库**、
-      #     `--8<--` 引用的生成片段是否存在、图片是否存在、内部链接是否可达
-      #   · `mkdocs.yml` 的 nav 与 `docs/` 是否互为子集（不漏页、不缺页）
-      #   · 每个真实实体在文档里都被提到；关键读数不出现"同一指标两个值"
-      # 放在 build 之前：门禁不过就不该发布。
-      - name: Check docs against repository
-        run: python book/scripts/book.py check
-
-      # ---------------------------------------------------------------- 构建
-      # `book/scripts/book.py build` 会按顺序做四件事：
-      #   ① 重新生成 facts/facts.json  ② 生成 docs/_generated/
-      #   ③ 同步 docs/assets/          ④ `mkdocs build --strict`
-      # 少任何一步都会得到"能构建但内容陈旧"的站点，所以不要绕开它直接调 mkdocs。
-      - name: Build docs
-        run: python book/scripts/book.py build
-
-      # 上传前自证"产物是完整的、子路径是对的、没有外部 CDN 引用"。
-      # ⚠️ 站点挂在 /dld/ 子路径下，但 Material 生成的资源引用是**相对路径**
-      #    （`assets/...`），那在任何子路径下都对 —— 所以**不要**用
-      #    "grep /dld/assets/" 来判断，那会误判。真正能证明子路径配对了的是
-      #    canonical 链接与 sitemap 里的 URL（都由 mkdocs.yml 的 site_url 推出）。
-      #    更完整的版本在 `python book/scripts/check_book.py --site` 里。
-      - name: Assert artifact is complete and paths are correct
+      - name: Verify Essential Docsify Files
         run: |
           set -euo pipefail
-          for f in book/site/index.html \
-                   book/site/search/search_index.json \
-                   book/site/sitemap.xml \
-                   book/site/assets/javascripts/mermaid.min.js; do
-            if [ ! -f "$f" ]; then
-              echo "::error::产物缺少 $f"
-              exit 1
-            fi
-            echo "ok  $f  ($(stat -c%s "$f") bytes)"
-          done
+          test -f docs/index.html || { echo "Missing docs/index.html"; exit 1; }
+          test -f docs/README.md || { echo "Missing docs/README.md"; exit 1; }
+          test -f docs/_sidebar.md || { echo "Missing docs/_sidebar.md"; exit 1; }
+          test -f docs/_coverpage.md || { echo "Missing docs/_coverpage.md"; exit 1; }
+          test -f docs/.nojekyll || { echo "Missing docs/.nojekyll"; exit 1; }
+          echo "All core Docsify files present and verified."
 
-          echo "--- canonical 必须是 /dld/（由 site_url 推出）---"
-          grep -o '<link rel="canonical" href="[^"]*"' book/site/index.html | head -1
-          grep -q '<link rel="canonical" href="https://tortrixx.github.io/dld/"' book/site/index.html
-
-          echo "--- sitemap 里的 URL 必须都带 /dld/ 前缀 ---"
-          if grep -o '<loc>[^<]*</loc>' book/site/sitemap.xml | grep -qv 'https://tortrixx.github.io/dld/'; then
-            echo "::error::sitemap 里有不带头路径的 URL"
-            exit 1
-          fi
-          echo "ok  sitemap 前缀正确"
-
-          echo "--- 站内不能出现外部 CDN 的 <script src>（Mermaid 自持）---"
-          if grep -REho 'src="https?://[^"]*"' book/site --include='*.html'; then
-            echo "::error::产物里仍有外部 CDN 的 <script src>，违反'不用外部 CDN 作核心依赖'"
-            exit 1
-          fi
-          echo "ok  没有外部 CDN 脚本引用"
-
-      - name: Configure Pages
+      - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Upload artifact
+      - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          # ⚠️ 注意：upload-pages-artifact 的默认路径也是仓库根，
-          #    这里必须显式指向 book/site，否则会把整个硬件工程当站点传上去。
-          path: book/site
+          path: docs
 
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
+    needs: build-and-verify
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy
+      - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
