@@ -1,5 +1,10 @@
 # HANDOFF — 会话交接单
 
+> **本文是什么**：**工程操作手册**（怎么编译 / 仿真 / 烧录、开工清单、已知残余）+ **分阶段工作日志**（倒序）。
+> 别和名字相近的另外两份搞混：**文档站怎么维护**看 [`HANDOVER.md`](HANDOVER.md)，
+> **进度总表**看 [`PROGRESS.md`](PROGRESS.md)，**AI 使用记录**看 [`AI_LOG.md`](AI_LOG.md)。
+> 仓库门面与文档地图见 [`README.md`](README.md)。
+
 > ⭐ **克隆后第一步** = `python scripts/gen_project.py puzzle_top`（生成 `quartus/puzzle.qpf` + `quartus/puzzle.qsf`；**`.qpf` 故意不入库**，缺它就打不开工程）。
 > 不确定环境齐不齐？先跑 `python scripts/check_env.py`（Python 版本 / 必需文件 / Quartus / 第三方依赖 /
 > 行尾一致性，退出码 0-1）。嫌麻烦就用 `scripts/bootstrap.ps1`（Windows）或 `scripts/bootstrap.sh`。
