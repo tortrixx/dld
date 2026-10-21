@@ -87,14 +87,32 @@
 
 ### 4.1 PDF（Typst）
 
-本机已把 Typst 0.15.1 解压到 `.tmp/typst/`（该目录被 `.gitignore` 覆盖，不入库）。构建：
+> ⭐ **2026-10-21 更新：这一整节已脚本化，通常不用手敲。**
+> 在仓库根跑一条命令即可跑完 §4.1 + §4.2：
+>
+> ```powershell
+> python scripts\build_report.py            # 下载 typst（如需）→ 编译 PDF → 生成 md → 同步 docx
+> python scripts\build_report.py --check    # 只校验四件套是否同步
+> ```
+>
+> 个人上交版（封面只留 姓名 / 学号 / 报告日期，真实信息不落进仓库）：
+>
+> ```powershell
+> python scripts\build_report.py --submission --name <姓名> --id <学号> --out <仓库外路径>.pdf
+> ```
+>
+> 下面保留手动做法，供排障时对照。
+
+Typst 由 `scripts/build_report.py` 自动下载到 `.tmp/tools/typst/`（该目录被 `.gitignore` 覆盖，不入库）；
+也可以手工下载解压到那里。手动构建：
 
 ```powershell
-cd <仓库根>
-.tmp\typst\bin\typst-x86_64-pc-windows-msvc\typst.exe compile --root . `
-  "docs\report\实验报告_题目4_简易拼图游戏.typ" `
-  "docs\report\实验报告_题目4_简易拼图游戏.pdf"
+cd <仓库根>\docs\report
+<仓库根>\.tmp\tools\typst\typst-x86_64-pc-windows-msvc\typst.exe compile `
+  "实验报告_题目4_简易拼图游戏.typ" "实验报告_题目4_简易拼图游戏.pdf"
 ```
+
+（必须在 `docs/report/` 目录内编译：`.typ` 里 17 张图都是同目录相对路径。）
 
 模板 `template.typ` 的字体栈是跨平台的：macOS 优先 `Songti SC / Heiti SC / Hiragino Sans GB / Menlo`，
 Windows 回退 `Noto Serif SC / Noto Sans SC / Consolas`，因此两边都能构建；
@@ -132,8 +150,8 @@ python scripts\sync_report_docx.py --no-media
 
 ### 4.3 重建后必须自检的三条
 
-1. **数字自洽**：`python scripts/audit_evidence.py` 必须 `0 FAIL`（当前 `0 FAIL / 2 WARN / 29 OK`，
-   两条 WARN 分别是"LAB 已满 127/127"与"本地有未推提交"，都是事实）；
+1. **数字自洽**：`python scripts/audit_evidence.py` 必须 `0 FAIL`
+   （2026-10-21 实测 `0 FAIL / 1 WARN / 31 OK`；唯一 WARN 是"LAB 已满 127/127"，属事实）；
 2. **截图与表格对得上**：PDF 里 §4.2 的表格每一行都要能在两张截图或 `puzzle.sta.rpt` 里找到出处；
 3. **不漏本机路径**：`git grep` 检索本机用户目录前缀应为 0 命中（PNG 是二进制，靠人工裁剪保证）。
 

@@ -165,7 +165,7 @@ Markdown 也没有按 docsify 的规则维护，发布出去只会让线上多�
 
 ---
 
-## 7. 改完必须做的三件事
+## 7. 改完必须做的检查
 
 ```powershell
 # 1. 站点体检：链接、图片、粗体、原始 HTML 块、$$、index.html 本地资源、发布面
@@ -174,16 +174,27 @@ python scripts/check_docs.py          # 必须 0 错误
 # 2. 事实模型对账
 python scripts/extract_facts.py --check
 
-# 3. 本地依赖齐全
+# 3. 本地依赖齐全（且不含任何会联网的外部引用）
 python scripts/vendor_assets.py --check
 
-# 4. 肉眼确认（本地起服务 + 无头浏览器截图）
+# 4. 报告四件套是否同步（改过 docs/report/* 才需要）
+python scripts/build_report.py --check
+
+# 5. 肉眼确认（本地起服务 + 无头浏览器截图）
 python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
 # 另开一个终端：
 & "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
   --hide-scrollbars --window-size=1440,2400 --virtual-time-budget=11000 `
   --screenshot=shot.png "http://127.0.0.1:8899/#/subsystems/01_system_top"
 ```
+
+### ⚠️ 两个解释器不能混用
+
+| 脚本 | 用哪个 Python | 为什么 |
+|:---|:---|:---|
+| `audit_evidence.py`、`srcnorm.py` | **系统 Python 3.14** | `.py` 的逻辑指纹走 `ast.dump`，其输出随 Python 版本变化；轮次记录是 3.14 产生的。用 3.12 跑会把 12 条绿证报成"逻辑指纹口径不一致"（已降级为 WARN 并说明原因，不会误报 FAIL） |
+| `sync_report_docx.py`、`build_report.py` | **捆绑 Python**（`load_workspace_dependencies` 给的那个） | 它们需要 `lxml`，系统 Python 没装 |
+
 
 两个已知的**测量陷阱**，别被它们骗了：
 
@@ -213,7 +224,44 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 
 ---
 
-## 9. 已知取舍
+## 10. 实验报告怎么重建
+
+报告有四种载体，**唯一事实源是 `docs/report/实验报告_题目4_简易拼图游戏.typ`**：
+
+| 载体 | 怎么来 |
+|:---|:---|
+| `.typ` | **手写**，唯一事实源 |
+| `.pdf` | `typst compile`（交付主件，27 页） |
+| `.md` | `scripts/gen_report_md.py`（封面与正文都从 `.typ` 派生） |
+| `.docx` | `scripts/sync_report_docx.py`（幂等同步，收敛后重跑是 0 变更） |
+
+**一条命令跑完整条链**（Typst 不在 PATH 也没关系，脚本会下载固定版本到 `.tmp/tools/typst/`）：
+
+```powershell
+python scripts/build_report.py            # 编译 PDF + 生成 md + 同步 docx
+python scripts/build_report.py --check    # 只校验四件套是否同步（不写盘、不下载）
+```
+
+### 个人上交版（封面只留 姓名 / 学号 / 报告日期）
+
+真实姓名和学号**只作为命令行参数**，不会写进仓库任何文件；产物默认写到仓库外，
+脚本还会**拒绝**把产物写进仓库目录：
+
+```powershell
+python scripts/build_report.py --submission --name 张三 --id 2024000000 `
+    --out "C:\Users\me\Desktop\上交\张三_实验报告.pdf"
+```
+
+实现方式：`docs/report/template.typ` 的 `minimal_cover` 参数控制封面显示哪几项，
+`.typ` 顶部用 `sys.inputs` 读取 `--input` 传入的值；不带 `--input` 编译时，
+封面就是入库版的 8 字段占位符（`课题组成员 / 202300000000 / 实验指导教师组 / 【评定中】`）。
+
+> ⚠️ **仓库里只留占位符版本**。`.gitignore` 已加 `*个人上交版*` / `docs/report/_submission*`
+> 等第二道防线，但真正的保障是"产物写在仓库外"这条约定。
+
+---
+
+## 11. 已知取舍
 
 | 取舍 | 原因 |
 |:---|:---|

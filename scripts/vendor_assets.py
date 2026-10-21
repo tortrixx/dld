@@ -16,7 +16,9 @@ from __future__ import annotations
 
 import argparse
 import os
+import re
 import sys
+import urllib.parse
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -34,6 +36,42 @@ ASSETS = {
     "docsify-pagination.min.js": "docsify-pagination@2.10.1/dist/docsify-pagination.min.js",
     "prism-vhdl.min.js": "prismjs@1.29.0/components/prism-vhdl.min.js",
 }
+
+
+def strip_external_imports(name: str, data: bytes) -> bytes:
+    """删掉 vendored CSS 里的外部 @import / url(http...) 资源引用。
+
+    上游 `vue.css` 第 1 行是
+        @import url("https://fonts.googleapis.com/css?family=Roboto+Mono|Source+Sans+Pro:...");
+    留着它站点就**不是**零外部依赖了：断网时会先卡一次连接超时。
+    站点的字体由 `docs/assets/custom.css` 的系统字体栈决定，这个 import 本来也用不上。
+
+    ⚠️ 只删**那一条语句**，不能按行过滤 —— vue.css 是压缩过的**单行**文件，
+       按行删会把整份样式表清空（第一版就是这么写错的，已实测踩到）。
+    """
+    if not name.endswith(".css"):
+        return data
+    text = data.decode("utf-8", "replace")
+    text = re.sub(r"@import\s+url\([^)]*\)\s*;?", "", text)
+    text = re.sub(r"url\(\s*['\"]?https?://[^)]*\)", "none", text)
+    return text.encode("utf-8")
+
+
+def external_asset_refs(path: str) -> list[str]:
+    """列出 **CSS** 里会真正发起网络请求的外部资源（@import / url(http...)）。
+
+    只查 CSS：JS 里的 `github.com`、`www.w3.org` 多数是注释、license 或 XML 命名空间
+    字符串，并不联网；把它们算成"外部依赖"是误报。
+    """
+    if not path.endswith(".css"):
+        return []
+    try:
+        text = open(path, encoding="utf-8", errors="replace").read()
+    except OSError:
+        return []
+    found = re.findall(r"@import\s+url\(\s*['\"]?(https?://[^)'\"]+)", text)
+    found += re.findall(r"url\(\s*['\"]?(https?://[^)'\"]+)", text)
+    return sorted(set(found))
 
 
 def main() -> int:
@@ -62,12 +100,25 @@ def main() -> int:
             print(f"FAIL {name}: 下载到 0 字节")
             bad += 1
             continue
+        data = strip_external_imports(name, data)
         with open(dest, "wb") as fh:
             fh.write(data)
         print(f"{name:<30} {len(data):>8} B  <- {remote}")
 
+    # 自证：vendored 资源里不允许残留任何会联网的外部引用
+    leftovers = {}
+    for name in ASSETS:
+        refs = external_asset_refs(os.path.join(OUT, name))
+        if refs:
+            leftovers[name] = refs
+    if leftovers:
+        bad += 1
+        print("\n[错误] vendored 资源里仍有会联网的外部引用（站点就不是零外部依赖了）：")
+        for name, refs in sorted(leftovers.items()):
+            print(f"  x {name}: {', '.join(refs)}")
+
     if args.check and bad == 0:
-        print(f"\n本地依赖齐全（{len(ASSETS)} 个文件），站点不依赖任何外部 CDN。")
+        print(f"\n本地依赖齐全（{len(ASSETS)} 个文件），且其中不含任何外部 URL。")
     return 1 if bad else 0
 
 

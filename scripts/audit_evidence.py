@@ -221,7 +221,26 @@ def audit_rounds():
             #    ⚠️ 但**不静默放过** —— 如实报出"差异只在注释/行尾"，并尽量**独立验证**
             #       这一点（见 _explain_only_comments），验证不了就明确说"仅按记录值判定"。
             if srcl:
-                still = sorted(k for k in set(srcl) | set(curl) if srcl.get(k) != curl.get(k))
+                # ⚠️ 2026-10-22：把「**严格**指纹已逐字节一致」的条目从"逻辑也变了"里剔除。
+                #    原因：srcnorm 对 .py 走 `ast.dump`，而 `ast.dump` 的输出**随 Python 版本变化**。
+                #    实测同一份 `sim/tb_clk_gen.py`：
+                #      · Python 3.14.6 → 0280db171345（与轮次记录一致）
+                #      · Python 3.12.14 → 8d05f62c5ee7（与记录不一致）
+                #    ⇒ 用错解释器跑本脚本会把 **12 条绿证全部误报成"连逻辑都变了"**。
+                #    严格指纹既然一致，文件就是逐字节没变；逻辑指纹还在差只可能是归一化口径
+                #    不同，**不是证据过期**。这类条目降级为 WARN 并说明原因。
+                logic_diff = {k for k in set(srcl) | set(curl) if srcl.get(k) != curl.get(k)}
+                strict_ok = {k for k in logic_diff if (src or {}).get(k) == cur.get(k)}
+                still = sorted(logic_diff - strict_ok)
+                drift = sorted(strict_ok)
+                if not still and drift:
+                    add("WARN", "A", "%s 绿证 %s：逻辑指纹口径与当前解释器不一致"
+                        % (module, js[-1].stem),
+                        "这些文件的**严格指纹逐字节一致**（%s），只有逻辑指纹不同 ⇒ 证据没过期，"
+                        "是 `srcnorm` 的 .py 归一化（`ast.dump`）随 Python 版本漂移。"
+                        "本仓库的轮次记录由 **Python 3.14** 产生；换 3.12 等解释器跑本脚本会误报。"
+                        % "、".join(drift))
+                    continue
                 if not still:
                     why = _explain_only_comments(module, last, src, changed)
                     add("OK", "A", "%s 绿证 %s 的**逻辑**仍覆盖当前 RTL/tb"

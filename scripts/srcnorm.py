@@ -189,6 +189,14 @@ def strip_python(text):
     """Python 的"代码骨架"：注释、函数/类 docstring、格式、行尾全部忽略。
 
     解析不了时退化成"只去 `#` 注释"（用 `tokenize`）；连 tokenize 都失败就只做行尾归一。
+
+    ⚠️ **本函数的输出与 Python 版本绑定**：主路径走 `ast.dump`，而 `ast.dump` 的字段随
+       版本增删（3.12 起加了 `type_params` 等）。实测同一份 `sim/tb_clk_gen.py`：
+         · Python 3.14.6  → `0280db171345`（与 `sim/rounds/**/rNN.json` 的记录一致）
+         · Python 3.12.14 → `8d05f62c5ee7`
+       所以**跑 `audit_evidence.py` 必须用与轮次记录一致的 Python 3.14**；换版本会得到
+       "逻辑指纹全变"的假象（`audit_evidence.py` 已把这种情形降级为 WARN 并说明是
+       解释器口径漂移，而不是证据过期）。`.vhd` 走 `strip_vhdl`，不受影响。
     """
     try:
         return ast.dump(_drop_docstrings(ast.parse(text)))

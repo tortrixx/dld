@@ -44,23 +44,77 @@ REPORT = ROOT / "docs" / "report"
 TYP = REPORT / "实验报告_题目4_简易拼图游戏.typ"
 MD = REPORT / "实验报告_题目4_简易拼图游戏.md"
 
-# 封面区块（与交付版逐字节一致；行尾两个空格是 markdown 换行）
-COVER = [
-    "# 《数字电路与逻辑设计实验（下）》课程设计报告",
-    "# 题目4：简易拼图游戏设计与实现",
-    "",
-    "**课程名称**：数字电路与逻辑设计实验（下）  ",
-    "**实验学期**：2026～2027学年第一学期  ",
-    "**专业班级**：电子工程 / 计算机科学与技术  ",
-    "**学生姓名**：课题组成员  ",
-    "**学生学号**：202300000000  ",
-    "**指导教师**：实验指导教师组  ",
-    "**实验成绩**：【评定中】  ",
-    "**报告日期**：2026年10月  ",
-    "",
-    "---",
-    "",
-]
+# 封面区块（行尾两个空格是 markdown 换行）
+#
+# ⚠️ 2026-10-21：封面原先在这里**硬编码**，于是 `.typ` 加了副标题后 md 没跟上
+#    （`--check` 只比对自己生成的产物，永远发现不了）。现在改为**从 `.typ` 的
+#    `lab_report.with(...)` 参数块解析**，封面与正文同源；解析失败才回落到兜底表。
+_FALLBACK_FIELDS = {
+    "title": "题目4：简易拼图游戏设计与实现",
+    "subtitle": "基于 Altera MAX II EPM1270T144C5 CPLD 的纯硬件 RTL 完整工程实现",
+    "course": "数字电路与逻辑设计实验（下）",
+    "semester": "2026～2027学年第一学期",
+    "student_name": "课题组成员",
+    "student_id": "202300000000",
+    "major_class": "电子工程 / 计算机科学与技术",
+    "advisor": "实验指导教师组",
+    "date": "2026年10月",
+    "score": "【评定中】",
+}
+
+
+def _cover_fields():
+    """从 `.typ` 顶部的 `#show: lab_report.with(...)` 抽出封面字段。
+
+    值可能是 `v("name", "课题组成员")` 这种「上交版覆盖」写法，取最后一个字符串字面量
+    即兜底值——正是入库版要显示的占位符。
+    """
+    try:
+        text = TYP.read_text(encoding="utf-8")
+    except OSError:
+        return dict(_FALLBACK_FIELDS)
+    m = re.search(r"lab_report\.with\((.*?)\n\)", text, re.S)
+    if not m:
+        return dict(_FALLBACK_FIELDS)
+    found = {}
+    for line in m.group(1).splitlines():
+        mm = re.match(r"\s*(\w+)\s*:\s*(.+?),?\s*$", line)
+        if not mm:
+            continue
+        literals = re.findall(r'"([^"]*)"', mm.group(2))
+        if literals:
+            found[mm.group(1)] = literals[-1]
+    fields = dict(_FALLBACK_FIELDS)
+    fields.update({k: v for k, v in found.items() if k in fields})
+    return fields
+
+
+def build_cover():
+    f = _cover_fields()
+    cover = [
+        "# 《%s》课程设计报告" % f["course"],
+        "# %s" % f["title"],
+        "",
+    ]
+    if f.get("subtitle"):
+        cover += [f["subtitle"], ""]
+    cover += [
+        "**课程名称**：%s  " % f["course"],
+        "**实验学期**：%s  " % f["semester"],
+        "**专业班级**：%s  " % f["major_class"],
+        "**学生姓名**：%s  " % f["student_name"],
+        "**学生学号**：%s  " % f["student_id"],
+        "**指导教师**：%s  " % f["advisor"],
+        "**实验成绩**：%s  " % f["score"],
+        "**报告日期**：%s  " % f["date"],
+        "",
+        "---",
+        "",
+    ]
+    return cover
+
+
+COVER = build_cover()
 
 
 # --------------------------------------------------------------------------- 行内

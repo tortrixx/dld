@@ -12,6 +12,9 @@
   advisor: "__________",
   date: "2026年10月",
   score: "__________",
+  // minimal_cover = true 时封面只保留 学生姓名 / 学生学号 / 报告日期 三项。
+  // 用途：个人上交版——不显示课程名称、实验学期、专业班级、指导教师、实验成绩。
+  minimal_cover: false,
   body,
 ) = {
   // 字体栈：macOS 字面量排在最前（跨平台不回归），后接 Windows 回退
@@ -162,19 +165,30 @@
     #align(center)[
       #block(width: 75%)[
         #set text(size: 11pt, font: f-serif)
-        #grid(
-          columns: (80pt, 1fr),
-          row-gutter: 15pt,
-          align: (right + horizon, left + horizon),
-          [课程名称：], [#course],
-          [实验学期：], [#semester],
-          [专业班级：], [#major_class],
-          [学生姓名：], [#student_name],
-          [学生学号：], [#student_id],
-          [指导教师：], [#advisor],
-          [实验成绩：], [#score],
-          [报告日期：], [#date],
-        )
+        #if minimal_cover [
+          #grid(
+            columns: (80pt, 1fr),
+            row-gutter: 15pt,
+            align: (right + horizon, left + horizon),
+            [学生姓名：], [#student_name],
+            [学生学号：], [#student_id],
+            [报告日期：], [#date],
+          )
+        ] else [
+          #grid(
+            columns: (80pt, 1fr),
+            row-gutter: 15pt,
+            align: (right + horizon, left + horizon),
+            [课程名称：], [#course],
+            [实验学期：], [#semester],
+            [专业班级：], [#major_class],
+            [学生姓名：], [#student_name],
+            [学生学号：], [#student_id],
+            [指导教师：], [#advisor],
+            [实验成绩：], [#score],
+            [报告日期：], [#date],
+          )
+        ]
       ]
     ]
   ]

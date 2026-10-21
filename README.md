@@ -24,12 +24,14 @@
 ```powershell
 python scripts/check_env.py                  # 1. 环境自检（Python / Quartus / 依赖 / 行尾）
 python scripts/gen_project.py puzzle_top     # 2. 生成 quartus/puzzle.qpf + .qsf（.qpf 故意不入库）
-quartus_sh -t scripts/build.tcl              # 3. 编译：map → fit → asm → sta
+"$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl   # 3. 编译：map → fit → asm → sta
 python scripts/sim.py run <模块名>            # 4. 仿真：12 个模块/场景、184 条断言
 python -m http.server 3000 --directory docs  # 5. 本地预览文档站
 ```
 
-环境不齐先用 `scripts/bootstrap.ps1`（Windows）/ `scripts/bootstrap.sh`（Linux、macOS）。
+环境不齐先用 `scripts/bootstrap.ps1`（Windows）/ `scripts/bootstrap.sh`（Linux、macOS）；
+`quartus_sh` 不在 PATH 时用 `$env:QUARTUS_ROOT\quartus\bin\` 下的完整路径
+（`QUARTUS_ROOT` 的两种填法 `scripts/qenv.py` 都认）。
 **改了任何 RTL 都要走完整条链**：重扫 `SEED` → 清洁重编译 → 重跑全部测试台 → 重烧 → 回填读数。
 
 ## 做到了什么
@@ -72,7 +74,7 @@ python -m http.server 3000 --directory docs  # 5. 本地预览文档站
 | 想了解 | 读 |
 |:---|:---|
 | **逐模块微架构 · 仿真波形分析 · 答辩高频考点** | <https://tortrixx.github.io/dld/>（源文件在 [`docs/`](docs/README.md)） |
-| 课程交付的实验报告（27 页） | [`docs/report/实验报告_题目4_简易拼图游戏.pdf`](docs/report/实验报告_题目4_简易拼图游戏.pdf) |
+| 课程交付的实验报告（27 页） | [`docs/report/实验报告_题目4_简易拼图游戏.pdf`](docs/report/实验报告_题目4_简易拼图游戏.pdf) ｜ 重建：`python scripts/build_report.py` |
 | 题目要求怎么理解、每条落在哪、引脚定义 | [`docs/00-规范理解与需求.md`](docs/00-规范理解与需求.md) |
 | 每个模块怎么设计（框图与代码逐条对账） | [`docs/02-模块详细设计.md`](docs/02-模块详细设计.md) |
 | 仿真怎么做的、每条断言在验什么 | [`docs/03-仿真验证方案.md`](docs/03-仿真验证方案.md) |

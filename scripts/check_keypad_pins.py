@@ -60,3 +60,7 @@ else:
     print("        A mismatch means the port is missing from TOP_PORTS in")
     print("        scripts/gen_project.py, so no pin constraint was emitted for it.")
     print("        Add the port, regenerate, and rebuild.  See docs/06 ERR-002.")
+
+# ⚠️ 2026-10-21：以前这里**没有** sys.exit —— 脚本会把 "8 mismatch(es)" 打印出来却仍然
+#    返回 0，谁把它接进 CI 都会得到一道永远绿的假门禁。现在按 bad 决定退出码。
+sys.exit(1 if bad else 0)
