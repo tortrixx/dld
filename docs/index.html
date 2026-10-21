@@ -2,9 +2,9 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
-  <title>简易拼图游戏 · 分模块硬件设计与仿真答辩文档</title>
+  <title>简易拼图游戏 · 硬件子系统设计与答辩速查</title>
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
-  <meta name="description" content="简易拼图游戏 VHDL 分模块设计、仿真波形分析与答辩速查">
+  <meta name="description" content="简易拼图游戏 VHDL 核心大模块硬件设计、时序仿真波形深度分析与答辩速查">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   
   <!-- Docsify Vue 基础主题 -->
@@ -25,17 +25,17 @@
       themeColor: '#059669',
       loadSidebar: true,
       subMaxLevel: 3,
-      loadNavbar: false,      // 关闭冗余顶部导航，界面更专注
-      coverpage: false,       // 关闭封面，直奔模块主题
+      loadNavbar: false,      // 关闭顶部导航，突出专注度
+      coverpage: false,       // 关闭封面，直入主题
       auto2top: true,
       homepage: 'README.md',
       notFoundPage: true,
       
-      // 全文搜索配置
+      // 全文搜索配置（无 Emoji）
       search: {
         maxAge: 86400000,
         paths: 'auto',
-        placeholder: '🔍 搜索模块、信号名称、仿真分析、答辩问题...',
+        placeholder: '搜索大模块、信号、仿真波形、答辩考点...',
         noData: '未找到相关内容',
         depth: 4,
         hideOtherSidebarContent: false
@@ -50,8 +50,8 @@
       
       // 翻页导航配置
       pagination: {
-        previousText: '上一模块',
-        nextText: '下一模块',
+        previousText: '上一大模块',
+        nextText: '下一大模块',
         crossChapter: true,
         crossChapterText: true
       },
