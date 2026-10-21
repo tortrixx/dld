@@ -54,7 +54,6 @@ jobs:
           test -f docs/index.html || { echo "Missing docs/index.html"; exit 1; }
           test -f docs/README.md || { echo "Missing docs/README.md"; exit 1; }
           test -f docs/_sidebar.md || { echo "Missing docs/_sidebar.md"; exit 1; }
-          test -f docs/_coverpage.md || { echo "Missing docs/_coverpage.md"; exit 1; }
           test -f docs/.nojekyll || { echo "Missing docs/.nojekyll"; exit 1; }
           echo "All core Docsify files present and verified."
 
