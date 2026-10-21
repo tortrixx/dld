@@ -272,8 +272,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\shoot_vwf.ps1 -Close
 
 | 文件 | 规格 | 怎么来的 | 性质 |
 |---|---|---|---|
-| `演示-跑一局.gif` | 640×420 · 48 帧 · 14.1 s · 290 KiB · 循环 | `site/scripts/gen-demo-frames.ts`（用站点规则模型自动求解并重放一局）→ `site/scripts/render-demo-gif.py`（Pillow 画图） | **规则模型渲染，不是板子实录** |
-| `dld-架构.drawio` | 纯文本 XML · 56 个元素（31 框 / 25 连线） | `site/scripts/gen-architecture-drawio.mjs` **生成**（改 RTL 后改脚本重跑，别手改） | 架构与数据通路图，可在 app.diagrams.net 打开编辑 |
+| `演示-跑一局.gif` | 640×420 · 48 帧 · 14.1 s · 290 KiB · 循环 | 由已退役的站点生成脚本产出（`site/scripts/gen-demo-frames.ts` → `render-demo-gif.py`，该目录已随站点重做删除；素材本身保留） | **规则模型渲染，不是板子实录** |
+| `dld-架构.drawio` | 纯文本 XML · 56 个元素（31 框 / 25 连线） | 由已退役的 `site/scripts/gen-architecture-drawio.mjs` 生成（目录已删除，此后请直接手改本文件） | 架构与数据通路图，可在 app.diagrams.net 打开编辑 |
 
 ⚠️ 口径提醒（同 §0）：这两个素材都**不能**当作"Quartus 实测仿真图"引用。
 演示 GIF 的图注在站点上也明确写了"非板子实录"。

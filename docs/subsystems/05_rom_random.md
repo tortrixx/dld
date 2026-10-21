@@ -1,4 +1,4 @@
-# 图案与随机数源（pattern_rom / piece_rom / rng_lfsr）
+# 图案库与随机数（pattern_rom / piece_rom / rng_lfsr）
 
 > **一句话**：它给游戏三样东西：目标图案、每块零片的外形和开局的随机位置。
 
@@ -7,7 +7,7 @@
 - **吃进**：游戏主控的 `i_level`（1 位关卡号）与顶层的 `i_pat`（2 位图案下标）；拼图引擎的 `i_step`（1 位，就是 `rnd_step`）。
 - **吐出**：`o_mask`（64 位目标图案）；4 块零片的 `o_mask`（各 64 位）、`o_h` 与 `o_w`（各 3 位）、`o_n`（3 位）；还有 `o_val`（8 位随机数）。
 - **节拍**：两个 ROM 是纯组合逻辑（不等时钟，输入一变输出就变）；`rng_lfsr` 挂在 50 MHz `i_clk` 上，只在 `i_step` 为 '1' 的那一拍推进一步。
-- **代价**：`rng_lfsr` 15 个 logic cell、8 个 LC 寄存器；`piece_rom` 被常量折叠成 0 个 LE，`pattern_rom` 加图案库那次只多 4 个 LE（`map.rpt` 层次表，第 13 / 第 9 工作阶段）。
+- **代价**：`rng_lfsr` 14 LE、8 个寄存器（`puzzle.fit.rpt` 层次表；`map.rpt` 上显示 15 个 logic cell，两个报告口径差 1）；`piece_rom` 被常量折叠成 0 个 LE，`pattern_rom` 加图案库那次只多 4 个 LE。
 - **图案账**：第一关固定 1 幅 12 格，`i_level='0'` 时 `i_pat` 直接被忽略；第二关恒锁 `L2_FIXED_PAT`（PAT3 阶梯）；第三关才从 4 幅 16 格图案里随机选。
 - **面积账**：零片 3+6+3 = 12 格、3+2+5+6 = 16 格，与对应图案的格数逐格对得上。
 

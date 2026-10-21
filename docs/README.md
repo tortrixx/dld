@@ -1,6 +1,6 @@
 # 简易拼图游戏 · 硬件模块与答辩速查
 
-> **一句话**：在一块没有 CPU、也没有片上 RAM 的 CPLD 上，用纯 VHDL 逻辑做了一个能玩的 8×8 双色点阵拼图游戏。
+> **一句话**：在一块没有 CPU、也没有片上 RAM 的 CPLD 上，用纯硬件逻辑做了一个能玩的 8×8 双色点阵拼图游戏。
 
 <div class="metrics">
   <div class="metric"><b>1,264 / 1,270</b><span>逻辑单元 LE（99.53%）</span></div>
@@ -25,7 +25,7 @@
   <a class="mod-card" href="#/subsystems/01_system_top">
     <div class="mod-card-head"><span class="mod-card-idx">01</span><span class="mod-card-title">系统顶层集成</span></div>
     <span class="mod-card-entity">puzzle_top.vhd · puzzle_pkg.vhd</span>
-    <div class="mod-card-desc">把六个模块接在一起，管 52 根引脚怎么接、点阵的红绿两色怎么分配。</div>
+    <div class="mod-card-desc">把 11 个子模块接在一起，管 52 根引脚怎么接、点阵的红绿两色怎么分配。</div>
     <div class="mod-card-tags"><span>52 引脚</span><span>双色仲裁</span><span>127 LAB 打满</span></div>
   </a>
   <a class="mod-card" href="#/subsystems/02_clock_keypad">
@@ -37,14 +37,14 @@
   <a class="mod-card" href="#/subsystems/03_game_fsm">
     <div class="mod-card-head"><span class="mod-card-idx">03</span><span class="mod-card-title">游戏主控状态机</span></div>
     <span class="mod-card-entity">game_fsm.vhd</span>
-    <div class="mod-card-desc">游戏的裁判：管自检、预览、对局、结算四个阶段，以及倒计时。</div>
+    <div class="mod-card-desc">游戏的裁判：管自检、待机、预览、对局、胜负这几步怎么走，以及倒计时。</div>
     <div class="mod-card-tags"><span>6 状态</span><span>2 s 自检</span><span>30 / 40 / 60 s</span></div>
   </a>
   <a class="mod-card" href="#/subsystems/04_puzzle_engine">
     <div class="mod-card-head"><span class="mod-card-idx">04</span><span class="mod-card-title">核心拼图引擎</span></div>
     <span class="mod-card-entity">puzzle_ctrl.vhd</span>
     <div class="mod-card-desc">真正干活的部分：算零片往哪走、会不会撞上、有没有拼对。</div>
-    <div class="mod-card-tags"><span>4,690 → 760 LE</span><span>36 位状态</span><span>行流式渲染</span></div>
+    <div class="mod-card-tags"><span>本模块 760 LE</span><span>36 位状态</span><span>行流式渲染</span></div>
   </a>
   <a class="mod-card" href="#/subsystems/05_rom_random">
     <div class="mod-card-head"><span class="mod-card-idx">05</span><span class="mod-card-title">图案库与随机数</span></div>

@@ -8,10 +8,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0">
   <meta name="theme-color" content="#0f766e">
 
-  <!-- Docsify 基础主题（版本固定，避免上游更新把站点改坏） -->
-  <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/themes/vue.css">
-
-  <!-- 站点自定义样式（最后加载，覆盖主题默认值） -->
+  <!--
+    依赖全部放在 assets/vendor/ 本地，不走 CDN。
+    理由：答辩现场的网络未必能访问 cdn.jsdelivr.net，一旦 CDN 不可达，
+    页面会永久停在「正在加载文档…」。本地副本由 scripts/vendor_assets.py 下载，
+    升级版本时改那里的版本号重跑即可。
+  -->
+  <link rel="stylesheet" href="assets/vendor/vue.css">
   <link rel="stylesheet" href="assets/custom.css">
 </head>
 <body>
@@ -26,7 +29,6 @@
       subMaxLevel: 2,          // 侧边栏只展开到二级标题，避免目录过长
       auto2top: true,
       homepage: 'README.md',
-      notFoundPage: true,
       maxLevel: 4,
 
       search: {
@@ -48,7 +50,7 @@
         previousText: '上一个模块',
         nextText: '下一个模块',
         crossChapter: true,
-        crossChapterText: true
+        crossChapterText: false   // 章节名对本站无信息量（各页同属「模块速查」），关掉免得重复一行
       }
     }
   </script>
@@ -56,16 +58,30 @@
   <!-- 行为增强：把「图片 + 斜体图注」包成 figure（必须在 docsify 之前加载） -->
   <script src="assets/custom.js"></script>
 
-  <!-- Docsify 核心与官方插件 -->
-  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/docsify.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/search.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify@4.13.1/lib/plugins/zoom-image.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-copy-code@2.1.1/dist/docsify-copy-code.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-pagination@2.10.1/dist/docsify-pagination.min.js"></script>
+  <!-- Docsify 核心与插件（本地副本，见 scripts/vendor_assets.py） -->
+  <script src="assets/vendor/docsify.min.js"></script>
+  <script src="assets/vendor/search.min.js"></script>
+  <script src="assets/vendor/zoom-image.min.js"></script>
+  <script src="assets/vendor/docsify-copy-code.min.js"></script>
+  <script src="assets/vendor/docsify-pagination.min.js"></script>
 
-  <!-- Prism 代码高亮：VHDL 不在默认语言包里，需要单独补 -->
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-vhdl.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+  <!-- Prism 代码高亮：VHDL 不在 docsify 自带的语言包里，需要单独补 -->
+  <script src="assets/vendor/prism-vhdl.min.js"></script>
+
+  <!--
+    兜底：如果 docsify 核心脚本本身没加载成功（文件缺失、被拦截），
+    把占位文案换成人能看懂的提示，而不是让页面一直停在「正在加载文档…」。
+  -->
+  <script>
+    window.addEventListener('load', function () {
+      if (window.Docsify) return;
+      var app = document.getElementById('app');
+      if (app) {
+        app.innerHTML = '<p style="font-family:system-ui;padding:24px;line-height:1.8">' +
+          '文档引擎 <code>assets/vendor/docsify.min.js</code> 没能加载。<br>' +
+          '请确认这个文件存在且可访问，然后刷新页面。</p>';
+      }
+    });
+  </script>
 </body>
 </html>

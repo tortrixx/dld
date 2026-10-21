@@ -58,10 +58,37 @@ jobs:
           test -f docs/.nojekyll || { echo "Missing docs/.nojekyll"; exit 1; }
           echo "All core Docsify files present and verified."
 
-      # 站点体检：链接/图片是否存在、粗体与原始 HTML 块是否会渲染失败。
-      # 这三类故障都不会报错，只会在浏览器里悄悄变丑，所以必须挡在部署之前。
+      # 站点体检：链接/图片是否存在、粗体与原始 HTML 块是否会渲染失败、
+      # index.html 的本地资源是否齐全、站点页是否引用了不会被发布的文件。
+      # 这些故障都不会报错，只会在浏览器里悄悄变丑，所以必须挡在部署之前。
       - name: Check Docsify Site Integrity
         run: python scripts/check_docs.py
+
+      # 发布面只保留站点本身。
+      # docs/ 下还放着工程证据文档（00/02/03/05/06-*.md、图/、report/），
+      # 它们是事实模型的取证来源，必须留在仓库里，但**不该对外发布**：
+      # 那些页面不参与站点导航、Markdown 也没有按 docsify 的规则维护。
+      # 这个集合必须与 scripts/check_docs.py 的 PUBLISHED_FILES / PUBLISHED_DIRS 保持一致。
+      - name: Stage Site Files
+        run: |
+          set -euo pipefail
+          rm -rf _site
+          mkdir -p _site
+          cp -r docs/assets   _site/assets
+          cp -r docs/subsystems _site/subsystems
+          cp docs/index.html docs/README.md docs/_sidebar.md docs/.nojekyll _site/
+          echo "Staged files:"
+          find _site -type f | sort
+
+      - name: Verify Staged Site
+        run: |
+          set -euo pipefail
+          for f in index.html README.md _sidebar.md .nojekyll \
+                   assets/custom.css assets/custom.js assets/vendor/docsify.min.js; do
+            test -f "_site/$f" || { echo "Staged site is missing $f"; exit 1; }
+          done
+          test -d _site/subsystems || { echo "Staged site is missing subsystems/"; exit 1; }
+          echo "Staged site verified."
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
@@ -69,7 +96,7 @@ jobs:
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: docs
+          path: _site
 
   deploy:
     name: Deploy to GitHub Pages

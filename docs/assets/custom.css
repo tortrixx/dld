@@ -20,7 +20,7 @@
   --ink:      #0f172a;
   --text:     #334155;
   --muted:    #64748b;
-  --faint:    #94a3b8;
+  --faint:    #64748b;   /* 也当正文用（卡片实体名、翻页标签），必须 ≥4.5:1，别再调浅 */
   --line:     #e2e8f0;
   --line-soft:#eef2f6;
   --bg:       #ffffff;
@@ -164,6 +164,12 @@ body {
 .sidebar .search a { color: var(--green-700); }
 
 .sidebar-toggle span { background-color: var(--green-600); }
+/* vue 主题把 outline 干掉了，这里补回键盘焦点环，否则 Tab 到汉堡按钮没有任何提示 */
+.sidebar-toggle:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
 
 /* ==========================================================================
    3. 正文版心
@@ -372,6 +378,12 @@ body {
   font-size: 13px;
   line-height: 1.6;
   text-align: center;
+}
+/* 图片可被 Tab 聚焦（custom.js 加了 tabindex/role），焦点要看得见 */
+.markdown-section .doc-figure img:focus-visible,
+.markdown-section figure img:focus-visible {
+  outline: 2px solid var(--green-600);
+  outline-offset: 2px;
 }
 /* 正文里的行内小图（没有包进 figure 的）*/
 .markdown-section > p > img {

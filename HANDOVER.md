@@ -14,6 +14,7 @@
 3. **对着波形能讲**：每页有「波形怎么读」，写清时间刻度 + 信号名 + 跳变。
 
 线上地址：<https://tortrixx.github.io/dld/>（推送 `main` 后由 GitHub Actions 自动部署）。
+**站点不依赖任何外部 CDN**，依赖脚本全部放在 `docs/assets/vendor/`，见第 5 节。
 
 ---
 
@@ -21,14 +22,15 @@
 
 ```
 docs/
-├── index.html                 # Docsify 入口：CDN 版本、插件开关（改动前先读第 4 节）
-├── _sidebar.md                # 侧边栏：总览 + 6 个模块，平铺，不要嵌套
+├── index.html                 # Docsify 入口：插件开关与本地依赖清单
+├── _sidebar.md                # 侧边栏：总览 + 一个分组（模块速查）+ 6 个模块
 ├── README.md                  # 首页：一句话 + 指标条 + 演示 GIF + 6 张模块卡片
 ├── assets/
 │   ├── custom.css             # 全部样式（配色变量、版心、卡片、图框）
 │   ├── custom.js              # 唯一行为：把「图片 + 斜体图注」包成 <figure>
+│   ├── vendor/                # Docsify 及其插件的本地副本（不进 CDN）
 │   └── images/                # 站点用图（波形截图、架构图、演示 GIF）
-├── subsystems/                # 6 个模块页，每页 90～140 行
+├── subsystems/                # 6 个模块页，每页 90～110 行
 │   ├── 01_system_top.md       # puzzle_top / puzzle_pkg
 │   ├── 02_clock_keypad.md     # clk_gen / keypad_scan
 │   ├── 03_game_fsm.md         # game_fsm
@@ -40,8 +42,11 @@ docs/
 ```
 
 `docs/` 下还有几个 **MkDocs 时代的证据文件**（`00-规范理解与需求.md`、`02-模块详细设计.md`、
-`03-仿真验证方案.md`、`05-资源利用与编译报告.md`、`06-硬件调试记录.md`）。它们不在侧边栏里、
-不影响阅读，但被 `scripts/extract_facts.py` 与 `scripts/audit_evidence.py` 读取，**不要删**。
+`03-仿真验证方案.md`、`05-资源利用与编译报告.md`、`06-硬件调试记录.md`）。它们被
+`scripts/extract_facts.py` 与 `scripts/audit_evidence.py` 读取，**不要删**；它们也**不对外发布**，见第 6 节。
+
+侧边栏是**一层分组 + 平铺条目**（`_sidebar.md` 里 `* **模块速查**` 下面挂 6 个同级条目）。
+不要再往下嵌套：docsify 的折叠插件已经移除，但多层嵌套会让 `subMaxLevel` 的展开行为变得难以预期。
 
 ---
 
@@ -61,11 +66,15 @@ docs/
 ## 5. 答辩问答          # 4～5 条，答案第一句是结论，≤120 字，含信号名
 ```
 
+页面 H1 必须与 `_sidebar.md`、首页卡片上的标题一致，否则目录和卡片会对不上。
+
 ### 三条容易踩的坑
 
-1. **粗体必须以汉字、字母、数字或全角括号结尾。**
-   `**1,264 个逻辑单元 (LE)**` 和 `` **图案库 (`pattern_rom`)** `` 会渲染失败，
-   页面上直接显示两个星号。正确写法：`**1,264 个逻辑单元（LE）**`、`` **图案库**（`pattern_rom`） ``。
+1. **粗体不要以半角标点或反引号结尾。**
+   `**1,264 个逻辑单元 (LE)**`、`` **图案库 (`pattern_rom`)** `` 会渲染失败，页面上直接显示两个星号。
+   正确写法：`**1,264 个逻辑单元（LE）**`、`` **图案库**（`pattern_rom`） ``。
+   注意：只有「收尾星号紧跟半角标点、且后面紧跟汉字或全角标点」才坏；
+   `**Fmax 54.27 MHz**。` 这种以字母结尾的没问题。拿不准就跑门禁。
 2. **不要用 `<div>` 等原始 HTML 包问答。**
    marked 会把「块级标签开头、中间没有空行」的整段当 HTML 直通，块内的 `**` 和 `` ` `` 全部原样显示。
    问答用 `### Q…` + 段落即可。
@@ -75,49 +84,100 @@ docs/
 ### 图片
 
 - 图片下一行**紧跟** `*斜体图注*`，中间不留空行；`custom.js` 会自动包成图框和题注。
+  图注里可以用行内代码，会被保留。
 - 图注里**不要写「图 1」「图 15」**：站点编号与实验报告不一致，会串。用描述性图注。
 - 图注里写「在图上找：①②③」时，**必须真的能在图上看到**，否则老师一放大就露馅。
+- **不要把图片和正文写在同一段**。`custom.js` 遇到「图 + 文字」的段落会整段跳过（不包裹），
+  这是刻意的保护：早期版本会把整段连同正文一起删掉。
 
 ### 事实纪律
 
 - 数字只从 `facts/facts.json`、`rtl/`、`quartus/output_files/*.rpt`、报告原文里取；
   **查不到出处就不写**。
-- 口径要分清：整机是 1,264 / 1,270 LE，而 `puzzle_ctrl` 单模块在 fit 报告里是 760 LE；
-  v1～v7 的 4,690 / 3,751 / 994 等是**单独综合**读数。混着说会被追问。
+- 口径要分清：整机是 1,264 / 1,270 LE；`puzzle_ctrl` 单模块在 fit 报告里是 760 LE；
+  v1～v7 的 4,690 / 3,751 / 994 / 563 是**单独综合**读数。混着说会被追问。
 - 波形是**时间压缩仿真**（测试台把 `puzzle_pkg.CLK_HZ` 从 50 MHz 补丁成更小的值），
-  页面里必须说明，否则读者会把横轴当真实秒数。
+  页面里必须说明，否则读者会把横轴当真实秒数。截图刻度末值 ≠ 仿真总长，两者都要写清。
 
 ---
 
 ## 4. 站点配置（`docs/index.html`）
 
-- Docsify 与插件版本**全部固定**（`docsify@4.13.1`、`docsify-copy-code@2.1.1`、
-  `docsify-pagination@2.10.1`、`prismjs@1.29.0`），不要改回 `@latest`。
+- 插件版本全部**固定**，且都从 `assets/vendor/` 本地加载，见第 5 节。
 - **没有** `docsify-sidebar-collapse`：它会注入 CSS 把嵌套列表折叠，导致首页侧边栏里
-  6 个模块链接全部不可见。侧边栏因此写成平铺结构。
-- **没有** KaTeX：站内已无公式，去掉一个依赖。若将来要写公式，需要同时补回
-  `katex.min.js` + `auto-render.min.js` 并删掉 `check_docs.py` 里的 `$$` 规则。
+  6 个模块链接全部不可见。
+- **没有** KaTeX：站内已无公式。若将来要写公式，需要补回 katex 的 JS + auto-render，
+  并删掉 `check_docs.py` 里的 `$$` 规则。
 - `subMaxLevel: 2`：侧边栏展开当前页的二级标题。
+- 末尾有一小段兜底脚本：如果 `docsify.min.js` 没加载成功，把「正在加载文档…」换成一句
+  人能看懂的提示，而不是永远卡住。
 
 样式全在 `docs/assets/custom.css`，配色和尺寸都在 `:root` 变量里。几个关键约定：
 
 - 正文版心 780px（中文一行 35～40 字），**图片可突破到 1000px**，因为仿真截图的信息全在细节里；
 - 图框用 `width: fit-content; max-width: min(100%, 1000px)`，
   **不要改成 `max-width: 1000px`**：那样小图会被拉伸、窄屏会被撑破；
+- `--faint` 也当正文色用（卡片实体名、翻页标签），**必须保持 ≥4.5:1 对比度**，别再调浅；
 - 首页两个组件：`.metrics`（指标条）和 `.mod-grid` / `.mod-card`（模块卡片）。
 
 ---
 
-## 5. 改完必须做的三件事
+## 5. 本地依赖（不用 CDN）
+
+答辩现场的网络未必能访问 `cdn.jsdelivr.net`；一旦 CDN 不可达，页面会永久停在
+「正在加载文档…」。所以依赖全部下载到 `docs/assets/vendor/`：
+
+| 文件 | 来源 |
+|:---|:---|
+| `docsify.min.js`、`vue.css`、`search.min.js`、`zoom-image.min.js` | `docsify@4.13.1` |
+| `docsify-copy-code.min.js` | `docsify-copy-code@2.1.1` |
+| `docsify-pagination.min.js` | `docsify-pagination@2.10.1` |
+| `prism-vhdl.min.js` | `prismjs@1.29.0` |
+
+升级版本：改 `scripts/vendor_assets.py` 顶部的 `ASSETS` 表，重跑脚本，再本地看一眼：
 
 ```powershell
-# 1. 站点体检：链接、图片是否存在，粗体与原始 HTML 块会不会渲染失败，是否有 $$
+python scripts/vendor_assets.py           # 下载/更新
+python scripts/vendor_assets.py --check   # 只校验本地文件是否齐全
+```
+
+---
+
+## 6. 发布面
+
+**只有站点本身会被发布**，由 `.github/workflows/pages.yml` 的 `Stage Site Files` 步骤从
+`docs/` 里挑出这些内容，其余一律不上线：
+
+```
+_site/
+├── index.html  README.md  _sidebar.md  .nojekyll
+├── assets/       （custom.css / custom.js / vendor/ / images/）
+└── subsystems/   （6 个模块页）
+```
+
+这么做的原因：`docs/` 下还放着工程证据文档和报告三件套，它们不参与站点导航、
+Markdown 也没有按 docsify 的规则维护，发布出去只会让线上多出一批没人看、渲染还半坏的页面
+（实测那批文件里有 400+ 处粗体渲染失败）。
+
+⚠️ **这个集合必须与 `scripts/check_docs.py` 的 `PUBLISHED_FILES` / `PUBLISHED_DIRS` 保持一致**，
+门禁会检查「站点页有没有引用不会被发布的文件」。如果将来想让站点链接实验报告 PDF，
+要同时把 `report/` 加进这两处。
+
+---
+
+## 7. 改完必须做的三件事
+
+```powershell
+# 1. 站点体检：链接、图片、粗体、原始 HTML 块、$$、index.html 本地资源、发布面
 python scripts/check_docs.py          # 必须 0 错误
 
 # 2. 事实模型对账
 python scripts/extract_facts.py --check
 
-# 3. 肉眼确认（本地起服务 + 无头浏览器截图）
+# 3. 本地依赖齐全
+python scripts/vendor_assets.py --check
+
+# 4. 肉眼确认（本地起服务 + 无头浏览器截图）
 python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
 # 另开一个终端：
 & "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
@@ -125,33 +185,40 @@ python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
   --screenshot=shot.png "http://127.0.0.1:8899/#/subsystems/01_system_top"
 ```
 
-> 无头 Chrome 在 Windows 上**视口最小约 512px**，用 `--window-size=390` 截图会得到
-> 512px 的渲染被裁到 390px，看起来像溢出——那是假象。窄屏请用 512px 验证。
+两个已知的**测量陷阱**，别被它们骗了：
 
-CI 会把上面第 1、2 步跑在部署之前（`.github/workflows/pages.yml`），
+- 无头 Chrome 在 Windows 上**视口最小约 512px**。用 `--window-size=390` 截图会得到
+  512px 的渲染被裁到 390px，看起来像横向溢出——那是假象。窄屏请用 512px 验证。
+- **不要用 PowerShell 的 `Get-Content -Raw` + `Set-Content` 改这些文件**：
+  Windows PowerShell 5.1 会按系统 ANSI 代码页读写，把 UTF-8 中文写成乱码
+  （本项目已经因此损坏过一次 `docs/README.md` 与 `docs/index.html`）。
+  改文件请用编辑器/`edit` 工具，或 Python 里显式 `encoding="utf-8"`。
+
+CI 会把上面第 1、2 步和「暂存发布面 + 校验暂存结果」跑在部署之前，
 所以本地过了基本就不会部署失败。
 
 ---
 
-## 6. 部署
+## 8. 部署
 
 ```powershell
-git add docs/ scripts/ .github/
+git add docs/ scripts/ .github/ HANDOVER.md
 git commit -m "docs: ..."
 git push origin main
 gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 ```
 
-推送后 GitHub Actions 会自动构建并发布到 <https://tortrixx.github.io/dld/>。
-工作流只在 `docs/**`、`rtl/**`、`sim/**`、`facts/**`、`scripts/**` 或工作流本身变动时触发。
+推送后 GitHub Actions 自动构建并发布。工作流只在 `docs/**`、`rtl/**`、`sim/**`、`facts/**`、
+`scripts/**` 或工作流本身变动时触发。
 
 ---
 
-## 7. 已知取舍
+## 9. 已知取舍
 
 | 取舍 | 原因 |
 |:---|:---|
 | `docs/图/SIM-*.svg` 不在站内使用 | 是脚本按跳变画出的示意图，多数信号在整段时基上是平线，读不出信息；站内统一用 Quartus 截图（`GUI-*.png`）作为证据 |
-| `docs/assets/images/GUI-*.png` 是裁过的 | 裁掉了窗口标题栏、工具条、左侧工具栏和空白行，只留时间轴 + 信号名 + 波形；**原始截图仍在 `docs/图/`** |
+| `docs/assets/images/GUI-*.png` 是裁过的 | 裁掉了窗口标题栏、工具条、左侧工具栏和空白行，只留时间轴 + 信号名 + 波形；**原始截图仍在 `docs/图/`**（`GUI-build-area` / `GUI-build-timing` 两张的原始图在 `docs/report/GUI-编译-*.png`） |
 | 首页放的是规则模型重放 GIF | 不是板子实录，图注里已明确标注；用来让人 3 秒明白这游戏长什么样 |
-| `docs/` 下保留 MkDocs 时代的证据 md | 被 `extract_facts.py` / `audit_evidence.py` 读取，删了会破坏事实模型对账 |
+| `docs/` 下保留 MkDocs 时代的证据 md 与报告三件套 | 被 `extract_facts.py` / `audit_evidence.py` 读取，删了会破坏事实模型对账；它们不发布，所以不影响线上 |
+| 站内目前没有代码块 | 仍保留了 `prism-vhdl` 与 copy-code 插件（合计约 5 KB），硬件文档后续补 VHDL 片段时直接可用 |
