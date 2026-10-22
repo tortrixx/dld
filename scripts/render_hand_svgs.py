@@ -7,6 +7,7 @@ fig3: viewBox 910x314，输出 2.2x → 2002x691
 """
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -42,7 +43,9 @@ def main():
                         "--force-device-scale-factor=%s" % SCALE,
                         "--window-size=%d,%d" % (int(w), int(h)),
                         "--screenshot=" + png, url], capture_output=True)
-        print("  %-16s %dx%d → %s（%d B）"
+        site = os.path.join(ROOT, "docs", "assets", "images", name + ".png")
+        shutil.copy2(png, site)
+        print("  %-16s %dx%d → %s（%d B，站点副本已同步）"
               % (name, w, h, os.path.basename(png), os.path.getsize(png)))
     return 0
 

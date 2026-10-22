@@ -39,7 +39,7 @@ PKG = os.path.join(ROOT, "rtl", "puzzle_pkg.vhd")
 OUT_SVG = os.path.join(ROOT, "docs", "report", "fig_game_flow.svg")
 OUT_PNG = os.path.join(ROOT, "docs", "report", "fig_game_flow.png")
 
-W, H = 2320, 2680
+W, H = 1700, 2680
 FONT = "Microsoft YaHei, SimSun, sans-serif"
 LINE = "#334155"          # 统一线条色（不用花花绿绿）
 FILL = "#ffffff"
@@ -82,7 +82,7 @@ NODES = [
                                                 "显示胜利图案 · 奏通关乐句（按【开始】重开）"]),
     ("again",   "dec",     660, 2430, 420, 150, ["按【开始】重开？"]),
     # 失败在循环之外（一局结束），所以画在容器右侧
-    ("fail",    "proc",   1740, 1160, 540, 90, ["失败 S_FAIL",
+    ("fail",    "proc",   1150, 1990, 500, 90, ["失败 S_FAIL",
                                                 "显示 FAIL · 奏失败乐句 · 结算先闪后常亮"]),
 ]
 
@@ -91,6 +91,7 @@ LOOP_BOX = (400, 1050, 1220, 900, "对局循环  S_PLAYING（限时 30 / 40 / 60
 
 BUS_X = 470          # 「回循环」总线竖线的 x
 BUS_TOP_Y = 1203     # 进循环起点的高度（lk 垂直中心）
+
 
 # ---------------------------------------------------------------- 连线
 # (起点id, 起点方位, 终点id, 终点方位, 标签, [额外拐点])
@@ -107,7 +108,7 @@ EDGES = [
     ("preview", "b", "shuffle", "t", "", []),
     ("shuffle", "b", "lk", "t", "", []),
     ("lk", "r", "ltime", "l", "否", []),
-    ("ltime", "r", "fail", "l", "是", []),
+    ("ltime", "r", "fail", "t", "是", [(1610, 1203), (1610, 1940), (1400, 1940)]),
     ("lk", "b", "ldec", "t", "是", []),
     ("ldec", "b", "lhit", "t", "", []),
     ("lhit", "r", "lblock", "l", "是", []),
@@ -124,6 +125,25 @@ EDGES = [
     # 重开 → 回待机：走容器**左侧外面**的通道（x=360），不穿任何方框
     ("again", "l", "idle", "l", "是", [(360, 2505), (360, 534)]),
 ]
+
+# ---------------------------------------------------------------- 纵向压缩
+# 画布宽度受 S_FAIL 位置影响（原本挂最右边，把画布撑到 2320）；把它挪到循环下方后
+# 宽度降到 1700，但高度 2680 反而成了瓶颈 —— 按 A4 版心宽高比，图会被"宽"卡住。
+# 这里把所有**纵向坐标**（节点 y/高度、拐点 y、容器、总线、画布高）统一乘 YS，
+# 字号不动 ⇒ 图变矮、字相对变大。横向一律不动。
+YS = 0.78
+NODES = [(nid, kind, x, int(y * YS), w, max(58, int(h * YS)), lines)
+         for (nid, kind, x, y, w, h, lines) in NODES]
+EDGES = [(a, b, c, d, lab, [(px, int(py * YS)) for px, py in ex])
+         for (a, b, c, d, lab, ex) in EDGES]
+LOOP_BOX = (LOOP_BOX[0], int(LOOP_BOX[1] * YS), LOOP_BOX[2],
+            int(LOOP_BOX[3] * YS), LOOP_BOX[4])
+H = int(H * YS)
+
+# 缩放后重算总线端点：竖线顶端 = lk 菱形中心，底端 = 原来 1835 缩放后的位置
+_lk = [n for n in NODES if n[0] == "lk"][0]
+BUS_TOP_Y = _lk[3] + _lk[5] // 2
+BUS_BOT_Y = int(1835 * YS)
 
 
 def esc(s: str) -> str:
@@ -235,10 +255,10 @@ def build_svg():
                      'fill="%s" text-anchor="middle">%s</text>' % (tx, ty, FONT, ACCENT, esc(label)))
 
     # 回循环总线：一条竖线汇齐所有回边，再横着进循环起点（只画一个箭头）
-    p.append('<path d="M %.1f 1835 L %.1f %.1f L %.1f %.1f" fill="none" stroke="%s" '
+    p.append('<path d="M %.1f %.1f L %.1f %.1f L %.1f %.1f" fill="none" stroke="%s" '
              'stroke-width="2" marker-end="url(#ar)"/>'
-             % (BUS_X, BUS_X, BUS_TOP_Y, anchor("lk", "l")[0], BUS_TOP_Y, LINE))
-    p.append('<circle cx="%.1f" cy="1835" r="5" fill="%s"/>' % (BUS_X, LINE))
+             % (BUS_X, BUS_BOT_Y, BUS_X, BUS_TOP_Y, anchor("lk", "l")[0], BUS_TOP_Y, LINE))
+    p.append('<circle cx="%.1f" cy="%.1f" r="5" fill="%s"/>' % (BUS_X, BUS_BOT_Y, LINE))
     p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="17.5" fill="%s" '
              'text-anchor="start">回循环</text>' % (BUS_X + 12, BUS_TOP_Y - 24, FONT, ACCENT))
 

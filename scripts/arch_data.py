@@ -76,9 +76,9 @@ GLUE = {
 BOX_IDS = list(ENTITIES) + list(EXTERNAL) + list(GLUE)
 
 # ---------------------------------------------------------------- 全局网络（轨道式分配）
-# 这三个网络是"一对多"的全局分配（clk 8 个消费者、rst 8 个、sw7 4 个）。
-# 逐根画箭头会得到 20 根长线、必然穿框 ⇒ 图上用**全局轨道 / 角标**表达，
-# 不进入 WIRE_GROUPS（否则 fidelity 对账会要求画 20 根线）。
+# 这三个网络是"一对多"的全局分配（按 GLOBALS 实计：clk 10 个消费者、rst 8 个、sw7 4 个）。
+# 逐根画箭头会得到 22 根长线、必然穿框 ⇒ 图上用**全局轨道 / 角标**表达，
+# 不进入 WIRE_GROUPS（否则 fidelity 对账会要求画 22 根线）。
 RAILS = {
     "clk": {"from": "ext_clk", "text": "clk 50 MHz"},
     "rst": {"from": "clk_gen", "text": "rst 同步复位"},

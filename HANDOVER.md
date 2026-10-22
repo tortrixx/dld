@@ -315,7 +315,7 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 
 | 层 | 文件 | 职责 |
 |:---|:---|:---|
-| **数据（唯一事实源）** | `scripts/arch_data.py` | 方框集合（11 entity + 7 板载 + 2 顶层胶合）、35 组连线 / 60 个 `(源,目标,网名)` 三元组、每个模块消费的全局网络 —— 全部从 `facts/facts.json` 与 `rtl/puzzle_top.vhd` 现算，人工只能读不能改 |
+| **数据（唯一事实源）** | `scripts/arch_data.py` | 方框集合（11 entity + 7 板载 + 2 顶层胶合）、35 组原始连线（按 `(源,目标)` 合并后图上画 32 条） / 60 个 `(源,目标,网名)` 三元组、每个模块消费的全局网络 —— 全部从 `facts/facts.json` 与 `rtl/puzzle_top.vhd` 现算，人工只能读不能改 |
 | **布局（只管画）** | `scripts/fig1_layout.py` | 六列分层 + 空通道正交走线 + 顶部干线带 + 标签自动避让；产出 SVG **和** 一份 `layout.json` 供对账 |
 | **裁判（客观体检）** | `scripts/audit_diagram.py` | 读 `layout.json` 做 16 项几何检查：线穿框、标签压框/互压、端点是否落在框边、越界、交叉数、空白率、对齐…；`--fidelity` 再和 `arch_data` 逐条对账 |
 

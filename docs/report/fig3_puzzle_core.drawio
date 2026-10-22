@@ -10,13 +10,13 @@
         <mxCell id="b2" value="&lt;b&gt;2. 64位几何变换处理器&lt;/b&gt;&lt;br&gt;零片 ROM 原型掩码输入&lt;br&gt;纯组合移位器二维平移&lt;br&gt;S3 触发 90° 顺时针旋转" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#EFF6FF;strokeColor=#3B82F6;fontColor=#1D4ED8;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="270" y="60" width="190" height="110" as="geometry"/>
         </mxCell>
-        <mxCell id="b3" value="&lt;b&gt;3. 刚性碰撞拦截检测&lt;/b&gt;&lt;br&gt;越界检测: x&amp;lt;0 | x+w&amp;gt;8&lt;br&gt;重叠检测: piece AND locked&lt;br&gt;&lt;font color=&quot;#B91C1C&quot;&gt;&lt;b&gt;冲突单拍锁死禁止更新&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#EF4444;fontColor=#B91C1C;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="b3" value="&lt;b&gt;3. 刚性碰撞拦截检测&lt;/b&gt;&lt;br&gt;越界检测: x&amp;lt;0 | x+w&amp;gt;8&lt;br&gt;重叠检测: 候选行 AND 其余各零片&lt;br&gt;&lt;font color=&quot;#B91C1C&quot;&gt;&lt;b&gt;判决拍拒绝更新&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FEF2F2;strokeColor=#EF4444;fontColor=#B91C1C;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="510" y="60" width="180" height="110" as="geometry"/>
         </mxCell>
-        <mxCell id="b4" value="&lt;b&gt;4. 锁定与全图验证&lt;/b&gt;&lt;br&gt;S8 确认: piece 并入锁定面&lt;br&gt;全图比对: locked == target&lt;br&gt;&lt;font color=&quot;#15803D&quot;&gt;&lt;b&gt;100% 吻合即置高 match&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAF5FF;strokeColor=#A855F7;fontColor=#6B21A8;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="b4" value="&lt;b&gt;4. 锁定与全图验证&lt;/b&gt;&lt;br&gt;S8 确认: piece 并入锁定面&lt;br&gt;全图比对: 八行 cov 并集 == 目标行&lt;br&gt;&lt;font color=&quot;#15803D&quot;&gt;&lt;b&gt;并集吻合且全部锁定 → match&lt;/b&gt;&lt;/font&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FAF5FF;strokeColor=#A855F7;fontColor=#6B21A8;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="740" y="60" width="170" height="110" as="geometry"/>
         </mxCell>
-        <mxCell id="b_buf" value="&lt;b&gt;双平面 64位 像素合成与 125 Hz 超临界行扫描消隐&lt;/b&gt;&lt;br&gt;&lt;br&gt;红光平面 (Red): 游离未选零片 + 锁定零片红分量&lt;br&gt;绿光平面 (Green): 当前选中零片 + ≤10s 幽灵闪烁辅助&lt;br&gt;黄光合成 (Yellow): 已正确锁定零片 (红+绿双亮)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="b_buf" value="&lt;b&gt;双平面 64位 像素合成与 125 Hz 超临界行扫描消隐&lt;/b&gt;&lt;br&gt;&lt;br&gt;红光平面 (Red): 游离未选零片 + 锁定零片红分量&lt;br&gt;绿光平面 (Green): 当前选中 + 已锁定零片 + 幽灵闪烁&lt;br&gt;黄光合成 (Yellow): 已正确锁定零片 (红+绿双亮)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8FAFC;strokeColor=#64748B;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="160" y="220" width="620" height="110" as="geometry"/>
         </mxCell>
         <mxCell id="c1" value="(x_pos, y_pos)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;entryX=0;entryY=0.5;strokeColor=#1E293B;fontSize=10;" edge="1" parent="1" source="b1" target="b2"/>
