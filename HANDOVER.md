@@ -303,11 +303,11 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | 载体 | 怎么来 |
 |:---|:---|
 | `.typ` | **手写**，唯一事实源 |
-| `.pdf` | `typst compile`（交付主件，27 页） |
+| `.pdf` | `typst compile`（交付主件，26 页） |
 | `.md` | `scripts/gen_report_md.py`（封面与正文都从 `.typ` 派生） |
 | `.docx` | `scripts/sync_report_docx.py`（幂等同步，收敛后重跑是 0 变更） |
 
-### 另外两个交付件：平台「实际设计方案」的作答稿与三张设计图
+### 另外两个交付件：平台「实际设计方案」的作答稿与六张设计图
 
 课程平台除了报告，还有一步「实际设计方案（10 分）」，要求**框图与实现电路(代码)一致**。
 老师两次反馈过这张图：先是"更像流程图、缺模块间信号"，重画后又指出"**渲染出来的架构图不好**" ——
@@ -327,18 +327,20 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | `docs/report/fig_overview.svg/.png` | `scripts/gen_overview_diagram.py`：**功能总览**（6 个功能块 + 时钟，块内列出实体名；`--check` 验证 11 个 entity 恰好划分一次） |
 | `docs/report/fig1_system_architecture.svg/.png` | `scripts/gen_design_diagram.py`：**方框 = entity**，箭头 = 顶层端口连接（网名[位宽]），全局网络用角标。报告 §2.2 与站点 `docs/assets/images/` 用同一张 |
 | `docs/report/fig_game_flow.svg/.png` | `scripts/gen_flow_diagram.py`：**规范流程图**（圆角=起止 / 矩形=处理 / 菱形=判断），对局循环用容器框 + 「回循环」总线 |
-| `docs/report/实际设计方案-模块设计一览.svg/.png` | 同上（11 格，逐模块给端口与设计要点） |
+| `docs/report/实际设计方案-模块设计一览.svg/.png` | `scripts/gen_design_diagram.py`（11 格，逐模块给端口与设计要点） |
+| `docs/report/fig2_game_fsm.svg/.png`、`fig3_puzzle_core.svg/.png` | **手工维护**的矢量图（状态转移图 / 引擎四级数据流图）；改完用 `scripts/render_hand_svgs.py` 重渲染 PNG |
+| `docs/report/GUI-*.png`（14 张） | `scripts/gen_wave_figures.py`：从 `docs/图/` 的 Quartus 整窗截图里裁掉标题栏与左侧工具栏、裁掉底部空白（2 张编译截图已预先裁过，脚本跳过） |
 | `docs/report/实际设计方案.md` | **手写**：游戏流程 → 设计方法 → 总体框图 → 各模块设计 → 信号传递表 |
 
-这三张图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与
+上述生成图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与
 `rtl/puzzle_top.vhd` 现算，`--check` 会逐条对账 ⇒ "与代码一致"是按构造保证的；
 流程图的六个状态、三个判据信号、四个限时常量也与 `game_fsm.vhd` / `puzzle_ctrl.vhd` /
-`puzzle_pkg.vhd` 对账。改完 RTL 记得重跑这两个脚本（它们还会顺手刷新
+`puzzle_pkg.vhd` 对账。改完 RTL 记得重跑对应的生成脚本（它们还会顺手刷新
 `docs/assets/images/` 下的站点副本）。
 
 **量化记录（改造前后，同一把尺子）**：旧版 `fig1` 跑 `audit_diagram` 得到 **35 个 ERROR**
 （32 处线穿方框 + 3 处标签重叠）、16 处交叉、55% 空白、`SCORE 4156`；
-新版 **0 ERROR / 0 穿框 / 0 标签冲突**，80 处交叉、40% 空白、`SCORE 958`。
+新版 **0 ERROR / 0 穿框 / 0 标签冲突 / 0 标签压线**，当前实测 `SCORE 893.86`（2026-10-22 的"总线主干 + 只标信号组名"版）。
 数字与命令见 `.tmp/cand/BASELINE.md`。
 
 > ⚠️ **不要用 PowerShell 的 `Get-Content | Set-Content` 改这些脚本**：

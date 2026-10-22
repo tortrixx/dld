@@ -142,7 +142,7 @@ def build():
              'fill="%s" text-anchor="middle">题目 4：简易拼图游戏 —— 功能总览框图</text>'
              % (W // 2, FONT, INK))
     p.append('<text x="%d" y="72" font-family="%s" font-size="15" fill="#475569" '
-             'text-anchor="middle">按功能划分的 6 个功能块（每块内等宽小字 = 它包含的 '
+             'text-anchor="middle">按功能划分的 6 个核心功能块 + 1 个时钟块（块内等宽小字 = 它包含的 '
              'rtl/&lt;同名&gt;.vhd 实体，共 11 个）；模块级连线与端口见下一张图</text>'
              % (W // 2, FONT))
 
@@ -183,7 +183,7 @@ def build():
             wd = tw(label, 15) + 8
             p.append('<rect x="%.1f" y="%.1f" width="%.1f" height="20" rx="3" fill="#ffffff"/>'
                      % (lx - wd / 2, ly - 16, wd))
-            p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="15" fill="%s" '
+            p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="16.5" fill="%s" '
                      'text-anchor="middle">%s</text>' % (lx, ly, FONT, "#334155", esc(label)))
 
     # ④ 方框
@@ -192,16 +192,16 @@ def build():
         fill, stroke = ("#fef2f2", CLK) if is_clk else ("#ffffff", LINE)
         p.append('<rect x="%d" y="%d" width="%d" height="%d" rx="8" fill="%s" stroke="%s" '
                  'stroke-width="2.2"/>' % (x, y, w, h, fill, stroke))
-        p.append('<text x="%.0f" y="%d" font-family="%s" font-size="21" font-weight="bold" '
+        p.append('<text x="%.0f" y="%d" font-family="%s" font-size="22.5" font-weight="bold" '
                  'fill="%s" text-anchor="middle">%s</text>'
                  % (x + w / 2, y + 34, FONT, CLK if is_clk else INK, esc(title)))
-        p.append('<text x="%.0f" y="%d" font-family="%s" font-size="13.5" fill="#475569" '
+        p.append('<text x="%.0f" y="%d" font-family="%s" font-size="14.5" fill="#475569" '
                  'text-anchor="middle">%s</text>'
                  % (x + w / 2, y + 58, FONT, esc(sub)))
         # 内含实体名（与代码对账的那一行）
         names = [] if bid == "clk" else ENTITIES_OF[bid]
         for i, nm in enumerate(names):
-            p.append('<text x="%.0f" y="%d" font-family="%s" font-size="15" fill="%s" '
+            p.append('<text x="%.0f" y="%d" font-family="%s" font-size="16.5" fill="%s" '
                      'text-anchor="middle">%s</text>'
                      % (x + w / 2, y + 84 + i * 19, MONO,
                         "#94a3b8" if is_clk else "#0f766e", esc(nm)))

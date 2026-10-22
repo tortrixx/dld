@@ -54,18 +54,18 @@ NODES = [
     ("start",   "stadium", 700, 66, 340, 58, ["上电 / 复位"]),
     ("sw",      "dec",     660, 166, 420, 150, ["SW7 = 1 ？", "（系统使能开关）"]),
     ("quiet",   "proc",    60, 196, 500, 84, ["全系统静默熄灭", "（低功耗，所有显示器件不显示）", "SW7 重新置 1 后回到上方判定"]),
-    ("self",    "proc",    520, 372, 620, 82, ["自检 S_SELF_TEST（2 s）",
+    ("self",    "proc",    520, 372, 620, 82, ["自检 S_SELF_TEST（约 2 s）",
                                                "点阵 64 点全亮黄闪 2 Hz · 数码管 88888888 · POST 短鸣"]),
     ("idle",    "proc",    520, 496, 620, 76, ["待机 S_IDLE",
                                                "DISP7 显示 5 · DISP0 显示当前关卡"]),
     ("gokey",   "dec",     660, 614, 420, 150, ["按【开始】？"]),
-    ("preview", "proc",    520, 806, 620, 82, ["预览 S_PREVIEW（5 s）",
+    ("preview", "proc",    520, 806, 620, 82, ["预览 S_PREVIEW（约 5 s）",
                                                "点阵红光显示目标图案 · DISP7 倒计时 5→1"]),
     ("shuffle", "proc",    520, 930, 620, 82, ["散落（LFSR 取锚点）",
                                                "与已落位零片重叠则重新采样，最多 15 次"]),
     # ---- 对局循环（容器内） ----
     ("lk",      "dec",     620, 1128, 420, 150, ["有按键？"]),
-    ("ltime",   "dec",    1120, 1128, 420, 150, ["倒计时 = 0 ？"]),
+    ("ltime",   "dec",    1120, 1128, 420, 150, ["剩余 ≤ 1 s ？"]),
     ("ldec",    "proc",    520, 1320, 620, 82, ["译码并执行按键",
                                                 "选择 / 上 / 下 / 左 / 右 / 旋转 / 确认"]),
     ("lhit",    "dec",     620, 1444, 420, 150, ["碰撞或越界？"]),
@@ -179,7 +179,7 @@ def shape_svg(n):
     out = [s]
     cnt = len(lines)
     for i, t in enumerate(lines):
-        size = 19 if i == 0 else 15.5
+        size = 19.5 if i == 0 else 16.5
         weight = ' font-weight="bold"' if i == 0 else ''
         yy = y + h / 2 - (cnt - 1) * 13 + i * 26 + 7
         out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="%s"%s fill="#0f172a" '
@@ -197,7 +197,7 @@ def build_svg():
          '<rect width="%d" height="%d" fill="#ffffff"/>' % (W, H),
          '<text x="%d" y="34" font-family="%s" font-size="30" font-weight="bold" fill="#0f172a" '
          'text-anchor="middle">题目 4：简易拼图游戏 —— 游戏流程框图</text>' % (W // 2, FONT),
-         '<text x="%d" y="56" font-family="%s" font-size="16" fill="#475569" text-anchor="middle">'
+         '<text x="%d" y="56" font-family="%s" font-size="18" fill="#475569" text-anchor="middle">'
          '圆角框 = 起止　矩形 = 处理　菱形 = 判断　箭头 = 流向（判断分支标 是 / 否）；'
          '对局阶段为循环，已用容器框圈出</text>' % (W // 2, FONT)]
 
@@ -231,7 +231,7 @@ def build_svg():
                 rw, rh = 40, 22
                 p.append('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="#ffffff"/>'
                          % (tx - rw / 2, ty - 16, rw, rh))
-            p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="16" font-weight="bold" '
+            p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="17" font-weight="bold" '
                      'fill="%s" text-anchor="middle">%s</text>' % (tx, ty, FONT, ACCENT, esc(label)))
 
     # 回循环总线：一条竖线汇齐所有回边，再横着进循环起点（只画一个箭头）
@@ -239,7 +239,7 @@ def build_svg():
              'stroke-width="2" marker-end="url(#ar)"/>'
              % (BUS_X, BUS_X, BUS_TOP_Y, anchor("lk", "l")[0], BUS_TOP_Y, LINE))
     p.append('<circle cx="%.1f" cy="1835" r="5" fill="%s"/>' % (BUS_X, LINE))
-    p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="15" fill="%s" '
+    p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="17.5" fill="%s" '
              'text-anchor="start">回循环</text>' % (BUS_X + 12, BUS_TOP_Y - 24, FONT, ACCENT))
 
     # 图形
@@ -295,7 +295,7 @@ def main() -> int:
         return sum((1.0 if ord(ch) > 0x2E7F else 0.62) * size for ch in text)
 
     for nid, _kind, x, y, w, h, lines in NODES:
-        widest = max((_tw(t, 19 if i == 0 else 15.5) for i, t in enumerate(lines)), default=0.0)
+        widest = max((_tw(t, 19.5 if i == 0 else 16.5) for i, t in enumerate(lines)), default=0.0)
         # 菱形可用的横向宽度只有框宽的一半左右（内接矩形）
         avail = (w * 0.52 if _kind == "dec" else w) - 20
         if widest > avail:

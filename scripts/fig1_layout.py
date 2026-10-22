@@ -43,14 +43,14 @@ MONO = "Consolas, Courier New, monospace"
 TITLE_SIZE = 27
 SUBTITLE_SIZE = 15
 ZONE_SIZE = 14
-ENT_TITLE = 18.5
-ENT_SUB = 12.5
+ENT_TITLE = 19.5
+ENT_SUB = 13
 GLUE_TITLE = 15
-GLUE_SUB = 11.5
+GLUE_SUB = 12.5
 EXT_TITLE = 14
-EXT_SUB = 11.5
-TAG_SIZE = 11
-BUS_SIZE = 16
+EXT_SUB = 12.5
+TAG_SIZE = 12.5
+BUS_SIZE = 17
 LEGEND_SIZE = 13
 NOTE_SIZE = 12.5
 
@@ -67,8 +67,8 @@ GLUE_FILL = "#f8fafc"
 GLUE_LINE = "#64748b"
 
 # ---------------------------------------------------------------- 六列
-COL_X = [24, 192, 462, 806, 1104, 1372]
-COL_W = [104, 146, 180, 164, 190, 104]
+COL_X = [24, 192, 462, 806, 1104, 1364]
+COL_W = [104, 146, 180, 164, 190, 116]
 COL_TITLE = ["板载输入器件", "时钟与输入采集", "主控 · 存储 · 随机源",
              "核心引擎与顶层胶合", "显示与音频输出", "板载输出器件"]
 
@@ -103,7 +103,7 @@ CN = {
     "pattern_rom": "目标图案库",
     "rng_lfsr": "8 位 LFSR",
     "puzzle_ctrl": "拼图引擎",
-    "disp_format": "数码管段码",
+    "disp_format": "数码管 BCD 内容",
     "seg_scan": "数码管扫描",
     "dot_matrix_scan": "点阵行扫描",
     "buzzer_ctrl": "音效 / 乐句",
@@ -120,7 +120,7 @@ EXT_LINES = {
 GLUE_CN = {"glue_pat": "图案选择锁存", "glue_row": "行计数器+行切片"}
 EXT_SUB_TEXT = {"ext_clk": "PIN_18", "ext_btn": "PIN_61", "ext_sw": "PIN_125",
                 "ext_kp": "kp_row/col", "ext_seg": "seg / cat",
-                "ext_dot": "ROW/COL", "ext_buzz": "PIN_60"}
+                "ext_dot": "ROW/COLR/COLG", "ext_buzz": "PIN_60"}
 
 # ---------------------------------------------------------------- 主干（总线）名字
 # 键 = (源模块, 出线侧)；同一个源的所有出线共用一条主干。
@@ -151,7 +151,7 @@ NOTE_LINES = [
     "图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；"
     "虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件",
     "方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；"
-    "这三路是一对多分配（消费者 8 / 8 / 4 个），逐根画会得到 20 根长线，故用角标表达",
+    "这三路是一对多分配（消费者 10 / 8 / 4 个、共 22 根），逐根画会得到 22 根长线，故用角标表达",
 ]
 
 

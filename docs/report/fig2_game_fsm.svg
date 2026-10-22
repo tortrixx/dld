@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="36 16 890 428" width="890" height="428" font-family="Hiragino Sans GB, PingFang SC, Noto Sans SC, Microsoft YaHei, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="36 16 890 428" width="890" height="428" font-family="Microsoft YaHei, SimSun, sans-serif">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#334155"/>

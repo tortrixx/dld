@@ -14,8 +14,8 @@
 <text x="888" y="272" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">核心引擎与顶层胶合</text>
 <rect x="1101" y="252" width="196" height="598" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
 <text x="1199" y="272" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">显示与音频输出</text>
-<rect x="1369" y="256" width="110" height="590" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
-<text x="1424" y="276" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">板载输出器件</text>
+<rect x="1361" y="256" width="122" height="590" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
+<text x="1422" y="276" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">板载输出器件</text>
 <path d="M 128.0 483.0 L 146.0 483.0 L 146.0 363.0 L 192.0 363.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 128.0 913.0 L 174.0 913.0 L 174.0 904.0 L 192.0 904.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 192.0 904.0 L 160.0 904.0 L 160.0 913.0 L 128.0 913.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
@@ -36,129 +36,129 @@
 <path d="M 806.0 664.0 L 736.8 664.0 L 736.8 862.0 L 642.0 862.0" fill="none" stroke="#b45309" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar2)"/>
 <path d="M 642.0 388.0 L 685.6 388.0 L 685.6 148.0 L 988.0 148.0 L 988.0 328.0 L 1104.0 328.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 1294.0 328.0 L 1312.0 328.0 L 1312.0 438.0 L 1294.0 438.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
-<path d="M 1294.0 438.0 L 1326.0 438.0 L 1326.0 327.0 L 1372.0 327.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 1294.0 438.0 L 1323.3 438.0 L 1323.3 327.0 L 1364.0 327.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 642.0 388.0 L 685.6 388.0 L 685.6 148.0 L 1086.0 148.0 L 1086.0 811.0 L 1104.0 811.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
-<path d="M 1294.0 798.0 L 1354.0 798.0 L 1354.0 799.0 L 1372.0 799.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 1294.0 798.0 L 1346.0 798.0 L 1346.0 799.0 L 1364.0 799.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 970.0 664.0 L 1086.0 664.0 L 1086.0 437.0 L 970.0 437.0" fill="none" stroke="#b45309" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar2)"/>
 <path d="M 642.0 388.0 L 685.6 388.0 L 685.6 437.0 L 806.0 437.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 642.0 750.0 L 762.4 750.0 L 762.4 456.0 L 806.0 456.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 970.0 437.0 L 1037.0 437.0 L 1037.0 548.0 L 1104.0 548.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
-<path d="M 1294.0 548.0 L 1340.0 548.0 L 1340.0 549.0 L 1372.0 549.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 1294.0 548.0 L 1334.7 548.0 L 1334.7 549.0 L 1364.0 549.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 642.0 388.0 L 685.6 388.0 L 685.6 314.0 L 806.0 314.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 642.0 862.0 L 788.0 862.0 L 788.0 340.0 L 806.0 340.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 806.0 327.0 L 660.0 327.0 L 660.0 737.0 L 642.0 737.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <path d="M 970.0 327.0 L 988.0 327.0 L 988.0 664.0 L 970.0 664.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
 <rect x="192" y="300" width="146" height="126" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="265" y="330" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">clk_gen</text>
-<text x="265" y="350" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">分频 / 复位</text>
-<text x="198" y="420" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk</text>
+<text x="265" y="330" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">clk_gen</text>
+<text x="265" y="350" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">分频 / 复位</text>
+<text x="198" y="420" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk</text>
 <rect x="192" y="866" width="146" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="265" y="896" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">keypad_scan</text>
-<text x="265" y="916" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">键盘扫描</text>
-<text x="198" y="936" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
+<text x="265" y="896" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">keypad_scan</text>
+<text x="265" y="916" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">键盘扫描</text>
+<text x="198" y="936" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst</text>
 <rect x="462" y="290" width="180" height="196" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="552" y="320" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">game_fsm</text>
-<text x="552" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">游戏主状态机</text>
-<text x="468" y="480" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<text x="552" y="320" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">game_fsm</text>
+<text x="552" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">游戏主状态机</text>
+<text x="468" y="480" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst·sw7</text>
 <rect x="462" y="600" width="180" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="552" y="630" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">piece_rom</text>
-<text x="552" y="650" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">零片掩码表</text>
+<text x="552" y="630" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">piece_rom</text>
+<text x="552" y="650" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">零片掩码表</text>
 <rect x="462" y="712" width="180" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="552" y="742" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">pattern_rom</text>
-<text x="552" y="762" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">目标图案库</text>
+<text x="552" y="742" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">pattern_rom</text>
+<text x="552" y="762" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">目标图案库</text>
 <rect x="462" y="824" width="180" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="552" y="854" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">rng_lfsr</text>
-<text x="552" y="874" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">8 位 LFSR</text>
-<text x="468" y="894" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
+<text x="552" y="854" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">rng_lfsr</text>
+<text x="552" y="874" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">8 位 LFSR</text>
+<text x="468" y="894" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst</text>
 <rect x="806" y="560" width="164" height="208" rx="7" fill="#fffbeb" stroke="#b45309" stroke-width="2.4"/>
-<text x="888" y="590" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">puzzle_ctrl</text>
-<text x="888" y="610" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">拼图引擎</text>
-<text x="812" y="762" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
+<text x="888" y="590" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">puzzle_ctrl</text>
+<text x="888" y="610" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">拼图引擎</text>
+<text x="812" y="762" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst</text>
 <rect x="1104" y="290" width="190" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="1199" y="320" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">disp_format</text>
-<text x="1199" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">数码管段码</text>
+<text x="1199" y="320" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">disp_format</text>
+<text x="1199" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">数码管 BCD 内容</text>
 <rect x="1104" y="400" width="190" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="1199" y="430" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">seg_scan</text>
-<text x="1199" y="450" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">数码管扫描</text>
-<text x="1110" y="470" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<text x="1199" y="430" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">seg_scan</text>
+<text x="1199" y="450" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">数码管扫描</text>
+<text x="1110" y="470" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst·sw7</text>
 <rect x="1104" y="510" width="190" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="1199" y="540" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">dot_matrix_scan</text>
-<text x="1199" y="560" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">点阵行扫描</text>
-<text x="1110" y="580" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<text x="1199" y="540" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">dot_matrix_scan</text>
+<text x="1199" y="560" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">点阵行扫描</text>
+<text x="1110" y="580" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst·sw7</text>
 <rect x="1104" y="760" width="190" height="76" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="1199" y="790" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18.5" font-weight="bold" fill="#0f172a" text-anchor="middle">buzzer_ctrl</text>
-<text x="1199" y="810" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">音效 / 乐句</text>
-<text x="1110" y="830" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<text x="1199" y="790" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">buzzer_ctrl</text>
+<text x="1199" y="810" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">音效 / 乐句</text>
+<text x="1110" y="830" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst·sw7</text>
 <rect x="24" y="330" width="104" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
 <text x="76" y="353" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">50 MHz</text>
 <text x="76" y="371" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">有源晶振</text>
-<text x="76" y="387" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_18</text>
+<text x="76" y="387" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#64748b" text-anchor="middle">PIN_18</text>
 <rect x="24" y="450" width="104" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
 <text x="76" y="473" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">BTN0</text>
 <text x="76" y="491" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">复位按键</text>
-<text x="76" y="507" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_61</text>
+<text x="76" y="507" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#64748b" text-anchor="middle">PIN_61</text>
 <rect x="24" y="570" width="104" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
 <text x="76" y="593" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">SW7</text>
 <text x="76" y="611" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">全局使能</text>
-<text x="76" y="627" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_125</text>
+<text x="76" y="627" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#64748b" text-anchor="middle">PIN_125</text>
 <rect x="24" y="880" width="104" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
 <text x="76" y="903" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">4×4</text>
 <text x="76" y="921" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">矩阵键盘</text>
-<text x="76" y="937" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">kp_row/col</text>
-<rect x="1372" y="294" width="104" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
-<text x="1424" y="317" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">8 位</text>
-<text x="1424" y="335" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">共阴数码管</text>
-<text x="1424" y="351" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">seg / cat</text>
-<rect x="1372" y="516" width="104" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
-<text x="1424" y="539" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">8×8</text>
-<text x="1424" y="557" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">双色点阵</text>
-<text x="1424" y="573" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">ROW/COL</text>
-<rect x="1372" y="766" width="104" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
-<text x="1424" y="789" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">无源</text>
-<text x="1424" y="807" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">蜂鸣器</text>
-<text x="1424" y="823" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_60</text>
+<text x="76" y="937" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#64748b" text-anchor="middle">kp_row/col</text>
+<rect x="1364" y="294" width="116" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="1422" y="317" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">8 位</text>
+<text x="1422" y="335" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">共阴数码管</text>
+<text x="1422" y="351" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#64748b" text-anchor="middle">seg / cat</text>
+<rect x="1364" y="516" width="116" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="1422" y="539" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">8×8</text>
+<text x="1422" y="557" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">双色点阵</text>
+<text x="1422" y="573" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#64748b" text-anchor="middle">ROW/COLR/COLG</text>
+<rect x="1364" y="766" width="116" height="66" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="1422" y="789" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">无源</text>
+<text x="1422" y="807" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">蜂鸣器</text>
+<text x="1422" y="823" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#64748b" text-anchor="middle">PIN_60</text>
 <rect x="806" y="400" width="164" height="74" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="2.0" stroke-dasharray="7 5"/>
 <text x="888" y="430" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.0" font-weight="bold" fill="#0f172a" text-anchor="middle">行计数器+行切片</text>
-<text x="888" y="450" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="11.5" fill="#475569" text-anchor="middle">非 entity</text>
-<text x="812" y="468" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk</text>
+<text x="888" y="450" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">非 entity</text>
+<text x="812" y="468" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk</text>
 <rect x="806" y="290" width="164" height="74" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="2.0" stroke-dasharray="7 5"/>
 <text x="888" y="320" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.0" font-weight="bold" fill="#0f172a" text-anchor="middle">图案选择锁存</text>
-<text x="888" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="11.5" fill="#475569" text-anchor="middle">非 entity</text>
-<text x="812" y="358" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
-<rect x="108.0" y="526.0" width="58.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="137.0" y="543.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">复位键</text>
-<rect x="122.0" y="848.0" width="58.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="151.0" y="865.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">键盘行</text>
-<rect x="147.0" y="947.0" width="58.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="176.0" y="964.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">键盘列</text>
-<rect x="142.0" y="305.0" width="42.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="184.0" y="322.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">节拍</text>
-<rect x="362.0" y="880.0" width="58.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="391.0" y="897.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">按键码</text>
-<rect x="370.1" y="295.0" width="83.9" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="454.0" y="312.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">控制/状态</text>
-<rect x="646.0" y="765.0" width="83.9" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="688.0" y="782.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">判定/推进</text>
-<rect x="367.0" y="529.0" width="74.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="404.0" y="546.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">零片掩码</text>
-<rect x="641.1" y="793.0" width="74.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="678.1" y="810.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">目标图案</text>
-<rect x="686.0" y="864.0" width="58.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="715.0" y="881.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">随机数</text>
-<rect x="1282.0" y="263.0" width="42.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="1303.0" y="280.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">段码</text>
-<rect x="1276.0" y="481.0" width="67.9" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="1310.0" y="498.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">段/位选</text>
-<rect x="1303.0" y="774.0" width="42.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="1324.0" y="791.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">蜂鸣</text>
-<rect x="975.8" y="666.0" width="58.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="1004.8" y="683.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">帧平面</text>
-<rect x="695.0" y="353.0" width="58.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="724.0" y="370.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">行切片</text>
-<rect x="692.2" y="329.0" width="81.7" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="733.0" y="346.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">选择→ROM</text>
-<rect x="694.0" y="219.0" width="83.9" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
-<text x="736.0" y="236.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">选择→引擎</text>
+<text x="888" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#475569" text-anchor="middle">非 entity</text>
+<text x="812" y="358" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#94a3b8">clk·rst</text>
+<rect x="106.5" y="526.0" width="61.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="137.0" y="543.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">复位键</text>
+<rect x="120.5" y="848.0" width="61.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="151.0" y="865.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">键盘行</text>
+<rect x="145.5" y="947.0" width="61.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="176.0" y="964.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">键盘列</text>
+<rect x="140.0" y="305.0" width="44.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="184.0" y="322.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">节拍</text>
+<rect x="360.5" y="880.0" width="61.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="391.0" y="897.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">按键码</text>
+<rect x="365.5" y="295.0" width="88.5" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="454.0" y="312.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">控制/状态</text>
+<rect x="799.7" y="489.0" width="88.5" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="844.0" y="506.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">判定/推进</text>
+<rect x="365.0" y="529.0" width="78.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="404.0" y="546.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">零片掩码</text>
+<rect x="639.1" y="793.0" width="78.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="678.1" y="810.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">目标图案</text>
+<rect x="684.5" y="864.0" width="61.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="715.0" y="881.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">随机数</text>
+<rect x="1281.0" y="263.0" width="44.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="1303.0" y="280.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">段码</text>
+<rect x="1272.9" y="481.0" width="71.5" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="1308.7" y="498.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">段/位选</text>
+<rect x="1298.0" y="774.0" width="44.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="1320.0" y="791.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">蜂鸣</text>
+<rect x="974.3" y="666.0" width="61.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="1004.8" y="683.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">帧平面</text>
+<rect x="693.5" y="353.0" width="61.0" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="724.0" y="370.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">行切片</text>
+<rect x="689.9" y="329.0" width="86.2" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="733.0" y="346.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">选择→ROM</text>
+<rect x="691.7" y="219.0" width="88.5" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
+<text x="736.0" y="236.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">选择→引擎</text>
 <text x="16" y="996" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#334155">图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件</text>
-<text x="16" y="1016" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#334155">方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；这三路是一对多分配（消费者 8 / 8 / 4 个），逐根画会得到 20 根长线，故用角标表达</text>
+<text x="16" y="1016" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#334155">方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；这三路是一对多分配（消费者 10 / 8 / 4 个、共 22 根），逐根画会得到 22 根长线，故用角标表达</text>
 </svg>
