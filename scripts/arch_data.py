@@ -279,13 +279,38 @@ def verify_layout(path: str) -> int:
                 unknown.append(n)
             got_triples.add((frm, to, n))
     want_triples = set(wire_triples())
-    if got_triples != want_triples:
-        miss = sorted(want_triples - got_triples)
+
+    # 两种模式：
+    #   ① 默认（精确模式）：图上画的连线三元组必须 == 事实源；
+    #   ② 子集模式（`connection_subset: true`）：图上只画**主要**连接，其余只在图下的
+    #      明细表里列全。此时要求 图上 ⊂ 事实源（不许无中生有），且
+    #      `all_connections`（明细表内容）== 事实源（不许漏项）。
+    subset_mode = bool(lay.get("connection_subset"))
+    if subset_mode:
         extra = sorted(got_triples - want_triples)
-        if miss:
-            bad.append("漏画 %d 根：%s" % (len(miss), miss[:8]))
         if extra:
-            bad.append("多画 %d 根：%s" % (len(extra), extra[:8]))
+            bad.append("画了事实源里没有的连接 %d 根：%s" % (len(extra), extra[:8]))
+        listed = lay.get("all_connections")
+        if not isinstance(listed, list):
+            bad.append("子集模式必须提供 all_connections（明细表内容）")
+        else:
+            listed_t = {(a, b, n) for a, b, n in
+                        (tuple(x) if isinstance(x, list) else x for x in listed)}
+            if listed_t != want_triples:
+                miss = sorted(want_triples - listed_t)
+                extra2 = sorted(listed_t - want_triples)
+                if miss:
+                    bad.append("明细表漏了 %d 条：%s" % (len(miss), miss[:6]))
+                if extra2:
+                    bad.append("明细表多了 %d 条：%s" % (len(extra2), extra2[:6]))
+    else:
+        if got_triples != want_triples:
+            miss = sorted(want_triples - got_triples)
+            extra = sorted(got_triples - want_triples)
+            if miss:
+                bad.append("漏画 %d 根：%s" % (len(miss), miss[:8]))
+            if extra:
+                bad.append("多画 %d 根：%s" % (len(extra), extra[:8]))
     if unknown:
         bad.append("用了不存在的网名：%s" % sorted(set(unknown)))
 
@@ -294,8 +319,13 @@ def verify_layout(path: str) -> int:
           % (sum(1 for b in boxes.values() if b.get("kind") == "entity"),
              sum(1 for b in boxes.values() if b.get("kind") == "ext"),
              sum(1 for b in boxes.values() if b.get("kind") == "glue")))
-    print("  连线：布局 %d 根 / 三元组 %d 个；事实源三元组 %d 个"
-          % (len(lay.get("wires", [])), len(got_triples), len(want_triples)))
+    print("  连线：布局 %d 根 / 三元组 %d 个；事实源三元组 %d 个%s"
+          % (len(lay.get("wires", [])), len(got_triples), len(want_triples),
+             "（子集模式：明细表列全 %d 个）" % len(want_triples) if subset_mode else ""))
+    if subset_mode:
+        print("  覆盖：图上画了 %d / %d 个三元组（%.0f%%），其余在明细表里"
+              % (len(got_triples), len(want_triples),
+                 100.0 * len(got_triples) / max(1, len(want_triples))))
     if bad:
         for b in bad:
             print("  [FAIL] %s" % b)

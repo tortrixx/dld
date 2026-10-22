@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="1516" height="1430" viewBox="0 0 1516 1430">
+<svg xmlns="http://www.w3.org/2000/svg" width="1516" height="1032" viewBox="0 0 1516 1032">
 <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.2" markerHeight="6.2" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.2" markerHeight="6.2" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker></defs>
-<rect width="1516" height="1430" fill="#ffffff"/>
+<rect width="1516" height="1032" fill="#ffffff"/>
 <text x="758" y="44" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="27" font-weight="bold" fill="#0f172a" text-anchor="middle">题目 4：简易拼图游戏 —— 系统总体框图</text>
-<text x="758" y="72" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" fill="#475569" text-anchor="middle">每个实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity；同一个源模块出去的线共用一条主干（箭头旁为信号组名），主干上的每条连接见下方明细表</text>
+<text x="758" y="72" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" fill="#475569" text-anchor="middle">每个实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity；同一个源模块出去的线共用一条主干，箭头旁标的是信号组名（网名与位宽见正文模块接口表）</text>
 <rect x="21" y="292" width="110" height="668" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
 <text x="76" y="312" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">板载输入器件</text>
 <rect x="189" y="262" width="152" height="694" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
@@ -159,39 +159,6 @@
 <text x="733.0" y="346.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">选择→ROM</text>
 <rect x="694.0" y="219.0" width="83.9" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
 <text x="736.0" y="236.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.0" fill="#1e293b" text-anchor="middle">选择→引擎</text>
-<text x="18" y="1010" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">主干明细（每条连接 = puzzle_top.vhd 例化时的一行端口映射；「源 → 目标：网名[位宽]」）</text>
-<text x="18" y="1036" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">ext_btn → clk_gen：btn</text>
-<text x="18" y="1054" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">ext_kp → keypad_scan：kp_row[3:0]</text>
-<text x="18" y="1072" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">keypad_scan → ext_kp：kp_col[3:0]</text>
-<text x="18" y="1090" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">clk_gen → keypad_scan：t_200</text>
-<text x="18" y="1108" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">clk_gen → game_fsm：t_1hz/t_4hz</text>
-<text x="18" y="1126" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">clk_gen → buzzer_ctrl：t_4hz</text>
-<text x="18" y="1144" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">clk_gen → puzzle_ctrl：t_1k</text>
-<text x="18" y="1162" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">clk_gen → seg_scan：t_1k</text>
-<text x="18" y="1180" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">clk_gen → glue_row：t_1k</text>
-<text x="18" y="1198" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">keypad_scan → game_fsm：key[3:0]/press</text>
-<text x="18" y="1216" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">game_fsm → piece_rom：level</text>
-<text x="18" y="1234" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">game_fsm → pattern_rom：level</text>
-<text x="18" y="1252" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">game_fsm → puzzle_ctrl：go/sel/move/conf/mv_up/mv_dn/mv_lf/mv_rt/mv_rot/level</text>
-<text x="18" y="1270" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">puzzle_ctrl → game_fsm：solved/all_lock/shuf_busy</text>
-<text x="18" y="1288" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">piece_rom → puzzle_ctrl：shapes[4×64]/shape_h[4×3]/shape_w[4×3]</text>
-<text x="18" y="1306" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">pattern_rom → puzzle_ctrl：tgt_mask[63:0]</text>
-<text x="758" y="1036" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">rng_lfsr → puzzle_ctrl：rnd_val[7:0]</text>
-<text x="758" y="1054" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">puzzle_ctrl → rng_lfsr：rnd_step</text>
-<text x="758" y="1072" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">game_fsm → disp_format：state[2:0]/gtime[5:0]/gblink/level/lvl3</text>
-<text x="758" y="1090" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">disp_format → seg_scan：disp_data[31:0]/disp_blank[7:0]</text>
-<text x="758" y="1108" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">seg_scan → ext_seg：seg[7:0]/cat[7:0]</text>
-<text x="758" y="1126" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">game_fsm → buzzer_ctrl：sound[3:0]</text>
-<text x="758" y="1144" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">buzzer_ctrl → ext_buzz：buzz</text>
-<text x="758" y="1162" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">puzzle_ctrl → glue_row：eng_fr[63:0]/eng_fg[63:0]</text>
-<text x="758" y="1180" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">game_fsm → glue_row：state[2:0]/gblink</text>
-<text x="758" y="1198" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">pattern_rom → glue_row：tgt_mask[63:0]</text>
-<text x="758" y="1216" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">glue_row → dot_matrix_scan：mat_r[7:0]/mat_g[7:0]/mrow[2:0]</text>
-<text x="758" y="1234" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">dot_matrix_scan → ext_dot：dot_row[7:0]/dot_colr[7:0]/dot_colg[7:0]</text>
-<text x="758" y="1252" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">game_fsm → glue_pat：state[2:0]/lvl3</text>
-<text x="758" y="1270" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">rng_lfsr → glue_pat：rnd_val[7:0]</text>
-<text x="758" y="1288" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">glue_pat → pattern_rom：pat_sel[1:0]</text>
-<text x="758" y="1306" font-family="Consolas, Courier New, monospace" font-size="13.0" fill="#334155">glue_pat → puzzle_ctrl：pat_sel[1:0]</text>
-<text x="16" y="1340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#334155">图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件</text>
-<text x="16" y="1360" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#334155">方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；这三路是一对多分配（消费者 8 / 8 / 4 个），逐根画会得到 20 根长线，故用角标表达</text>
+<text x="16" y="996" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#334155">图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件</text>
+<text x="16" y="1016" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="12.5" fill="#334155">方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；这三路是一对多分配（消费者 8 / 8 / 4 个），逐根画会得到 20 根长线，故用角标表达</text>
 </svg>

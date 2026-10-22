@@ -1718,7 +1718,38 @@ class Auditor(object):
                 layout_links.add((w["from"], w["to"], net))
         missing = sorted(links - layout_links, key=lambda t: (str(t[0]), str(t[1]), str(t[2])))
         extra = sorted(layout_links - links, key=lambda t: (str(t[0]), str(t[1]), str(t[2])))
-        if missing or extra:
+        # 子集模式：layout 可以显式声明"只画主要连接、全部连接在明细表里"。
+        # 此时要求：画的 ⊆ 事实源（不许无中生有），且 all_connections == 事实源（表不许漏）。
+        if self.doc.get("connection_subset"):
+            listed = self.doc.get("all_connections")
+            if isinstance(listed, list):
+                listed_set = {(a, b, n) for a, b, n in listed}
+                lmiss = sorted(links - listed_set, key=lambda t: (str(t[0]), str(t[1]), str(t[2])))
+                lextra = sorted(listed_set - links, key=lambda t: (str(t[0]), str(t[1]), str(t[2])))
+                if lmiss or lextra:
+                    self.add("E-FIDELITY",
+                             "all_connections (明细表) mismatch: {} missing, {} extra "
+                             "(missing={}; extra={})".format(
+                                 len(lmiss), len(lextra),
+                                 _brief([list(t) for t in lmiss]),
+                                 _brief([list(t) for t in lextra])),
+                             category="ALL_CONNECTIONS",
+                             missing=[list(t) for t in lmiss],
+                             extra=[list(t) for t in lextra])
+                self.fidelity["connection_subset"] = True
+                self.fidelity["drawn_connections"] = len(layout_links)
+                self.fidelity["all_connections"] = len(links)
+            else:
+                self.add("E-FIDELITY",
+                         "connection_subset=true 但没有提供 all_connections 列表",
+                         category="ALL_CONNECTIONS")
+            extra_only = extra
+            if extra_only:
+                self.add("E-FIDELITY",
+                         "画了事实源里没有的连接 {} 个：{}".format(
+                             len(extra_only), _brief([list(t) for t in extra_only])),
+                         category="LINKS", extra=[list(t) for t in extra_only])
+        elif missing or extra:
             self.add("E-FIDELITY",
                      "LINKS mismatch: {} missing, {} extra (missing={}; extra={})"
                      .format(len(missing), len(extra),

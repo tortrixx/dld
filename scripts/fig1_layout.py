@@ -33,10 +33,10 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import arch_data as AD  # noqa: E402
 
 NAME = "new"
-DESC = "六列分层 + 总线主干与分支 + 主干命名 + 底部连接明细表"
+DESC = "六列分层 + 总线主干与分支 + 只标重要信号组名（明细表见文档）"
 
 # ---------------------------------------------------------------- 画布与字号
-W, H = 1516, 1430
+W, H = 1516, 1032
 FONT = "Microsoft YaHei, SimSun, sans-serif"
 MONO = "Consolas, Courier New, monospace"
 
@@ -145,8 +145,8 @@ TRUNK_CN = {
 }
 
 BAND_Y0, BAND_DY = 128, 20
-LEGEND_Y = 1010
-NOTE_Y = 1340
+LEGEND_Y = 986
+NOTE_Y = 996
 NOTE_LINES = [
     "图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；"
     "虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件",
@@ -364,7 +364,7 @@ def build(widths, facts):
 
     obstacles = [R(b.x, b.y, b.w, b.h) for b in boxes.values()]
     obstacles.append(R(0, 0, W, 104))
-    obstacles.append(R(0, LEGEND_Y - 12, W, H - LEGEND_Y + 12))
+    obstacles.append(R(0, H - 40, W, 40))
     for z in zones:
         tw = text_w(z["title"], ZONE_SIZE)
         obstacles.append(R(z["x"] + z["w"] / 2 - tw / 2, z["y"] + 6, tw, 20))
@@ -421,7 +421,7 @@ def build(widths, facts):
         best, bestp = None, None
         for (x, y, anc) in cands:
             r = lrect(txt, x, y, anc)
-            if r.x < 6 or r.x1 > W - 6 or r.y < 6 or r.y1 > LEGEND_Y - 14:
+            if r.x < 6 or r.x1 > W - 6 or r.y < 6 or r.y1 > H - 26:
                 continue
             p = penalty(r)
             if p == 0.0:
@@ -499,8 +499,8 @@ def svg(lay_boxes, zones, lay_wires, wires):
              % (W // 2, FONT, TITLE_SIZE, INK))
     p.append('<text x="%d" y="72" font-family="%s" font-size="%d" fill="#475569" '
              'text-anchor="middle">每个实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity；'
-             '同一个源模块出去的线共用一条主干（箭头旁为信号组名），'
-             '主干上的每条连接见下方明细表</text>' % (W // 2, FONT, SUBTITLE_SIZE))
+             '同一个源模块出去的线共用一条主干，箭头旁标的是信号组名（网名与位宽见正文模块接口表）</text>'
+             % (W // 2, FONT, SUBTITLE_SIZE))
 
     for z in zones:
         p.append('<rect x="%d" y="%d" width="%d" height="%d" rx="10" fill="%s" stroke="%s" '
@@ -566,23 +566,6 @@ def svg(lay_boxes, zones, lay_wires, wires):
         p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="%.1f" fill="#1e293b" '
                  'text-anchor="middle">%s</text>'
                  % (lb["x"], lb["y"] + 6, FONT, lb["size"], esc(lb["text"])))
-
-    # ---- 底部：主干明细表（源 → 目标：网名[位宽]） ----
-    p.append('<text x="18" y="%d" font-family="%s" font-size="14" font-weight="bold" '
-             'fill="%s">主干明细（每条连接 = puzzle_top.vhd 例化时的一行端口映射；'
-             '「源 → 目标：网名[位宽]」）</text>' % (LEGEND_Y, FONT, INK))
-    rows = []
-    for w in wires:
-        rows.append("%s → %s：%s" % (w["from"], w["to"],
-                                     "/".join(AD.net_label(n, None) for n in w["nets"])))
-    ncol = 2
-    per = (len(rows) + ncol - 1) // ncol
-    colw = (W - 36) // ncol
-    for i, txt in enumerate(rows):
-        cx0 = 18 + (i // per) * colw
-        cy = LEGEND_Y + 26 + (i % per) * 18
-        p.append('<text x="%d" y="%d" font-family="%s" font-size="%.1f" fill="#334155">%s</text>'
-                 % (cx0, cy, MONO, LEGEND_SIZE, esc(txt)))
 
     for i, t in enumerate(NOTE_LINES):
         p.append('<text x="16" y="%d" font-family="%s" font-size="%.1f" fill="#334155">%s</text>'
