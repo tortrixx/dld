@@ -68,57 +68,57 @@
 <text x="870.0" y="87.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">上电 / 复位</text>
 <polygon points="870,129 1080,187 870,246 660,187" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="870.0" y="181.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">SW7 = 1 ？</text>
-<text x="870.0" y="207.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">（系统使能开关）</text>
+<text x="870.0" y="207.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">（系统使能开关）</text>
 <rect x="60" y="152" width="500" height="65" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="310.0" y="165.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">全系统静默熄灭</text>
-<text x="310.0" y="191.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">（低功耗，所有显示器件不显示）</text>
-<text x="310.0" y="217.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">SW7 重新置 1 后回到上方判定</text>
+<text x="310.0" y="191.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">（低功耗，所有显示器件不显示）</text>
+<text x="310.0" y="217.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">SW7 重新置 1 后回到上方判定</text>
 <rect x="520" y="290" width="620" height="63" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="315.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">自检 S_SELF_TEST（约 2 s）</text>
-<text x="830.0" y="341.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">点阵 64 点全亮黄闪 2 Hz · 数码管 88888888 · POST 短鸣</text>
+<text x="830.0" y="341.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">点阵 64 点全亮黄闪 2 Hz · 数码管 88888888 · POST 短鸣</text>
 <rect x="520" y="386" width="620" height="59" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="409.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">待机 S_IDLE</text>
-<text x="830.0" y="435.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">DISP7 显示 5 · DISP0 显示当前关卡</text>
+<text x="830.0" y="435.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">DISP7 显示 5 · DISP0 显示当前关卡</text>
 <polygon points="870,478 1080,536 870,595 660,536" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="870.0" y="543.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">按【开始】？</text>
 <rect x="520" y="628" width="620" height="63" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="653.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">预览 S_PREVIEW（约 5 s）</text>
-<text x="830.0" y="679.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">点阵红光显示目标图案 · DISP7 倒计时 5→1</text>
+<text x="830.0" y="679.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">点阵红光显示目标图案 · DISP7 倒计时 5→1</text>
 <rect x="520" y="725" width="620" height="63" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="750.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">散落（LFSR 取锚点）</text>
-<text x="830.0" y="776.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">与已落位零片重叠则重新采样，最多 15 次</text>
+<text x="830.0" y="776.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">与已落位零片重叠则重新采样，最多 15 次</text>
 <polygon points="830,879 1040,937 830,996 620,937" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="944.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">有按键？</text>
 <polygon points="1330,879 1540,937 1330,996 1120,937" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="1330.0" y="944.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">剩余 ≤ 1 s ？</text>
 <rect x="520" y="1029" width="620" height="63" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="1054.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">译码并执行按键</text>
-<text x="830.0" y="1080.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">选择 / 上 / 下 / 左 / 右 / 旋转 / 确认</text>
+<text x="830.0" y="1080.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">选择 / 上 / 下 / 左 / 右 / 旋转 / 确认</text>
 <polygon points="830,1126 1040,1184 830,1243 620,1184" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="1191.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">碰撞或越界？</text>
 <rect x="1120" y="1146" width="420" height="59" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="1330.0" y="1169.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">拦截：零片不动</text>
-<text x="1330.0" y="1195.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">（硬件实时拒绝非法指令）</text>
+<text x="1330.0" y="1195.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">（硬件实时拒绝非法指令）</text>
 <rect x="480" y="1276" width="620" height="63" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="790.0" y="1301.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">更新零片位置 / 朝向</text>
-<text x="790.0" y="1327.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">按【确认】则锁定并并入已锁定平面</text>
+<text x="790.0" y="1327.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">按【确认】则锁定并并入已锁定平面</text>
 <polygon points="830,1372 1056,1430 830,1489 604,1430" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="1424.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">全图并集 == 目标图案</text>
-<text x="830.0" y="1450.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">且全部零片已锁定？</text>
+<text x="830.0" y="1450.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">且全部零片已锁定？</text>
 <rect x="520" y="1552" width="620" height="63" rx="6" fill="#fffbeb" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="1577.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">过关 S_WIN</text>
-<text x="830.0" y="1603.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">显示 PASS · 奏通关号角 · 结算先闪 2 周期后常亮</text>
+<text x="830.0" y="1603.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">显示 PASS · 奏通关号角 · 结算先闪 2 周期后常亮</text>
 <polygon points="870,1648 1080,1706 870,1765 660,1706" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="870.0" y="1713.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">关卡 &lt; 3 ？</text>
 <rect x="1260" y="1669" width="460" height="59" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="1490.0" y="1692.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">关卡 +1</text>
-<text x="1490.0" y="1718.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">→ 回到待机</text>
+<text x="1490.0" y="1718.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">→ 回到待机</text>
 <rect x="520" y="1798" width="620" height="63" rx="6" fill="#fffbeb" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="1823.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">通关结算</text>
-<text x="830.0" y="1849.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">显示胜利图案 · 奏通关乐句（按【开始】重开）</text>
+<text x="830.0" y="1849.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">显示胜利图案 · 奏通关乐句（按【开始】重开）</text>
 <polygon points="870,1895 1080,1953 870,2012 660,1953" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="870.0" y="1960.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">按【开始】重开？</text>
 <rect x="1150" y="1552" width="500" height="70" rx="6" fill="#fffbeb" stroke="#334155" stroke-width="2"/>
 <text x="1400.0" y="1581.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.5" font-weight="bold" fill="#0f172a" text-anchor="middle">失败 S_FAIL</text>
-<text x="1400.0" y="1607.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#0f172a" text-anchor="middle">显示 FAIL · 奏失败乐句 · 结算先闪后常亮</text>
+<text x="1400.0" y="1607.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.5" fill="#0f172a" text-anchor="middle">显示 FAIL · 奏失败乐句 · 结算先闪后常亮</text>
 </svg>

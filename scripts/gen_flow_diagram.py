@@ -199,7 +199,7 @@ def shape_svg(n):
     out = [s]
     cnt = len(lines)
     for i, t in enumerate(lines):
-        size = 19.5 if i == 0 else 16.5
+        size = 19.5 if i == 0 else 17.5
         weight = ' font-weight="bold"' if i == 0 else ''
         yy = y + h / 2 - (cnt - 1) * 13 + i * 26 + 7
         out.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="%s"%s fill="#0f172a" '
@@ -315,7 +315,7 @@ def main() -> int:
         return sum((1.0 if ord(ch) > 0x2E7F else 0.62) * size for ch in text)
 
     for nid, _kind, x, y, w, h, lines in NODES:
-        widest = max((_tw(t, 19.5 if i == 0 else 16.5) for i, t in enumerate(lines)), default=0.0)
+        widest = max((_tw(t, 19.5 if i == 0 else 17.5) for i, t in enumerate(lines)), default=0.0)
         # 菱形可用的横向宽度只有框宽的一半左右（内接矩形）
         avail = (w * 0.52 if _kind == "dec" else w) - 20
         if widest > avail:

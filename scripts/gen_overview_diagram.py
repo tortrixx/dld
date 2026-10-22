@@ -195,7 +195,7 @@ def build():
         p.append('<text x="%.0f" y="%d" font-family="%s" font-size="22.5" font-weight="bold" '
                  'fill="%s" text-anchor="middle">%s</text>'
                  % (x + w / 2, y + 34, FONT, CLK if is_clk else INK, esc(title)))
-        p.append('<text x="%.0f" y="%d" font-family="%s" font-size="14.5" fill="#475569" '
+        p.append('<text x="%.0f" y="%d" font-family="%s" font-size="16" fill="#475569" '
                  'text-anchor="middle">%s</text>'
                  % (x + w / 2, y + 58, FONT, esc(sub)))
         # 内含实体名（与代码对账的那一行）

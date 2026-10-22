@@ -332,6 +332,45 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | `docs/report/GUI-*.png`（14 张） | `scripts/gen_wave_figures.py`：从 `docs/图/` 的 Quartus 整窗截图里裁掉标题栏与左侧工具栏、裁掉底部空白（2 张编译截图已预先裁过，脚本跳过） |
 | `docs/report/实际设计方案.md` | **手写**：游戏流程 → 设计方法 → 总体框图 → 各模块设计 → 信号传递表 |
 
+### 图片质量台账（A4 版心 166 mm 下的实测字号）
+
+> 口径：报告版心宽 **166 mm**（`template.typ` 页边距）；矢量图按 viewBox 宽度换算，
+> 位图按像素宽度换算（Quartus 截图字高约 12 px）。
+> 重算命令：`python .tmp/qa_figures.py`；`--out <路径>` 可直接重新生成下表。
+
+| 图 | 显示宽 | 原生尺寸 | 最小字号 | 最大字号 |
+|:--|--:|:--|--:|--:|
+| `fig1_system_architecture.svg` | 100% | 矢量 1516x? | 4.0 pt | 8.4 pt |
+| `fig_overview.svg` | 100% | 矢量 1740x? | 4.1 pt | 7.3 pt |
+| `GUI-buzzer_ctrl.png` | 100% | 1375x278 | 4.1 pt | 4.1 pt |
+| `GUI-clk_gen.png` | 100% | 1375x388 | 4.1 pt | 4.1 pt |
+| `GUI-disp_format.png` | 100% | 1375x335 | 4.1 pt | 4.1 pt |
+| `GUI-dot_matrix_scan.png` | 100% | 1375x312 | 4.1 pt | 4.1 pt |
+| `GUI-game_fsm.png` | 100% | 1375x607 | 4.1 pt | 4.1 pt |
+| `GUI-keypad_scan.png` | 100% | 1375x350 | 4.1 pt | 4.1 pt |
+| `GUI-pattern_rom.png` | 100% | 1375x103 | 4.1 pt | 4.1 pt |
+| `GUI-piece_rom.png` | 100% | 1375x311 | 4.1 pt | 4.1 pt |
+| `GUI-puzzle_ctrl.png` | 100% | 1375x609 | 4.1 pt | 4.1 pt |
+| `GUI-puzzle_top.png` | 100% | 1375x609 | 4.1 pt | 4.1 pt |
+| `GUI-rng_lfsr.png` | 100% | 1375x164 | 4.1 pt | 4.1 pt |
+| `GUI-seg_scan.png` | 100% | 1375x276 | 4.1 pt | 4.1 pt |
+| `fig_game_flow.svg` | 88% | 矢量 1700x? | 4.1 pt | 7.3 pt |
+| `fig3_puzzle_core.svg` | 100% | 矢量 910x? | 4.7 pt | 7.0 pt |
+| `fig2_game_fsm.svg` | 100% | 矢量 890x? | 5.0 pt | 7.4 pt |
+| `GUI-编译-面积.png` | 62% | 468x228 | 7.5 pt | 7.5 pt |
+| `GUI-编译-时序.png` | 75% | 535x74 | 7.9 pt | 7.9 pt |
+
+**当前结论**：19 张图的最小字号落在 **4.0 ~ 8.4 pt**，没有一张低于 4 pt；三张主图的
+主文字（方框标题）在 **7.3 ~ 8.4 pt**。改造前最差的三档是流程图 3.0 pt、模块级框图 3.4 pt、
+12 张 Quartus 截图 3.75 pt（且带窗口标题栏与底部大片空白）。
+
+**提字号的三条手法**（都可复现）：
+1. **裁掉窗口装饰**：`scripts/gen_wave_figures.py` 从 `docs/图/` 的原件重裁截图；
+2. **缩短画布**：`scripts/gen_flow_diagram.py` 把 `S_FAIL` 挪进主流程（宽 2320→1700），
+   再只压缩纵向坐标（`YS=0.78`，字号不动）—— 图变矮，同样版心宽度下字相对变大；
+3. **分级提档**：`fig1_layout.py` / `gen_overview_diagram.py` 的标题、组名、角标、注释
+   各提一档，靠 `audit_diagram.py` 的 `E-TEXT-OVERFLOW` 守住不溢出边框。
+
 上述生成图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与
 `rtl/puzzle_top.vhd` 现算，`--check` 会逐条对账 ⇒ "与代码一致"是按构造保证的；
 流程图的六个状态、三个判据信号、四个限时常量也与 `game_fsm.vhd` / `puzzle_ctrl.vhd` /
