@@ -302,7 +302,7 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | 载体 | 怎么来 |
 |:---|:---|
 | `.typ` | **手写**，唯一事实源 |
-| `.pdf` | `typst compile`（交付主件，28 页） |
+| `.pdf` | `typst compile`（交付主件，27 页） |
 | `.md` | `scripts/gen_report_md.py`（封面与正文都从 `.typ` 派生） |
 | `.docx` | `scripts/sync_report_docx.py`（幂等同步，收敛后重跑是 0 变更） |
 

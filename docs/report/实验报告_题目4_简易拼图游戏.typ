@@ -132,14 +132,14 @@
 整机的决策流程如下图所示：圆角框为起止、矩形为处理、菱形为判断，判断分支标注 是 / 否；对局阶段是一个循环（图中用容器框圈出，三条回边汇入一条「回循环」总线）。
 
 #figure(
-  image("fig_game_flow.svg", width: 72%),
+  image("fig_game_flow.svg", width: 88%),
   caption: [游戏决策流程框图（自检 → 待机 → 预览 → 对局循环 → 过关 / 失败 / 通关）]
 )
 
 游戏主控状态机（FSM）严格遵循硬件算法状态机（ASM）设计规范，其状态转移与跳转条件如下图所示：
 
 #figure(
-  image("fig2_game_fsm.svg", width: 90%),
+  image("fig2_game_fsm.svg", width: 100%),
   caption: [游戏主控状态机 ASM 状态转移流程图]
 )
 
@@ -155,7 +155,7 @@
 拼图核心引擎采用数据流解耦与并行计算微架构，其内部运算流程如下图所示：
 
 #figure(
-  image("fig3_puzzle_core.svg", width: 84%),
+  image("fig3_puzzle_core.svg", width: 100%),
   caption: [拼图核心引擎数据流与微架构框图]
 )
 
@@ -203,10 +203,10 @@
 #figure(image("GUI-keypad_scan.png", width: 100%), caption: [keypad_scan 仿真波形：列独热轮巡、40 ms 滞回消抖与单拍按键脉冲])
 *键盘消抖分析*：列输出 `kp_col[3:0]` 由 200 Hz 节拍驱动、*两拍一轮（一轮 10 ms）*的独热释放扫描。行输入在 5～15 ms 机械抖动期间不会立即响应：消抖计数器要求连续 4 轮（= 40 ms，8 个 200 Hz 采样点）读数一致才判稳，随后输出严格单时钟周期的按键脉冲，彻底消除连击。
 
-#figure(image("GUI-game_fsm.png", width: 92%), caption: [game_fsm 仿真波形：S_SELF_TEST → S_IDLE → S_PREVIEW → S_PLAYING → S_WIN 全流程])
+#figure(image("GUI-game_fsm.png", width: 100%), caption: [game_fsm 仿真波形：S_SELF_TEST → S_IDLE → S_PREVIEW → S_PLAYING → S_WIN 全流程])
 *状态机迁移分析*：展示完整轨迹：S_SELF_TEST（自检窗口 8 个 4 Hz 节拍，复位路径恰 2.0 s）→ S_IDLE（待机）→ S_PREVIEW（5 s 预览倒计时）→ S_PLAYING（散落零片并开启 30 s 倒计时）→ S_WIN（通关结算后跳向关卡 2）。
 
-#figure(image("GUI-puzzle_ctrl.png", width: 72%), caption: [puzzle_ctrl 仿真波形：零片平移、边界拦截与锁定并入])
+#figure(image("GUI-puzzle_ctrl.png", width: 100%), caption: [puzzle_ctrl 仿真波形：零片平移、边界拦截与锁定并入])
 *拼图引擎运算分析*：按下【左】键时零片正常平移；移动至边界（x = 0）再次按【左】时，碰撞检测逻辑瞬间置高内部信号 `chk_hit`，坐标当拍保持不变；按【确认】后零片并入已锁定平面（置 `alllock_r`）。
 
 #figure(image("GUI-pattern_rom.png", width: 100%), caption: [pattern_rom 仿真波形：三关目标图案库输出])
@@ -230,7 +230,7 @@
 #figure(image("GUI-buzzer_ctrl.png", width: 100%), caption: [buzzer_ctrl 仿真波形：数控分频与 16 步连奏旋律])
 *音频合成分析*：E5～G6 核心 8 音频率误差 ≤1.3%（实测 0.59%～1.25%），占空比 50.0%。16 步旋律步进连奏填音消除断续，换码时不复位步进计数器，背景乐与提示音平滑过渡。
 
-#figure(image("GUI-puzzle_top.png", width: 92%), caption: [puzzle_top 整机仿真波形：自检 → 三关连闯 → PASS / FAIL 端到端闭环])
+#figure(image("GUI-puzzle_top.png", width: 100%), caption: [puzzle_top 整机仿真波形：自检 → 三关连闯 → PASS / FAIL 端到端闭环])
 *整机端到端全流程分析*：模式 A / 模式 B 两轮真实按键序列驱动整机呈现自检 → 待机 → 预览 → 对局 → 过关连闯三关 → 胜利（PASS）→ 重开 → 超时失败（FAIL）完整闭环。倒计时 ≤10 s 告急幽灵 2 Hz 绿色闪烁精准触发。
 
 = 四、实际实现功能说明及资源利用情况（5分）
@@ -242,14 +242,14 @@
 下列数据全部取自本机 Quartus II 9.1 的原始编译报告（清洁重编译、`SEED = 8`、50 MHz / 20.000 ns 时钟约束），两张截图均为软件界面现场抓取（未做任何重绘或补写）：
 
 #figure(
-  image("GUI-编译-面积.png", width: 82%),
-  caption: [Quartus II 9.1 编译报告 Flow Summary（2026-10-21 12:38 清洁重编译现场截图）：Device、Timing Models、逻辑单元 1,264 / 1,270、引脚 52 / 116、UFM 实测值]
+  image("GUI-编译-面积.png", width: 62%),
+  caption: [Quartus II 9.1 编译报告 Flow Summary 数据区（2026-10-21 12:38 的清洁重编译现场截图，已裁去窗口边框与报告树；随包 `quartus/output_files/` 中的报告为 2026-10-22 14:26 的同参数清洁重编译，逐项读数相同）：Device、Timing Models、逻辑单元 1,264 / 1,270、引脚 52 / 116、UFM 实测值]
 )
 
 
 #figure(
-  image("GUI-编译-时序.png", width: 66%),
-  caption: [Quartus II 9.1 TimeQuest Timing Analyzer 的 Fmax Summary 页面（现场截图）：clk 的 Fmax 与 Restricted Fmax 均为 54.27 MHz，Note 列空表示无违例]
+  image("GUI-编译-时序.png", width: 75%),
+  caption: [Quartus II 9.1 TimeQuest Timing Analyzer 的 Fmax Summary 表格（现场截图，已裁去窗口边框与报告树）：clk 的 Fmax 与 Restricted Fmax 均为 54.27 MHz，Note 列空表示无违例]
 )
 
 下表数据的读数来源：LE / 引脚 / UFM 取自上方 `Flow Summary` 现场截图；LAB 127 / 127 取自 `puzzle.fit.rpt` 的 `Fitter Resource Usage Summary`；Fmax 取自上方 `Fmax Summary` 现场截图；setup / hold / 最小脉宽裕量取自同一份 TimeQuest 报告的 `Setup Summary` / `Hold Summary` / `Minimum Pulse Width Summary` 三个页面（End Point TNS 均为 0.000）。

@@ -195,9 +195,9 @@ def build_svg():
          'markerHeight="6.5" orient="auto-start-reverse">'
          '<path d="M 0 0 L 10 5 L 0 10 z" fill="%s"/></marker></defs>' % LINE,
          '<rect width="%d" height="%d" fill="#ffffff"/>' % (W, H),
-         '<text x="%d" y="42" font-family="%s" font-size="30" font-weight="bold" fill="#0f172a" '
+         '<text x="%d" y="34" font-family="%s" font-size="30" font-weight="bold" fill="#0f172a" '
          'text-anchor="middle">题目 4：简易拼图游戏 —— 游戏流程框图</text>' % (W // 2, FONT),
-         '<text x="%d" y="70" font-family="%s" font-size="16.5" fill="#475569" text-anchor="middle">'
+         '<text x="%d" y="56" font-family="%s" font-size="16" fill="#475569" text-anchor="middle">'
          '圆角框 = 起止　矩形 = 处理　菱形 = 判断　箭头 = 流向（判断分支标 是 / 否）；'
          '对局阶段为循环，已用容器框圈出</text>' % (W // 2, FONT)]
 

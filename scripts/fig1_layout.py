@@ -108,7 +108,7 @@ CN = {
     "disp_format": "数码管段码",
     "seg_scan": "数码管扫描",
     "dot_matrix_scan": "点阵行扫描",
-    "buzzer_ctrl": "蜂鸣器乐句",
+    "buzzer_ctrl": "音效 / 乐句",
 }
 EXT_LINES = {
     "ext_clk": ("50 MHz", "有源晶振"),

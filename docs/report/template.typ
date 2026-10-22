@@ -131,7 +131,8 @@
     width: 100%,
     clip: true,
   )[
-    #set text(size: 7.2pt, font: f-mono)
+    #set text(size: 7.0pt, font: f-mono)
+    #set par(leading: 0.50em)
     #it
   ]
 

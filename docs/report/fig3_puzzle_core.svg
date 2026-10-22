@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 950 400" width="950" height="400" font-family="Hiragino Sans GB, PingFang SC, Noto Sans SC, Microsoft YaHei, sans-serif">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="28 48 910 314" width="910" height="314" font-family="Hiragino Sans GB, PingFang SC, Noto Sans SC, Microsoft YaHei, sans-serif">
   <defs>
     <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#1e293b"/>
@@ -17,7 +17,8 @@
 
   <!-- Arrow Step 1 -> Step 2 -->
   <line x1="220" y1="115" x2="275" y2="115" stroke="#1e293b" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <text x="248" y="105" font-size="9.5" font-family="monospace" fill="#475569" text-anchor="middle">(x_pos, y_pos)</text>
+  <text x="248" y="100" font-size="9" font-family="monospace" fill="#475569" text-anchor="middle">(x_pos,</text>
+  <text x="248" y="111" font-size="9" font-family="monospace" fill="#475569" text-anchor="middle">y_pos)</text>
 
   <!-- Step 2: 64位几何平移与旋转 -->
   <rect x="280" y="60" width="190" height="110" rx="8" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.8"/>
