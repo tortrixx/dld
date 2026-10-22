@@ -183,7 +183,10 @@ python scripts/build_report.py --check
 # 5. 隐私三面体检：跟踪文件 + **提交信息** + 作者身份
 python scripts/check_privacy.py       # 必须 PASS
 
-# 6. 肉眼确认（本地起服务 + 无头浏览器截图）
+# 6. 交付用设计图是否与 RTL 一致（改过 rtl/ 或 facts/ 才需要）
+python scripts/gen_design_diagram.py --check   # 方框/网名/位宽/端口名逐条对账
+
+# 7. 肉眼确认（本地起服务 + 无头浏览器截图）
 python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
 # 另开一个终端：
 & "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
@@ -198,6 +201,25 @@ python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
 | `audit_evidence.py`、`srcnorm.py` | **系统 Python 3.14** | `.py` 的逻辑指纹走 `ast.dump`，其输出随 Python 版本变化；轮次记录是 3.14 产生的。用 3.12 跑会把 12 条绿证报成"逻辑指纹口径不一致"（已降级为 WARN 并说明原因，不会误报 FAIL） |
 | `sync_report_docx.py`、`build_report.py` | **捆绑 Python**（`load_workspace_dependencies` 给的那个） | 它们需要 `lxml`，系统 Python 没装 |
 
+
+### ⚠️ Quartus 有 32 位和 64 位两套，**读数一样但 `.pof` 字节不同**（2026-10-22 踩到）
+
+`C:\QuartusII91\QuartusII91\quartus\` 下同时有 `bin\quartus_sh.exe`（32 位）与
+`bin64\quartus_sh.exe`（64 位）。实测同一个 `.qsf`：
+
+| 用哪个 | LE / LAB / 引脚 | Fmax | `puzzle.pof` |
+|:---|:---|:---|:---|
+| `bin\`（32 位，**本项目的口径**） | 1,264 / 127 / 52 | 54.27 MHz | **27,312 B**，sha256 `cc3c69b3…` ✅ 与 `build_provenance.json` 一致 |
+| `bin64\`（64 位） | 完全相同 | 相同 | 27,319 B，sha256 不同 ❌ |
+
+后果：用 64 位编译一次，`quartus/output_files/` 里那份"逐字节可复现"的固件就没了
+（`output_files/` 是 gitignore 的，**没有版本可回滚**），而报告里"清洁重编译后与烧录读回的
+版本逐字节相同"这句话立刻变成假的。
+
+⇒ 复现交付固件请一律用 **`quartus\bin\quartus_sh.exe`**；改完 `rtl/` 重编译后，
+用 `python scripts/record_build.py --force` 更新 `build_provenance.json`，
+并核对 `pof.sha256` 与实物一致。清洁重编译只需 **~15 s**（删掉 `quartus/db/` 与
+`quartus/output_files/` 再跑 `quartus_sh -t scripts/build.tcl`）。
 
 两个已知的**测量陷阱**，别被它们骗了：
 
@@ -282,6 +304,23 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | `.pdf` | `typst compile`（交付主件，27 页） |
 | `.md` | `scripts/gen_report_md.py`（封面与正文都从 `.typ` 派生） |
 | `.docx` | `scripts/sync_report_docx.py`（幂等同步，收敛后重跑是 0 变更） |
+
+### 另外两个交付件：平台「实际设计方案」的作答稿与设计图
+
+课程平台除了报告，还有一步「实际设计方案（10 分）」，要求**框图与实现电路(代码)一致**。
+报告里那张 `fig1` 是功能级示意图（方框是「时钟/键盘输入/游戏控制」），**不满足**这一条，
+所以另做了一套：
+
+| 交付件 | 怎么来 |
+|:---|:---|
+| `docs/report/实际设计方案.md` | **手写**：设计方法 + 总体框图 + 各模块设计 + 信号传递表 |
+| `docs/report/实际设计方案-总体框图.svg/.png` | `scripts/gen_design_diagram.py`（方框 = entity，箭头 = 顶层端口连接） |
+| `docs/report/实际设计方案-模块设计一览.svg/.png` | 同上（11 格，逐模块给端口与设计要点） |
+
+这两张图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与
+`rtl/puzzle_top.vhd` 现算，`--check` 会逐条对账 ⇒ "与代码一致"是按构造保证的，
+改完 RTL 记得重跑一次。`docs/report/fig2_game_fsm.png`、`fig3_puzzle_core.png`
+（状态机图与引擎图）也一并随设计方案交付。
 
 **一条命令跑完整条链**（Typst 不在 PATH 也没关系，脚本会下载固定版本到 `.tmp/tools/typst/`）：
 

@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1580" viewBox="0 0 2560 1580">
+<rect width="2560" height="1580" fill="#ffffff"/>
+<text x="1280" y="42" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="30" font-weight="bold" fill="#0f172a" text-anchor="middle">各模块设计一览（11 个子模块 · 端口名与位宽取自 rtl/*.vhd 的 entity 声明）</text>
+<text x="1280" y="70" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#475569" text-anchor="middle">每格 = 一个 entity；框内左列输入、右列输出；下方是该模块的设计意图（完整端口清单见源码）</text>
+<rect x="28" y="92" width="600" height="470" rx="10" fill="#ffffff" stroke="#0284c7" stroke-width="2.2"/>
+<rect x="28" y="92" width="600" height="46" rx="10" fill="#e0f2fe"/>
+<text x="328" y="122" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">clk_gen</text>
+<text x="328" y="156" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/clk_gen.vhd</text>
+<text x="46" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="46" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_clk</text>
+<text x="46" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_btn</text>
+<text x="336" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="336" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_rst</text>
+<text x="336" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_tick_1k…o_tick_1hz</text>
+<line x1="42" y1="342" x2="614" y2="342" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="46" y="366" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="46" y="392" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 级联分频链 c1..c7：只产生单周期使能脉冲，不生成分频时钟</text>
+<text x="46" y="444" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· bcnt 对 BTN0 做 20 ms 饱和计数消抖后输出同步复位</text>
+<rect x="656" y="92" width="600" height="470" rx="10" fill="#ffffff" stroke="#16a34a" stroke-width="2.2"/>
+<rect x="656" y="92" width="600" height="46" rx="10" fill="#dcfce7"/>
+<text x="956" y="122" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">keypad_scan</text>
+<text x="956" y="156" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/keypad_scan.vhd</text>
+<text x="674" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="674" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_clk</text>
+<text x="674" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_rst</text>
+<text x="674" y="256" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_tick</text>
+<text x="674" y="280" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_row[3:0]</text>
+<text x="964" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="964" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_col[3:0]</text>
+<text x="964" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_key[3:0]</text>
+<text x="964" y="256" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_press</text>
+<text x="964" y="280" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_release</text>
+<line x1="670" y1="342" x2="1242" y2="342" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="674" y="366" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="674" y="392" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 列独热低电平轮询，两拍一轮 = 10 ms</text>
+<text x="674" y="444" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· cnt 连续 4 轮读数一致才判稳（40 ms）；松开立即撤销</text>
+<rect x="1284" y="92" width="600" height="470" rx="10" fill="#ffffff" stroke="#d97706" stroke-width="2.2"/>
+<rect x="1284" y="92" width="600" height="46" rx="10" fill="#fef3c7"/>
+<text x="1584" y="122" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">game_fsm</text>
+<text x="1584" y="156" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/game_fsm.vhd</text>
+<text x="1302" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="1302" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_press</text>
+<text x="1302" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_key[3:0]</text>
+<text x="1302" y="256" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_sw</text>
+<text x="1302" y="280" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_solved</text>
+<text x="1592" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="1592" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_state[2:0]</text>
+<text x="1592" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_time[5:0]</text>
+<text x="1592" y="256" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_sound[3:0]</text>
+<text x="1592" y="280" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_go…o_rot</text>
+<line x1="1298" y1="342" x2="1870" y2="342" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="1302" y="366" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="1302" y="392" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· st 六态：自检 / 待机 / 预览 / 对局 / 过关 / 失败</text>
+<text x="1302" y="444" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· key_of() 单点译码 8 个功能键，全部输出为单拍脉冲</text>
+<text x="1302" y="496" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 倒计时用 t_1hz 递减，闪烁由 t_4hz 翻转得 2 Hz</text>
+<rect x="1912" y="92" width="600" height="470" rx="10" fill="#ffffff" stroke="#dc2626" stroke-width="2.2"/>
+<rect x="1912" y="92" width="600" height="46" rx="10" fill="#fee2e2"/>
+<text x="2212" y="122" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">puzzle_ctrl</text>
+<text x="2212" y="156" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/puzzle_ctrl.vhd</text>
+<text x="1930" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="1930" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_tick</text>
+<text x="1930" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_target[63:0]</text>
+<text x="1930" y="256" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_sh0…i_sh3[63:0]</text>
+<text x="1930" y="280" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">rnd_val[7:0]</text>
+<text x="2220" y="184" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="2220" y="208" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_rowr[63:0]</text>
+<text x="2220" y="232" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_rowg[63:0]</text>
+<text x="2220" y="256" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_solved</text>
+<text x="2220" y="280" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">rnd_step</text>
+<line x1="1926" y1="342" x2="2498" y2="342" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="1930" y="366" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="1930" y="392" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 散落：按包围盒取锚点 + 重叠则重采样（最多 15 次）</text>
+<text x="1930" y="444" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 平移/旋转 = 单拍 64 位位运算；碰撞用 chk_slot/chk_crow/chk_hit 串行扫</text>
+<text x="1930" y="496" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 判定：全图并集 == 目标图案（frm_ok），不做坐标绑定</text>
+<rect x="28" y="590" width="600" height="470" rx="10" fill="#ffffff" stroke="#9333ea" stroke-width="2.2"/>
+<rect x="28" y="590" width="600" height="46" rx="10" fill="#f3e8ff"/>
+<text x="328" y="620" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">rng_lfsr</text>
+<text x="328" y="654" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/rng_lfsr.vhd</text>
+<text x="46" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="46" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_step</text>
+<text x="336" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="336" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_val[7:0]</text>
+<line x1="42" y1="840" x2="614" y2="840" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="46" y="864" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="46" y="890" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 8 位 Galois LFSR，抽头 sr(7)/sr(5)/sr(4)/sr(3) → x⁸+x⁶+x⁵+x⁴+1</text>
+<text x="46" y="942" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 复位种子 x"5A"，满周期 2⁸−1 = 255</text>
+<rect x="656" y="590" width="600" height="470" rx="10" fill="#ffffff" stroke="#9333ea" stroke-width="2.2"/>
+<rect x="656" y="590" width="600" height="46" rx="10" fill="#f3e8ff"/>
+<text x="956" y="620" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">piece_rom</text>
+<text x="956" y="654" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/piece_rom.vhd</text>
+<text x="674" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="674" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_level</text>
+<text x="964" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="964" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_mask（4×64 位）</text>
+<text x="964" y="730" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_h / o_w（4×3 位）</text>
+<text x="964" y="754" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_n[2:0]</text>
+<line x1="670" y1="840" x2="1242" y2="840" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="674" y="864" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="674" y="890" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 纯常量查找表：4 块零片掩码与包围盒并行输出，零额外逻辑</text>
+<text x="674" y="942" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 面积严格 3+6+3（第一关）与 3+2+5+6（第二/三关）</text>
+<rect x="1284" y="590" width="600" height="470" rx="10" fill="#ffffff" stroke="#9333ea" stroke-width="2.2"/>
+<rect x="1284" y="590" width="600" height="46" rx="10" fill="#f3e8ff"/>
+<text x="1584" y="620" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">pattern_rom</text>
+<text x="1584" y="654" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/pattern_rom.vhd</text>
+<text x="1302" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="1302" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_level</text>
+<text x="1302" y="730" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_pat[1:0]</text>
+<text x="1592" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="1592" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_mask[63:0]</text>
+<line x1="1298" y1="840" x2="1870" y2="840" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="1302" y="864" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="1302" y="890" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 三关目标图案库共 5 幅（第一关 1 幅 + 第二/三关 4 幅）</text>
+<text x="1302" y="942" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 每幅都做过连通性检查，保证一定可解</text>
+<rect x="1912" y="590" width="600" height="470" rx="10" fill="#ffffff" stroke="#4f46e5" stroke-width="2.2"/>
+<rect x="1912" y="590" width="600" height="46" rx="10" fill="#e0e7ff"/>
+<text x="2212" y="620" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">disp_format</text>
+<text x="2212" y="654" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/disp_format.vhd</text>
+<text x="1930" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="1930" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_state[2:0]</text>
+<text x="1930" y="730" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_time[5:0]</text>
+<text x="1930" y="754" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_blink</text>
+<text x="2220" y="682" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="2220" y="706" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_data[31:0]</text>
+<text x="2220" y="730" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_blank[7:0]</text>
+<line x1="1926" y1="840" x2="2498" y2="840" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="1930" y="864" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="1930" y="890" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 倒计时 /10 与 %10 展开为 64 项常量表 —— 全设计不含除法器</text>
+<text x="1930" y="942" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· PASS / FAIL 用字母段形直接拼装，不需额外字符发生器</text>
+<rect x="28" y="1088" width="600" height="470" rx="10" fill="#ffffff" stroke="#4f46e5" stroke-width="2.2"/>
+<rect x="28" y="1088" width="600" height="46" rx="10" fill="#e0e7ff"/>
+<text x="328" y="1118" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">seg_scan</text>
+<text x="328" y="1152" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/seg_scan.vhd</text>
+<text x="46" y="1180" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="46" y="1204" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_data[31:0]</text>
+<text x="46" y="1228" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_blank[7:0]</text>
+<text x="336" y="1180" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="336" y="1204" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_seg[7:0]</text>
+<text x="336" y="1228" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_cat[7:0]</text>
+<line x1="42" y1="1338" x2="614" y2="1338" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="46" y="1362" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="46" y="1388" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· idx 独热位选，段选与位选**同拍寄存**（无错位、无鬼影）</text>
+<text x="46" y="1440" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 1 kHz 节拍 ⇒ 每位 125 Hz，远高于人眼临界闪烁频率</text>
+<rect x="656" y="1088" width="600" height="470" rx="10" fill="#ffffff" stroke="#4f46e5" stroke-width="2.2"/>
+<rect x="656" y="1088" width="600" height="46" rx="10" fill="#e0e7ff"/>
+<text x="956" y="1118" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">dot_matrix_scan</text>
+<text x="956" y="1152" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/dot_matrix_scan.vhd</text>
+<text x="674" y="1180" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="674" y="1204" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_row[2:0]</text>
+<text x="674" y="1228" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_colr[7:0]</text>
+<text x="674" y="1252" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_colg[7:0]</text>
+<text x="964" y="1180" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="964" y="1204" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_row[7:0]</text>
+<text x="964" y="1228" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_colr[7:0]</text>
+<text x="964" y="1252" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_colg[7:0]</text>
+<line x1="670" y1="1338" x2="1242" y2="1338" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="674" y="1362" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="674" y="1388" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 行选通低电平独热（与手册 ROW 编号相反，已在代码注释里标注）</text>
+<text x="674" y="1440" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· 行索引与该行红/绿列数据同拍更新；整屏 125 Hz</text>
+<rect x="1284" y="1088" width="600" height="470" rx="10" fill="#ffffff" stroke="#4f46e5" stroke-width="2.2"/>
+<rect x="1284" y="1088" width="600" height="46" rx="10" fill="#e0e7ff"/>
+<text x="1584" y="1118" font-family="Consolas, Courier New, monospace" font-size="21" font-weight="bold" fill="#0f172a" text-anchor="middle">buzzer_ctrl</text>
+<text x="1584" y="1152" font-family="Consolas, Courier New, monospace" font-size="13" fill="#64748b" text-anchor="middle">rtl/buzzer_ctrl.vhd</text>
+<text x="1302" y="1180" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0369a1">输入（i_*）</text>
+<text x="1302" y="1204" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_en</text>
+<text x="1302" y="1228" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_sel[3:0]</text>
+<text x="1302" y="1252" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">i_t4</text>
+<text x="1592" y="1180" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#b91c1c">输出（o_*）</text>
+<text x="1592" y="1204" font-family="Consolas, Courier New, monospace" font-size="14.5" fill="#1e293b">o_buzz</text>
+<line x1="1298" y1="1338" x2="1870" y2="1338" stroke="#e2e8f0" stroke-width="1.5"/>
+<text x="1302" y="1362" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a">设计要点</text>
+<text x="1302" y="1388" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· ÷256 预分频 + 8 位半周期计数器产生方波（省面积）</text>
+<text x="1302" y="1440" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14.5" fill="#334155">· step 走 16 步乐句；换音码**不复位**计数器（避免换音爆音）</text>
+</svg>
