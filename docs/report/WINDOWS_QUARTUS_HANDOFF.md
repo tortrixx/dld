@@ -138,7 +138,8 @@ python scripts\sync_report_docx.py --no-media
 两个脚本的头部都写清了"用途 / 为什么需要 / 用法 / 依赖 / 已知边界"。要点：
 
 - **`sync_report_docx.py` 按"表头关键字"识别表格，不按表序号** —— §2.3 加表导致表号后移那次踩过坑；
-  列数不符会拒绝改写而不是硬写；
+  列数不符时只在「docx 多列、且 `.typ` 的表头文字是 docx 表头按序子序列」时**按表头对齐删列**
+  （如 §5.2 删掉 Commit 列），其余情形仍拒绝改写而不是硬写；
 - 锚点失配（例如 `.typ` 某段措辞被大改）时**不会静默成功**：`--check` 返回 1、`--apply` 直接中止不写盘，
   并提示去改 `.typ` 措辞或脚本顶部的 `PARA_JOBS` / `TBL_JOBS` 常量；
 - 已知边界：md 生成器不实现 typst 的自动图号（md 里显式写 `图 N`）；引用 `.svg/.pdf` 的图会自动改指同名 `.png`；
@@ -151,7 +152,7 @@ python scripts\sync_report_docx.py --no-media
 ### 4.3 重建后必须自检的三条
 
 1. **数字自洽**：`python scripts/audit_evidence.py` 必须 `0 FAIL`
-   （2026-10-21 实测 `0 FAIL / 1 WARN / 31 OK`；唯一 WARN 是"LAB 已满 127/127"，属事实）；
+   （2026-10-22 实测 `0 FAIL / 1 WARN / 30 OK`；唯一 WARN 是"LAB 已满 127/127"，属事实）；
 2. **截图与表格对得上**：PDF 里 §4.2 的表格每一行都要能在两张截图或 `puzzle.sta.rpt` 里找到出处；
 3. **不漏本机路径**：`git grep` 检索本机用户目录前缀应为 0 命中（PNG 是二进制，靠人工裁剪保证）。
 

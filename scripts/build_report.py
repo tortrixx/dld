@@ -23,6 +23,13 @@
 【隐私】
     `--submission` 的姓名/学号只作为 `typst --input` 的参数存在，
     **不写进仓库任何文件**；产物默认写到仓库外，并且本脚本会拒绝写到 `docs/report/` 里。
+    中间那一步暂存在 `.tmp/report_build/submission.pdf`（沙箱只允许 typst 写工作区内），
+    无论编译成功与否都会在 `finally` 里删除，不会把带身份的 PDF 留在仓库里。
+
+【提交信息也算隐私面】
+    文件干净不代表历史干净：真实姓名/学号/本机绝对路径**一旦写进提交信息**，
+    就会随 push 一起泄露，而且 `git grep` / `git log -S` 这类按**内容**检索的工具看不见它。
+    所以入库前请跑 `python scripts/check_privacy.py`（它会扫跟踪文件 + 提交信息 + 作者身份）。
 """
 
 from __future__ import annotations
@@ -34,6 +41,14 @@ import subprocess
 import sys
 import urllib.request
 import zipfile
+
+# ⚠️ Windows 控制台默认 GBK：本脚本要打印 ⚠️/→ 之类的符号，
+#    不切 UTF-8 会在**最后一行日志**上抛 UnicodeEncodeError ——
+#    文件其实已经写好了，退出码却是 1（自动化会被骗）。
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 REPORT = os.path.join(ROOT, "docs", "report")
@@ -128,18 +143,24 @@ def main() -> int:
         exe = ensure_typst()
         if not exe:
             return 1
-        # typst 在沙箱里只能写工作区内，所以先编到 .tmp/ 再搬出去
+        # typst 在沙箱里只能写工作区内，所以先编到 .tmp/ 再搬出去。
+        # ⚠️ 暂存件**含真实姓名/学号**，所以无论成败都在 finally 里删掉 ——
+        #    否则编译成功但搬移失败（或进程被杀）时，仓库里会留下一份带身份的 PDF。
         stage_dir = os.path.join(ROOT, ".tmp", "report_build")
         os.makedirs(stage_dir, exist_ok=True)
         staged = os.path.join(stage_dir, "submission.pdf")
-        rc = compile_typst(exe, staged, {
-            "submission": "true", "name": args.name, "id": args.id, "date": args.date,
-        })
-        if rc != 0 or not os.path.isfile(staged):
-            log("[错误] 上交版编译失败")
-            return 1
-        os.makedirs(os.path.dirname(out_abs) or ".", exist_ok=True)
-        shutil.move(staged, out_abs)
+        try:
+            rc = compile_typst(exe, staged, {
+                "submission": "true", "name": args.name, "id": args.id, "date": args.date,
+            })
+            if rc != 0 or not os.path.isfile(staged):
+                log("[错误] 上交版编译失败")
+                return 1
+            os.makedirs(os.path.dirname(out_abs) or ".", exist_ok=True)
+            shutil.move(staged, out_abs)
+        finally:
+            if os.path.isfile(staged):
+                os.remove(staged)
         log(f"\n上交版已写出（仓库外）：{out_abs}")
         log(f"  封面字段：学生姓名 / 学生学号 / 报告日期（{args.date}）")
         log("  ⚠️ 请勿把这份文件复制进仓库；docs/report/ 下只保留占位符版本。")

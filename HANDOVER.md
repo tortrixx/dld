@@ -180,7 +180,10 @@ python scripts/vendor_assets.py --check
 # 4. 报告四件套是否同步（改过 docs/report/* 才需要）
 python scripts/build_report.py --check
 
-# 5. 肉眼确认（本地起服务 + 无头浏览器截图）
+# 5. 隐私三面体检：跟踪文件 + **提交信息** + 作者身份
+python scripts/check_privacy.py       # 必须 PASS
+
+# 6. 肉眼确认（本地起服务 + 无头浏览器截图）
 python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
 # 另开一个终端：
 & "C:\Program Files\Google\Chrome\Application\chrome.exe" --headless=new --disable-gpu `
@@ -205,6 +208,29 @@ python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
   （本项目已经因此损坏过一次 `docs/README.md` 与 `docs/index.html`）。
   改文件请用编辑器/`edit` 工具，或 Python 里显式 `encoding="utf-8"`。
 
+### ⚠️ 隐私面**包括提交信息**（2026-10-22 实盘踩到）
+
+「文件干净」不等于「仓库干净」。当时工作树、全部 blob、`git grep`、`git log -S` 都是 0 命中，
+但 **HEAD 的提交信息正文里**写着 `C:\Users\<用户>\Desktop\...\<真实姓名>_<真实学号>_....pdf`，
+而且已经 push 到远端 —— 因为 `git grep` 扫的是**内容**、`git log -S` 扫的是**增删差异**，
+两者都看不见 commit message，而 commit message 是随 push 一起公开的。
+
+所以隐私体检必须跑 `python scripts/check_privacy.py`（跟踪文件 + 提交信息 + 作者身份三面）。
+它挂了就说明**改文件没用**，得重写提交信息：
+
+```powershell
+# 只有最近一两个提交脏：改 message 不动 tree，最安全
+git commit-tree <tree> -p <parent> -F 新信息.txt     # 用原提交的 tree/父提交重放
+git update-ref refs/heads/main <新提交> <旧提交>      # compare-and-swap，防并发
+git rev-parse HEAD^{tree}                            # 必须与重写前**逐字节相同**
+git push --force-with-lease origin main
+```
+
+⚠️ 重写**较老的**提交会让它之后所有提交的哈希集体失效 —— 而 `HANDOFF.md`、`docs/03`、
+`docs/06`、`PROGRESS.md`、`AI_LOG.md` 是按哈希引用那些提交的（`sim/rounds/*.json` 的证据链
+也挂在上面）。所以老提交里的历史路径只在 `scripts/check_privacy.py` 的 `KNOWN_HISTORICAL`
+里显式登记为"已知并接受"，**不要**为了它去重写整条历史。
+
 CI 会把上面第 1、2 步和「暂存发布面 + 校验暂存结果」跑在部署之前，
 所以本地过了基本就不会部署失败。
 
@@ -224,7 +250,7 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 
 ---
 
-## 10. 实验报告怎么重建
+## 9. 实验报告怎么重建
 
 报告有四种载体，**唯一事实源是 `docs/report/实验报告_题目4_简易拼图游戏.typ`**：
 
@@ -244,8 +270,8 @@ python scripts/build_report.py --check    # 只校验四件套是否同步（不
 
 ### 个人上交版（封面只留 姓名 / 学号 / 报告日期）
 
-真实姓名和学号**只作为命令行参数**，不会写进仓库任何文件；产物默认写到仓库外，
-脚本还会**拒绝**把产物写进仓库目录：
+真实姓名和学号**只作为命令行参数**，不会写进仓库任何文件；产物**必须**写到仓库外
+（`--out` 必填），脚本会**拒绝**把产物写进仓库目录：
 
 ```powershell
 python scripts/build_report.py --submission --name 张三 --id 2024000000 `
@@ -261,7 +287,7 @@ python scripts/build_report.py --submission --name 张三 --id 2024000000 `
 
 ---
 
-## 11. 已知取舍
+## 10. 已知取舍
 
 | 取舍 | 原因 |
 |:---|:---|

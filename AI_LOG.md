@@ -1538,3 +1538,20 @@ ERR-041（干净帧窗口）定义保持不变**。
 但**用户要的是"一个站点"** —— 而"一个站点"其实比"两个站点共享事实"**更彻底地**
 消灭了那整类风险。⇒ **当'消除不一致'有两条路（让两边同步 / 让只剩一边）时，
 后者往往更便宜也更可靠**；AI 不该默认"保留既有实现"就一定是对的。
+
+## 30.5 后续：`book/` 也删了，站点落到 `docs/` 下的 Docsify（记录，不改上文）
+
+上一节的结论"只剩一边"后来被**同一把尺子**又量了一次：`book/`（Material for MkDocs）
+虽然只有一层，但仍要维护 `mkdocs.yml` + hooks + 页面生成脚本 + 站点门禁一整套构建链，
+而它的内容与 `docs/` 下的工程文档**本来就是同一批事实**。于是：
+
+* `book/` 整个目录删除（73 个跟踪文件），站点改为 **`docs/` 下的 Docsify** ——
+  纯静态、零构建步骤，依赖全部自持在 `docs/assets/vendor/`（**不引用任何外部 CDN**，
+  `vendor_assets.py --check` 会把 CSS 里的 `@import`/`url(http…)` 也挡下来）；
+* `.github/workflows/pages.yml` 改为只暂存 `docs/` 的发布面
+  （`index.html` / `README.md` / `_sidebar.md` / `.nojekyll` / `assets/` / `subsystems/`）；
+* 新增 `scripts/check_docs.py` 作为站点门禁：链接、图片、粗体与原始 HTML 块的**静默渲染故障**、
+  `index.html` 本地资源齐全、发布面是否引用了不会被发布的文件；
+* `facts/facts.json` 与 `extract_facts.py` **保留** —— 它们是"事实模型"这条线，与站点用什么引擎无关。
+
+⇒ 两次都印证同一条：**减少"需要保持一致的副本数"，比提高"同步副本的能力"更划算。**

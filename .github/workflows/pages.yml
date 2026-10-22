@@ -64,6 +64,12 @@ jobs:
       - name: Check Docsify Site Integrity
         run: python scripts/check_docs.py
 
+      # 隐私体检：跟踪文件 + 提交信息 + 作者身份。
+      # ⚠️ actions/checkout 默认只取 1 个提交，所以这里只能挡住"本次提交信息"里的泄漏；
+      #    **全量历史必须本地跑**（脚本会打印实际扫到的提交数，别被 CI 的绿灯骗了）。
+      - name: Check Privacy (files + commit messages + identity)
+        run: python scripts/check_privacy.py
+
       # 发布面只保留站点本身。
       # docs/ 下还放着工程证据文档（00/02/03/05/06-*.md、图/、report/），
       # 它们是事实模型的取证来源，必须留在仓库里，但**不该对外发布**：

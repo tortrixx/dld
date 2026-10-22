@@ -29,7 +29,9 @@
       C 章节标题：章标题全角括号、节标题改名/重编号（如 2.3→2.4）
       D 正文段落：锚点 → `.typ` 连续"内容块"（p/ul/ol，自动跳过中间插着的 figure/table）
       E 表格：**按表头关键字识别**（"资源类别"/"缺陷编号"/"模块"…），不按表序号 —— 
-        因为新增 §2.3 表会让后续表号整体后移（这个坑踩过一次）；列数不符则拒绝改写
+        因为新增 §2.3 表会让后续表号整体后移（这个坑踩过一次）。
+        列数不符时：**只在 docx 多列、且 typ 的表头文字是 docx 表头按序子序列时删列**
+        （如 §5.2 删掉 "Commit" 列）；其余情形仍拒绝改写
       F 新增章节：若 `.typ` 有、docx 没有的节（当前是 §2.3 模块表）则插入
       G 代码清单 §8.2：按 `top_clean.vhd` 逐行重建（VHDL 是唯一事实源）
     不同步（属排版，Word 侧本来就不同）：
@@ -41,6 +43,7 @@
     1. 段落锚点按 `.typ` 的固定前缀匹配；若 `.typ` 大改章节顺序/措辞到锚点失效，
        脚本会明确打印 `[FAIL] 锚点未命中` 而不是静默跳过 —— 修锚点常量即可。
     2. 表格识别靠表头关键字，新增表时请在 `TBL_JOBS` 里补一行（关键字 + typ 表序号）。
+       删列只按**表头文字**对齐：改过表头措辞又同时改了列集合时，请先让两边表头一致。
     3. 只处理 `word/document.xml` 与 `word/media/*`；页眉页脚/样式/编号不动。
     4. 行尾/编码：脚本源码 LF；docx 是二进制不受影响。
 """
@@ -297,6 +300,52 @@ def png_size(data):
     return struct.unpack(">II", data[16:24])
 
 
+def drop_cols(tbl, keep):
+    """保留 keep 指定的列（升序索引），删掉其余列，并把余下列宽均分回原总宽。
+
+    用途：`.typ` 里删掉一整列（如 §5.2 的 "Commit" 列）时，docx 必须跟着删。
+    本脚本原本"列数不符就拒绝改写"，于是这条链会卡死；而"删列"是合法的结构变更 ——
+    只要**按表头文字**能把 typ 的列一一对上，就删掉 docx 多出来的列。
+    列宽按原总宽均分（余数给前几列），保证与文档里其它表的列宽风格一致。
+
+    ⚠️ 这里是**破坏性**操作，所以 `keep` 必须先过一遍自检（空/重复/越界一律抛错）：
+       曾经 `keep=[]`（表头解析出 0 格）会把整张表的列删光，而外层 FAILS 还是空的。
+    """
+    keep = sorted(set(keep))
+    rows = tbl.findall("w:tr", NS)
+    n_before = len(rows[0].findall("w:tc", NS)) if rows else 0
+    if not keep:
+        raise ValueError("keep 为空 —— 会删光整张表")
+    if n_before == 0:
+        raise ValueError("这张表一行都没有")
+    if keep[-1] >= n_before:
+        raise ValueError("keep 越界：%r（表里只有 %d 列）" % (keep, n_before))
+
+    grid = tbl.find("w:tblGrid", NS)
+    cols = grid.findall("w:gridCol", NS) if grid is not None else []
+    total = sum(int(c.get("{%s}w" % W) or 0) for c in cols)
+    if grid is not None:
+        for ci in range(len(cols) - 1, -1, -1):
+            if ci not in keep:
+                grid.remove(cols[ci])
+    n_keep = len(keep)
+    base, rem = divmod(total, n_keep)
+    widths = [base + (1 if i < rem else 0) for i in range(n_keep)]
+    if grid is not None:
+        for i, c in enumerate(grid.findall("w:gridCol", NS)):
+            c.set("{%s}w" % W, str(widths[i]))
+    for tr in rows:
+        tcs = tr.findall("w:tc", NS)
+        for ci in range(len(tcs) - 1, -1, -1):
+            if ci not in keep:
+                tr.remove(tcs[ci])
+        for i, tc in enumerate(tr.findall("w:tc", NS)):
+            tcw = tc.find("w:tcPr/w:tcW", NS)
+            if tcw is not None:
+                tcw.set("{%s}w" % W, str(widths[i]))
+    return n_before - n_keep
+
+
 # --------------------------------------------------------------------------- 主流程
 def main():
     ap = argparse.ArgumentParser(description="把 .typ / PNG 的改动幂等同步进 .docx")
@@ -443,18 +492,48 @@ def main():
         return None, None
 
     n_cell = 0
+    n_col = 0
     for tidx, kw, name in TBL_JOBS:
         header, rows = Ttbl[tidx][1], Ttbl[tidx][2]
         allrows = (list(header) + list(rows)) if header else list(rows)
         ncols = len(allrows[0])
+        # `.typ` 自己的表先得是矩形：否则"列数"这个概念就不成立，后面删列会删错
+        widths = sorted({len(r) for r in allrows})
+        if widths != [ncols]:
+            fail("%s：.typ 表格自身列数不齐 %s —— 拒绝改写" % (name, widths))
+            continue
         ti, tbl = find_tbl(*kw)
         if tbl is None:
             fail("%s：未找到表（关键字 %s）" % (name, kw))
             continue
         real = len(tbl.findall("w:tr", NS)[0].findall("w:tc", NS))
         if real != ncols:
-            fail("%s：列数 docx=%d vs typ=%d，拒绝改写" % (name, real, ncols))
-            continue
+            keep = None
+            if real > ncols and header and header[0]:
+                dtxt = ["".join(x.text or "" for x in tc.findall(".//w:t", NS)).strip()
+                        for tc in tbl.findall("w:tr", NS)[0].findall("w:tc", NS)]
+                keep, cur = [], -1
+                for cell in header[0]:
+                    # 本脚本的 parse_table 保留原始字符串；gen_report_md.py 那边是 (文本, 粗体) 元组
+                    want = plain(cell[0] if isinstance(cell, tuple) else cell)
+                    nxt = next((k for k in range(cur + 1, len(dtxt)) if dtxt[k] == want), None)
+                    if nxt is None:
+                        keep = None
+                        break
+                    keep.append(nxt)
+                    cur = nxt
+                # 必须**恰好**把 typ 的每一列都配上，且非空 —— 半截/空的 keep 会删错列
+                if keep is None or len(keep) != ncols:
+                    keep = None
+            if keep is None:
+                fail("%s：列数 docx=%d vs typ=%d，拒绝改写" % (name, real, ncols))
+                continue
+            try:
+                n_col += drop_cols(tbl, keep)
+            except ValueError as exc:                      # drop_cols 的自检
+                fail("%s：拒绝删列 —— %s" % (name, exc))
+                continue
+            print("  [E] %s：docx 多 %d 列 -> 按表头对齐保留列 %s" % (name, real - ncols, keep))
         trs = tbl.findall("w:tr", NS)
         while len(trs) < len(allrows):
             trs[-1].addnext(copy.deepcopy(trs[-1]))
@@ -473,8 +552,9 @@ def main():
                     set_para_text(pp, tgt)
                     n_cell += 1
         print("  [E] %s（tbl#%d）%d×%d" % (name, ti, len(allrows), ncols))
-    print("  [E] 表格单元格：%d 格" % n_cell)
+    print("  [E] 表格单元格：%d 格；删列：%d" % (n_cell, n_col))
     count("表格单元格", n_cell)
+    count("删除表格列", n_col)
 
     # ---- F 缺节插入（当前只有 §2.3 模块表）--------------------------------
     n_ins = 0

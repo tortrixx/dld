@@ -162,7 +162,7 @@
     //   早先用的是 `block(width: 75%)` + 第二列 `1fr` ⇒ 标签/取值被钉在那个 75% 盒子的
     //   左边缘，视觉上偏左（用户实测反馈）。minimal_cover 与完整封面共用同一套写法。
     #align(center)[
-      #set text(size: 11pt, font: f-serif)
+      #set text(size: 12.5pt, font: f-serif)
       #if minimal_cover [
         #grid(
           columns: (auto, auto),
