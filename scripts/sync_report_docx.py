@@ -97,6 +97,13 @@ TBL_JOBS = [
     (6, ("缺陷类别",), "§7.3 纠错表"),
 ]
 
+# `.typ` 里已经删掉、但 docx 里还留着的**尾部章节**：从该标题（含）一路删到文末。
+# 只支持"文末章节"——中间章节得靠"下一个标题"定位，容易删错，所以不做。
+# 背景：§九 参考文献 于 2026-10-22 按用户要求从报告里去掉（老师不查文献表）。
+DROP_TAIL = [
+    "九、参考文献",
+]
+
 # 正文段落锚点：(docx 段落前缀, typ 块前缀, 连续"内容块"个数)
 PARA_JOBS = [
     ("核心逻辑器件", "核心逻辑器件", 1),
@@ -593,14 +600,44 @@ def main():
     print("  [F] 缺失章节：%s" % ("已插入" if n_ins else "无"))
     count("缺失章节", n_ins)
 
+    # ---- H 删除 `.typ` 里已去掉的**尾部章节** -----------------------------
+    # 只支持"文末章节"：从该标题（含）一路删到文末（`w:sectPr` 除外）。
+    # 中间章节得靠"下一个标题"定位，容易删错，所以不在这里做。
+    # 背景：§九 参考文献 于 2026-10-22 按用户要求从报告里去掉（老师不查文献表）。
+    n_drop = 0
+    body_el = root.find("w:body", NS)
+    for title in DROP_TAIL:
+        kids = list(body_el)
+        hit = [c for c in kids if c.tag == "{%s}p" % W and ptext(c).strip() == title]
+        if not hit:
+            continue
+        tail = kids[kids.index(hit[0]):]
+        doomed = [c for c in tail if c.tag != "{%s}sectPr" % W]
+        for c in doomed:
+            body_el.remove(c)
+        n_drop += len(doomed)
+        print("  [H] 删除尾部章节「%s」：%d 个块" % (title, len(doomed)))
+    print("  [H] 已删章节块：%d" % n_drop)
+    count("删除章节", n_drop)
+
     # ---- G §8.2 代码清单 --------------------------------------------------
     vhd = VHD.read_text(encoding="utf-8").rstrip("\n").split("\n")
     paras = list(root.findall(".//w:p", NS))
     n_code = 0
     i82 = next((k for k, p in enumerate(paras) if ptext(p).strip() == "8.2 规范注释的顶层 VHDL 代码清单"), None)
-    i9 = next((k for k, p in enumerate(paras) if ptext(p).strip().startswith("九、参考文献")), None)
-    if i82 is not None and i9 is not None and i82 < i9:
-        code = paras[i82 + 1:i9]
+    # 代码清单的右边界 = `.typ` 里 §8.2 之后的**下一个一级标题**（没有就是文末）。
+    # ⚠️ 这里原来硬编码 "九、参考文献" 当边界；那个章节被删掉之后，
+    #    硬编码会让整段 G **静默跳过**（代码清单不再校验）——所以改成从 `.typ` 现算。
+    i_end = len(paras)
+    t82 = next((k for k, b in enumerate(T) if b[0] == "h" and b[2].startswith("8.2 ")), None)
+    if t82 is not None:
+        nxt = next((b[2] for b in T[t82 + 1:] if b[0] == "h" and b[1] == 1), None)
+        if nxt:
+            j = next((k for k, p in enumerate(paras) if ptext(p).strip() == nxt), None)
+            if j is not None and (i82 is None or j > i82):
+                i_end = j
+    if i82 is not None and i82 < i_end:
+        code = paras[i82 + 1:i_end]
         if [ptext(p) for p in code] != vhd:
             n_code = len(code)
             tmpl = copy.deepcopy(code[0]) if code else None

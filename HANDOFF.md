@@ -20,7 +20,7 @@
 > （那 1 条 WARN = LAB 已满，是事实）。整机当前轮次 **`r56`（模式 A）/ `r57`（模式 B）**，各 **28/28**。
 > ✅ **本轮改动已提交并推送**：`9a16685`（`origin/main` 已同步；`git show --stat 9a16685` = **132 文件：37 改 + 95 增**）。
 > 📌 **实验报告已完成（2026-10-21）**：`docs/report/实验报告_题目4_简易拼图游戏.{typ,md,docx,pdf}`
-> 四件套同源，**27 页、九章齐全**。重建只需一条命令：`python scripts/build_report.py`
+> 四件套同源，**27 页、八章齐全**（原「九、参考文献」已于 2026-10-22 按用户要求去掉）。重建只需一条命令：`python scripts/build_report.py`
 > （需要 Typst，脚本会自己下载到 `.tmp/tools/typst/`）。
 > 个人上交版：`python scripts/build_report.py --submission --name <姓名> --id <学号> --out <仓库外路径>.pdf`
 > —— 真实姓名/学号**只当命令行参数、不落进仓库任何文件**，脚本还会拒绝把产物写进仓库目录。
