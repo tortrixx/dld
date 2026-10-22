@@ -134,6 +134,14 @@ for _name in ("时钟分频分析", "键盘消抖分析", "状态机迁移分析
               "数码管扫描分析", "点阵驱动分析", "音频合成分析", "整机端到端全流程分析"):
     PARA_JOBS.append((_name, _name, 1))
 
+# 需要**新增**到 docx 的正文段落：(docx 锚点前缀, typ 块前缀)
+# 背景：`PARA_JOBS` 只能**改写已存在的**锚点段落 —— `.typ` 里新写一段，docx 不会自己长出来
+# （2026-10-22 踩到：§3.2 新增的"仿真时间尺度如实说明"在 PDF 里有、docx 里没有，
+#   两边就不一致了）。这里显式登记"要插到某个锚点后面"的新段落，插入前先查重。
+PARA_INSERT = [
+    ("下列波形均为", "关于仿真时间尺度的如实说明"),
+]
+
 CHANGES = []          # [(说明, 数量)]
 FAILS = []            # 锚点/表格失配（会导致"以为 0 变更、其实没同步"）
 
@@ -484,6 +492,28 @@ def main():
             print("  [D] %s… %d -> %d 字" % (dpre[:16], len(old), len(tgt)))
     print("  [D] 正文段落：%d 处" % n_p)
     count("正文段落", n_p)
+
+    # ---- D2 新增段落（`.typ` 里新写的段落，docx 里还没有）------------------
+    n_ins_p = 0
+    for anchor_pre, typ_pre in PARA_INSERT:
+        acand = [p for p in root.findall(".//w:p", NS) if clean(ptext(p)).startswith(anchor_pre)]
+        tsel = [k for k, b in enumerate(T) if b[0] == "p" and btext(b).startswith(typ_pre)]
+        if len(acand) != 1 or len(tsel) != 1:
+            fail("新增段落锚点 %r：docx %d 段 / typ %d 块" % (anchor_pre, len(acand), len(tsel)))
+            continue
+        want = joinb(collect(T, tsel[0], 1))
+        after = acand[0].getnext()
+        if after is not None and clean(ptext(after)).startswith(typ_pre[:14]):
+            continue                                    # 已经插过了 —— 幂等
+        newp = copy.deepcopy(acand[0])
+        for dr in newp.findall(".//w:drawing", NS):
+            dr.getparent().remove(dr)
+        set_para_text(newp, want)
+        acand[0].addnext(newp)
+        n_ins_p += 1
+        print("  [D2] 新增段落：%s…（%d 字）" % (typ_pre[:16], len(want)))
+    print("  [D2] 新增正文段落：%d 处" % n_ins_p)
+    count("新增正文段落", n_ins_p)
 
     # ---- E 表格 -----------------------------------------------------------
     def tables():
