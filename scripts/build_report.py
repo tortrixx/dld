@@ -136,7 +136,12 @@ def main() -> int:
             log("[错误] --submission 需要同时给 --name / --id / --out")
             return 2
         out_abs = os.path.abspath(args.out)
-        if out_abs.startswith(os.path.abspath(ROOT) + os.sep):
+        # ⚠️ 必须 normcase 后再比：Windows 路径大小写不敏感，大小写变体
+        #    （把盘符/目录名换一种写法）用裸 startswith 是**绕得过去**的
+        #    —— 同一个目录会被当成"仓库外"。
+        root_abs = os.path.normcase(os.path.abspath(ROOT))
+        out_norm = os.path.normcase(out_abs)
+        if out_norm == root_abs or out_norm.startswith(root_abs + os.sep):
             log("[错误] 上交版含真实姓名/学号，**不能写进仓库目录**（含 docs/report/）。")
             log(f"       请换一个仓库外的路径，例如：{os.path.join(os.path.expanduser('~'), 'Desktop')}\\上交\\报告.pdf")
             return 2
@@ -145,7 +150,9 @@ def main() -> int:
             return 1
         # typst 在沙箱里只能写工作区内，所以先编到 .tmp/ 再搬出去。
         # ⚠️ 暂存件**含真实姓名/学号**，所以无论成败都在 finally 里删掉 ——
-        #    否则编译成功但搬移失败（或进程被杀）时，仓库里会留下一份带身份的 PDF。
+        #    否则编译成功但搬移失败时，仓库里会留下一份带身份的 PDF。
+        #    （进程被硬杀（SIGKILL）时 finally 不会执行，仍可能残留一份；
+        #      所以 .tmp/ 本身也在 .gitignore 里，且 scripts/check_privacy.py 会扫历史 blob。）
         stage_dir = os.path.join(ROOT, ".tmp", "report_build")
         os.makedirs(stage_dir, exist_ok=True)
         staged = os.path.join(stage_dir, "submission.pdf")

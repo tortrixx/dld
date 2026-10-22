@@ -38,7 +38,7 @@ docs/
 │   ├── 05_rom_random.md       # pattern_rom / piece_rom / rng_lfsr
 │   └── 06_display_audio.md    # disp_format / seg_scan / dot_matrix_scan / buzzer_ctrl
 ├── 图/                        # ⚠️ 事实模型的证据目录，被 facts.json 按字节锚定，不要动
-└── report/                    # 实验报告三件套（md / docx / pdf）与制图源文件
+└── report/                    # 实验报告（.typ 是唯一事实源，派生 md / docx / pdf）与制图源文件
 ```
 
 `docs/` 下还有几个 **MkDocs 时代的证据文件**（`00-规范理解与需求.md`、`02-模块详细设计.md`、
@@ -155,7 +155,7 @@ _site/
 └── subsystems/   （6 个模块页）
 ```
 
-这么做的原因：`docs/` 下还放着工程证据文档和报告三件套，它们不参与站点导航、
+这么做的原因：`docs/` 下还放着工程证据文档和报告四件套，它们不参与站点导航、
 Markdown 也没有按 docsify 的规则维护，发布出去只会让线上多出一批没人看、渲染还半坏的页面
 （实测那批文件里有 400+ 处粗体渲染失败）。
 
@@ -227,9 +227,31 @@ git push --force-with-lease origin main
 ```
 
 ⚠️ 重写**较老的**提交会让它之后所有提交的哈希集体失效 —— 而 `HANDOFF.md`、`docs/03`、
-`docs/06`、`PROGRESS.md`、`AI_LOG.md` 是按哈希引用那些提交的（`sim/rounds/*.json` 的证据链
-也挂在上面）。所以老提交里的历史路径只在 `scripts/check_privacy.py` 的 `KNOWN_HISTORICAL`
-里显式登记为"已知并接受"，**不要**为了它去重写整条历史。
+`docs/06`、`PROGRESS.md`、`AI_LOG.md` 是按哈希引用那些提交的（`sim/rounds/*.json` 的
+`git_head` 与 `quartus/build_provenance.json` 也存着提交 SHA）。所以老提交里的历史路径只在
+`scripts/check_privacy.py` 的 `KNOWN_HISTORICAL` 里显式登记为"已知并接受"。
+
+### ⚠️ 已知残留：历史 blob 里的本机账户名（**当前工作树已干净**）
+
+`check_privacy.py` 的第 ④ 面会报出这类东西，并且**刻意分成两档**：
+
+| 标签 | 含义 | 处理 |
+|:---|:---|:---|
+| `历史内容（当前树仍在）` | 同一个路径**现在**也命中 | **FAIL** —— 那是活的问题，直接改文件 |
+| `历史内容` | 只留在被改掉 / 被删掉的旧 blob 里 | 归入"历史残留"，汇总成一行 + 抽样 |
+
+实测（2026-10-22）：残留 **395 处 / 94 个路径**，全部是 2026-10-10 提交 `65ada93`
+（"消除全部作者绝对路径"）**之前**的东西 —— `.ref/` 的一次性脚本、旧版 `scripts/*.py`、
+旧版 `HANDOFF.md`、已删除的 `docs/modules/*.md`。**真实姓名与学号不在其中**。
+
+要真清掉只能**重写全史**，而代价是：
+1. 所有提交哈希变掉 ⇒ 上面那批文档里的哈希引用全部作废；
+2. `sim/rounds/*.json` 与 `quartus/build_provenance.json` 里的 `git_head` 变成悬空 ⇒
+   `audit_evidence.py` 的证据链核对会失败，必须同步改写；
+3. 这是一次独立的、需要先点头的工程，**不要在"顺手清理"里做**。
+
+⇒ 现状是**显式登记为已知并接受**（理由写在 `KNOWN_HISTORICAL` 里），门禁 PASS 但每次都会
+把命中数与路径数打印出来，不会被静默忽略。
 
 CI 会把上面第 1、2 步和「暂存发布面 + 校验暂存结果」跑在部署之前，
 所以本地过了基本就不会部署失败。
@@ -294,5 +316,5 @@ python scripts/build_report.py --submission --name 张三 --id 2024000000 `
 | `docs/图/SIM-*.svg` 不在站内使用 | 是脚本按跳变画出的示意图，多数信号在整段时基上是平线，读不出信息；站内统一用 Quartus 截图（`GUI-*.png`）作为证据 |
 | `docs/assets/images/GUI-*.png` 是裁过的 | 裁掉了窗口标题栏、工具条、左侧工具栏和空白行，只留时间轴 + 信号名 + 波形；**原始截图仍在 `docs/图/`**（`GUI-build-area` / `GUI-build-timing` 两张的原始图在 `docs/report/GUI-编译-*.png`） |
 | 首页放的是规则模型重放 GIF | 不是板子实录，图注里已明确标注；用来让人 3 秒明白这游戏长什么样 |
-| `docs/` 下保留 MkDocs 时代的证据 md 与报告三件套 | 被 `extract_facts.py` / `audit_evidence.py` 读取，删了会破坏事实模型对账；它们不发布，所以不影响线上 |
+| `docs/` 下保留 MkDocs 时代的证据 md 与报告四件套 | 被 `extract_facts.py` / `audit_evidence.py` 读取，删了会破坏事实模型对账；它们不发布，所以不影响线上 |
 | 站内目前没有代码块 | 仍保留了 `prism-vhdl` 与 copy-code 插件（合计约 5 KB），硬件文档后续补 VHDL 片段时直接可用 |
