@@ -186,6 +186,7 @@ python scripts/check_privacy.py       # 必须 PASS
 # 6. 交付用设计图是否与 RTL 一致（改过 rtl/ 或 facts/ 才需要）
 python scripts/gen_design_diagram.py --check   # ① 数据对账 ② 几何体检 ③ 端口名核对，三关全过才写盘
 python scripts/audit_diagram_selftest.py       # 体检脚本自身的回归（33 项断言）
+python scripts/gen_overview_diagram.py --check # 功能总览：11 个 entity 被 6 块 + 时钟恰好划分一次
 
 # 7. 肉眼确认（本地起服务 + 无头浏览器截图）
 python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
@@ -323,6 +324,7 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 
 | 交付件 | 怎么来 |
 |:---|:---|
+| `docs/report/fig_overview.svg/.png` | `scripts/gen_overview_diagram.py`：**功能总览**（6 个功能块 + 时钟，块内列出实体名；`--check` 验证 11 个 entity 恰好划分一次） |
 | `docs/report/fig1_system_architecture.svg/.png` | `scripts/gen_design_diagram.py`：**方框 = entity**，箭头 = 顶层端口连接（网名[位宽]），全局网络用角标。报告 §2.2 与站点 `docs/assets/images/` 用同一张 |
 | `docs/report/fig_game_flow.svg/.png` | `scripts/gen_flow_diagram.py`：**规范流程图**（圆角=起止 / 矩形=处理 / 菱形=判断），对局循环用容器框 + 「回循环」总线 |
 | `docs/report/实际设计方案-模块设计一览.svg/.png` | 同上（11 格，逐模块给端口与设计要点） |

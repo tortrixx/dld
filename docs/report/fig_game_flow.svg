@@ -7,59 +7,60 @@
 <rect x="400" y="1050" width="1220" height="900" rx="14" fill="#fffbeb" stroke="#b45309" stroke-width="2.2" stroke-dasharray="10 6"/>
 <text x="418" y="1082" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18" font-weight="bold" fill="#b45309">对局循环  S_PLAYING（限时 30 / 40 / 60 s）</text>
 <path d="M 870.0 124.0 L 870.0 166.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<path d="M 660.0 241.0 L 520.0 241.0 L 520.0 238.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="584.2" y="212.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="601.2" y="229.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
-<path d="M 290.0 200.0 L 290.0 120.0 L 610.0 120.0 L 610.0 241.0 L 660.0 241.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 660.0 241.0 L 560.0 241.0 L 560.0 238.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="591.0" y="206.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="610.0" y="223.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 870.0 316.0 L 870.0 372.0 L 830.0 372.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="879.0" y="322.5" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="896.0" y="339.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<rect x="831.0" y="337.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="850.0" y="354.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
 <path d="M 830.0 454.0 L 830.0 496.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 830.0 572.0 L 830.0 614.0 L 870.0 614.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 660.0 689.0 L 600.0 689.0 L 600.0 534.0 L 520.0 534.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="617.8" y="660.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="634.8" y="677.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<rect x="541.0" y="499.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="560.0" y="516.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 870.0 764.0 L 870.0 806.0 L 830.0 806.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="879.0" y="764.6" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="896.0" y="781.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<rect x="831.0" y="771.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="850.0" y="788.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
 <path d="M 830.0 888.0 L 830.0 930.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 830.0 1012.0 L 830.0 1128.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 1040.0 1203.0 L 1120.0 1203.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="1056.6" y="1174.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="1073.6" y="1191.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<rect x="1061.0" y="1168.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="1080.0" y="1185.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 1540.0 1203.0 L 1740.0 1203.0 L 1740.0 1205.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="1607.0" y="1174.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="1624.0" y="1191.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
-<path d="M 830.0 1278.0 L 830.0 1320.0 L 790.0 1320.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="839.0" y="1278.6" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="856.0" y="1295.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
-<path d="M 790.0 1402.0 L 790.0 1444.0 L 830.0 1444.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="1621.0" y="1168.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="1640.0" y="1185.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 830.0 1278.0 L 830.0 1320.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="837.0" y="1283.0" width="40" height="22" rx="4" fill="#ffffff"/>
+<text x="857.0" y="1299.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 830.0 1402.0 L 830.0 1444.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 1040.0 1519.0 L 1120.0 1519.0 L 1120.0 1508.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="1056.6" y="1490.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="1073.6" y="1507.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<rect x="1061.0" y="1484.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="1080.0" y="1501.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
 <path d="M 1330.0 1546.0 L 1330.0 1740.0 L 470.0 1740.0" fill="none" stroke="#334155" stroke-width="2"/>
 <path d="M 1330.0 1278.0 L 1330.0 1300.0 L 470.0 1300.0" fill="none" stroke="#334155" stroke-width="2"/>
+<rect x="881.0" y="1265.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="900.0" y="1282.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 830.0 1594.0 L 830.0 1636.0 L 790.0 1636.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="839.0" y="1594.6" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="856.0" y="1611.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<rect x="791.0" y="1601.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="810.0" y="1618.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 790.0 1718.0 L 790.0 1760.0 L 830.0 1760.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 604.0 1835.0 L 470.0 1835.0 L 470.0 1835.0" fill="none" stroke="#334155" stroke-width="2"/>
-<rect x="530.7" y="1806.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="547.7" y="1823.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<rect x="518.0" y="1800.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="537.0" y="1817.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 830.0 1910.0 L 830.0 1990.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="839.0" y="1926.6" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="856.0" y="1943.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<rect x="837.0" y="1934.0" width="40" height="22" rx="4" fill="#ffffff"/>
+<text x="857.0" y="1950.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
 <path d="M 830.0 2072.0 L 830.0 2114.0 L 870.0 2114.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 1080.0 2189.0 L 1260.0 2189.0 L 1260.0 2178.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="1138.6" y="2160.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="1155.6" y="2177.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<rect x="1151.0" y="2154.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="1170.0" y="2171.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
 <path d="M 870.0 2264.0 L 870.0 2306.0 L 830.0 2306.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="879.0" y="2264.6" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="896.0" y="2281.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<rect x="831.0" y="2271.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="850.0" y="2288.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 830.0 2388.0 L 830.0 2430.0 L 870.0 2430.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <path d="M 660.0 2505.0 L 360.0 2505.0 L 360.0 534.0 L 520.0 534.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<rect x="517.0" y="2476.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="534.0" y="2493.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<rect x="491.0" y="2470.0" width="38" height="22" rx="4" fill="#ffffff"/>
+<text x="510.0" y="2487.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
 <path d="M 470.0 1835 L 470.0 1203.0 L 620.0 1203.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <circle cx="470.0" cy="1835" r="5" fill="#334155"/>
 <text x="482.0" y="1179.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" fill="#b45309" text-anchor="start">回循环</text>
@@ -68,9 +69,10 @@
 <polygon points="870,166 1080,241 870,316 660,241" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="870.0" y="235.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">SW7 = 1 ？</text>
 <text x="870.0" y="261.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">（系统使能开关）</text>
-<rect x="60" y="200" width="460" height="76" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
-<text x="290.0" y="232.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">全系统静默熄灭</text>
-<text x="290.0" y="258.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">（低功耗，所有显示器件不显示）</text>
+<rect x="60" y="196" width="500" height="84" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="310.0" y="219.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">全系统静默熄灭</text>
+<text x="310.0" y="245.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">（低功耗，所有显示器件不显示）</text>
+<text x="310.0" y="271.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">SW7 重新置 1 后回到上方判定</text>
 <rect x="520" y="372" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="407.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">自检 S_SELF_TEST（2 s）</text>
 <text x="830.0" y="433.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">点阵 64 点全亮黄闪 2 Hz · 数码管 88888888 · POST 短鸣</text>
@@ -89,9 +91,9 @@
 <text x="830.0" y="1210.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">有按键？</text>
 <polygon points="1330,1128 1540,1203 1330,1278 1120,1203" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="1330.0" y="1210.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">倒计时 = 0 ？</text>
-<rect x="480" y="1320" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
-<text x="790.0" y="1355.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">译码并执行按键</text>
-<text x="790.0" y="1381.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">选择 / 上 / 下 / 左 / 右 / 旋转 / 确认</text>
+<rect x="520" y="1320" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="1355.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">译码并执行按键</text>
+<text x="830.0" y="1381.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">选择 / 上 / 下 / 左 / 右 / 旋转 / 确认</text>
 <polygon points="830,1444 1040,1519 830,1594 620,1519" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="1526.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">碰撞或越界？</text>
 <rect x="1120" y="1470" width="420" height="76" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>

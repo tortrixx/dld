@@ -53,7 +53,7 @@ FILL_ACCENT = "#fffbeb"
 NODES = [
     ("start",   "stadium", 700, 66, 340, 58, ["上电 / 复位"]),
     ("sw",      "dec",     660, 166, 420, 150, ["SW7 = 1 ？", "（系统使能开关）"]),
-    ("quiet",   "proc",    60, 200, 460, 76, ["全系统静默熄灭", "（低功耗，所有显示器件不显示）"]),
+    ("quiet",   "proc",    60, 196, 500, 84, ["全系统静默熄灭", "（低功耗，所有显示器件不显示）", "SW7 重新置 1 后回到上方判定"]),
     ("self",    "proc",    520, 372, 620, 82, ["自检 S_SELF_TEST（2 s）",
                                                "点阵 64 点全亮黄闪 2 Hz · 数码管 88888888 · POST 短鸣"]),
     ("idle",    "proc",    520, 496, 620, 76, ["待机 S_IDLE",
@@ -66,7 +66,7 @@ NODES = [
     # ---- 对局循环（容器内） ----
     ("lk",      "dec",     620, 1128, 420, 150, ["有按键？"]),
     ("ltime",   "dec",    1120, 1128, 420, 150, ["倒计时 = 0 ？"]),
-    ("ldec",    "proc",    480, 1320, 620, 82, ["译码并执行按键",
+    ("ldec",    "proc",    520, 1320, 620, 82, ["译码并执行按键",
                                                 "选择 / 上 / 下 / 左 / 右 / 旋转 / 确认"]),
     ("lhit",    "dec",     620, 1444, 420, 150, ["碰撞或越界？"]),
     ("lblock",  "proc",   1120, 1470, 420, 76, ["拦截：零片不动", "（硬件实时拒绝非法指令）"]),
@@ -98,7 +98,7 @@ BUS_TOP_Y = 1203     # 进循环起点的高度（lk 垂直中心）
 EDGES = [
     ("start", "b", "sw", "t", "", []),
     ("sw", "l", "quiet", "r", "否", []),
-    ("quiet", "t", "sw", "l", "", [(290, 120), (610, 120), (610, 241)]),
+    
     ("sw", "b", "self", "t", "是", []),
     ("self", "b", "idle", "t", "", []),
     ("idle", "b", "gokey", "t", "", []),
@@ -112,7 +112,7 @@ EDGES = [
     ("ldec", "b", "lhit", "t", "", []),
     ("lhit", "r", "lblock", "l", "是", []),
     ("lblock", "b", "bus", "b", "", [(1330, 1740)]),
-    ("ltime", "b", "bus", "b", "", [(1330, 1300)]),
+    ("ltime", "b", "bus", "b", "否", [(1330, 1300)]),
     ("lhit", "b", "lupd", "t", "否", []),
     ("lupd", "b", "lwin", "t", "", []),
     ("lwin", "l", "bus", "b", "否", [(470, 1835)]),
@@ -215,14 +215,22 @@ def build_svg():
         head = "" if to == "bus" else ' marker-end="url(#ar)"'
         p.append('<path d="%s" fill="none" stroke="%s" stroke-width="2"%s/>' % (d, LINE, head))
         if label:
-            ax, ay = pts[0]
-            dx, dy = pts[1][0] - ax, pts[1][1] - ay
-            if abs(dx) >= abs(dy):
-                tx, ty = ax + dx * 0.42, ay - 12
+            # 标签贴在**最长水平段**旁边（没有水平段就用最长垂直段），
+            # 垂直偏移 18px、白底矩形再往上收 —— 白块绝不压在线上。
+            segs = list(zip(pts[:-1], pts[1:]))
+            horiz = [s for s in segs if abs(s[1][0] - s[0][0]) >= abs(s[1][1] - s[0][1])]
+            if horiz:
+                (x0, y0), (x1, y1) = max(horiz, key=lambda s: abs(s[1][0] - s[0][0]))
+                tx, ty = (x0 + x1) / 2.0, min(y0, y1) - 18
+                rw, rh = 38, 22
+                p.append('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="#ffffff"/>'
+                         % (tx - rw / 2, ty - 17, rw, rh))
             else:
-                tx, ty = ax + (26 if dx >= 0 else -26), ay + dy * 0.42
-            p.append('<rect x="%.1f" y="%.1f" width="34" height="24" rx="4" fill="#ffffff"/>'
-                     % (tx - 17, ty - 17))
+                (x0, y0), (x1, y1) = max(segs, key=lambda s: abs(s[1][1] - s[0][1]))
+                tx, ty = max(x0, x1) + 27, (y0 + y1) / 2.0
+                rw, rh = 40, 22
+                p.append('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="#ffffff"/>'
+                         % (tx - rw / 2, ty - 16, rw, rh))
             p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="16" font-weight="bold" '
                      'fill="%s" text-anchor="middle">%s</text>' % (tx, ty, FONT, ACCENT, esc(label)))
 
