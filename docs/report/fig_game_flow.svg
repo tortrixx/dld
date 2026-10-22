@@ -43,9 +43,9 @@
 <rect x="839.0" y="1594.6" width="34" height="24" rx="4" fill="#ffffff"/>
 <text x="856.0" y="1611.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 790.0 1718.0 L 790.0 1760.0 L 830.0 1760.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
-<path d="M 620.0 1835.0 L 470.0 1835.0 L 470.0 1835.0" fill="none" stroke="#334155" stroke-width="2"/>
-<rect x="540.0" y="1806.0" width="34" height="24" rx="4" fill="#ffffff"/>
-<text x="557.0" y="1823.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<path d="M 604.0 1835.0 L 470.0 1835.0 L 470.0 1835.0" fill="none" stroke="#334155" stroke-width="2"/>
+<rect x="530.7" y="1806.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="547.7" y="1823.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
 <path d="M 830.0 1910.0 L 830.0 1990.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
 <rect x="839.0" y="1926.6" width="34" height="24" rx="4" fill="#ffffff"/>
 <text x="856.0" y="1943.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
@@ -100,7 +100,7 @@
 <rect x="480" y="1636" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
 <text x="790.0" y="1671.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">更新零片位置 / 朝向</text>
 <text x="790.0" y="1697.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">按【确认】则锁定并并入已锁定平面</text>
-<polygon points="830,1760 1040,1835 830,1910 620,1835" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<polygon points="830,1760 1056,1835 830,1910 604,1835" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
 <text x="830.0" y="1829.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">全图并集 == 目标图案</text>
 <text x="830.0" y="1855.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">且全部零片已锁定？</text>
 <rect x="520" y="1990" width="620" height="82" rx="6" fill="#fffbeb" stroke="#334155" stroke-width="2"/>

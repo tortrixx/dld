@@ -72,7 +72,7 @@ NODES = [
     ("lblock",  "proc",   1120, 1470, 420, 76, ["拦截：零片不动", "（硬件实时拒绝非法指令）"]),
     ("lupd",    "proc",    480, 1636, 620, 82, ["更新零片位置 / 朝向",
                                                 "按【确认】则锁定并并入已锁定平面"]),
-    ("lwin",    "dec",     620, 1760, 420, 150, ["全图并集 == 目标图案", "且全部零片已锁定？"]),
+    ("lwin",    "dec",     604, 1760, 452, 150, ["全图并集 == 目标图案", "且全部零片已锁定？"]),
     # ---- 循环之后 ----
     ("win",     "proc",    520, 1990, 620, 82, ["过关 S_WIN",
                                                 "显示 PASS · 奏通关号角 · 结算先闪 2 周期后常亮"]),
@@ -282,11 +282,24 @@ def main() -> int:
     for sig in ("frm_ok", "alllock_r", "chk_hit"):
         if sig not in ctrl:
             bad.append("puzzle_ctrl.vhd 里找不到 %s" % sig)
+    # 方框里的文字不许溢出边框（与 audit_diagram 的 E-TEXT-OVERFLOW 同一套宽度估值）
+    def _tw(text, size):
+        return sum((1.0 if ord(ch) > 0x2E7F else 0.62) * size for ch in text)
+
+    for nid, _kind, x, y, w, h, lines in NODES:
+        widest = max((_tw(t, 19 if i == 0 else 15.5) for i, t in enumerate(lines)), default=0.0)
+        # 菱形可用的横向宽度只有框宽的一半左右（内接矩形）
+        avail = (w * 0.52 if _kind == "dec" else w) - 20
+        if widest > avail:
+            bad.append("节点 %s 的文字宽 %.0f px 超过可用宽度 %.0f px（框宽 %d）"
+                       % (nid, widest, avail, w))
+
     if bad:
         for b in bad:
             print("  [FAIL] %s" % b)
         return 1
     print("  OK：六个状态、三个判据信号、四个限时常量都能在源码里找到且取值一致")
+    print("  OK：%d 个节点的文字都在框内（菱形按内接宽度算）" % len(NODES))
     if args.check:
         return 0
 

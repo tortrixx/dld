@@ -33,7 +33,7 @@ INPUT SCHEMA (all coordinates in SVG user units, y grows downward, floats allowe
       "id": "cand_A",
       "canvas": {"w": 2400, "h": 1500},
       "boxes": [{"id","kind":"entity|ext|glue","x","y","w","h",
-                 "title","sub"?,"title_size"?,"sub_size"?,"globals"?}],
+                 "title","sub"?,"title_size"?,"sub_size"?,"globals"?,"text_w"?}],
       "zones": [{"id","x","y","w","h","title"?}],
       "wires": [{"id","from","to","from_side"?,"to_side"?,"pts":[[x,y],...],
                  "nets"?,"label"?:{"text","x","y","anchor"?,"size"?,"lines"?},"width_px"?}]
@@ -214,6 +214,8 @@ MIN_INTRUSION_PX = 0.5     # E-BOX-HIT: minimum reported incursion depth
 ATTACH_TOL_PX = 3.0        # E-ATTACH
 LABEL_BOX_TOL_PX = 4.0     # E-LABEL-BOX
 LABEL_LABEL_TOL_PX = 2.0   # E-LABEL-LABEL
+LABEL_WIRE_TOL_PX = 1.5    # E-LABEL-WIRE：标签与连线之间至少留这么多
+TEXT_INSET_PX = 4.0       # E-TEXT-OVERFLOW：文字两侧各留的框内边距
 MARGIN_PX = 20.0           # E-MARGIN
 COLLINEAR_TOL_PX = 0.6     # W-COLLINEAR lateral offset / axis deviation
 COLLINEAR_MIN_OVERLAP_PX = 0.6   # W-COLLINEAR minimum shared length
@@ -237,14 +239,16 @@ MAX_BALANCE_DETAIL = 16    # W-BALANCE: columns/rows listed in the human table
 
 # Fixed presentation order, also the order codes are documented in.
 CODE_ORDER = [
-    "E-SCHEMA", "E-BOX-HIT", "E-LABEL-BOX", "E-LABEL-LABEL", "E-ATTACH",
+    "E-SCHEMA", "E-BOX-HIT", "E-LABEL-BOX", "E-LABEL-LABEL", "E-LABEL-WIRE",
+    "E-TEXT-OVERFLOW", "E-ATTACH",
     "E-BOX-OVERLAP", "E-ZONE-OVERLAP", "E-MARGIN", "W-CROSS", "W-COLLINEAR",
     "W-WHITESPACE", "W-BALANCE", "E-GLOBAL-MISSING", "E-FIDELITY",
     "W-ZONE-CONTAIN", "I-STATS",
 ]
 CODE_LEVEL = {
     "E-SCHEMA": "error", "E-BOX-HIT": "error", "E-LABEL-BOX": "error",
-    "E-LABEL-LABEL": "error", "E-ATTACH": "error", "E-BOX-OVERLAP": "error",
+    "E-LABEL-LABEL": "error", "E-LABEL-WIRE": "error", "E-TEXT-OVERFLOW": "error",
+    "E-ATTACH": "error", "E-BOX-OVERLAP": "error",
     "E-ZONE-OVERLAP": "error", "E-MARGIN": "error", "E-GLOBAL-MISSING": "error",
     "E-FIDELITY": "error", "W-CROSS": "warning", "W-COLLINEAR": "warning",
     "W-WHITESPACE": "warning", "W-BALANCE": "warning",
@@ -881,6 +885,13 @@ class Auditor(object):
                              where=where, id=bid, field="globals")
                     globals_list = None
 
+            tw = b.get("text_w")
+            if tw is not None and (not is_num(tw) or float(tw) <= 0):
+                self.add("E-SCHEMA",
+                         "box {}: 'text_w' must be a positive number when present, "
+                         "got {!r}".format(label, tw), where=where, id=bid, field="text_w")
+                tw = None
+
             bad_fields = []
             for key in ("x", "y", "w", "h"):
                 v = b.get(key)
@@ -899,6 +910,7 @@ class Auditor(object):
             rec = {"id": bid if bid is not None else where,
                    "kind": kind, "title": title if isinstance(title, str) else "",
                    "rect": rect,
+                   "text_w": float(tw) if tw is not None else None,
                    "globals": list(globals_list) if globals_list else []}
             self.boxes.append(rec)
             if bid is not None:
@@ -1099,6 +1111,7 @@ class Auditor(object):
                    "to": to if isinstance(to, str) else None,
                    "pts": pts,
                    "nets": list(nets) if nets else [],
+                   "trunk": w.get("trunk") if isinstance(w.get("trunk"), str) else None,
                    "label": label_rec,
                    "rect": (label_rect(label_rec) if label_rec else None)}
             self.wires.append(rec)
@@ -1200,6 +1213,58 @@ class Auditor(object):
                              wire=wire["id"], box=box["id"],
                              overlap=[round(inter.w, 3), round(inter.h, 3)],
                              label_rect=lr.as_dict(), box_rect=box["rect"].as_dict())
+
+    # -------------------------------------------------------- E-LABEL-WIRE
+    def check_label_wire(self):
+        """标签不许压在**任何**连线上（包括它自己那根）。
+
+        连线上盖一块白底标签，是框图最刺眼、可读性最差的毛病之一：
+        线被切断、字被线穿过，两头都不清。判据：标签矩形（内缩 LABEL_WIRE_TOL_PX）
+        与任一折线段相交即报错。
+        """
+        for wire in self.wires:
+            lr = wire["rect"]
+            if lr is None:
+                continue
+            inner = Rect(lr.x0 + LABEL_WIRE_TOL_PX, lr.y0 + LABEL_WIRE_TOL_PX,
+                         lr.x1 - LABEL_WIRE_TOL_PX, lr.y1 - LABEL_WIRE_TOL_PX)
+            if inner.w <= 0 or inner.h <= 0:
+                continue
+            for other in self.wires:
+                pts = other["pts"]
+                hit_at = None
+                for k in range(len(pts) - 1):
+                    if seg_rect_clip(pts[k], pts[k + 1], inner) is not None:
+                        hit_at = pts[k]
+                        break
+                if hit_at is not None:
+                    self.add("E-LABEL-WIRE",
+                             "label {!r} of wire {} sits on top of wire {} "
+                             "(label x={}..{}, y={}..{}; wire passes ({},{})..({},{}))".format(
+                                 wire["label"]["text"], wire["id"], other["id"],
+                                 fmt(lr.x0), fmt(lr.x1), fmt(lr.y0), fmt(lr.y1),
+                                 fmt(pts[0][0]), fmt(pts[0][1]), fmt(pts[-1][0]), fmt(pts[-1][1])),
+                             wire=wire["id"], on_wire=other["id"],
+                             label_rect=lr.as_dict(), at=[round(hit_at[0], 3), round(hit_at[1], 3)])
+
+    # ----------------------------------------------------- E-TEXT-OVERFLOW
+    def check_text_overflow(self):
+        """方框里的文字宽度（布局方自报 `text_w`）不能超过框宽。
+
+        `text_w` 是生成器算出来的"最长一行文字宽度"（用同一套字符宽度估值），
+        没有上报的方框不检查（向后兼容）。
+        """
+        for box in self.boxes:
+            tw = box.get("text_w")
+            if tw is None:
+                continue
+            avail = box["rect"].w - 2 * TEXT_INSET_PX
+            if tw > avail:
+                self.add("E-TEXT-OVERFLOW",
+                         "box {}: text needs {} px but the box only offers {} px "
+                         "(box w={}; text will spill over the border)".format(
+                             box["id"], fmt(tw), fmt(avail), fmt(box["rect"].w)),
+                         box=box["id"], text_w=round(tw, 2), available=round(avail, 2))
 
     # ------------------------------------------------------- E-LABEL-LABEL
     def check_label_label(self):
@@ -1354,6 +1419,7 @@ class Auditor(object):
 
     # ------------------------------------------------------------ W-COLLINEAR
     def check_collinear(self):
+        trunk_of = {w["id"]: w.get("trunk") for w in self.wires}
         segs = []  # (wire_id, axis, offset, lo, hi)
         for wire in self.wires:
             pts = wire["pts"]
@@ -1382,6 +1448,10 @@ class Auditor(object):
                 if overlap <= COLLINEAR_MIN_OVERLAP_PX:
                     continue
                 key = (ida, idb) if ida <= idb else (idb, ida)
+                # 同一根总线的分支本来就该共用一段主干（这是"总线"画法，不是错误）
+                ta, tb = trunk_of.get(ida), trunk_of.get(idb)
+                if ta is not None and ta == tb:
+                    continue
                 prev = pairs.get(key)
                 if prev is None or overlap > prev["overlap"]:
                     pairs[key] = {"overlap": overlap, "axis": axa,
@@ -1706,6 +1776,8 @@ class Auditor(object):
         self.check_box_hit()
         self.check_label_box()
         self.check_label_label()
+        self.check_label_wire()
+        self.check_text_overflow()
         self.check_attach()
         self.check_box_overlap()
         self.check_zone_overlap()
@@ -1973,7 +2045,7 @@ def main(argv=None):
                 "better):\n"
                 "  score = 100*errors + 10*crossings + 5*collinear_pairs\n"
                 "          + 200*empty_fraction + longest_wire/100\n\n"
-                "checks: E-SCHEMA E-BOX-HIT E-LABEL-BOX E-LABEL-LABEL "
+                "checks: E-SCHEMA E-BOX-HIT E-LABEL-BOX E-LABEL-LABEL E-LABEL-WIRE E-TEXT-OVERFLOW "
                 "E-ATTACH E-BOX-OVERLAP\n"
                 "        E-ZONE-OVERLAP E-MARGIN W-CROSS W-COLLINEAR "
                 "W-WHITESPACE W-BALANCE\n"
