@@ -35,6 +35,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -43,8 +44,10 @@ if hasattr(sys.stdout, "reconfigure"):
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 FACTS = os.path.join(ROOT, "facts", "facts.json")
-OUT_SVG = os.path.join(ROOT, "docs", "report", "实际设计方案-总体框图.svg")
-OUT_PNG = os.path.join(ROOT, "docs", "report", "实际设计方案-总体框图.png")
+OUT_SVG = os.path.join(ROOT, "docs", "report", "fig1_system_architecture.svg")
+OUT_PNG = os.path.join(ROOT, "docs", "report", "fig1_system_architecture.png")
+# 站点页用的是 docs/assets/images/ 下那一份（内容相同，另存一份便于 docsify 引用）
+OUT_PNG_SITE = os.path.join(ROOT, "docs", "assets", "images", "fig1_system_architecture.png")
 OUT_SVG2 = os.path.join(ROOT, "docs", "report", "实际设计方案-模块设计一览.svg")
 OUT_PNG2 = os.path.join(ROOT, "docs", "report", "实际设计方案-模块设计一览.png")
 
@@ -137,11 +140,15 @@ EDGES = [
     ("buzzer_ctrl", "ext_buzz", "buzz", "right", "left", None, 0),
 ]
 
+# 配色刻意克制：模块一律白底细黑边，只有"外部器件"用浅灰、"顶层胶合"用虚线，
+# 唯一的强调色留给核心引擎 puzzle_ctrl —— 目标是"教科书式框图"，不靠颜色区分模块
+# （子系统归属由分区虚线框 + 分区标题表达）。
 GROUP_FILL = {
-    "ext": ("#eef2f7", "#94a3b8"), "clk": ("#e0f2fe", "#0284c7"),
-    "in": ("#dcfce7", "#16a34a"), "ctl": ("#fef3c7", "#d97706"),
-    "mem": ("#f3e8ff", "#9333ea"), "core": ("#fee2e2", "#dc2626"),
-    "out": ("#e0e7ff", "#4f46e5"), "glue": ("#f8fafc", "#64748b"),
+    "ext": ("#f1f5f9", "#94a3b8"),
+    "clk": ("#ffffff", "#334155"), "in": ("#ffffff", "#334155"),
+    "ctl": ("#ffffff", "#334155"), "mem": ("#ffffff", "#334155"),
+    "core": ("#fffbeb", "#b45309"), "out": ("#ffffff", "#334155"),
+    "glue": ("#f8fafc", "#64748b"),
 }
 GLUE = {"glue"}
 
@@ -412,9 +419,9 @@ MODULES = [
       "step 走 16 步乐句；换音码**不复位**计数器（避免换音爆音）"]),
 ]
 MW, MH = 2560, 1580
-MZ_FILL = {"clk": ("#e0f2fe", "#0284c7"), "in": ("#dcfce7", "#16a34a"),
-           "ctl": ("#fef3c7", "#d97706"), "core": ("#fee2e2", "#dc2626"),
-           "mem": ("#f3e8ff", "#9333ea"), "out": ("#e0e7ff", "#4f46e5")}
+# 模块设计一览用同一套克制配色（与总体框图一致）
+MZ_FILL = {k: (("#fffbeb", "#b45309") if k == "core" else ("#ffffff", "#334155"))
+           for k in ("clk", "in", "ctl", "core", "mem", "out")}
 MZONE = {"clk_gen": "clk", "keypad_scan": "in", "game_fsm": "ctl",
          "puzzle_ctrl": "core", "rng_lfsr": "mem", "piece_rom": "mem",
          "pattern_rom": "mem", "disp_format": "out", "seg_scan": "out",
@@ -539,6 +546,10 @@ def main() -> int:
                   % (os.path.relpath(png_path, ROOT), os.path.getsize(png_path), os.path.basename(exe)))
         else:
             print("[提示] 没找到 Chrome/Edge，只出了 SVG；PNG 请手动截。")
+    # 站点页要一份 docs/assets/images/ 下的副本（与 docs/report/ 那份逐字节相同）
+    shutil.copy2(OUT_PNG, OUT_PNG_SITE)
+    print("写出 %s（站点副本，%d B）"
+          % (os.path.relpath(OUT_PNG_SITE, ROOT), os.path.getsize(OUT_PNG_SITE)))
     return 0
 
 

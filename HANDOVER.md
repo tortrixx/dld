@@ -301,26 +301,34 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | 载体 | 怎么来 |
 |:---|:---|
 | `.typ` | **手写**，唯一事实源 |
-| `.pdf` | `typst compile`（交付主件，27 页） |
+| `.pdf` | `typst compile`（交付主件，28 页） |
 | `.md` | `scripts/gen_report_md.py`（封面与正文都从 `.typ` 派生） |
 | `.docx` | `scripts/sync_report_docx.py`（幂等同步，收敛后重跑是 0 变更） |
 
-### 另外两个交付件：平台「实际设计方案」的作答稿与设计图
+### 另外两个交付件：平台「实际设计方案」的作答稿与三张设计图
 
 课程平台除了报告，还有一步「实际设计方案（10 分）」，要求**框图与实现电路(代码)一致**。
-报告里那张 `fig1` 是功能级示意图（方框是「时钟/键盘输入/游戏控制」），**不满足**这一条，
-所以另做了一套：
+原先报告里的 `fig1` 是**功能级**示意图（方框写的是「时钟/键盘输入/游戏控制」），
+老师反馈"更像流程图、缺模块间信号" —— 所以整套重做了：
 
 | 交付件 | 怎么来 |
 |:---|:---|
-| `docs/report/实际设计方案.md` | **手写**：设计方法 + 总体框图 + 各模块设计 + 信号传递表 |
-| `docs/report/实际设计方案-总体框图.svg/.png` | `scripts/gen_design_diagram.py`（方框 = entity，箭头 = 顶层端口连接） |
+| `docs/report/fig1_system_architecture.svg/.png` | `scripts/gen_design_diagram.py`：**方框 = entity**，箭头 = 顶层端口连接（网名[位宽]）。报告 §2.2 与站点 `docs/assets/images/` 用同一张 |
+| `docs/report/fig_game_flow.svg/.png` | `scripts/gen_flow_diagram.py`：**规范流程图**（圆角=起止 / 矩形=处理 / 菱形=判断），对局循环用容器框 + 「回循环」总线 |
 | `docs/report/实际设计方案-模块设计一览.svg/.png` | 同上（11 格，逐模块给端口与设计要点） |
+| `docs/report/实际设计方案.md` | **手写**：游戏流程 → 设计方法 → 总体框图 → 各模块设计 → 信号传递表 |
 
-这两张图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与
-`rtl/puzzle_top.vhd` 现算，`--check` 会逐条对账 ⇒ "与代码一致"是按构造保证的，
-改完 RTL 记得重跑一次。`docs/report/fig2_game_fsm.png`、`fig3_puzzle_core.png`
-（状态机图与引擎图）也一并随设计方案交付。
+这三张图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与
+`rtl/puzzle_top.vhd` 现算，`--check` 会逐条对账 ⇒ "与代码一致"是按构造保证的；
+流程图的六个状态、三个判据信号、四个限时常量也与 `game_fsm.vhd` / `puzzle_ctrl.vhd` /
+`puzzle_pkg.vhd` 对账。改完 RTL 记得重跑这两个脚本（它们还会顺手刷新
+`docs/assets/images/` 下的站点副本）。
+
+> ⚠️ **不要用 PowerShell 的 `Get-Content | Set-Content` 改这些脚本**：
+> `-NoNewline` 会把整个文件的行首尾连成一行（2026-10-22 因此重写过一次
+> `gen_flow_diagram.py`）。改文件用 `edit` 工具或 Python 显式 `encoding="utf-8"`。
+
+> `docs/report/fig2_game_fsm.*`、`fig3_puzzle_core.*`（状态机图与引擎图）也随设计方案交付。
 
 **一条命令跑完整条链**（Typst 不在 PATH 也没关系，脚本会下载固定版本到 `.tmp/tools/typst/`）：
 

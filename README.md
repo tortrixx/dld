@@ -74,7 +74,7 @@ python -m http.server 3000 --directory docs  # 5. 本地预览文档站
 | 想了解 | 读 |
 |:---|:---|
 | **逐模块微架构 · 仿真波形分析 · 答辩高频考点** | <https://tortrixx.github.io/dld/>（源文件在 [`docs/`](docs/README.md)） |
-| 课程交付的实验报告（27 页） | [`docs/report/实验报告_题目4_简易拼图游戏.pdf`](docs/report/实验报告_题目4_简易拼图游戏.pdf) ｜ 重建：`python scripts/build_report.py` |
+| 课程交付的实验报告（28 页） | [`docs/report/实验报告_题目4_简易拼图游戏.pdf`](docs/report/实验报告_题目4_简易拼图游戏.pdf) ｜ 重建：`python scripts/build_report.py` |
 | 题目要求怎么理解、每条落在哪、引脚定义 | [`docs/00-规范理解与需求.md`](docs/00-规范理解与需求.md) |
 | 每个模块怎么设计（框图与代码逐条对账） | [`docs/02-模块详细设计.md`](docs/02-模块详细设计.md) |
 | 仿真怎么做的、每条断言在验什么 | [`docs/03-仿真验证方案.md`](docs/03-仿真验证方案.md) |

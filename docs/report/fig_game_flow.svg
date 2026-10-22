@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="2320" height="2680" viewBox="0 0 2320 2680">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.5" markerHeight="6.5" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker></defs>
+<rect width="2320" height="2680" fill="#ffffff"/>
+<text x="1160" y="42" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="30" font-weight="bold" fill="#0f172a" text-anchor="middle">题目 4：简易拼图游戏 —— 游戏流程框图</text>
+<text x="1160" y="70" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#475569" text-anchor="middle">圆角框 = 起止　矩形 = 处理　菱形 = 判断　箭头 = 流向（判断分支标 是 / 否）；对局阶段为循环，已用容器框圈出</text>
+<rect x="400" y="1050" width="1220" height="900" rx="14" fill="#fffbeb" stroke="#b45309" stroke-width="2.2" stroke-dasharray="10 6"/>
+<text x="418" y="1082" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="18" font-weight="bold" fill="#b45309">对局循环  S_PLAYING（限时 30 / 40 / 60 s）</text>
+<path d="M 870.0 124.0 L 870.0 166.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 660.0 241.0 L 520.0 241.0 L 520.0 238.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="584.2" y="212.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="601.2" y="229.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<path d="M 290.0 200.0 L 290.0 120.0 L 610.0 120.0 L 610.0 241.0 L 660.0 241.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 870.0 316.0 L 870.0 372.0 L 830.0 372.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="879.0" y="322.5" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="896.0" y="339.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 830.0 454.0 L 830.0 496.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 830.0 572.0 L 830.0 614.0 L 870.0 614.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 660.0 689.0 L 600.0 689.0 L 600.0 534.0 L 520.0 534.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="617.8" y="660.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="634.8" y="677.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<path d="M 870.0 764.0 L 870.0 806.0 L 830.0 806.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="879.0" y="764.6" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="896.0" y="781.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 830.0 888.0 L 830.0 930.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 830.0 1012.0 L 830.0 1128.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 1040.0 1203.0 L 1120.0 1203.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="1056.6" y="1174.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="1073.6" y="1191.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<path d="M 1540.0 1203.0 L 1740.0 1203.0 L 1740.0 1205.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="1607.0" y="1174.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="1624.0" y="1191.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 830.0 1278.0 L 830.0 1320.0 L 790.0 1320.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="839.0" y="1278.6" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="856.0" y="1295.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 790.0 1402.0 L 790.0 1444.0 L 830.0 1444.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 1040.0 1519.0 L 1120.0 1519.0 L 1120.0 1508.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="1056.6" y="1490.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="1073.6" y="1507.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 1330.0 1546.0 L 1330.0 1740.0 L 470.0 1740.0" fill="none" stroke="#334155" stroke-width="2"/>
+<path d="M 1330.0 1278.0 L 1330.0 1300.0 L 470.0 1300.0" fill="none" stroke="#334155" stroke-width="2"/>
+<path d="M 830.0 1594.0 L 830.0 1636.0 L 790.0 1636.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="839.0" y="1594.6" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="856.0" y="1611.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<path d="M 790.0 1718.0 L 790.0 1760.0 L 830.0 1760.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 620.0 1835.0 L 470.0 1835.0 L 470.0 1835.0" fill="none" stroke="#334155" stroke-width="2"/>
+<rect x="540.0" y="1806.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="557.0" y="1823.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<path d="M 830.0 1910.0 L 830.0 1990.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="839.0" y="1926.6" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="856.0" y="1943.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 830.0 2072.0 L 830.0 2114.0 L 870.0 2114.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 1080.0 2189.0 L 1260.0 2189.0 L 1260.0 2178.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="1138.6" y="2160.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="1155.6" y="2177.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 870.0 2264.0 L 870.0 2306.0 L 830.0 2306.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="879.0" y="2264.6" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="896.0" y="2281.6" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">否</text>
+<path d="M 830.0 2388.0 L 830.0 2430.0 L 870.0 2430.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<path d="M 660.0 2505.0 L 360.0 2505.0 L 360.0 534.0 L 520.0 534.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="517.0" y="2476.0" width="34" height="24" rx="4" fill="#ffffff"/>
+<text x="534.0" y="2493.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" font-weight="bold" fill="#b45309" text-anchor="middle">是</text>
+<path d="M 470.0 1835 L 470.0 1203.0 L 620.0 1203.0" fill="none" stroke="#334155" stroke-width="2" marker-end="url(#ar)"/>
+<circle cx="470.0" cy="1835" r="5" fill="#334155"/>
+<text x="482.0" y="1179.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" fill="#b45309" text-anchor="start">回循环</text>
+<rect x="700" y="66" width="340" height="58" rx="29" fill="#f1f5f9" stroke="#334155" stroke-width="2"/>
+<text x="870.0" y="102.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">上电 / 复位</text>
+<polygon points="870,166 1080,241 870,316 660,241" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="870.0" y="235.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">SW7 = 1 ？</text>
+<text x="870.0" y="261.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">（系统使能开关）</text>
+<rect x="60" y="200" width="460" height="76" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="290.0" y="232.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">全系统静默熄灭</text>
+<text x="290.0" y="258.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">（低功耗，所有显示器件不显示）</text>
+<rect x="520" y="372" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="407.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">自检 S_SELF_TEST（2 s）</text>
+<text x="830.0" y="433.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">点阵 64 点全亮黄闪 2 Hz · 数码管 88888888 · POST 短鸣</text>
+<rect x="520" y="496" width="620" height="76" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="528.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">待机 S_IDLE</text>
+<text x="830.0" y="554.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">DISP7 显示 5 · DISP0 显示当前关卡</text>
+<polygon points="870,614 1080,689 870,764 660,689" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="870.0" y="696.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">按【开始】？</text>
+<rect x="520" y="806" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="841.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">预览 S_PREVIEW（5 s）</text>
+<text x="830.0" y="867.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">点阵红光显示目标图案 · DISP7 倒计时 5→1</text>
+<rect x="520" y="930" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="965.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">散落（LFSR 取锚点）</text>
+<text x="830.0" y="991.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">与已落位零片重叠则重新采样，最多 15 次</text>
+<polygon points="830,1128 1040,1203 830,1278 620,1203" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="1210.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">有按键？</text>
+<polygon points="1330,1128 1540,1203 1330,1278 1120,1203" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="1330.0" y="1210.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">倒计时 = 0 ？</text>
+<rect x="480" y="1320" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="790.0" y="1355.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">译码并执行按键</text>
+<text x="790.0" y="1381.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">选择 / 上 / 下 / 左 / 右 / 旋转 / 确认</text>
+<polygon points="830,1444 1040,1519 830,1594 620,1519" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="1526.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">碰撞或越界？</text>
+<rect x="1120" y="1470" width="420" height="76" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="1330.0" y="1502.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">拦截：零片不动</text>
+<text x="1330.0" y="1528.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">（硬件实时拒绝非法指令）</text>
+<rect x="480" y="1636" width="620" height="82" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="790.0" y="1671.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">更新零片位置 / 朝向</text>
+<text x="790.0" y="1697.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">按【确认】则锁定并并入已锁定平面</text>
+<polygon points="830,1760 1040,1835 830,1910 620,1835" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="1829.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">全图并集 == 目标图案</text>
+<text x="830.0" y="1855.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">且全部零片已锁定？</text>
+<rect x="520" y="1990" width="620" height="82" rx="6" fill="#fffbeb" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="2025.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">过关 S_WIN</text>
+<text x="830.0" y="2051.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">显示 PASS · 奏通关号角 · 结算先闪 2 周期后常亮</text>
+<polygon points="870,2114 1080,2189 870,2264 660,2189" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="870.0" y="2196.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">关卡 &lt; 3 ？</text>
+<rect x="1260" y="2140" width="460" height="76" rx="6" fill="#ffffff" stroke="#334155" stroke-width="2"/>
+<text x="1490.0" y="2172.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">关卡 +1</text>
+<text x="1490.0" y="2198.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">→ 回到待机</text>
+<rect x="520" y="2306" width="620" height="82" rx="6" fill="#fffbeb" stroke="#334155" stroke-width="2"/>
+<text x="830.0" y="2341.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">通关结算</text>
+<text x="830.0" y="2367.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">显示胜利图案 · 奏通关乐句（按【开始】重开）</text>
+<polygon points="870,2430 1080,2505 870,2580 660,2505" fill="#f8fafc" stroke="#334155" stroke-width="2"/>
+<text x="870.0" y="2512.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">按【开始】重开？</text>
+<rect x="1740" y="1160" width="540" height="90" rx="6" fill="#fffbeb" stroke="#334155" stroke-width="2"/>
+<text x="2010.0" y="1199.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">失败 S_FAIL</text>
+<text x="2010.0" y="1225.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5" fill="#0f172a" text-anchor="middle">显示 FAIL · 奏失败乐句 · 结算先闪后常亮</text>
+</svg>

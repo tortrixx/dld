@@ -83,6 +83,7 @@ WP = "http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing"
 A = "http://schemas.openxmlformats.org/drawingml/2006/main"
 PIC = "http://schemas.openxmlformats.org/drawingml/2006/picture"
 R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+RELNS = "http://schemas.openxmlformats.org/package/2006/relationships"
 NS = {"w": W, "wp": WP, "a": A, "pic": PIC, "r": R}
 EMU_PER_TWIP = 635
 
@@ -134,12 +135,19 @@ for _name in ("时钟分频分析", "键盘消抖分析", "状态机迁移分析
               "数码管扫描分析", "点阵驱动分析", "音频合成分析", "整机端到端全流程分析"):
     PARA_JOBS.append((_name, _name, 1))
 
-# 需要**新增**到 docx 的正文段落：(docx 锚点前缀, typ 块前缀)
+# 需要**新增**到 docx 的正文段落：(docx 锚点前缀, typ 块前缀, 位置)
 # 背景：`PARA_JOBS` 只能**改写已存在的**锚点段落 —— `.typ` 里新写一段，docx 不会自己长出来
 # （2026-10-22 踩到：§3.2 新增的"仿真时间尺度如实说明"在 PDF 里有、docx 里没有，
-#   两边就不一致了）。这里显式登记"要插到某个锚点后面"的新段落，插入前先查重。
+#   两边就不一致了）。这里显式登记"要插到某个锚点前面/后面的新段落"，插入前先查重。
 PARA_INSERT = [
-    ("下列波形均为", "关于仿真时间尺度的如实说明"),
+    ("下列波形均为", "关于仿真时间尺度的如实说明", "after"),
+    ("2.4 主状态机", "整机的决策流程如下图所示", "after"),
+]
+
+# 需要**新增**到 docx 的插图：(docx 锚点段落前缀, docs/report/ 下的 PNG 文件名)
+# 同样是因为媒体同步只替换"已存在的图"的字节，新加的图不会自己长出来（2026-10-22 踩到）。
+FIG_INSERT = [
+    ("整机的决策流程如下图所示", "fig_game_flow.png"),
 ]
 
 CHANGES = []          # [(说明, 数量)]
@@ -495,25 +503,94 @@ def main():
 
     # ---- D2 新增段落（`.typ` 里新写的段落，docx 里还没有）------------------
     n_ins_p = 0
-    for anchor_pre, typ_pre in PARA_INSERT:
+    for anchor_pre, typ_pre, pos in PARA_INSERT:
         acand = [p for p in root.findall(".//w:p", NS) if clean(ptext(p)).startswith(anchor_pre)]
         tsel = [k for k, b in enumerate(T) if b[0] == "p" and btext(b).startswith(typ_pre)]
         if len(acand) != 1 or len(tsel) != 1:
             fail("新增段落锚点 %r：docx %d 段 / typ %d 块" % (anchor_pre, len(acand), len(tsel)))
             continue
         want = joinb(collect(T, tsel[0], 1))
-        after = acand[0].getnext()
-        if after is not None and clean(ptext(after)).startswith(typ_pre[:14]):
+        nb = acand[0].getprevious() if pos == "before" else acand[0].getnext()
+        if nb is not None and clean(ptext(nb)).startswith(typ_pre[:14]):
             continue                                    # 已经插过了 —— 幂等
         newp = copy.deepcopy(acand[0])
         for dr in newp.findall(".//w:drawing", NS):
             dr.getparent().remove(dr)
         set_para_text(newp, want)
-        acand[0].addnext(newp)
+        if pos == "before":
+            acand[0].addprevious(newp)
+        else:
+            acand[0].addnext(newp)
         n_ins_p += 1
-        print("  [D2] 新增段落：%s…（%d 字）" % (typ_pre[:16], len(want)))
+        print("  [D2] 新增段落（%s）：%s…（%d 字）" % (pos, typ_pre[:16], len(want)))
     print("  [D2] 新增正文段落：%d 处" % n_ins_p)
     count("新增正文段落", n_ins_p)
+
+    # ---- D3 新增插图（`.typ` 里新加的图，docx 里还没有）--------------------
+    # 与 [D2] 同理：`PARA_JOBS`/媒体同步都只作用于**已存在**的图，新加的图不会自己长出来。
+    # 做法：把一张已有图所在的段落整段深拷贝一份，换掉它的图片关系与显示尺寸，
+    # 再把 PNG 作为新的 media part 与 relationship 挂进去。
+    n_fig = 0
+    for anchor_pre, png_name in FIG_INSERT:
+        if png_name not in local_png:
+            fail("新增插图 %s：docs/report/ 下找不到这个 PNG" % png_name)
+            continue
+        drs = root.findall(".//w:drawing", NS)
+        if any((d.find(".//pic:cNvPr", NS) is not None
+                and d.find(".//pic:cNvPr", NS).get("name") == png_name) for d in drs):
+            continue                                   # 已经插过了 —— 幂等
+        if not drs:
+            fail("新增插图 %s：docx 里一张图都没有，没有可复制的模板" % png_name)
+            continue
+        # ① 新 media part + relationship
+        target = "media/" + png_name
+        rid = "rIdFig%d" % (900 + n_fig)
+        while rid in rid2f:
+            rid = "rIdFig%d" % (int(rid[6:]) + 1)
+        data["word/" + target] = local_png[png_name].read_bytes()
+        rel = etree.SubElement(rels, "{%s}Relationship" % RELNS)
+        rel.set("Id", rid)
+        rel.set("Type", "http://schemas.openxmlformats.org/officeDocument/2006/"
+                        "relationships/image")
+        rel.set("Target", target)
+        rid2f[rid] = target
+        # ⚠️ 改了 rels 元素就必须**写回 data** —— 否则 docx 里的图会引用一个不存在的
+        #    关系（rId），Word 打开时图片直接不显示（这个坑 2026-10-22 踩过一次）
+        data["word/_rels/document.xml.rels"] = etree.tostring(
+            rels, xml_declaration=True, encoding="UTF-8", standalone=True)
+        # ② 找锚点段落，把模板图的段落插到它后面
+        acand = [p for p in root.findall(".//w:p", NS)
+                 if clean(ptext(p)).startswith(anchor_pre)]
+        if len(acand) != 1:
+            fail("新增插图锚点 %r：命中 %d 段" % (anchor_pre, len(acand)))
+            continue
+        tmpl_p = drs[0].getparent()
+        while tmpl_p is not None and tmpl_p.tag != "{%s}p" % W:
+            tmpl_p = tmpl_p.getparent()
+        newp = copy.deepcopy(tmpl_p)
+        pic = newp.find(".//pic:cNvPr", NS)
+        if pic is not None:
+            pic.set("name", png_name)
+        blip = newp.find(".//a:blip", NS)
+        if blip is not None:
+            blip.set("{%s}embed" % R, rid)
+        for t in newp.findall(".//w:t", NS):
+            t.text = ""
+        # 按 .typ 的 width 百分比 × 正文净宽 重算尺寸
+        pct = next((f[3] for f in Tfig if Path(f[1]).name == png_name.replace(".png", ".svg")), 100)
+        pw, ph = png_size(local_png[png_name].read_bytes())
+        cx = int(text_w * pct / 100)
+        cy = int(cx * ph / pw)
+        for ext in (newp.find(".//wp:extent", NS), newp.find(".//a:xfrm/a:ext", NS)):
+            if ext is not None:
+                ext.set("cx", str(cx))
+                ext.set("cy", str(cy))
+        acand[0].addnext(newp)
+        n_fig += 1
+        print("  [D3] 新增插图：%s（%d%% × 正文净宽 = %.2f in 宽）"
+              % (png_name, pct, cx / 914400))
+    print("  [D3] 新增插图：%d 张" % n_fig)
+    count("新增插图", n_fig)
 
     # ---- E 表格 -----------------------------------------------------------
     def tables():
@@ -721,12 +798,20 @@ def main():
         root, xml_declaration=True, encoding="UTF-8", standalone=True)
     tmp = DOCX.with_suffix(".docx.tmp")
     with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED) as zo:
+        written = set()
         for i in infos:
             zi = zipfile.ZipInfo(i.filename, date_time=i.date_time)
             zi.compress_type = i.compress_type
             zi.external_attr = i.external_attr
             zi.create_system = i.create_system
             zo.writestr(zi, data[i.filename])
+            written.add(i.filename)
+        # ⚠️ 新增的 part（例如 [D3] 插进去的 word/media/*.png）不在原始 infolist 里，
+        #    必须补写 —— 否则 docx 里那张图引用的媒体文件根本不存在（2026-10-22 踩过）
+        for name, blob in data.items():
+            if name not in written:
+                zo.writestr(name, blob)
+                print("  [+] 新增 part：%s（%d B）" % (name, len(blob)))
     for _ in range(15):                     # Windows / AV 偶发占用 -> 重试
         try:
             tmp.replace(DOCX)
