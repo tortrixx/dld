@@ -184,7 +184,8 @@ python scripts/build_report.py --check
 python scripts/check_privacy.py       # 必须 PASS
 
 # 6. 交付用设计图是否与 RTL 一致（改过 rtl/ 或 facts/ 才需要）
-python scripts/gen_design_diagram.py --check   # 方框/网名/位宽/端口名逐条对账
+python scripts/gen_design_diagram.py --check   # ① 数据对账 ② 几何体检 ③ 端口名核对，三关全过才写盘
+python scripts/audit_diagram_selftest.py       # 体检脚本自身的回归（33 项断言）
 
 # 7. 肉眼确认（本地起服务 + 无头浏览器截图）
 python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
@@ -308,12 +309,21 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 ### 另外两个交付件：平台「实际设计方案」的作答稿与三张设计图
 
 课程平台除了报告，还有一步「实际设计方案（10 分）」，要求**框图与实现电路(代码)一致**。
-原先报告里的 `fig1` 是**功能级**示意图（方框写的是「时钟/键盘输入/游戏控制」），
-老师反馈"更像流程图、缺模块间信号" —— 所以整套重做了：
+老师两次反馈过这张图：先是"更像流程图、缺模块间信号"，重画后又指出"**渲染出来的架构图不好**" ——
+所以最终版把这件事拆成**三层**，每层只干一件事：
+
+| 层 | 文件 | 职责 |
+|:---|:---|:---|
+| **数据（唯一事实源）** | `scripts/arch_data.py` | 方框集合（11 entity + 7 板载 + 2 顶层胶合）、35 组连线 / 60 个 `(源,目标,网名)` 三元组、每个模块消费的全局网络 —— 全部从 `facts/facts.json` 与 `rtl/puzzle_top.vhd` 现算，人工只能读不能改 |
+| **布局（只管画）** | `scripts/fig1_layout.py` | 六列分层 + 空通道正交走线 + 顶部干线带 + 标签自动避让；产出 SVG **和** 一份 `layout.json` 供对账 |
+| **裁判（客观体检）** | `scripts/audit_diagram.py` | 读 `layout.json` 做 16 项几何检查：线穿框、标签压框/互压、端点是否落在框边、越界、交叉数、空白率、对齐…；`--fidelity` 再和 `arch_data` 逐条对账 |
+
+`gen_design_diagram.py` 只是个壳：**写盘之前必须连过三关**（① 数据对账 ② 几何体检 ③ 端口名核对），
+过不了就不写盘。
 
 | 交付件 | 怎么来 |
 |:---|:---|
-| `docs/report/fig1_system_architecture.svg/.png` | `scripts/gen_design_diagram.py`：**方框 = entity**，箭头 = 顶层端口连接（网名[位宽]）。报告 §2.2 与站点 `docs/assets/images/` 用同一张 |
+| `docs/report/fig1_system_architecture.svg/.png` | `scripts/gen_design_diagram.py`：**方框 = entity**，箭头 = 顶层端口连接（网名[位宽]），全局网络用角标。报告 §2.2 与站点 `docs/assets/images/` 用同一张 |
 | `docs/report/fig_game_flow.svg/.png` | `scripts/gen_flow_diagram.py`：**规范流程图**（圆角=起止 / 矩形=处理 / 菱形=判断），对局循环用容器框 + 「回循环」总线 |
 | `docs/report/实际设计方案-模块设计一览.svg/.png` | 同上（11 格，逐模块给端口与设计要点） |
 | `docs/report/实际设计方案.md` | **手写**：游戏流程 → 设计方法 → 总体框图 → 各模块设计 → 信号传递表 |
@@ -323,6 +333,11 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 流程图的六个状态、三个判据信号、四个限时常量也与 `game_fsm.vhd` / `puzzle_ctrl.vhd` /
 `puzzle_pkg.vhd` 对账。改完 RTL 记得重跑这两个脚本（它们还会顺手刷新
 `docs/assets/images/` 下的站点副本）。
+
+**量化记录（改造前后，同一把尺子）**：旧版 `fig1` 跑 `audit_diagram` 得到 **35 个 ERROR**
+（32 处线穿方框 + 3 处标签重叠）、16 处交叉、55% 空白、`SCORE 4156`；
+新版 **0 ERROR / 0 穿框 / 0 标签冲突**，80 处交叉、40% 空白、`SCORE 958`。
+数字与命令见 `.tmp/cand/BASELINE.md`。
 
 > ⚠️ **不要用 PowerShell 的 `Get-Content | Set-Content` 改这些脚本**：
 > `-NoNewline` 会把整个文件的行首尾连成一行（2026-10-22 因此重写过一次

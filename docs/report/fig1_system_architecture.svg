@@ -1,200 +1,212 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="2560" height="1560" viewBox="0 0 2560 1560">
-<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker></defs>
-<rect width="2560" height="1560" fill="#ffffff"/>
-<text x="1280" y="40" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="29" font-weight="bold" fill="#0f172a" text-anchor="middle">题目 4：简易拼图游戏 —— 系统总体框图（模块与实现电路一致）</text>
-<text x="1280" y="66" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#475569" text-anchor="middle">每个方框 = rtl/&lt;文件&gt;.vhd 中的一个 entity；每根箭头 = puzzle_top.vhd 例化时的端口连接（formal ← actual 网名）；位宽口径 [MSB:LSB]</text>
-<rect x="28" y="92" width="196" height="480" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="7 6"/>
-<text x="40" y="84" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">外部世界（板载器件）</text>
-<rect x="384" y="92" width="228" height="500" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="7 6"/>
-<text x="396" y="84" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">时钟与输入</text>
-<rect x="774" y="100" width="228" height="206" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="7 6"/>
-<text x="786" y="92" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">图案 / 零片存储</text>
-<rect x="774" y="426" width="228" height="200" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="7 6"/>
-<text x="786" y="418" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">游戏控制</text>
-<rect x="1164" y="376" width="240" height="500" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="7 6"/>
-<text x="1176" y="368" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">拼图核心引擎</text>
-<rect x="1566" y="92" width="610" height="760" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-dasharray="7 6"/>
-<text x="1578" y="84" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">显示与音频输出</text>
-<path d="M 212.0 136.0 L 304.0 136.0 L 396.0 136.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 212.0 336.0 L 258.0 336.0 L 258.0 136.0 L 396.0 136.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 498.0 176.0 L 498.0 319.0 L 498.0 462.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 600.0 136.0 L 540.0 136.0 L 540.0 430.0 L 888.0 430.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 600.0 136.0 L 556.0 136.0 L 556.0 430.0 L 888.0 430.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 600.0 136.0 L 860.0 136.0 L 860.0 655.0 L 1176.0 655.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 212.0 236.0 L 499.0 236.0 L 499.0 480.0 L 786.0 480.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 212.0 494.0 L 304.0 494.0 L 304.0 502.0 L 396.0 502.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 396.0 502.0 L 304.0 502.0 L 304.0 494.0 L 212.0 494.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 600.0 502.0 L 693.0 502.0 L 693.0 480.0 L 786.0 480.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 600.0 502.0 L 552.0 502.0 L 552.0 480.0 L 786.0 480.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 560.0 480.0 L 560.0 146.0 L 786.0 146.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 576.0 480.0 L 576.0 252.0 L 786.0 252.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 146.0 L 1044.0 146.0 L 1044.0 475.0 L 1176.0 475.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 252.0 L 1076.0 252.0 L 1076.0 475.0 L 1176.0 475.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1284.0 744.0 L 1284.0 657.0 L 1284.0 570.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1284.0 570.0 L 1284.0 1140.0 L 1176.0 1140.0 L 1176.0 782.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 1083.0 480.0 L 1083.0 475.0 L 1176.0 475.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 1060.0 480.0 L 1060.0 475.0 L 1176.0 475.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1176.0 475.0 L 1083.0 475.0 L 1083.0 480.0 L 990.0 480.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1176.0 475.0 L 1100.0 475.0 L 1100.0 480.0 L 990.0 480.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 1180.0 480.0 L 1180.0 134.0 L 1578.0 134.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 1180.0 480.0 L 1180.0 134.0 L 1578.0 134.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 1180.0 480.0 L 1180.0 134.0 L 1578.0 134.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1782.0 134.0 L 1875.0 134.0 L 1968.0 134.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1782.0 134.0 L 1480.0 134.0 L 1968.0 134.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 2164.0 134.0 L 2257.0 134.0 L 2257.0 136.0 L 2350.0 136.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 2164.0 134.0 L 1770.0 134.0 L 1770.0 136.0 L 2350.0 136.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1284.0 570.0 L 1284.0 1010.0 L 1284.0 622.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1284.0 570.0 L 1284.0 1060.0 L 1284.0 622.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1392.0 655.0 L 1470.0 655.0 L 1470.0 264.0 L 1968.0 264.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1392.0 655.0 L 1470.0 655.0 L 1470.0 264.0 L 1968.0 264.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1392.0 655.0 L 1452.0 655.0 L 1452.0 264.0 L 1968.0 264.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 2164.0 264.0 L 2257.0 264.0 L 2350.0 264.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 2164.0 264.0 L 1770.0 264.0 L 2350.0 264.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 2164.0 264.0 L 1770.0 264.0 L 2350.0 264.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 990.0 480.0 L 1180.0 480.0 L 1180.0 782.0 L 1578.0 782.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<path d="M 1782.0 782.0 L 2066.0 782.0 L 2350.0 782.0" fill="none" stroke="#334155" stroke-width="1.9" marker-end="url(#ar)"/>
-<rect x="40" y="104" width="172" height="64" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.2"/>
-<text x="126" y="134" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">50 MHz 有源晶振</text>
-<text x="126" y="156" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">PIN_18</text>
-<rect x="40" y="204" width="172" height="64" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.2"/>
-<text x="126" y="234" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">SW7 使能</text>
-<text x="126" y="256" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">PIN_125</text>
-<rect x="40" y="304" width="172" height="64" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.2"/>
-<text x="126" y="334" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">BTN0 复位</text>
-<text x="126" y="356" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">PIN_61</text>
-<rect x="40" y="462" width="172" height="64" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.2"/>
-<text x="126" y="492" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">4×4 矩阵键盘</text>
-<text x="126" y="514" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">kp_row / kp_col</text>
-<rect x="396" y="96" width="204" height="80" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="498" y="126" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">clk_gen</text>
-<text x="498" y="148" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/clk_gen.vhd</text>
-<rect x="396" y="462" width="204" height="80" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="498" y="492" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">keypad_scan</text>
-<text x="498" y="514" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/keypad_scan.vhd</text>
-<rect x="786" y="108" width="204" height="76" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="888" y="138" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">piece_rom</text>
-<text x="888" y="160" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/piece_rom.vhd</text>
-<rect x="786" y="214" width="204" height="76" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="888" y="244" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">pattern_rom</text>
-<text x="888" y="266" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/pattern_rom.vhd</text>
-<rect x="786" y="430" width="204" height="100" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="888" y="460" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">game_fsm</text>
-<text x="888" y="482" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/game_fsm.vhd</text>
-<rect x="1176" y="380" width="216" height="190" rx="8" fill="#fffbeb" stroke="#b45309" stroke-width="2.2"/>
-<text x="1284" y="410" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">puzzle_ctrl</text>
-<text x="1284" y="432" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/puzzle_ctrl.vhd</text>
-<rect x="1176" y="622" width="216" height="66" rx="8" fill="#f8fafc" stroke="#64748b" stroke-width="2.2" stroke-dasharray="7 5"/>
-<text x="1284" y="652" font-family="Consolas, Courier New, monospace" font-size="15.5" font-weight="bold" fill="#0f172a" text-anchor="middle">顶层行切片 + 行计数器</text>
-<text x="1284" y="674" font-family="Consolas, Courier New, monospace" font-size="12.5" fill="#475569" text-anchor="middle">puzzle_top.vhd 内（非独立 entity）</text>
-<rect x="1176" y="744" width="216" height="76" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="1284" y="774" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">rng_lfsr</text>
-<text x="1284" y="796" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/rng_lfsr.vhd</text>
-<rect x="1578" y="744" width="204" height="76" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="1680" y="774" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">buzzer_ctrl</text>
-<text x="1680" y="796" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/buzzer_ctrl.vhd</text>
-<rect x="1578" y="96" width="204" height="76" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="1680" y="126" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">disp_format</text>
-<text x="1680" y="148" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/disp_format.vhd</text>
-<rect x="1968" y="96" width="196" height="76" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="2066" y="126" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">seg_scan</text>
-<text x="2066" y="148" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/seg_scan.vhd</text>
-<rect x="1968" y="220" width="196" height="88" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
-<text x="2066" y="250" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">dot_matrix_scan</text>
-<text x="2066" y="272" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">rtl/dot_matrix_scan.vhd</text>
-<rect x="2350" y="104" width="170" height="64" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.2"/>
-<text x="2435" y="134" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">8 位共阴数码管</text>
-<text x="2435" y="156" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">seg / cat</text>
-<rect x="2350" y="232" width="170" height="64" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.2"/>
-<text x="2435" y="262" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">8×8 双色点阵</text>
-<text x="2435" y="284" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">ROW / COLR / COLG</text>
-<rect x="2350" y="750" width="170" height="64" rx="8" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2.2"/>
-<text x="2435" y="780" font-family="Consolas, Courier New, monospace" font-size="19" font-weight="bold" fill="#0f172a" text-anchor="middle">无源蜂鸣器</text>
-<text x="2435" y="802" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#475569" text-anchor="middle">PIN_60</text>
-<rect x="286.0" y="121.0" width="36.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="304.0" y="136.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">clk</text>
-<rect x="286.0" y="143.0" width="36.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="304.0" y="158.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">btn</text>
-<rect x="472.0" y="431.0" width="52.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="498.0" y="446.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">t_200</text>
-<rect x="862.0" y="365.0" width="52.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="888.0" y="380.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">t_1hz</text>
-<rect x="862.0" y="387.0" width="52.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="888.0" y="402.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">t_4hz</text>
-<rect x="1074.0" y="610.0" width="44.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1096.0" y="625.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">t_1k</text>
-<rect x="675.0" y="465.0" width="36.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="693.0" y="480.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">sw7</text>
-<rect x="254.0" y="472.0" width="100.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="304.0" y="487.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">kp_row[3:0]</text>
-<rect x="254.0" y="494.0" width="100.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="304.0" y="509.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">kp_col[3:0]</text>
-<rect x="655.0" y="453.0" width="76.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="693.0" y="468.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">key[3:0]</text>
-<rect x="667.0" y="487.0" width="52.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="693.0" y="502.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">press</text>
-<rect x="667.0" y="121.0" width="52.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="693.0" y="136.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">level</text>
-<rect x="473.0" y="253.0" width="52.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="499.0" y="268.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">level</text>
-<rect x="640.0" y="348.0" width="108.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="694.0" y="363.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">shapes[4×64]</text>
-<rect x="632.0" y="300.0" width="124.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="694.0" y="315.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">tgt_mask[63:0]</text>
-<rect x="1230.0" y="585.0" width="108.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1284.0" y="600.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">rnd_val[7:0]</text>
-<rect x="1058.0" y="767.0" width="76.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1096.0" y="782.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">rnd_step</text>
-<rect x="1026.0" y="380.0" width="140.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1096.0" y="395.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">go/sel/move/conf</text>
-<rect x="1029.0" y="426.0" width="108.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1083.0" y="441.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">mv_rot/level</text>
-<rect x="1017.0" y="499.0" width="132.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1083.0" y="514.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">solved/all_lock</text>
-<rect x="1041.0" y="545.0" width="84.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1083.0" y="560.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">shuf_busy</text>
-<rect x="1238.0" y="99.0" width="92.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1284.0" y="114.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">state[2:0]</text>
-<rect x="1238.0" y="121.0" width="92.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1284.0" y="136.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">gtime[5:0]</text>
-<rect x="1254.0" y="143.0" width="60.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1284.0" y="158.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">gblink</text>
-<rect x="1809.0" y="109.0" width="132.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1875.0" y="124.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">disp_data[31:0]</text>
-<rect x="1809.0" y="137.0" width="132.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1875.0" y="152.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">disp_blank[7:0]</text>
-<rect x="2219.0" y="111.0" width="76.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="2257.0" y="126.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">seg[7:0]</text>
-<rect x="2219.0" y="139.0" width="76.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="2257.0" y="154.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">cat[7:0]</text>
-<rect x="1230.0" y="577.0" width="108.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1284.0" y="592.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">eng_fr[63:0]</text>
-<rect x="1230.0" y="599.0" width="108.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1284.0" y="614.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">eng_fg[63:0]</text>
-<rect x="1433.0" y="237.0" width="92.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1479.0" y="252.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">mat_r[7:0]</text>
-<rect x="1433.0" y="259.0" width="92.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1479.0" y="274.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">mat_g[7:0]</text>
-<rect x="1846.0" y="279.0" width="84.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1888.0" y="294.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">mrow[2:0]</text>
-<rect x="2203.0" y="237.0" width="108.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="2257.0" y="252.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">dot_row[7:0]</text>
-<rect x="2199.0" y="259.0" width="116.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="2257.0" y="274.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">dot_colr[7:0]</text>
-<rect x="2199.0" y="281.0" width="116.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="2257.0" y="296.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">dot_colg[7:0]</text>
-<rect x="1439.0" y="767.0" width="92.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="1485.0" y="782.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">sound[3:0]</text>
-<rect x="2044.0" y="767.0" width="44.0" height="20" rx="4" fill="#ffffff" fill-opacity="0.94" stroke="#e2e8f0"/>
-<text x="2066.0" y="782.0" font-family="Consolas, Courier New, monospace" font-size="13.5" fill="#1e293b" text-anchor="middle">buzz</text>
-<rect x="28" y="910" width="2504" height="630" rx="10" fill="#ffffff" stroke="#cbd5e1"/>
-<text x="48" y="946" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="20" font-weight="bold" fill="#1e293b">图例与对账口径（这张图是怎么保证「与代码一致」的）</text>
-<text x="48" y="982" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· 方框 = rtl/&lt;文件&gt;.vhd 中的一个 entity。本图功能方框 11 个，与 puzzle_top.vhd 里 11 个 u_* 例化、以及 11 条 component 声明三方一致（scripts/gen_design_diagram.py --check 逐条核对）。</text>
-<text x="48" y="1018" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· 箭头标签 = 顶层例化时的端口连接网名（formal ← actual）；位宽取自各子模块 entity 的端口声明，顶层内部信号（eng_fr / mat_r / mrow）取自 puzzle_top.vhd 的 signal 声明。</text>
-<text x="48" y="1054" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· 数组型端口按人可读口径标注：shapes[4×64] = 4 块零片各 64 位掩码；shape_h / shape_w[4×3] = 4 块包围盒的高 / 宽。</text>
-<text x="48" y="1090" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· 虚线框「顶层行切片 + 行计数器」不是独立 entity，而是 puzzle_top.vhd 内的胶合逻辑：把引擎输出的 64 位整帧平面按行号 mrow 切片成 8 位行数据 mat_r / mat_g 送点阵扫描（125 Hz）。</text>
-<text x="48" y="1126" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· 时钟与使能：clk_gen 由 50 MHz 产生 rst 与 7 路单周期 tick（t_1k / t_200 / t_100 / t_40 / t_4hz / t_1hz；o_tick_2hz 在顶层未接 open，2 Hz 方波由 t_4hz 翻转得到）。</text>
-<text x="48" y="1162" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· 另有 3 个板级诊断顶层（board_test_top / keypad_diag_top / keypad_raw_top）不属于本数据通路，未画出。</text>
-<text x="48" y="1198" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· ⚠️ 如实说明：`piece_rom.o_n`（网名 `piece_n`，本关零片数）在当前顶层**未被任何模块消费** —— 引擎自己按关卡推导块数。这与编译报告里的 “assigned a value but never read” 警告一一对应，属已知遗留、不影响功能。</text>
-<text x="48" y="1234" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.5"  fill="#1e293b">· 引脚号见报告 §1.3 引脚分配表（52 个用户引脚，与 quartus/puzzle.qsf 逐脚一致）；各模块的详细职责与完整端口清单见《实际设计方案》正文表格。</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1490" height="1180" viewBox="0 0 1490 1180">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.2" markerHeight="6.2" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker><marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6.2" markerHeight="6.2" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#b45309"/></marker></defs>
+<rect width="1490" height="1180" fill="#ffffff"/>
+<text x="745" y="44" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="26" font-weight="bold" fill="#0f172a" text-anchor="middle">题目 4：简易拼图游戏 —— 系统总体框图</text>
+<text x="745" y="72" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#475569" text-anchor="middle">每个实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity；每根箭头 = puzzle_top.vhd 例化时的一条端口连接（formal ← actual 网名），标注位宽 [MSB:LSB]</text>
+<rect x="21" y="320" width="110" height="664" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
+<text x="76" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">板载输入器件</text>
+<rect x="193" y="290" width="156" height="688" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
+<text x="271" y="310" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">时钟与输入采集</text>
+<rect x="473" y="260" width="164" height="698" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
+<text x="555" y="280" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">主控 · 存储 · 随机源</text>
+<rect x="827" y="260" width="162" height="604" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
+<text x="908" y="280" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">核心引擎与顶层胶合</text>
+<rect x="1137" y="260" width="162" height="628" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
+<text x="1218" y="280" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">显示与音频输出</text>
+<rect x="1363" y="280" width="106" height="604" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" stroke-dasharray="7 6"/>
+<text x="1416" y="300" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#64748b" text-anchor="middle">板载输出器件</text>
+<path d="M 128.0 525.0 L 144.0 525.0 L 144.0 392.0 L 196.0 392.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 128.0 935.0 L 162.0 935.0 L 162.0 922.0 L 196.0 922.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 196.0 922.0 L 180.0 922.0 L 180.0 935.0 L 128.0 935.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 346.0 437.0 L 460.0 437.0 L 460.0 922.0 L 346.0 922.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 346.0 347.0 L 403.6 347.0 L 403.6 385.0 L 476.0 385.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 346.0 407.0 L 397.6 407.0 L 397.6 152.0 L 1101.6 152.0 L 1101.6 817.0 L 1140.0 817.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 346.0 377.0 L 362.0 377.0 L 362.0 132.0 L 814.0 132.0 L 814.0 685.0 L 830.0 685.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 346.0 377.0 L 362.0 377.0 L 362.0 132.0 L 1079.2 132.0 L 1079.2 472.0 L 1140.0 472.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 346.0 377.0 L 362.0 377.0 L 362.0 132.0 L 800.0 132.0 L 800.0 445.0 L 830.0 445.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 346.0 922.0 L 431.8 922.0 L 431.8 415.0 L 476.0 415.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 400.0 L 690.7 400.0 L 690.7 642.0 L 634.0 642.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 456.7 L 742.3 456.7 L 742.3 787.0 L 634.0 787.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 428.3 L 721.7 428.3 L 721.7 715.0 L 830.0 715.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 830.0 730.0 L 711.3 730.0 L 711.3 400.0 L 634.0 400.0" fill="none" stroke="#b45309" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar2)"/>
+<path d="M 634.0 642.0 L 763.0 642.0 L 763.0 745.0 L 830.0 745.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 787.0 L 773.3 787.0 L 773.3 775.0 L 830.0 775.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 917.0 L 794.0 917.0 L 794.0 805.0 L 830.0 805.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 830.0 760.0 L 783.7 760.0 L 783.7 902.0 L 634.0 902.0" fill="none" stroke="#b45309" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar2)"/>
+<path d="M 634.0 343.3 L 650.0 343.3 L 650.0 172.0 L 1056.9 172.0 L 1056.9 342.0 L 1140.0 342.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 1296.0 342.0 L 1312.0 342.0 L 1312.0 472.0 L 1296.0 472.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 1296.0 472.0 L 1324.7 472.0 L 1324.7 355.0 L 1366.0 355.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 485.0 L 664.0 485.0 L 664.0 192.0 L 1124.0 192.0 L 1124.0 847.0 L 1140.0 847.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 1296.0 832.0 L 1350.0 832.0 L 1350.0 835.0 L 1366.0 835.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 986.0 745.0 L 1050.9 745.0 L 1050.9 470.0 L 986.0 470.0" fill="none" stroke="#b45309" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar2)"/>
+<path d="M 634.0 371.7 L 680.3 371.7 L 680.3 470.0 L 830.0 470.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 757.0 L 752.7 757.0 L 752.7 495.0 L 830.0 495.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 986.0 470.0 L 1002.0 470.0 L 1002.0 602.0 L 1140.0 602.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 1296.0 602.0 L 1337.3 602.0 L 1337.3 605.0 L 1366.0 605.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 315.0 L 670.0 315.0 L 670.0 325.0 L 830.0 325.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 634.0 887.0 L 732.0 887.0 L 732.0 355.0 L 830.0 355.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 830.0 340.0 L 701.0 340.0 L 701.0 757.0 L 634.0 757.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 986.0 340.0 L 1026.4 340.0 L 1026.4 745.0 L 986.0 745.0" fill="none" stroke="#334155" stroke-width="1.9" stroke-linejoin="round" marker-end="url(#ar)"/>
+<rect x="196" y="330" width="150" height="124" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="271" y="360" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">clk_gen</text>
+<text x="271" y="382" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">分频 / 复位</text>
+<text x="203" y="447" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk</text>
+<rect x="196" y="880" width="150" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="271" y="910" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">keypad_scan</text>
+<text x="271" y="932" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">键盘扫描 / 消抖</text>
+<text x="203" y="957" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
+<rect x="476" y="300" width="158" height="200" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="555" y="330" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">game_fsm</text>
+<text x="555" y="352" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">游戏主状态机</text>
+<text x="483" y="493" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<rect x="476" y="600" width="158" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="555" y="630" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">piece_rom</text>
+<text x="555" y="652" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">零片掩码表</text>
+<rect x="476" y="730" width="158" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="555" y="760" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">pattern_rom</text>
+<text x="555" y="782" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">目标图案库</text>
+<rect x="476" y="860" width="158" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="555" y="890" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">rng_lfsr</text>
+<text x="555" y="912" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">8 位 LFSR 随机源</text>
+<text x="483" y="937" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
+<rect x="830" y="640" width="156" height="210" rx="7" fill="#fffbeb" stroke="#b45309" stroke-width="2.4"/>
+<text x="908" y="670" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">puzzle_ctrl</text>
+<text x="908" y="692" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">拼图引擎</text>
+<text x="837" y="843" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
+<rect x="1140" y="300" width="156" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="1218" y="330" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">disp_format</text>
+<text x="1218" y="352" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">数码管段码</text>
+<rect x="1140" y="430" width="156" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="1218" y="460" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">seg_scan</text>
+<text x="1218" y="482" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">数码管扫描</text>
+<text x="1147" y="507" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<rect x="1140" y="560" width="156" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="1218" y="590" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">dot_matrix_scan</text>
+<text x="1218" y="612" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">点阵行扫描</text>
+<text x="1147" y="637" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<rect x="1140" y="790" width="156" height="84" rx="7" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
+<text x="1218" y="820" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="19.0" font-weight="bold" fill="#0f172a" text-anchor="middle">buzzer_ctrl</text>
+<text x="1218" y="842" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#475569" text-anchor="middle">蜂鸣器乐句</text>
+<text x="1147" y="867" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst·sw7</text>
+<rect x="24" y="360" width="104" height="70" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="76" y="384" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">50 MHz</text>
+<text x="76" y="403" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">有源晶振</text>
+<text x="76" y="420" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_18</text>
+<rect x="24" y="490" width="104" height="70" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="76" y="514" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">BTN0</text>
+<text x="76" y="533" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">复位按键</text>
+<text x="76" y="550" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_61</text>
+<rect x="24" y="620" width="104" height="70" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="76" y="644" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">SW7</text>
+<text x="76" y="663" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">全局使能</text>
+<text x="76" y="680" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_125</text>
+<rect x="24" y="900" width="104" height="70" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="76" y="924" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">4×4</text>
+<text x="76" y="943" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">矩阵键盘</text>
+<text x="76" y="960" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">kp_row/kp_col</text>
+<rect x="1366" y="320" width="100" height="70" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="1416" y="344" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">8 位</text>
+<text x="1416" y="363" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">共阴数码管</text>
+<text x="1416" y="380" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">seg / cat</text>
+<rect x="1366" y="570" width="100" height="70" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="1416" y="594" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">8×8</text>
+<text x="1416" y="613" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">双色点阵</text>
+<text x="1416" y="630" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">ROW/COLR/COLG</text>
+<rect x="1366" y="800" width="100" height="70" rx="7" fill="#eef2f7" stroke="#94a3b8" stroke-width="1.8"/>
+<text x="1416" y="824" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">无源</text>
+<text x="1416" y="843" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="14" fill="#0f172a" text-anchor="middle">蜂鸣器</text>
+<text x="1416" y="860" font-family="Consolas, Courier New, monospace" font-size="11.5" fill="#64748b" text-anchor="middle">PIN_60</text>
+<rect x="830" y="430" width="156" height="80" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="2.0" stroke-dasharray="7 5"/>
+<text x="908" y="460" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.0" font-weight="bold" fill="#0f172a" text-anchor="middle">行计数器 + 行切片</text>
+<text x="908" y="482" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="11.5" fill="#475569" text-anchor="middle">非 entity</text>
+<text x="837" y="503" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk</text>
+<rect x="830" y="300" width="156" height="80" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="2.0" stroke-dasharray="7 5"/>
+<text x="908" y="330" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.0" font-weight="bold" fill="#0f172a" text-anchor="middle">图案选择锁存</text>
+<text x="908" y="352" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="11.5" fill="#475569" text-anchor="middle">非 entity</text>
+<text x="837" y="373" font-family="Consolas, Courier New, monospace" font-size="11.0" fill="#94a3b8">clk·rst</text>
+<rect x="146.3" y="377.0" width="45.5" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="169.0" y="393.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">btn</text>
+<rect x="128.6" y="853.0" width="134.8" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="196.0" y="869.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">kp_row[3:0]</text>
+<rect x="65.6" y="979.0" width="134.8" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="133.0" y="995.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">kp_col[3:0]</text>
+<rect x="353.1" y="908.0" width="67.8" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="387.0" y="924.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">t_200</text>
+<rect x="337.6" y="305.0" width="134.8" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="405.0" y="321.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">t_1hz/t_4hz</text>
+<rect x="1064.1" y="803.0" width="67.8" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1098.0" y="819.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">t_4hz</text>
+<rect x="787.3" y="615.0" width="56.6" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="815.6" y="631.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">t_1k</text>
+<rect x="1078.7" y="459.0" width="56.6" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1107.0" y="475.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">t_1k</text>
+<rect x="772.7" y="405.0" width="56.6" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="801.0" y="421.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">t_1k</text>
+<rect x="347.9" y="508.0" width="168.2" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="432.0" y="524.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">key[3:0]/press</text>
+<rect x="641.1" y="628.0" width="67.8" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="675.0" y="644.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">level</text>
+<rect x="641.1" y="774.0" width="67.8" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="675.0" y="790.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">level</text>
+<rect x="624.7" y="506.0" width="190.6" height="88.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="720.0" y="522.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">go/sel/move/conf</text>
+<text x="720.0" y="544.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">mv_up/mv_dn</text>
+<text x="720.0" y="566.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">mv_lf/mv_rt</text>
+<text x="720.0" y="588.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">mv_rot/level</text>
+<rect x="639.3" y="437.0" width="179.4" height="44.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="729.0" y="453.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">solved/all_lock</text>
+<text x="729.0" y="475.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">shuf_busy</text>
+<rect x="677.1" y="690.0" width="145.9" height="66.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="750.1" y="706.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">shapes[4×64]</text>
+<text x="750.1" y="728.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">shape_h[4×3]</text>
+<text x="750.1" y="750.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">shape_w[4×3]</text>
+<rect x="653.9" y="805.0" width="168.2" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="738.0" y="821.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">tgt_mask[63:0]</text>
+<rect x="719.0" y="853.0" width="145.9" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="792.0" y="869.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">rnd_val[7:0]</text>
+<rect x="642.4" y="889.0" width="101.3" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="693.0" y="905.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">rnd_step</text>
+<rect x="989.0" y="295.0" width="145.9" height="88.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1062.0" y="311.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">state[2:0]</text>
+<text x="1062.0" y="333.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">gtime[5:0]</text>
+<text x="1062.0" y="355.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">gblink/level</text>
+<text x="1062.0" y="377.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">lvl3</text>
+<rect x="1301.3" y="451.0" width="179.4" height="44.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1391.0" y="467.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">disp_data[31:0]</text>
+<text x="1391.0" y="489.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">disp_blank[7:0]</text>
+<rect x="1303.0" y="403.0" width="101.3" height="44.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1353.6" y="419.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">seg[7:0]</text>
+<text x="1353.6" y="441.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">cat[7:0]</text>
+<rect x="1063.2" y="762.0" width="123.6" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1125.0" y="778.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">sound[3:0]</text>
+<rect x="1299.7" y="817.0" width="56.6" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1328.0" y="833.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">buzz</text>
+<rect x="972.0" y="516.0" width="145.9" height="44.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1045.0" y="532.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">eng_fr[63:0]</text>
+<text x="1045.0" y="554.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">eng_fg[63:0]</text>
+<rect x="640.2" y="390.0" width="123.6" height="44.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="702.0" y="406.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">state[2:0]</text>
+<text x="702.0" y="428.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">gblink</text>
+<rect x="653.9" y="660.0" width="168.2" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="738.0" y="676.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">tgt_mask[63:0]</text>
+<rect x="1010.2" y="568.0" width="123.6" height="66.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1072.0" y="584.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">mat_r[7:0]</text>
+<text x="1072.0" y="606.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">mat_g[7:0]</text>
+<text x="1072.0" y="628.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">mrow[2:0]</text>
+<rect x="1303.5" y="646.0" width="157.1" height="66.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1382.0" y="662.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">dot_row[7:0]</text>
+<text x="1382.0" y="684.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">dot_colr[7:0]</text>
+<text x="1382.0" y="706.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">dot_colg[7:0]</text>
+<rect x="639.3" y="318.0" width="179.4" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="729.0" y="334.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">state[2:0]/lvl3</text>
+<rect x="674.0" y="349.0" width="145.9" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="747.0" y="365.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">rnd_val[7:0]</text>
+<rect x="521.0" y="703.0" width="145.9" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="594.0" y="719.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">pat_sel[1:0]</text>
+<rect x="990.0" y="730.0" width="145.9" height="22.0" rx="3" fill="#ffffff" fill-opacity="0.9"/>
+<text x="1063.0" y="746.0" font-family="Consolas, Courier New, monospace" font-size="18.0" fill="#1e293b" text-anchor="middle">pat_sel[1:0]</text>
+<text x="16" y="1078" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#334155">图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；虚线框 = puzzle_top.vhd 内的顶层胶合逻辑（不是独立 entity）；浅灰框 = 板载器件</text>
+<text x="16" y="1101" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#334155">箭头 = puzzle_top.vhd 例化时的端口连接（formal ← actual 网名），标注位宽 [MSB:LSB]；方框左下角角标 = 该模块消费的全局网络：clk 50 MHz（← 有源晶振）、rst（← clk_gen）、sw7 使能（← SW7）</text>
+<text x="16" y="1124" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.0" fill="#334155">如实说明：clk_gen 的 t_100 / t_40 / o_tick_2hz 三路输出在顶层无人消费（仅板级诊断顶层使用）；piece_rom.o_n（piece_n）未被消费 —— 与 Quartus “assigned a value but never read” 警告一致</text>
 </svg>

@@ -426,7 +426,13 @@ def main():
     pg, mar = sect.find("w:pgSz", NS), sect.find("w:pgMar", NS)
     text_w = (int(pg.get("{%s}w" % W)) - int(mar.get("{%s}left" % W))
               - int(mar.get("{%s}right" % W))) * EMU_PER_TWIP
-    pct = {f[1]: f[3] for f in Tfig}
+    # `.typ` 里引用的是矢量源（`fig1_system_architecture.svg`），而 Word 里嵌的是同名
+    # PNG ⇒ 两个名字都要能查到，否则这一张图的 extent 永远对不上（会静默拉伸）。
+    pct = {}
+    for f in Tfig:
+        pct[f[1]] = f[3]
+        if str(f[1]).lower().endswith(".svg"):
+            pct[str(f[1])[:-4] + ".png"] = f[3]
     n_ext = 0
     for dr in root.findall(".//w:drawing", NS):
         pic = dr.find(".//pic:cNvPr", NS)
