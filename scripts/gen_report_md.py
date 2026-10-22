@@ -51,7 +51,6 @@ MD = REPORT / "实验报告_题目4_简易拼图游戏.md"
 #    `lab_report.with(...)` 参数块解析**，封面与正文同源；解析失败才回落到兜底表。
 _FALLBACK_FIELDS = {
     "title": "题目4：简易拼图游戏设计与实现",
-    "subtitle": "基于 Altera MAX II EPM1270T144C5 CPLD 的纯硬件 RTL 完整工程实现",
     "course": "数字电路与逻辑设计实验（下）",
     "semester": "2026～2027学年第一学期",
     "student_name": "课题组成员",
@@ -95,10 +94,6 @@ def build_cover():
         "# 《%s》课程设计报告" % f["course"],
         "# %s" % f["title"],
         "",
-    ]
-    if f.get("subtitle"):
-        cover += [f["subtitle"], ""]
-    cover += [
         "**课程名称**：%s  " % f["course"],
         "**实验学期**：%s  " % f["semester"],
         "**专业班级**：%s  " % f["major_class"],

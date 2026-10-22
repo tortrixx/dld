@@ -16,7 +16,6 @@
 
 #show: lab_report.with(
   title: "题目4：简易拼图游戏设计与实现",
-  subtitle: "基于 Altera MAX II EPM1270T144C5 CPLD 的纯硬件 RTL 完整工程实现",
   course: "数字电路与逻辑设计实验（下）",
   semester: "2026～2027学年第一学期",
   student_name: v("name", "课题组成员"),

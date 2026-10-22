@@ -3,7 +3,6 @@
 
 #let lab_report(
   title: "实验报告",
-  subtitle: "",
   course: "数字电路与逻辑设计实验（下）",
   semester: "2026～2027学年第一学期",
   student_name: "__________",
@@ -156,39 +155,37 @@
     #text(size: 24pt, font: f-sans, weight: "bold", fill: rgb("#000000"))[#course]
     #v(1.2cm)
     #text(size: 18pt, font: f-sans, weight: "bold", fill: rgb("#000000"))[#title]
-    #if subtitle != "" [
-      #v(0.6cm)
-      #text(size: 12pt, font: f-serif, fill: rgb("#374151"))[#subtitle]
-    ]
 
     #v(4.2cm)
+    // 字段区必须**整体居中**：
+    //   列宽用 auto 让表格缩到内容宽度，外面再 align(center) 才是真正居中。
+    //   早先用的是 `block(width: 75%)` + 第二列 `1fr` ⇒ 标签/取值被钉在那个 75% 盒子的
+    //   左边缘，视觉上偏左（用户实测反馈）。minimal_cover 与完整封面共用同一套写法。
     #align(center)[
-      #block(width: 75%)[
-        #set text(size: 11pt, font: f-serif)
-        #if minimal_cover [
-          #grid(
-            columns: (80pt, 1fr),
-            row-gutter: 15pt,
-            align: (right + horizon, left + horizon),
-            [学生姓名：], [#student_name],
-            [学生学号：], [#student_id],
-            [报告日期：], [#date],
-          )
-        ] else [
-          #grid(
-            columns: (80pt, 1fr),
-            row-gutter: 15pt,
-            align: (right + horizon, left + horizon),
-            [课程名称：], [#course],
-            [实验学期：], [#semester],
-            [专业班级：], [#major_class],
-            [学生姓名：], [#student_name],
-            [学生学号：], [#student_id],
-            [指导教师：], [#advisor],
-            [实验成绩：], [#score],
-            [报告日期：], [#date],
-          )
-        ]
+      #set text(size: 11pt, font: f-serif)
+      #if minimal_cover [
+        #grid(
+          columns: (auto, auto),
+          row-gutter: 15pt,
+          align: (right + horizon, left + horizon),
+          [学生姓名：], [#student_name],
+          [学生学号：], [#student_id],
+          [报告日期：], [#date],
+        )
+      ] else [
+        #grid(
+          columns: (auto, auto),
+          row-gutter: 15pt,
+          align: (right + horizon, left + horizon),
+          [课程名称：], [#course],
+          [实验学期：], [#semester],
+          [专业班级：], [#major_class],
+          [学生姓名：], [#student_name],
+          [学生学号：], [#student_id],
+          [指导教师：], [#advisor],
+          [实验成绩：], [#score],
+          [报告日期：], [#date],
+        )
       ]
     ]
   ]
