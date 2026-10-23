@@ -229,12 +229,17 @@ def main() -> int:
     if args.check:
         return 0
 
+    # 注意：fig1_system_architecture.png 现在由 draw.io 渲染（scripts/gen_drawio_figures.py），
+    # 这里只写 SVG 和「模块设计一览」；若再从 SVG 截一次 PNG 会把 draw.io 的图覆盖掉。
     for svg_path, png_path, w, h, svg in (
-            (OUT_SVG, OUT_PNG, res["w"], res["h"], res["svg"]),
+            (OUT_SVG, None, res["w"], res["h"], res["svg"]),
             (OUT_SVG2, OUT_PNG2, MW, MH, build_modules_svg(facts))):
         with open(svg_path, "w", encoding="utf-8", newline="\n") as fh:
             fh.write(svg)
         print("\n写出 %s（%d B）" % (os.path.relpath(svg_path, ROOT), len(svg.encode())))
+        if png_path is None:
+            print("       （该图的 PNG 由 scripts/gen_drawio_figures.py 用 draw.io 渲染）")
+            continue
         exe = render_png(svg_path, png_path, w, h)
         if exe and os.path.isfile(png_path):
             print("写出 %s（%d B，用 %s 渲染）"
@@ -242,9 +247,9 @@ def main() -> int:
                      os.path.basename(exe)))
         else:
             print("[提示] 没找到 Chrome/Edge，只出了 SVG；PNG 请手动截。")
-    shutil.copy2(OUT_PNG, OUT_PNG_SITE)
-    print("写出 %s（站点副本，%d B）"
-          % (os.path.relpath(OUT_PNG_SITE, ROOT), os.path.getsize(OUT_PNG_SITE)))
+    shutil.copy2(OUT_PNG2, os.path.join(ROOT, "docs", "assets", "images",
+                                        os.path.basename(OUT_PNG2)))
+    print("写出站点副本：%s" % os.path.basename(OUT_PNG2))
     return 0
 
 
