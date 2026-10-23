@@ -5,35 +5,29 @@
 <text x="870" y="46" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="27" font-weight="bold" fill="#0f172a" text-anchor="middle">题目 4：简易拼图游戏 —— 功能总览框图</text>
 <text x="870" y="72" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" fill="#475569" text-anchor="middle">按功能划分的 6 个核心功能块 + 1 个时钟块（块内等宽小字 = 它包含的 rtl/&lt;同名&gt;.vhd 实体，共 11 个）；模块级连线与端口见下一张图</text>
 <rect x="100" y="210" width="1440" height="492" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.6" stroke-dasharray="9 6"/>
-<text x="215" y="236" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">内部核心功能框图（6 个功能块 · 10 个 entity）</text>
+<text x="215" y="236" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15" font-weight="bold" fill="#64748b">内部核心功能框图（6 块 · 10 个 entity）</text>
 <path d="M 820 90 L 820 190" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5"/>
-<path d="M 200 190 L 1400 190" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5"/>
+<path d="M 200 190 L 1365 190" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5"/>
 <path d="M 200 190 L 200 276" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
 <path d="M 650 190 L 650 276" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
 <path d="M 1000 190 L 1000 276" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
-<path d="M 1350 190 L 1350 276" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
-<path d="M 950 190 L 950 470" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
-<path d="M 1300 190 L 1300 470" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
+<path d="M 1365 190 L 1365 276" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
+<path d="M 1100 190 L 1100 470" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
+<path d="M 1330 190 L 1330 470" fill="none" stroke="#b91c1c" stroke-width="1.6" stroke-dasharray="6 5" marker-end="url(#ac)"/>
 <path d="M 420.0 344.0 L 500.0 344.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
-<rect x="441.0" y="312.0" width="38.0" height="20" rx="3" fill="#ffffff"/>
-<text x="460.0" y="328.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">按键</text>
+<text x="460.0" y="328.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">按键</text>
 <path d="M 800.0 344.0 L 860.0 344.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
-<rect x="811.0" y="312.0" width="38.0" height="20" rx="3" fill="#ffffff"/>
-<text x="830.0" y="328.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">控制</text>
+<text x="830.0" y="328.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">控制</text>
 <path d="M 1140.0 344.0 L 1215.0 344.0 L 1215.0 356.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
-<rect x="1151.0" y="312.0" width="53.0" height="20" rx="3" fill="#ffffff"/>
-<text x="1177.5" y="328.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">帧平面</text>
-<path d="M 1515.0 356.0 L 1560.0 356.0 L 1560.0 345.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
-<path d="M 650.0 412.0 L 740.0 412.0 L 740.0 440.0 L 920.0 440.0 L 920.0 470.0 L 1000.0 470.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
-<rect x="803.5" y="408.0" width="53.0" height="20" rx="3" fill="#ffffff"/>
-<text x="830.0" y="424.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">关卡号</text>
+<text x="1178.5" y="328.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">帧平面</text>
+<path d="M 1515.0 356.0 L 1560.0 356.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
+<path d="M 650.0 412.0 L 700.0 412.0 L 700.0 428.0 L 920.0 428.0 L 920.0 470.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
+<text x="766.0" y="454.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">关卡号</text>
 <path d="M 1000.0 470.0 L 1000.0 412.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
-<rect x="987.4" y="425.0" width="77.3" height="20" rx="3" fill="#ffffff"/>
-<text x="1026.0" y="441.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">掩码/图案</text>
-<path d="M 650.0 412.0 L 620.0 412.0 L 620.0 640.0 L 1160.0 640.0 L 1160.0 538.0 L 1200.0 538.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
-<rect x="863.5" y="608.0" width="53.0" height="20" rx="3" fill="#ffffff"/>
-<text x="890.0" y="624.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">音效码</text>
-<path d="M 1460.0 538.0 L 1560.0 538.0 L 1560.0 515.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
+<text x="1051.5" y="455.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">掩码/图案</text>
+<path d="M 650.0 412.0 L 620.0 412.0 L 620.0 650.0 L 1330.0 650.0 L 1330.0 606.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
+<text x="965.0" y="672.5" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16.5" fill="#334155" text-anchor="middle">音效码</text>
+<path d="M 1460.0 538.0 L 1560.0 538.0" fill="none" stroke="#334155" stroke-width="2" stroke-linejoin="round" marker-end="url(#ar)"/>
 <rect x="120" y="276" width="300" height="136" rx="8" fill="#ffffff" stroke="#334155" stroke-width="2.2"/>
 <text x="270" y="310" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="22.5" font-weight="bold" fill="#0f172a" text-anchor="middle">键盘输入</text>
 <text x="270" y="334" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="16" fill="#475569" text-anchor="middle">列扫描 · 40 ms 消抖</text>

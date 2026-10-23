@@ -52,20 +52,19 @@ def build_overview():
                         stroke="#CBD5E1", sw=1.6, bold=False, dashed=True,
                         rounded=True))
     # 容器标题：cy+9（不是 cy+6）—— 原来墨迹顶缘距容器顶虚线内缘只有 9.2 画布 px。
-    cells.append(DL.label("zone_title", G.ZONE_TITLE_X, cy + 9,
-                          "内部核心功能框图（6 块 · 10 个 entity）", fs=15,
+    # 容器标题用 G.CONTAINER[4]（不要重抄字符串）：SVG 版与 drawio 版必须逐字一致
+    # （早先 drawio 侧硬编码成「6 块」、SVG 是「6 个功能块」，同一张图两个交付件不同）。
+    cells.append(DL.label("zone_title", G.ZONE_TITLE_X, cy + 9, ctitle, fs=15,
                           color=DL.MUTED, bold=True, w=300))
     # 时钟分配（虚线）在方框之前画，穿过方框的部分会被框挡住
     rail = DL.label("clknote", 0, 0, "", fs=1)
     # ⚠️ tap 的 x 选择有一条硬规则：**不能落在"连线标签要用的空隙"里**。
     #   · kbd 200 / fsm 650 / core 1000 / dsp 1365 都是块的水平中心，直接从 rail 下到块顶，
     #     中间穿过别的方框（方框后画、把线压住）—— 安全；
-    #   · 原先把 rom/aud 放在空隙 818 / 1160 里（想沿列间空隙下引再横着进块左边缘），
-    #     结果「控制」(空隙 800..860) 与「帧平面」(空隙 1140..1215) 两个标签被竖线穿字。
-    #     现在改成 1100 / 1330：仍然直落块顶，只穿过 core / dsp 方框（被压住），
-    #     把 800..860 与 1140..1215 两个空隙完整让给标签。
-    taps = {"kbd": 200, "fsm": 650, "core": 1000, "dsp": 1365, "rom": 1100, "aud": 1330}
-    for bid, tx in taps.items():
+    #   · rom 1100 / aud 1330 同理（穿过 core / dsp 方框被压住），把 800..860 与
+    #     1140..1215 两个空隙完整让给「控制」「帧平面」标签。
+    #   这一份 x 值现在是 `gen_overview_diagram.TAPS`，两边共用。
+    for bid, tx in G.TAPS.items():
         ty = G.block(bid)[2]
         cells.append(DL.edge("clk_" + bid, "clk", bid, [(tx, G.RAIL_Y)],
                              color=DL.CLK, sw=1.6, dashed=True, fs=15))
@@ -104,21 +103,9 @@ def build_overview():
         ("fsm", "b", "aud", "b", "音效码", [(620, 412), (620, 650), (1330, 650)]),
         ("aud", "r", "dev_buzz", "l", "", []),
     ]
-    # 六条连线标签全部改成**独立 label 钉死坐标**（`e%d` 传 lab=""）。
-    # 为什么不用 draw.io 的自动 edgeLabel：它的落点由折线中点 + 相对偏移决定，实测
-    #   ·「关卡号」被 rom 时钟竖线 x=818 穿过；
-    #   ·「掩码/图案」左缘距 rom→core 竖线 x=1000 只有 3.3 画布 px（等于贴着线）；
-    #   ·「按键」「控制」「帧平面」顶缘距各自水平连线只有 9.6~10.1 画布 px。
-    # 手工坐标让每一条都能对线/框留出 ≥10 画布 px（帧平面受 60 px 通道限制为 7~8 px，
-    # 但零重叠、零穿越）。
-    detached = {
-        0: ("e0_lab", 443, 314, 34, 18),    # 按键（kbd→fsm，通道 420..500）
-        1: ("e1_lab", 813, 314, 34, 18),    # 控制（fsm→core，通道 800..860）
-        2: ("e2_lab", 1154, 314, 49, 18),   # 帧平面（core→dsp，通道 1140..1215）
-        4: ("e4_lab", 743, 440, 46, 18),    # 关卡号（水平段已抬到 y=428）
-        5: ("e5_lab", 1012, 441, 79, 18),   # 掩码/图案（竖线 x=1000 右侧）
-        6: ("e6_lab", 930, 658, 70, 18),    # 音效码（水平段 y=650 下方）
-    }
+    # 六条连线标签全部改成**独立 label 钉死坐标**（`e%d` 传 lab=""），坐标表与
+    # SVG 版（`gen_overview_diagram.LABEL_POS`）同源。
+    detached = G.LABEL_POS
     for i, (frm, fs, to, ts, lab, extra) in enumerate(flows):
         pts = G.pts_of(frm, fs, to, ts, extra)
         # pts_of 会把两端也算进去；draw.io 只需要中间拐点

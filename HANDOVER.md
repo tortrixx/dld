@@ -305,7 +305,7 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | 载体 | 怎么来 |
 |:---|:---|
 | `.typ` | **手写**，唯一事实源 |
-| `.pdf` | `typst compile`（交付主件，26 页） |
+| `.pdf` | `typst compile`（交付主件，27 页） |
 | `.md` | `scripts/gen_report_md.py`（封面与正文都从 `.typ` 派生） |
 | `.docx` | `scripts/sync_report_docx.py`（幂等同步，收敛后重跑是 0 变更） |
 
@@ -342,8 +342,8 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 
 | 图 | 显示宽 | 来源 | 最小字号 | 最大字号 |
 |:--|--:|:--|--:|--:|
-| `fig1_system_architecture.png` | 100% | draw.io 3645x2526 | 3.4 pt | 7.1 pt |
-| `fig_game_flow.png` | 88% | draw.io 4204x5008 | 3.9 pt | 7.2 pt |
+| `fig1_system_architecture.png` | 100% | draw.io 3645x2584 | 3.4 pt | 7.1 pt |
+| `fig_game_flow.png` | 88% | draw.io 4204x5363 | 3.9 pt | 7.2 pt |
 | `GUI-buzzer_ctrl.png` | 100% | 1375x278 | 4.1 pt | 4.1 pt |
 | `GUI-clk_gen.png` | 100% | 1375x388 | 4.1 pt | 4.1 pt |
 | `GUI-disp_format.png` | 100% | 1375x335 | 4.1 pt | 4.1 pt |
@@ -362,15 +362,18 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | `GUI-编译-面积.png` | 62% | 468x228 | 7.5 pt | 7.5 pt |
 | `GUI-编译-时序.png` | 75% | 535x74 | 7.9 pt | 7.9 pt |
 
-**当前结论**（2026-10-23 **第二轮视觉验收改完、三张主图冻结后**重算，`& $bun .tmp\qa_figures.py --out .tmp\fig_ledger.md`）：
+**当前结论**（2026-10-23 **第三轮（多 agent 工作流审查）改完、三张主图冻结后**重算，`python .tmp/qa_figures.py --out .tmp/fig_ledger.md`）：
 19 张图的最小字号落在 **3.4 ~ 7.9 pt** —— 最差是 `fig1_system_architecture.png` **3.4 pt**，
 最好是 `GUI-编译-时序.png` **7.9 pt**；3 张主图（draw.io 渲染）分别是 **3.4 / 3.9 / 4.1 pt**（`fig1` / `fig_game_flow` / `fig_overview`），
 其余 16 张为 4.1 ~ 7.9 pt。主文字（方框标题）在 7.1 ~ 7.9 pt。改造前最差的三档是流程图 3.0 pt、模块级框图 3.4 pt、
 12 张 Quartus 截图 3.75 pt（且带窗口标题栏与底部大片空白）。
 
-> ⚠️ **`来源` 列的像素宽 ≠ 画布宽**：这一轮为给左上角三行图例腾地方，`fig_game_flow` 渲染出的 PNG 由
-> **4110×5008 变成 4204×5008**（右侧多出一条空白带），但**画布宽仍是 1700**（`YS=0.78` 只压纵向）
-> —— 字号是按画布宽换算的，所以 **pt 一个没变**（3.9 / 7.2 pt）。见到 `来源` 列宽度变化不必当成字号回归。
+> ⚠️ **`来源` 列的像素宽 ≠ 画布宽**：两轮改动都让 PNG 的导出框变大而**画布宽没变** ——
+> `fig_game_flow` 由 **4110×5008 → 4204×5008**（左上角三行图例把导出框往左撑），
+> 第三轮又因「按【开始】重开?」的否支绕到右侧 **4204×5363**（画布高 2121 → 2223）；
+> `fig1_system_architecture` 由 3645×2526 → **3645×2584**（图例由 1 行变 3 行、整体上移）。
+> **画布宽仍是 1700 / 1516**（`YS=0.78` 只压纵向）—— 字号是按画布宽换算的，所以
+> **pt 一个没变**（3.4 / 3.9 / 4.1）。见到 `来源` 列尺寸变化不必当成字号回归。
 
 **提字号的三条手法**（都可复现）：
 1. **裁掉窗口装饰**：`scripts/gen_wave_figures.py` 从 `docs/图/` 的原件重裁截图；
@@ -494,15 +497,45 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 
 **已知取舍（诚实记录残余，是取舍不是待办）**
 
-13. ⚠️ `fig1_system_architecture` 仍有 **10 / 17** 个主干信号组名 `d_own > 30 画布 px`（最远：「选择→ROM」**87**、
-    「选择→引擎」**71**、「零片掩码」**65.5**、「段码」**55.7**）—— 是被两条硬约束挤出来的：**通道净宽被 7~8 根竖线占满**、
-    且**必须离分区虚线 ≥ 10 px**，放不下 78 ~ 88 px 宽的标签。取舍口径是「**宁可浮动也不压线**」：
-    压线会被渲染级检查判死，浮动只是看着不贴身；
-14. ⚠️ `fig_game_flow` 底部空白带 `y = 1505` 与 `lwin → win` 的竖线有 **1 处 90° 交叉** ——
-    交叉处**没有标签邻近**，属正常流程图的线交叉，不做处理；
-15. ⚠️ `fig1_system_architecture` 的 `ext_dot`「ROW/COLR/COLG」/ `ext_seg`「seg / cat」距**自身浅灰框**边
-    **7.7 / 8.5 画布 px**（其余 5 个 `ext_*` 框 ≥ 11.6）—— 是框内边距，不是线穿字；再放大只能加宽 `ext_*` 框，
-    而 `channel(0)` 只剩 46 px 要分给两根主干，故不再动。
+13. ⚠️ `fig1_system_architecture` 仍有 **10 / 17** 个主干信号组名 `d_own > 30 画布 px`（口径 = 标签矩形到
+    **自己那条主干折线**的最短距离；最远：「选择→ROM」**87.0**、「选择→引擎」**71.0**、「零片掩码」**65.5**、
+    「段码」**59.5**）—— 是被两条硬约束挤出来的：**通道净宽被 7~8 根竖线占满**、且**必须离分区虚线 ≥ 10 px**，
+    放不下 78 ~ 88 px 宽的标签。取舍口径是「**宁可浮动也不压线**」：压线会被渲染级检查判死，浮动只是看着不贴身；
+14. ⚠️ `fig_game_flow` 底部空白带 `y = 1505` 与 `lall → lsolved` 的竖线有 **1 处 90° 交叉** ——
+    交叉处**没有标签邻近**（最近的「是」在 34 画布 px 外），属正常流程图的线交叉，不做处理；
+    （复算：`python -c "import sys;sys.path.insert(0,'scripts');import gen_flow_diagram as G;
+    print(G.pts_of('ltime','b','bus','b',[(1560,1278),(1560,1930)]));
+    print(G.pts_of('lall','b','lsolved','t',[]))"`）
+15. ⚠️ `fig1_system_architecture` 的 `ext_*` 浅灰框**框内文字到自身框边**的留白：水平口径下
+    `ext_dot`「ROW/COLR/COLG」**7.7** 画布 px（其余 6 个 ≥ 11.6）；若改成"四向最小"口径则
+    `ext_kp` 8.9 / `ext_seg` 9.2（都是下沿，被 `g`、`/` 的降部吃掉）。是框内边距、不是线穿字；
+    再放大只能加宽 `ext_*` 框，而 `channel(0)` 只剩 46 px 要分给两根主干，故不再动。
+
+**第三轮（2026-10-23，多 agent 工作流审查：5 个独立审查员 + 5 个对抗复核员）**
+工作流对「三张图 + 脚本 diff + 文档/提交包」五路并行审查，再让另一名 agent 逐条证伪；19 条发现中 18 条
+被确认为真，已全部处理：
+
+- **`fig_game_flow` 的语义按 RTL 重画**（本轮最重的一条）：原图把「过关 S_WIN」画成每关必经、之后才判
+  「关卡 < 3？」，与 `rtl/game_fsm.vhd:337-349` 相反（第一、二关拼对是 `level/lvl3` 置位后直接回
+  `S_PREVIEW`，只有第三关才 `st <= S_WIN`）。现在拆成 **「全部零片已锁定？ → 全图并集 == 目标图案？」**
+  两级判据（补上 `:350-352` 的 `i_all_lock` 分支：**全锁但拼错 → 立刻失败**），并把「过关 S_WIN（第三关）」
+  放到「关卡 < 3？」的**否**支；「按【开始】重开?」补了**否**支（回到结算画面）与标签。
+  报告 §2.4 的 S_WIN / S_FAIL 两段同步改写。
+- **`fig_game_flow` 的箭头悬空**：`start/sw/gokey/lupd/lvlq/again` 的菱形中心原为 870/870/870/790/870/870，
+  与下方矩形的 830 错开 ⇒ `lupd→lwin`、`win→lvlq` 两支箭头的尖端悬在菱形斜边上方 ~24 px。现在
+  **所有菱形/矩形中心一律取 830**，竖线不再需要折点，箭头正落在顶点上。
+- **`fig_game_flow` 的容器圆角**：draw.io 对 1220×702 的框默认给 ~104 px 圆角，弧线切进标题
+  「对局循环 S_PLAYING…」；改为显式 `arcSize=14` + 标题拆两行（单行会伸到 x≈854、被 x=830 的竖箭头穿过）。
+- **`fig1_system_architecture` 的事实错误**：`arch_data.GLOBALS["glue_row"]` 漏了 `rst`
+  （`rtl/puzzle_top.vhd:371` 的 `mrow` 复位），导致图内角标少一个 `rst`、typ §2.2 的
+  「消费者 10/8/4、共 22 根」少算 1 → 已改为 **10/9/4、共 23 根**。
+- **PNG 与 SVG 两个交付件不一致**：`fig_overview` 的 `taps`（950/1300 vs 1100/1330）与音效码走线、
+  `fig_game_flow` 的标签定位（SVG 里还留着"待机框内侧的否标签"）—— 现在 **`label_xy()` / `LABEL_POS` /
+  `taps` 都由两边共用**；`fig1` 的 PNG 图例也补齐了 SVG 有的三路来源与消费者计数，并加了
+  「晶振 → clk、SW7 → sw7 都有意不画线」一句。
+- **`fig1_layout.py` 的死代码**：4b 的 60 轮"共线清零"循环在当前几何下一轮都进不去，且 `level_get`
+  对 band 型控制量会 `KeyError` —— 已删除（保留 `h_runs` / `h_conflicts`，5b 仍在用）。
+- 渲染级自测工具的两个坑（欧氏距离、文字块高度上限、强调色阈值 76）也一并修了，见上面那段引用块。
 
 
 上述生成图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与

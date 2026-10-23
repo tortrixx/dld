@@ -76,9 +76,12 @@ GLUE = {
 BOX_IDS = list(ENTITIES) + list(EXTERNAL) + list(GLUE)
 
 # ---------------------------------------------------------------- 全局网络（轨道式分配）
-# 这三个网络是"一对多"的全局分配（按 GLOBALS 实计：clk 10 个消费者、rst 8 个、sw7 4 个）。
-# 逐根画箭头会得到 22 根长线、必然穿框 ⇒ 图上用**全局轨道 / 角标**表达，
-# 不进入 WIRE_GROUPS（否则 fidelity 对账会要求画 22 根线）。
+# 这三个网络是"一对多"的全局分配（按 GLOBALS 实计：clk 10 个消费者、rst 9 个、sw7 4 个）。
+# 逐根画箭头会得到 23 根长线、必然穿框 ⇒ 图上用**全局轨道 / 角标**表达，
+# 不进入 WIRE_GROUPS（否则 fidelity 对账会要求画 23 根线）。
+# ⚠️ `glue_row` 必须算 rst 消费者：它在 `rtl/puzzle_top.vhd:368-377` 的行计数器里
+#    `if (rst = '1') then mrow <= (others => '0');` —— 早先只写了 ["clk"]，
+#    导致图内角标少一个 rst、typ §2.2 的"消费者 10/8/4、共 22 根"也少算 1。
 RAILS = {
     "clk": {"from": "ext_clk", "text": "clk 50 MHz"},
     "rst": {"from": "clk_gen", "text": "rst 同步复位"},
@@ -97,7 +100,7 @@ GLOBALS = {
     "seg_scan":        ["clk", "rst", "sw7"],
     "dot_matrix_scan": ["clk", "rst", "sw7"],
     "buzzer_ctrl":     ["clk", "rst", "sw7"],
-    "glue_row":        ["clk"],
+    "glue_row":        ["clk", "rst"],
     "glue_pat":        ["clk", "rst"],
 }
 

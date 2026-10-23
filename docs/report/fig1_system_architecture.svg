@@ -120,7 +120,7 @@
 <rect x="806" y="400" width="164" height="74" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="2.0" stroke-dasharray="7 5"/>
 <text x="888" y="430" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.0" font-weight="bold" fill="#0f172a" text-anchor="middle">行计数器+行切片</text>
 <text x="888" y="450" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#475569" text-anchor="middle">计数 · 切片</text>
-<text x="812" y="468" font-family="Consolas, Courier New, monospace" font-size="14.0" fill="#94a3b8">clk</text>
+<text x="812" y="468" font-family="Consolas, Courier New, monospace" font-size="14.0" fill="#94a3b8">clk·rst</text>
 <rect x="806" y="290" width="164" height="74" rx="7" fill="#f8fafc" stroke="#64748b" stroke-width="2.0" stroke-dasharray="7 5"/>
 <text x="888" y="320" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="15.0" font-weight="bold" fill="#0f172a" text-anchor="middle">图案选择锁存</text>
 <text x="888" y="340" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#475569" text-anchor="middle">锁存 · 组合</text>
@@ -159,6 +159,8 @@
 <text x="768.0" y="235.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">选择→ROM</text>
 <rect x="882.7" y="218.0" width="88.5" height="22" rx="3" fill="#ffffff" fill-opacity="0.93"/>
 <text x="927.0" y="235.0" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="17.0" fill="#1e293b" text-anchor="middle">选择→引擎</text>
-<text x="16" y="996" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#334155">图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件</text>
-<text x="16" y="1016" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#334155">方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；这三路是一对多分配（消费者 10 / 8 / 4 个、共 22 根），逐根画会得到 22 根长线，故用角标表达；纯组合模块（disp_format / piece_rom / pattern_rom）不消费全局网络，因此没有角标（不是漏画）</text>
+<text x="16" y="966" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#334155">图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件</text>
+<text x="16" y="986" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#334155">方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；这三路是一对多分配（消费者 10 / 9 / 4 个、共 23 根），逐根画会得到 23 根长线，故用角标表达</text>
+<text x="16" y="1006" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#334155">纯组合模块（disp_format / piece_rom / pattern_rom）不消费全局网络，因此没有角标（不是漏画）</text>
+<text x="16" y="1026" font-family="Microsoft YaHei, SimSun, sans-serif" font-size="13.5" fill="#334155">⚠ 板载「50 MHz 有源晶振 → clk」与「SW7 → sw7」都有意不画连线：这两路是全局网络（一对多分发），图上用方框左下角角标表达，不是漏画接线</text>
 </svg>

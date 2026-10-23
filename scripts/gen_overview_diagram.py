@@ -66,25 +66,46 @@ EXT = [
     ("dev_disp", 1560, 270, 150, 150, ["数码管", "8×8 双色点阵"]),
     ("dev_buzz", 1560, 470, 150, 90, ["蜂鸣器"]),
 ]
-CONTAINER = (100, 210, 1440, 492, "内部核心功能框图（6 个功能块 · 10 个 entity）")
+CONTAINER = (100, 210, 1440, 492, "内部核心功能框图（6 块 · 10 个 entity）")
 RAIL_Y = 190
+# 6 条时钟分配竖线的 x —— **SVG 版与 drawio 版共用本常量**（早先两边各写一套，
+# 950/1300/1350 vs 1100/1330/1365，同一张图的两个交付件走线不一致）。
+TAPS = {"kbd": 200, "fsm": 650, "core": 1000, "dsp": 1365, "rom": 1100, "aud": 1330}
 # 容器标题左端 x：放在容器左内边留白处，并避开 x=200（kbd）与 x=650（fsm）两条时钟竖线
 # —— 标题文字宽约 300，落在 215..515 正好卡在两条竖线之间的空档，净距 ≫12 px。
 # drawio 版（gen_drawio_figures.build_overview）复用这个常量，两边保持一致。
 ZONE_TITLE_X = 215
 
-# ---- 连线：(源, 源侧, 目标, 目标侧, 标签, 额外拐点) ----
+# ---- 连线：(源, 源侧, 目标, 目标侧, 标签, 额外拐点[, 显式终点]) ----
+# ⚠️ 第 7 项 `end` 用来覆盖"终点必须落在目标框中心"的默认行为：
+#    · `关卡号` 要进「图案与随机数据」顶边的 x=920，而不是框顶中心 1000
+#      （否则末段会变成沿框顶边的水平线，箭头朝右、且下半被方框盖住）；
+#    · `dsp→dev_disp` / `aud→dev_buzz` 要水平进器件框左边缘，
+#      否则 pts_of 会在目标框中心 y 处插一个竖直短段，箭头朝上戳在框边。
 EDGES = [
     ("kbd", "r", "fsm", "l", "按键", []),
     ("fsm", "r", "core", "l", "控制", []),
     ("core", "r", "dsp", "l", "帧平面", []),
-    ("dsp", "r", "dev_disp", "l", "", []),
-    ("fsm", "b", "rom", "t", "关卡号", [(740, 412), (740, 440), (920, 440), (920, 470)]),
+    ("dsp", "r", "dev_disp", "l", "", [], (1560, 356)),
+    # 与 `gen_drawio_figures.build_overview()` 的 flows[4] 保持一致（700/428）。
+    ("fsm", "b", "rom", "t", "关卡号", [(700, 412), (700, 428), (920, 428)], (920, 470)),
     ("rom", "t", "core", "b", "掩码/图案", []),
-    ("fsm", "b", "aud", "l", "音效码", [(620, 412), (620, 640), (1160, 640), (1160, 538)]),
-    ("aud", "r", "dev_buzz", "l", "", []),
+    ("fsm", "b", "aud", "b", "音效码", [(620, 412), (620, 650), (1330, 650)]),
+    ("aud", "r", "dev_buzz", "l", "", [], (1560, 538)),
 ]
 KP = [("kp_row", 300, "in"), ("kp_col", 350, "out")]
+
+# 六条连线标签的显式坐标 (x, y, w, h)——与 `gen_drawio_figures.build_overview()`
+# 的 `detached` 表**同源**：同一张图有 SVG / PNG 两个交付物，早先两边各算一套，
+# SVG 里出现"音效码被 rom 框盖住""掩码/图案 的白底切断竖线"这类缺陷。
+LABEL_POS = {
+    0: ("e0_lab", 443, 314, 34, 18),    # 按键（kbd→fsm，通道 420..500）
+    1: ("e1_lab", 813, 314, 34, 18),    # 控制（fsm→core，通道 800..860）
+    2: ("e2_lab", 1154, 314, 49, 18),   # 帧平面（core→dsp，通道 1140..1215）
+    4: ("e4_lab", 743, 440, 46, 18),    # 关卡号（水平段已抬到 y=428）
+    5: ("e5_lab", 1012, 441, 79, 18),   # 掩码/图案（竖线 x=1000 右侧）
+    6: ("e6_lab", 930, 658, 70, 18),    # 音效码（水平段 y=650 下方）
+}
 
 
 def esc(s):
@@ -116,8 +137,9 @@ def anchor(bid, side):
             "t": (x + w / 2, y), "b": (x + w / 2, y + h)}[side]
 
 
-def pts_of(frm, fs, to, ts, extra):
-    seq = [anchor(frm, fs)] + [tuple(q) for q in extra] + [anchor(to, ts)]
+def pts_of(frm, fs, to, ts, extra, end=None):
+    """折线点串。`end` 非空时用它替代 `anchor(to, ts)`（见 EDGES 的注释）。"""
+    seq = [anchor(frm, fs)] + [tuple(q) for q in extra] + [tuple(end) if end else anchor(to, ts)]
     out = [seq[0]]
     for q in seq[1:]:
         a = out[-1]
@@ -160,35 +182,34 @@ def build():
     # ① 先画时钟分配（虚线）—— 后面的方框会压住穿过它们的部分
     p.append('<path d="M 820 90 L 820 %d" fill="none" stroke="%s" stroke-width="1.6" '
              'stroke-dasharray="6 5"/>' % (RAIL_Y, CLK))
-    p.append('<path d="M 200 %d L 1400 %d" fill="none" stroke="%s" stroke-width="1.6" '
-             'stroke-dasharray="6 5"/>' % (RAIL_Y, RAIL_Y, CLK))
-    taps = {"kbd": 200, "fsm": 650, "core": 1000, "dsp": 1350, "rom": 950, "aud": 1300}
-    for bid, tx in taps.items():
+    # ⚠️ taps 必须与 `gen_drawio_figures.build_overview()` **完全一致**：同一张图有 SVG
+    #    （实际设计方案交付件）与 PNG（报告用）两个交付物，早先两边各写一套（这里
+    #    950/1300/1350、drawio 那边 1100/1330/1365），两个交付件的走线不一样
+    #    （第二轮独立验收 docspkg-F4 实测）。现在 taps 是本模块的常量，drawio 侧直接引用。
+    rail_x1 = max(TAPS.values())
+    p.append('<path d="M %d %d L %d %d" fill="none" stroke="%s" stroke-width="1.6" '
+             'stroke-dasharray="6 5"/>' % (min(TAPS.values()), RAIL_Y, rail_x1, RAIL_Y, CLK))
+    for bid, tx in TAPS.items():
         ty = block(bid)[2]
         p.append('<path d="M %d %d L %d %d" fill="none" stroke="%s" stroke-width="1.6" '
                  'stroke-dasharray="6 5" marker-end="url(#ac)"/>'
                  % (tx, RAIL_Y, tx, ty, CLK))
 
     # ③ 实线数据流（先画线、后方框压住线头）
-    for frm, fs, to, ts, label, extra in EDGES:
-        pts = pts_of(frm, fs, to, ts, extra)
+    for i, edge in enumerate(EDGES):
+        frm, fs, to, ts, label, extra = edge[:6]
+        end = edge[6] if len(edge) > 6 else None
+        pts = pts_of(frm, fs, to, ts, extra, end)
         d = "M " + " L ".join("%.1f %.1f" % q for q in pts)
         p.append('<path d="%s" fill="none" stroke="%s" stroke-width="2" '
                  'stroke-linejoin="round" marker-end="url(#ar)"/>' % (d, LINE))
-        if label:
-            segs = list(zip(pts[:-1], pts[1:]))
-            horiz = [s for s in segs if abs(s[1][0] - s[0][0]) >= abs(s[1][1] - s[0][1])]
-            if horiz:
-                (x0, y0), (x1, y1) = max(horiz, key=lambda s: abs(s[1][0] - s[0][0]))
-                lx, ly = (x0 + x1) / 2.0, min(y0, y1) - 16
-            else:
-                (x0, y0), (x1, y1) = max(segs, key=lambda s: abs(s[1][1] - s[0][1]))
-                lx, ly = max(x0, x1) + 26, (y0 + y1) / 2.0
-            wd = tw(label, 15) + 8
-            p.append('<rect x="%.1f" y="%.1f" width="%.1f" height="20" rx="3" fill="#ffffff"/>'
-                     % (lx - wd / 2, ly - 16, wd))
+        if label and i in LABEL_POS:
+            # ⚠️ 六条标签用**显式坐标**（与 drawio 侧同源）：默认落点会让「音效码」
+            #    被后画的 rom 框盖住、让「掩码/图案」的白底切断 x=1000 的竖线。
+            _cid, lx, ly, lw, lh = LABEL_POS[i]
             p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="16.5" fill="%s" '
-                     'text-anchor="middle">%s</text>' % (lx, ly, FONT, "#334155", esc(label)))
+                     'text-anchor="middle">%s</text>'
+                     % (lx + lw / 2.0, ly + lh / 2.0 + 5.5, FONT, "#334155", esc(label)))
 
     # ④ 方框
     for bid, x, y, w, h, title, sub in BLOCKS:

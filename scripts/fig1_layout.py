@@ -178,14 +178,18 @@ LANE_MERGE = 8.0
 # 附着点离方框上 / 下边缘的最小距离。
 LANE_INSET = 14.0
 
-LEGEND_Y = 986
-NOTE_Y = 996
+LEGEND_Y = 946
+NOTE_Y = 966
 NOTE_LINES = [
     "图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；"
     "虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件",
     "方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；"
-    "这三路是一对多分配（消费者 10 / 8 / 4 个、共 22 根），逐根画会得到 22 根长线，故用角标表达；"
+    "这三路是一对多分配（消费者 10 / 9 / 4 个、共 23 根），逐根画会得到 23 根长线，故用角标表达",
+    # ⚠️ 这一段必须单独成行：并到上一行会宽 ≈1900 px，超出画布 W=1516 被硬裁
+    #    （第三轮独立验收 scripts-F2 实测，SVG 交付件里右端 1/6 被切掉）。
     "纯组合模块（disp_format / piece_rom / pattern_rom）不消费全局网络，因此没有角标（不是漏画）",
+    "⚠ 板载「50 MHz 有源晶振 → clk」与「SW7 → sw7」都有意不画连线：这两路是全局网络（一对多分发），"
+    "图上用方框左下角角标表达，不是漏画接线",
 ]
 
 
@@ -525,11 +529,14 @@ def build(widths, facts):
             apply_lane(key, best_i)
             lane_sel[key], base = best_i, best_c
 
-    # ---------- 4b. 跨主干"共线重合"清零（T1 返工 必修1 A1~A5） ----------
+    # ---------- 4b. 跨主干"共线重合"检测（T1 返工 必修1 A1~A5） ----------
     # 两个不同源模块的水平段若 y 相差 < 8 px 且 x 相邻/重叠，draw.io 会把它画成
     # **一根连续直线**（"选择→引擎"的横段 970→988 与 w18 的 988→1104 就差 1 px）。
-    # 3c 已经把竖线分开了，这里把剩下的水平级差逐对拉开：优先挪"入线口"，
-    # 其次挪"出线口"、再挪"干线带档位"，每次只接受让重合对数下降的移动。
+    # ⚠️ 这里只保留**检测函数**：实际把重合降到 0 的是 3c（同通道共用槽位）+ 5b
+    #    （出线口 y 精修），`h_conflicts()` 现在是 5b 的判据之一。
+    #    原先还有一段 60 轮的"挪入线口 / 出线口 / 干线带档位"清零循环，但它在当前
+    #    几何下**一轮都进不去**（进循环时 h_conflicts() 已经是 0），且 `level_get`
+    #    对 band 型控制量会 KeyError（band_y 只对 span>=2 的主干赋值）—— 已删除。
     by_id = {w["id"]: w for w in wires}
 
     def h_runs():
@@ -563,67 +570,6 @@ def build(widths, facts):
                     out.append((a, b))
         return out
 
-    def level_range(ctrl):
-        kind, ref = ctrl
-        if kind == "entry":
-            b = boxes[by_id[ref]["to"]]
-            return (b.y + LANE_INSET, b.y1 - LANE_INSET)
-        if kind == "exit":
-            b = boxes[ref[0]]
-            return (b.y + LANE_INSET, b.y1 - LANE_INSET)
-        return (BAND_Y0, BAND_Y0 + 4 * BAND_DY)
-
-    def level_get(ctrl):
-        kind, ref = ctrl
-        if kind == "entry":
-            return in_y[ref]
-        if kind == "exit":
-            return trunks[ref][0]["y_exit"]
-        return trunks[ref][0]["band_y"]
-
-    def level_set(ctrl, v):
-        kind, ref = ctrl
-        if kind == "entry":
-            in_y[ref] = v
-            route(by_id[ref])
-        elif kind == "exit":
-            for w in trunks[ref]:
-                w["y_exit"] = v
-                route(w)
-        else:
-            for w in trunks[ref]:
-                if w["span"] >= 2:
-                    w["band_y"] = v
-                route(w)
-
-    for _ in range(60):
-        conf = h_conflicts()
-        if not conf:
-            break
-        base_cross = cross_total()
-        done = False
-        for (a, b) in conf:
-            for seg in (a, b):
-                ctrl = seg[4]
-                lo, hi = level_range(ctrl)
-                cur = level_get(ctrl)
-                for dv in (LANE_MERGE, -LANE_MERGE, 2 * LANE_MERGE, -2 * LANE_MERGE):
-                    nv = cur + dv
-                    if nv < lo or nv > hi or abs(nv - cur) < 1e-9:
-                        continue
-                    level_set(ctrl, nv)
-                    nc = len(h_conflicts())
-                    if nc < len(conf) or (nc == len(conf) and cross_total() < base_cross):
-                        done = True
-                        break
-                    level_set(ctrl, cur)
-                if done:
-                    break
-            if done:
-                break
-        if not done:
-            break
-    h_left = len(h_conflicts())
 
     # ---------- 5. 主干标签（贴在主干起点旁边） ----------
     all_segs = []

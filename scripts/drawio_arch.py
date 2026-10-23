@@ -110,11 +110,21 @@ def build_arch(lay):
                           fs=27, bold=True, w=900, align="center"))
     cells.append(DL.label("subtitle", (W - 1300) / 2, 40, t_sub,
                           fs=15, color="#475569", w=1300, align="center"))
-    cells.append(DL.label("note1", 16, H - 44,
+    cells.append(DL.label("note1", 16, H - 64,
                           "图例：实线框 = entity（11 个）· 虚线框 = 顶层胶合逻辑（非 entity）"
-                          " · 浅灰框 = 板载器件；方框左下角 = 该模块消费的全局网络；"
-                          "纯组合模块（disp_format / piece_rom / pattern_rom）不消费"
-                          "全局网络，故无角标（不是漏画）",
+                          " · 浅灰框 = 板载器件；方框左下角 = 该模块消费的全局网络",
+                          fs=13, color="#334155", w=W - 40))
+    cells.append(DL.label("note2", 16, H - 42,
+                          "（clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 ← SW7；消费者 10 / 9 / 4 个、"
+                          "共 23 根，逐根画会得到 23 根长线，故用角标表达；纯组合模块 disp_format / "
+                          "piece_rom / pattern_rom 不消费全局网络，故无角标，不是漏画）",
+                          fs=13, color="#334155", w=W - 40))
+    # ⚠️ 这三行脚注必须与 `fig1_layout.NOTE_LINES`（SVG 版的图例）内容一致：同一张图有
+    #    SVG / PNG 两个交付物，早先 PNG 只写了角标定义、没有三路来源与消费者计数，
+    #    而 typ §2.2 却称"消费者与来源在图中均可查" —— 两个交付物口径不一致。
+    cells.append(DL.label("note3", 16, H - 20,
+                          "⚠ 板载「50 MHz 有源晶振 → clk」与「SW7 → sw7」都有意不画连线："
+                          "这两路是全局网络（一对多分发），图上用方框左下角角标表达，不是漏画接线",
                           fs=13, color="#334155", w=W - 40))
     return cells, W, H
 

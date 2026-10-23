@@ -38,13 +38,17 @@ def _style(**kw):
 
 def box(cid, x, y, w, h, text="", *, fill="#FFFFFF", stroke=LINE, sw=2,
         fs=19, bold=True, dashed=False, rounded=False, font=FONT, color=INK,
-        shape=""):
+        shape="", arc=None):
     st = _style(**{"shape": shape}) if shape else ""
     st += _style(rounded=1 if rounded else 0, whiteSpace="wrap", html=1,
                 fillColor=fill, strokeColor=stroke, strokeWidth=sw,
                 fontSize=fs, fontFamily=font, fontColor=color,
                 fontStyle=1 if bold else 0, align="center", verticalAlign="middle",
                 dashed=1 if dashed else 0)
+    # arc：圆角半径（画布 px，绝对值）。不指定时 draw.io 按框短边比例给（大框上会到
+    # 100+ px，弧线能伸进左上角标题所在的区域）；小框/容器需要显式给一个小半径。
+    if arc is not None:
+        st += _style(arcSize=arc, absoluteArcSize=1)
     esc = (text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
                .replace('"', "&quot;").replace("\n", "<br>"))
     return (f'<mxCell id="{cid}" value="{esc}" style="{st}" vertex="1" parent="1">'

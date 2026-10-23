@@ -39,7 +39,7 @@ PKG = os.path.join(ROOT, "rtl", "puzzle_pkg.vhd")
 OUT_SVG = os.path.join(ROOT, "docs", "report", "fig_game_flow.svg")
 OUT_PNG = os.path.join(ROOT, "docs", "report", "fig_game_flow.png")
 
-W, H = 1700, 2720
+W, H = 1740, 2850
 FONT = "Microsoft YaHei, SimSun, sans-serif"
 LINE = "#334155"          # 统一线条色（不用花花绿绿）
 FILL = "#ffffff"
@@ -50,9 +50,14 @@ FILL_ACCENT = "#fffbeb"
 
 # ---------------------------------------------------------------- 图形
 # (id, 类型, x, y, 宽, 高, [文字行])
+# ⚠️ **所有菱形与矩形的中心 x 一律取 830**（画布坐标 520..1140 的中线）：
+#    这样"矩形底边 → 菱形顶点"的竖线不需要横向折点，draw.io 的箭头才会正落在
+#    菱形顶点上。原先 start/sw/gokey/lupd/lvlq/again 的中心分别是 870/870/870/790/870/870，
+#    与下方矩形的 830 错开 ⇒ `lupd→lwin`、`win→lvlq` 两支箭头的尖端悬在菱形斜边
+#    上方 ~24 px 的空白里（第二轮独立验收 R2 实测）。对齐后这些边都是纯竖线。
 NODES = [
-    ("start",   "stadium", 700, 66, 340, 58, ["上电 / 复位"]),
-    ("sw",      "dec",     660, 166, 420, 150, ["SW7 = 1 ？", "（系统使能开关）"]),
+    ("start",   "stadium", 660, 66, 340, 58, ["上电 / 复位"]),
+    ("sw",      "dec",     620, 166, 420, 150, ["SW7 = 1 ？", "（系统使能开关）"]),
     # ⚠️ 框高按"三行文字的墨迹块高 ≈ 1.4×字号 × 行数 ≈ 73.5 px"反推：74 只够"不溢出"，
     #    第三行距框底边只剩 1.3 px。要拿到 ≥10 px 上下留白，框高需要 ≈ 73.5 + 2×10 ≈ 94，
     #    这里取 113（pre-YS）×0.78 ≈ 88，实测上下留白各 ~7 / ~7（渲染级复看确认）。
@@ -61,7 +66,7 @@ NODES = [
                                                "点阵 64 点全亮黄闪 2 Hz · 数码管 88888888 · POST 短鸣"]),
     ("idle",    "proc",    520, 496, 620, 76, ["待机 S_IDLE",
                                                "DISP7 显示 5 · DISP0 显示当前关卡"]),
-    ("gokey",   "dec",     660, 614, 420, 150, ["按【开始】？"]),
+    ("gokey",   "dec",     620, 614, 420, 150, ["按【开始】？"]),
     ("preview", "proc",    520, 806, 620, 82, ["预览 S_PREVIEW（约 5 s）",
                                                "点阵红光显示目标图案 · DISP7 倒计时 5→1"]),
     ("shuffle", "proc",    520, 930, 620, 82, ["散落（LFSR 取锚点）",
@@ -73,29 +78,37 @@ NODES = [
                                                 "选择 / 上 / 下 / 左 / 右 / 旋转 / 确认"]),
     ("lhit",    "dec",     620, 1444, 420, 150, ["碰撞或越界？"]),
     ("lblock",  "proc",   1120, 1470, 420, 76, ["拦截：零片不动", "（硬件实时拒绝非法指令）"]),
-    ("lupd",    "proc",    480, 1636, 620, 82, ["更新零片位置 / 朝向",
+    ("lupd",    "proc",    520, 1636, 620, 82, ["更新零片位置 / 朝向",
                                                 "按【确认】则锁定并并入已锁定平面"]),
-    ("lwin",    "dec",     604, 1760, 452, 150, ["全图并集 == 目标图案", "且全部零片已锁定？"]),
+    # ⚠️ 这里原来是**一个**复合判据「全图并集 == 目标图案 且全部零片已锁定？」，
+    #    与 RTL 不符：`game_fsm.vhd:337-352` 里 i_solved（并集==目标 且 全锁）→ 过关，
+    #    而 i_all_lock（全锁 但 并集≠目标）→ **立刻判负 S_FAIL**（B9 拼装错误）。
+    #    拆成两级判据后，"全锁但拼错" 才会走到失败，而不是空转到超时。
+    ("lall",    "dec",     604, 1760, 452, 150, ["全部零片已锁定？"]),
+    ("lsolved", "dec",     604, 1990, 452, 150, ["全图并集 ==", "目标图案？"]),
     # ---- 循环之后 ----
-    # ⚠️ win / fail 及以下四个节点整体下移 40（pre-YS）：容器底边与 win 顶边之间
-    #    原本只有 31 px，放不下「lwin→win 的是」标签（16 px 字 + 两侧各 10 px 净距），
-    #    标签会压住容器底虚线。下移后该空隙 62 px，标签有地方站。
-    ("win",     "proc",    520, 2030, 620, 82, ["过关 S_WIN",
+    # ⚠️ 语义按 RTL 校正：`game_fsm.vhd:337-349` 只有**第三关**拼对才 `st <= S_WIN`，
+    #    第一、二关拼对是 `level/lvl3` 置位后直接 `st <= S_PREVIEW`。所以
+    #    「过关 S_WIN」= 终局状态，画在「关卡 < 3？」的**否**分支上。
+    ("win",     "proc",    520, 2200, 620, 82, ["本关拼合成功",
+                                                "并集 == 目标图案 且全部零片已锁定"]),
+    ("lvlq",    "dec",     620, 2320, 420, 150, ["关卡 < 3 ？"]),
+    ("nextlvl", "proc",   1260, 2357, 460, 76, ["关卡 +1", "→ 进入下一关预览"]),
+    ("final",   "proc",    520, 2540, 620, 82, ["过关 S_WIN（第三关）",
                                                 "显示 PASS · 奏通关号角 · 结算先闪 2 周期后常亮"]),
-    ("lvlq",    "dec",     660, 2154, 420, 150, ["关卡 < 3 ？"]),
-    # ⚠️ 原写「→ 回到待机」是错的：game_fsm.vhd:339-346 在 level/lvl3 未满时
-    #    `st <= S_PREVIEW`（回到**预览**）；而 S_IDLE 会把 level 清零（:284）。
-    ("nextlvl", "proc",   1260, 2180, 460, 76, ["关卡 +1", "→ 进入下一关预览"]),
-    ("final",   "proc",    520, 2346, 620, 82, ["通关结算",
-                                                "显示胜利图案 · 奏通关乐句（按【开始】重开）"]),
-    ("again",   "dec",     660, 2470, 420, 150, ["按【开始】重开？"]),
+    ("again",   "dec",     620, 2660, 420, 150, ["按【开始】重开？"]),
     # 失败在循环之外（一局结束），所以画在容器右侧
     ("fail",    "proc",   1150, 2030, 500, 90, ["失败 S_FAIL",
                                                 "显示 FAIL · 奏失败乐句 · 结算先闪后常亮"]),
 ]
 
 # 对局循环容器（把"散落之后、判定之前"的决策圈在一个框里，回边汇到一条总线）
-LOOP_BOX = (400, 1050, 1220, 900, "对局循环  S_PLAYING（限时 30 / 40 / 60 s）")
+# ⚠️ 标题拆两行：单行「对局循环  S_PLAYING（限时 30 / 40 / 60 s）」宽约 430 px，
+#    从容器左内边起排会一直伸到 x≈854 —— 正好被「散落 → 有按键?」的竖箭头（x=830）
+#    从「60」与「s)」之间穿过。拆成两行后每行 ≤210 px，与箭头、圆角都留足净距。
+LOOP_BOX = (400, 1050, 1220, 900, "对局循环  S_PLAYING")
+LOOP_SUBTITLE = "（限时 30 / 40 / 60 s）"
+LOOP_ARC = 14        # 容器圆角半径（画布 px）；draw.io 默认按短边比例给到 100+ px
 
 # ---------------------------------------------------------------- 图例
 # ⚠️ 图例**不能横跨整幅**：「上电 / 复位」框在 canvas x 700..1040 / y 51..109，
@@ -110,6 +123,39 @@ SUBTITLE_X, SUBTITLE_Y0, SUBTITLE_DY = 20, 52, 20
 
 BUS_X = 470          # 「回循环」总线竖线的 x
 BUS_TOP_Y = 1203     # 进循环起点的高度（lk 垂直中心）
+
+# ---------------------------------------------------------------- 标签定位（两个渲染器共用）
+# ⚠️ 这两个常量与下面的 LABEL_POS 必须由 **SVG 版（build_svg）与 draw.io 版
+#    （drawio_flow.build_flow）共用**：同一张图有两个交付物（报告用 PNG、实际设计方案
+#    用 SVG），早先两边各算一套，结果 SVG 里还留着"待机 S_IDLE 框内侧的否标签"这类
+#    已经修掉的缺陷（第二轮独立验收 docspkg-F5 实测）。
+# 默认落点离线的距离（画布 px）：水平段上方 24 / 竖直段右侧 32。
+LABEL_DY, LABEL_DX = 24, 32
+# 键 = (源, 目标, 标签文字)，值 = (tx, ty) 画布坐标 —— 用于默认落点会压线/压框的边。
+LABEL_POS = {
+    ("gokey", "idle", "否"): (632, 510),
+    ("ltime", "bus", "否"): (1400, 1018),
+    ("ltime", "fail", "是"): (1650, 968),
+    ("lk", "ldec", "是"): (874, 1008),
+    ("gokey", "preview", "是"): (890, 606),
+    ("lhit", "lupd", "否"): (880, 1252),
+    ("lall", "lsolved", "是"): (900, 1545),
+    ("lvlq", "final", "否"): (859, 1954),
+}
+
+
+def label_xy(frm, fs, to, ts, label, extra):
+    """标签中心（画布坐标）：手工表优先，否则贴最长水平段上方 / 最长竖直段右侧。"""
+    if (frm, to, label) in LABEL_POS:
+        return LABEL_POS[(frm, to, label)]
+    pts = pts_of(frm, fs, to, ts, extra)
+    segs = list(zip(pts[:-1], pts[1:]))
+    horiz = [s for s in segs if abs(s[1][0] - s[0][0]) >= abs(s[1][1] - s[0][1])]
+    if horiz:
+        (x0, y0), (x1, y1) = max(horiz, key=lambda s: abs(s[1][0] - s[0][0]))
+        return (x0 + x1) / 2.0, min(y0, y1) - LABEL_DY
+    (x0, y0), (x1, y1) = max(segs, key=lambda s: abs(s[1][1] - s[0][1]))
+    return max(x0, x1) + LABEL_DX, (y0 + y1) / 2.0
 
 
 # ---------------------------------------------------------------- 连线
@@ -137,9 +183,12 @@ EDGES = [
     #    沿容器内右侧空白下到容器底部空白带（y=BUS_BOT_Y），再向左汇入「回循环」总线。
     ("ltime", "b", "bus", "b", "否", [(1560, 1278), (1560, 1930)]),
     ("lhit", "b", "lupd", "t", "否", []),
-    ("lupd", "b", "lwin", "t", "", []),
-    ("lwin", "l", "bus", "b", "否", [(470, 1835)]),
-    ("lwin", "b", "win", "t", "是", []),
+    ("lupd", "b", "lall", "t", "", []),
+    ("lall", "b", "lsolved", "t", "是", []),
+    ("lall", "l", "bus", "b", "否", [(470, 1835)]),
+    ("lsolved", "b", "win", "t", "是", []),
+    # 「全锁但拼错」→ 立刻失败（RTL `game_fsm.vhd:350-352` 的 i_all_lock 分支，B9）
+    ("lsolved", "r", "fail", "l", "否", []),
     ("win", "b", "lvlq", "t", "", []),
     ("lvlq", "r", "nextlvl", "l", "是", []),
     ("lvlq", "b", "final", "t", "否", []),
@@ -147,7 +196,9 @@ EDGES = [
     # 重开 → 回**预览**（不是待机）：`game_fsm.vhd:361-366` 对 S_WIN | S_FAIL 统一处理，
     # 按【开始】直接 `st <= S_PREVIEW`（并把 level/lvl3 清零）；而 S_IDLE 需要再按一次
     # 【开始】才进预览（`:281-287`），所以这里回 idle 会多出一次按键、与 RTL 不符。
-    ("again", "l", "preview", "l", "是", [(360, 2545), (360, 845)]),
+    ("again", "l", "preview", "l", "是", [(360, 2735), (360, 845)]),
+    # 「否」= 不重开 → 停留在通关结算画面（图例声明"判断分支标 是/否"，原来这个菱形漏了否）
+    ("again", "r", "final", "r", "否", [(1160, 2735), (1160, 2581)]),
 ]
 
 # ---------------------------------------------------------------- 纵向压缩
@@ -189,9 +240,11 @@ def anchor(nid, side):
 
 # ---------------------------------------------------------------- 无端子折线（带箭头）
 # 缺陷 8：「全系统静默熄灭」原来是框内注记、没有回边。这里补一条回边 —— 从 quiet 底边
-# 下到 y=270 的空白带，向右到 x=700（避开 sw→self 的 x=870 竖线），再向上进 sw 菱形。
-# ⚠️ 终点必须落在**菱形的斜边**上，不能落在外接矩形的底边：sw 是菱形，底顶点在
-#    (870, 246.5)，x=700 处的左下斜边只有 y≈199 —— 写 (700,246) 会让箭头悬空 47 px。
+# 下到 y=270 的空白带，向右到 x=700（避开 sw→self 那条竖线，它现在在 sw 的中心 x=830），
+# 再向上进 sw 菱形。
+# ⚠️ 终点必须落在**菱形的斜边**上，不能落在外接矩形的底边：sw 是菱形（中心 x=830、
+#    半宽 210、半高 58.5），底顶点在 (830, 246)，而 x=700 处的左下斜边只有
+#    y≈209.8 —— 写 (700,246) 会让箭头悬空 36 px。所以终点用 dec_edge_y() 现算。
 # 用「自由折线」而不是 EDGES 的原因：EDGES 的 ts 方位只能给到方框中心/顶点，
 # 而这里要正好落在斜边的 x=700 处。
 def dec_edge_y(nid, x):
@@ -211,7 +264,14 @@ FREE_EDGES = [
 def pts_of(frm, fs, to, ts, extra):
     """返回直角折线的点串。"""
     if to == "bus":
-        return [anchor(frm, fs)] + [tuple(q) for q in extra] + [(BUS_X, extra[-1][1])]
+        pts = [anchor(frm, fs)] + [tuple(q) for q in extra] + [(BUS_X, extra[-1][1])]
+        # ⚠️ 去重：extra[-1] 本来就可能是 (BUS_X, …)（如 lall→bus），不去重会留下
+        #    零长度末段（`(470,1431) -> (470,1431)`），一旦加 marker 就会出问题。
+        ded = [pts[0]]
+        for q in pts[1:]:
+            if abs(q[0] - ded[-1][0]) > 1 or abs(q[1] - ded[-1][1]) > 1:
+                ded.append(q)
+        return ded
     if frm == "bus":
         return [(BUS_X, BUS_TOP_Y)] + [tuple(q) for q in extra] + [anchor(to, ts)]
     seq = [anchor(frm, fs)] + [tuple(q) for q in extra] + [anchor(to, ts)]
@@ -269,10 +329,12 @@ def build_svg():
 
     # 对局循环容器（先画，压在连线下面）
     lx, ly, lw, lh, ltitle = LOOP_BOX
-    p.append('<rect x="%d" y="%d" width="%d" height="%d" rx="14" fill="#fffbeb" stroke="%s" '
-             'stroke-width="2.2" stroke-dasharray="10 6"/>' % (lx, ly, lw, lh, ACCENT))
+    p.append('<rect x="%d" y="%d" width="%d" height="%d" rx="%d" fill="#fffbeb" stroke="%s" '
+             'stroke-width="2.2" stroke-dasharray="10 6"/>' % (lx, ly, lw, lh, LOOP_ARC, ACCENT))
     p.append('<text x="%d" y="%d" font-family="%s" font-size="18" font-weight="bold" fill="%s">%s</text>'
-             % (lx + 18, ly + 32, FONT, ACCENT, esc(ltitle)))
+             % (lx + 24, ly + 26, FONT, ACCENT, esc(ltitle)))
+    p.append('<text x="%d" y="%d" font-family="%s" font-size="18" font-weight="bold" fill="%s">%s</text>'
+             % (lx + 24, ly + 46, FONT, ACCENT, esc(LOOP_SUBTITLE)))
 
     # 连线
     for frm, fs, to, ts, label, extra in EDGES:
@@ -281,22 +343,10 @@ def build_svg():
         head = "" if to == "bus" else ' marker-end="url(#ar)"'
         p.append('<path d="%s" fill="none" stroke="%s" stroke-width="2"%s/>' % (d, LINE, head))
         if label:
-            # 标签贴在**最长水平段**旁边（没有水平段就用最长垂直段），
-            # 垂直偏移 18px、白底矩形再往上收 —— 白块绝不压在线上。
-            segs = list(zip(pts[:-1], pts[1:]))
-            horiz = [s for s in segs if abs(s[1][0] - s[0][0]) >= abs(s[1][1] - s[0][1])]
-            if horiz:
-                (x0, y0), (x1, y1) = max(horiz, key=lambda s: abs(s[1][0] - s[0][0]))
-                tx, ty = (x0 + x1) / 2.0, min(y0, y1) - 18
-                rw, rh = 38, 22
-                p.append('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="#ffffff"/>'
-                         % (tx - rw / 2, ty - 17, rw, rh))
-            else:
-                (x0, y0), (x1, y1) = max(segs, key=lambda s: abs(s[1][1] - s[0][1]))
-                tx, ty = max(x0, x1) + 27, (y0 + y1) / 2.0
-                rw, rh = 40, 22
-                p.append('<rect x="%.1f" y="%.1f" width="%d" height="%d" rx="4" fill="#ffffff"/>'
-                         % (tx - rw / 2, ty - 16, rw, rh))
+            # ⚠️ 与 draw.io 版**共用** label_xy()：早先这里自己算一套（偏移 18/27 + 白底
+            #    矩形），结果 SVG 交付件里还留着"待机框内侧的否标签"等已修缺陷。现在两边
+            #    同源；白底矩形一并去掉（draw.io 版就是无底色的，靠挪标签让路）。
+            tx, ty = label_xy(frm, fs, to, ts, label, extra)
             p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="17" font-weight="bold" '
                      'fill="%s" text-anchor="middle">%s</text>' % (tx, ty, FONT, ACCENT, esc(label)))
 
