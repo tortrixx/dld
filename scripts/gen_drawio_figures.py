@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -152,7 +153,33 @@ def main(argv):
     ap = argparse.ArgumentParser(description="生成 .drawio 并用 draw.io 渲染")
     ap.add_argument("--only", choices=sorted(BUILDERS), help="只做一张")
     ap.add_argument("--scale", type=float, default=2.4)
+    ap.add_argument("--check", action="store_true",
+                    help="只校验：盘上的 .drawio 是否与现算一致、站点副本是否与报告图一致")
     a = ap.parse_args(argv)
+
+    if a.check:
+        bad = []
+        for key, (name, fn) in BUILDERS.items():
+            cells, w, h = fn()
+            src = os.path.join(RPT, name + ".drawio")
+            want = DL.mxfile_text(cells, name=name, width=int(w), height=int(h))
+            if not os.path.isfile(src):
+                bad.append("%s.drawio 不存在（请跑 gen_drawio_figures.py）" % name)
+            elif open(src, encoding="utf-8").read() != want:
+                bad.append("%s.drawio 与现算不一致（改了脚本没重出图？）" % name)
+            site = os.path.join(ROOT, "docs", "assets", "images", name + ".png")
+            rep = os.path.join(RPT, name + ".png")
+            if not (os.path.isfile(site) and os.path.isfile(rep)):
+                bad.append("%s.png 缺（报告或站点副本）" % name)
+            elif (os.path.getsize(site) != os.path.getsize(rep)
+                  or open(site, "rb").read() != open(rep, "rb").read()):
+                bad.append("%s.png 的站点副本与 docs/report/ 下不一致" % name)
+        print("== drawio 三张主图一致性体检 ==")
+        for b in bad:
+            print("  [FAIL] %s" % b)
+        if not bad:
+            print("  OK：三个 .drawio 与现算一致、三张 PNG 的站点副本与报告图逐字节一致")
+        return 1 if bad else 0
 
     ok_all = True
     for key, (name, fn) in BUILDERS.items():
@@ -167,6 +194,11 @@ def main(argv):
         if not ok:
             print("  渲染失败:", msg)
             ok_all = False
+            continue
+        # 站点副本由这里统一同步（SVG 生成器不再写 PNG，见 gen_overview/gen_flow 的注释）
+        site = os.path.join(ROOT, "docs", "assets", "images", name + ".png")
+        shutil.copy2(png, site)
+        print("  站点副本 -> docs/assets/images/%s.png" % name)
     return 0 if ok_all else 1
 
 

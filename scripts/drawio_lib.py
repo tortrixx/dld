@@ -111,7 +111,8 @@ def label(cid, x, y, text, *, fs=15, color=INK, font=FONT, bold=False, w=200, h=
             f'</mxCell>')
 
 
-def write_mxfile(path, cells, name="diagram", width=1600, height=1200):
+def mxfile_text(cells, name="diagram", width=1600, height=1200):
+    """与 write_mxfile 同一份内容，但不写盘（供 --check 逐字节对账）。"""
     xml = ['<mxfile host="dsh" type="device">',
            f'  <diagram id="d1" name="{name}">',
            f'    <mxGraphModel dx="1200" dy="900" grid="0" gridSize="10" guides="1" '
@@ -120,8 +121,12 @@ def write_mxfile(path, cells, name="diagram", width=1600, height=1200):
            '      <root>', '        <mxCell id="0"/>', '        <mxCell id="1" parent="0"/>']
     xml += ["        " + c for c in cells]
     xml += ['      </root>', '    </mxGraphModel>', '  </diagram>', '</mxfile>', '']
+    return "\n".join(xml)
+
+
+def write_mxfile(path, cells, name="diagram", width=1600, height=1200):
     with open(path, "w", encoding="utf-8", newline="\n") as fh:
-        fh.write("\n".join(xml))
+        fh.write(mxfile_text(cells, name=name, width=width, height=height))
 
 
 def find_drawio():

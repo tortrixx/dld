@@ -396,8 +396,15 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 |:--|:--|
 | ① 取渲染器 | 下载 <https://viewer.diagrams.net/js/viewer-static.min.js> 到 `.tmp/tools/drawio/viewer.min.js`（**该路径命中 `*.tmp` 忽略规则，不在仓库里，换机器要重新下**） |
 | ② 生成 `.drawio` | `python scripts/gen_drawio_figures.py`（写 `fig_overview` / `fig_game_flow` / `fig1_system_architecture` 三个 `.drawio`） |
-| ③ 渲染 PNG | 同一脚本内置：`scripts/drawio_render.py` 用 headless Chrome 打开本地页面截图（2.4x），再自动裁白边 |
-| ④ 只查环境 | `python scripts/drawio_render.py --check`（viewer 在不在、chrome 在不在） |
+| ③ 渲染 PNG | 同一脚本内置：`scripts/drawio_render.py` 用 headless Chrome 打开本地页面截图（2.4x），再自动裁白边；**渲染完顺手把站点副本同步到 `docs/assets/images/`** |
+| ④ 一致性体检 | `python scripts/gen_drawio_figures.py --check`：① 盘上的三个 `.drawio` 是否与现算逐字节一致（抓"改了脚本忘了重出图"）；② 三张 PNG 的站点副本是否与 `docs/report/` 下逐字节一致 |
+| ⑤ 只查环境 | `python scripts/drawio_render.py --check`（viewer 在不在、chrome 在不在） |
+
+> ⚠️ **`docs/report/fig_overview.png` 与 `fig_game_flow.png` 只归 draw.io 渲染**。
+> `gen_overview_diagram.py` / `gen_flow_diagram.py` **只写 `.svg`，不写 PNG**（2026-10-23 第三轮
+> 最终验收 F1 实测：早先它们会从自家 SVG 截一张 PNG 覆盖交付图，体积 358 KB → 212 KB /
+> 781 KB → 458 KB，连 DOCX 内嵌图都会跟着变，而当时的 10 项门禁里只有 `build_report.py --check`
+> 会事后发现）。`gen_design_diagram.py` 对同一风险一直有同样防护。
 
 **分工**：方框位置 / 连线折点 / 标签位置仍由 `arch_data.py` + `fig1_layout.py` /
 `gen_flow_diagram.py` / `gen_overview_diagram.py` 算（那份几何过 `audit_diagram.py` 的 16 项体检），
@@ -514,7 +521,6 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 **第三轮（2026-10-23，多 agent 工作流审查：5 个独立审查员 + 5 个对抗复核员）**
 工作流对「三张图 + 脚本 diff + 文档/提交包」五路并行审查，再让另一名 agent 逐条证伪；19 条发现中 18 条
 被确认为真，已全部处理：
-
 - **`fig_game_flow` 的语义按 RTL 重画**（本轮最重的一条）：原图把「过关 S_WIN」画成每关必经、之后才判
   「关卡 < 3？」，与 `rtl/game_fsm.vhd:337-349` 相反（第一、二关拼对是 `level/lvl3` 置位后直接回
   `S_PREVIEW`，只有第三关才 `st <= S_WIN`）。现在拆成 **「全部零片已锁定？ → 全图并集 == 目标图案？」**
@@ -536,6 +542,21 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 - **`fig1_layout.py` 的死代码**：4b 的 60 轮"共线清零"循环在当前几何下一轮都进不去，且 `level_get`
   对 band 型控制量会 `KeyError` —— 已删除（保留 `h_runs` / `h_conflicts`，5b 仍在用）。
 - 渲染级自测工具的两个坑（欧氏距离、文字块高度上限、强调色阈值 76）也一并修了，见上面那段引用块。
+
+**第三轮（同一天，3 个审查员：补 `fig_game_flow` 的独立审查 + 上一轮 21 条的回归复核 + 交付前最终验收）**
+- **最终验收 PASS**：10 项门禁全 exit=0；另在**仓库外镜像**里重渲三张主图，PNG / `.drawio` / `.svg`
+  三方共 9 个文件与交付件**逐字节相同** ⇒ "提交的图真能从脚本重出"成立；报告四件套同源、
+  提交包 15/15 文件与 `docs/report/` 一致、三个 zip 的每个条目与同名目录逐字节一致；
+  隐私三面 + 提交信息扫描均无命中。
+- **`fig_game_flow` 又修了 4 条**：① `gokey → idle` 的「否」回边折点 (600,416) 原本落在待机框
+  **内部**（draw.io 把箭头裁到框底边、SVG 版整段被白底盖住）→ 折点移到 x=500；② 标题改用
+  `align="center"`（原来 PNG 比 SVG 左偏 48 px）；③ 18 个是/否标签在两交付件间系统性错位
+  ≈(−6,+6) px → 两边统一锚点（drawio 用 `align="center"`、SVG 基线取 `ty+5.5`）；
+  ④ 对局循环里补上 `S_PLAYING` 按【开始】的去向（`game_fsm.vhd:332-336`，写在「译码并执行按键」
+  框的第二行），否则读者会以为"对局中按【开始】无效"、与报告 B11 矛盾。
+- **可复现性硬化**（第三轮最终验收的 major）：`gen_overview_diagram.py` / `gen_flow_diagram.py`
+  **不再写 PNG**，站点副本改由 `gen_drawio_figures.py` 渲染后统一同步；并给后者加了
+  `--check`（`.drawio` 与现算逐字节比对 + 站点副本与报告图逐字节比对）。见上面「draw.io 渲染链路」表。
 
 
 上述生成图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与

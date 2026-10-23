@@ -74,8 +74,12 @@ NODES = [
     # ---- 对局循环（容器内） ----
     ("lk",      "dec",     620, 1128, 420, 150, ["有按键？"]),
     ("ltime",   "dec",    1120, 1128, 420, 150, ["剩余 ≤ 1 s ？"]),
+    # ⚠️ 第二行必须带上「按【开始】重开一局」：`game_fsm.vhd:332-336` 在 S_PLAYING 里
+    #    也响应 K_START（cnt<=T_PREVIEW、level/lvl3 清零、st<=S_PREVIEW），而本图
+    #    对局循环内原本没有任何【开始】分支 —— 读者会以为"对局中按【开始】无效"
+    #    （第三轮独立验收 FLOW-04，与报告 B11 自相矛盾）。
     ("ldec",    "proc",    520, 1320, 620, 82, ["译码并执行按键",
-                                                "选择 / 上 / 下 / 左 / 右 / 旋转 / 确认"]),
+                                                "选择 / 上 / 下 / 左 / 右 / 旋转 / 确认（按【开始】重开一局）"]),
     ("lhit",    "dec",     620, 1444, 420, 150, ["碰撞或越界？"]),
     ("lblock",  "proc",   1120, 1470, 420, 76, ["拦截：零片不动", "（硬件实时拒绝非法指令）"]),
     ("lupd",    "proc",    520, 1636, 620, 82, ["更新零片位置 / 朝向",
@@ -168,7 +172,11 @@ EDGES = [
     ("sw", "b", "self", "t", "是", []),
     ("self", "b", "idle", "t", "", []),
     ("idle", "b", "gokey", "t", "", []),
-    ("gokey", "l", "idle", "l", "否", [(600, 689), (600, 534)]),
+    # ⚠️ 折点必须落在待机框**外面**：原来的 (600,534)→YS 后 (600,416) 落在 idle 框
+    #    (520..1140, 386..445) 内部 —— draw.io 会把箭头裁到框底边（朝上戳），
+    #    而 SVG 版是先画线后画框、整段被白底盖住（第三轮独立验收 FLOW-03）。
+    #    改到 x=500（idle 左缘 520 之外 20 px），终点仍是 idle 左边缘。
+    ("gokey", "l", "idle", "l", "否", [(500, 689), (500, 534)]),
     ("gokey", "b", "preview", "t", "是", []),
     ("preview", "b", "shuffle", "t", "", []),
     ("shuffle", "b", "lk", "t", "", []),
@@ -347,8 +355,13 @@ def build_svg():
             #    矩形），结果 SVG 交付件里还留着"待机框内侧的否标签"等已修缺陷。现在两边
             #    同源；白底矩形一并去掉（draw.io 版就是无底色的，靠挪标签让路）。
             tx, ty = label_xy(frm, fs, to, ts, label, extra)
-            p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="17" font-weight="bold" '
-                     'fill="%s" text-anchor="middle">%s</text>' % (tx, ty, FONT, ACCENT, esc(label)))
+            # ⚠️ 锚点必须与 drawio 版一致：drawio 用 `DL.label(align="center")` 让文字
+            #    居中在 (tx,ty)、垂直中心也是 ty；SVG 这边 text-anchor="middle" 时 x=tx
+            #    对得上，但 y 是**基线**，CJK 墨迹中心比基线高 ~5.5 px（fs=16）——
+            #    所以写 ty+5.5 才能与 PNG 逐像素对齐（第三轮独立验收 FLOW-02）。
+            p.append('<text x="%.1f" y="%.1f" font-family="%s" font-size="16" font-weight="bold" '
+                     'fill="%s" text-anchor="middle">%s</text>'
+                     % (tx, ty + 5.5, FONT, ACCENT, esc(label)))
 
     # 回循环总线：一条竖线汇齐所有回边，再横着进循环起点（只画一个箭头）
     p.append('<path d="M %.1f %.1f L %.1f %.1f L %.1f %.1f" fill="none" stroke="%s" '
@@ -437,12 +450,12 @@ def main() -> int:
     with open(OUT_SVG, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(svg)
     print("\n写出 %s（%d B）" % (os.path.relpath(OUT_SVG, ROOT), len(svg.encode())))
-    exe = render_png(OUT_SVG, OUT_PNG, W, H)
-    if exe and os.path.isfile(OUT_PNG):
-        print("写出 %s（%d B，用 %s 渲染）"
-              % (os.path.relpath(OUT_PNG, ROOT), os.path.getsize(OUT_PNG), os.path.basename(exe)))
-    else:
-        print("[提示] 没找到 Chrome/Edge，只出了 SVG。")
+    # ⚠️ 本脚本**不再写** `docs/report/fig_game_flow.png`：那个 PNG 归 draw.io 渲染
+    #    （`scripts/gen_drawio_figures.py`）。早先这里会从 SVG 截一张 PNG 覆盖它，
+    #    结果"跑一次 SVG 生成器"就把交付图静默换成另一个渲染版本（体积 781 KB → 458 KB），
+    #    连 DOCX 内嵌图也跟着变，而 10 项门禁里只有 build_report --check 会事后发现
+    #    （第三轮最终验收 F1 实测）。`gen_design_diagram.py` 对同一风险早有同样防护。
+    print("       （该图的 PNG 由 scripts/gen_drawio_figures.py 用 draw.io 渲染）")
     return 0
 
 

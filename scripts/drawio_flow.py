@@ -64,8 +64,11 @@ def build_flow():
             #    原来写死 tx-22 / w=44（按居中算），单字标签会整体左偏约 12 px，
             #    与手工定位的意图对不上。这里按实测字宽反推左边缘。
             lw = max(28.0, _tw(label, 16) + 8)
-            cells.append(DL.label("lb%d" % i, tx - lw / 2.0 - 2, ty - 10, label, fs=16,
-                                  color=G.ACCENT, bold=True, w=int(round(lw))))
+            # align="center" + 盒心 = (tx,ty)，与 SVG 版（text-anchor=middle、y=ty+5.5）
+            # 的墨迹中心一致；原来用 align="left" + 左边缘 tx-lw/2-2，会整体偏 (-6,+6)。
+            cells.append(DL.label("lb%d" % i, tx - lw / 2.0, ty - 10, label, fs=16,
+                                  color=G.ACCENT, bold=True, w=int(round(lw)),
+                                  align="center"))
 
     # 「回循环」总线：竖线汇齐所有回边，再横着进循环起点（只画一个箭头）
     cells.append(DL.polyline("bus", [(G.BUS_X, G.BUS_BOT_Y), (G.BUS_X, G.BUS_TOP_Y),
@@ -81,8 +84,11 @@ def build_flow():
                                   fs=16, color=G.ACCENT, w=120))
 
     # 标题 + 图例（图例三行放左上角空白区，避开「上电 / 复位」框；见 gen_flow_diagram 注释）
-    cells.append(DL.label("title", G.W // 2 - 330, 14,
-                          "题目 4：简易拼图游戏 —— 游戏流程框图", fs=30, bold=True, w=660))
+    # ⚠️ align="center"：DL.label 默认 align="left"，标题会左偏 48 画布 px，而 SVG 版
+    #    用的是 text-anchor="middle" —— 两个交付件的标题必须同位（第三轮 FLOW-01）。
+    cells.append(DL.label("title", (G.W - 700) / 2, 14,
+                          "题目 4：简易拼图游戏 —— 游戏流程框图", fs=30, bold=True,
+                          w=700, align="center"))
     for i, line in enumerate(G.SUBTITLE_LINES):
         cells.append(DL.label("subtitle%d" % i, G.SUBTITLE_X,
                               G.SUBTITLE_Y0 + i * G.SUBTITLE_DY - 10, line,

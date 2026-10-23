@@ -307,14 +307,11 @@ def main():
     with open(OUT_SVG, "w", encoding="utf-8", newline="\n") as fh:
         fh.write(svg)
     print("\n写出 %s（%d B）" % (os.path.relpath(OUT_SVG, ROOT), len(svg.encode())))
-    exe = render_png(OUT_SVG, OUT_PNG, W, H)
-    if exe:
-        print("写出 %s（%d B，%s 渲染）"
-              % (os.path.relpath(OUT_PNG, ROOT), os.path.getsize(OUT_PNG),
-                 os.path.basename(exe)))
-    import shutil
-    shutil.copy2(OUT_PNG, OUT_PNG_SITE)
-    print("写出 %s（站点副本）" % os.path.relpath(OUT_PNG_SITE, ROOT))
+    # ⚠️ 本脚本**不再写** `docs/report/fig_overview.png` 与站点副本：那个 PNG 归 draw.io
+    #    渲染（`scripts/gen_drawio_figures.py`，它渲染完会顺手同步站点副本）。早先这里
+    #    会从 SVG 截一张 PNG 覆盖交付图（体积 358 KB → 212 KB），而且还会把**另一个
+    #    渲染版本**写进 `docs/assets/images/`，属于静默换图（第三轮最终验收 F1/F3 实测）。
+    print("       （该图的 PNG 与站点副本由 scripts/gen_drawio_figures.py 出）")
     return 0
 
 
