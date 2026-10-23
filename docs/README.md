@@ -70,3 +70,7 @@
 | 验证方式 | 12 套 Quartus 波形仿真测试台、184 条断言，全部自动通过 |
 
 > **数据出处**：以上读数来自 `quartus/output_files/puzzle.fit.rpt` 与 TimeQuest 报告，站内每页引用的数字都可在 `facts/facts.json` 中回溯。
+
+## 附：实际设计方案的模块设计一览
+
+![模块设计一览](assets/images/实际设计方案-模块设计一览.png)

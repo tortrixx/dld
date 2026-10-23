@@ -187,6 +187,8 @@ python scripts/check_privacy.py       # 必须 PASS
 python scripts/gen_design_diagram.py --check   # ① 数据对账 ② 几何体检 ③ 端口名核对，三关全过才写盘
 python scripts/audit_diagram_selftest.py       # 体检脚本自身的回归（33 项断言）
 python scripts/gen_overview_diagram.py --check # 功能总览：11 个 entity 被 6 块 + 时钟恰好划分一次
+python scripts/drawio_render.py --check        # draw.io 渲染环境（viewer.min.js + chrome）
+python scripts/gen_drawio_figures.py          # 出三个 .drawio 并用 draw.io 渲染三张主图 PNG
 
 # 7. 肉眼确认（本地起服务 + 无头浏览器截图）
 python -m http.server 8899 --bind 127.0.0.1     # 在 docs/ 目录下起
@@ -324,9 +326,9 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 
 | 交付件 | 怎么来 |
 |:---|:---|
-| `docs/report/fig_overview.svg/.png` | `scripts/gen_overview_diagram.py`：**功能总览**（6 个功能块 + 时钟，块内列出实体名；`--check` 验证 11 个 entity 恰好划分一次） |
-| `docs/report/fig1_system_architecture.svg/.png` | `scripts/gen_design_diagram.py`：**方框 = entity**，箭头 = 顶层端口连接（网名[位宽]），全局网络用角标。报告 §2.2 与站点 `docs/assets/images/` 用同一张 |
-| `docs/report/fig_game_flow.svg/.png` | `scripts/gen_flow_diagram.py`：**规范流程图**（圆角=起止 / 矩形=处理 / 菱形=判断），对局循环用容器框 + 「回循环」总线 |
+| `docs/report/fig_overview.png` + `.drawio` | `scripts/gen_overview_diagram.py`（几何）+ `scripts/gen_drawio_figures.py`（出 `.drawio` 并渲染 PNG）：**功能总览**；`--check` 验证 11 个 entity 恰好划分一次 |
+| `docs/report/fig1_system_architecture.png` + `.drawio` | 几何来自 `scripts/gen_design_diagram.py`（三关：数据对账/几何体检/端口名），呈现由 `scripts/drawio_arch.py` + draw.io 渲染；报告 §2.2 与站点 `docs/assets/images/` 用同一张 |
+| `docs/report/fig_game_flow.png` + `.drawio` | 几何来自 `scripts/gen_flow_diagram.py`，呈现由 `scripts/drawio_flow.py` + draw.io 渲染：**规范流程图** + 「回循环」总线 |
 | `docs/report/实际设计方案-模块设计一览.svg/.png` | `scripts/gen_design_diagram.py`（11 格，逐模块给端口与设计要点） |
 | `docs/report/fig2_game_fsm.svg/.png`、`fig3_puzzle_core.svg/.png` | **手工维护**的矢量图（状态转移图 / 引擎四级数据流图）；改完用 `scripts/render_hand_svgs.py` 重渲染 PNG |
 | `docs/report/GUI-*.png`（14 张） | `scripts/gen_wave_figures.py`：从 `docs/图/` 的 Quartus 整窗截图里裁掉标题栏与左侧工具栏、裁掉底部空白（2 张编译截图已预先裁过，脚本跳过） |
@@ -338,10 +340,10 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 > 位图按像素宽度换算（Quartus 截图字高约 12 px）。
 > 重算命令：`python .tmp/qa_figures.py`；`--out <路径>` 可直接重新生成下表。
 
-| 图 | 显示宽 | 原生尺寸 | 最小字号 | 最大字号 |
+| 图 | 显示宽 | 来源 | 最小字号 | 最大字号 |
 |:--|--:|:--|--:|--:|
-| `fig1_system_architecture.svg` | 100% | 矢量 1516x? | 4.0 pt | 8.4 pt |
-| `fig_overview.svg` | 100% | 矢量 1740x? | 4.1 pt | 7.3 pt |
+| `fig1_system_architecture.png` | 100% | draw.io 3645x2526 | 3.4 pt | 7.1 pt |
+| `fig_game_flow.png` | 88% | draw.io 4110x4933 | 3.9 pt | 7.2 pt |
 | `GUI-buzzer_ctrl.png` | 100% | 1375x278 | 4.1 pt | 4.1 pt |
 | `GUI-clk_gen.png` | 100% | 1375x388 | 4.1 pt | 4.1 pt |
 | `GUI-disp_format.png` | 100% | 1375x335 | 4.1 pt | 4.1 pt |
@@ -354,14 +356,14 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
 | `GUI-puzzle_top.png` | 100% | 1375x609 | 4.1 pt | 4.1 pt |
 | `GUI-rng_lfsr.png` | 100% | 1375x164 | 4.1 pt | 4.1 pt |
 | `GUI-seg_scan.png` | 100% | 1375x276 | 4.1 pt | 4.1 pt |
-| `fig_game_flow.svg` | 88% | 矢量 1700x? | 4.1 pt | 7.3 pt |
+| `fig_overview.png` | 100% | draw.io 4199x1776 | 4.1 pt | 7.4 pt |
 | `fig3_puzzle_core.svg` | 100% | 矢量 910x? | 4.7 pt | 7.0 pt |
 | `fig2_game_fsm.svg` | 100% | 矢量 890x? | 5.0 pt | 7.4 pt |
 | `GUI-编译-面积.png` | 62% | 468x228 | 7.5 pt | 7.5 pt |
 | `GUI-编译-时序.png` | 75% | 535x74 | 7.9 pt | 7.9 pt |
 
-**当前结论**：19 张图的最小字号落在 **4.0 ~ 8.4 pt**，没有一张低于 4 pt；三张主图的
-主文字（方框标题）在 **7.3 ~ 8.4 pt**。改造前最差的三档是流程图 3.0 pt、模块级框图 3.4 pt、
+**当前结论**：19 张图的最小字号落在 **3.4 ~ 7.9 pt**；其中 3 张主图（draw.io 渲染）为 3.4 ~ 4.1 pt，
+其余为 4.1 ~ 7.9 pt。主文字（方框标题）在 7.1 ~ 7.9 pt。改造前最差的三档是流程图 3.0 pt、模块级框图 3.4 pt、
 12 张 Quartus 截图 3.75 pt（且带窗口标题栏与底部大片空白）。
 
 **提字号的三条手法**（都可复现）：
@@ -370,6 +372,59 @@ gh run watch $(gh run list --limit 1 --json databaseId -q '.[0].databaseId')
    再只压缩纵向坐标（`YS=0.78`，字号不动）—— 图变矮，同样版心宽度下字相对变大；
 3. **分级提档**：`fig1_layout.py` / `gen_overview_diagram.py` 的标题、组名、角标、注释
    各提一档，靠 `audit_diagram.py` 的 `E-TEXT-OVERFLOW` 守住不溢出边框。
+
+
+### draw.io 渲染链路（2026-10-23 起，三张主图由它出图）
+
+用户要求三张主图能在 draw.io 里维护/微调。桌面版装不上（`choco install drawio` 要管理员，
+`C:\ProgramData\chocolatey\lib-bad` 拒绝访问），所以走**官方 viewer 渲染**：
+
+| 步骤 | 命令 / 文件 |
+|:--|:--|
+| ① 取渲染器 | 下载 <https://viewer.diagrams.net/js/viewer-static.min.js> 到 `.tmp/tools/drawio/viewer.min.js`（**该路径命中 `*.tmp` 忽略规则，不在仓库里，换机器要重新下**） |
+| ② 生成 `.drawio` | `python scripts/gen_drawio_figures.py`（写 `fig_overview` / `fig_game_flow` / `fig1_system_architecture` 三个 `.drawio`） |
+| ③ 渲染 PNG | 同一脚本内置：`scripts/drawio_render.py` 用 headless Chrome 打开本地页面截图（2.4x），再自动裁白边 |
+| ④ 只查环境 | `python scripts/drawio_render.py --check`（viewer 在不在、chrome 在不在） |
+
+**分工**：方框位置 / 连线折点 / 标签位置仍由 `arch_data.py` + `fig1_layout.py` /
+`gen_flow_diagram.py` / `gen_overview_diagram.py` 算（那份几何过 `audit_diagram.py` 的 16 项体检），
+`.drawio` 只负责"用 draw.io 的箭头与线型画出来"。**改布局改生成脚本，改箭头样式改 `.drawio`。**
+
+> ⚠️ **两个必踩的坑**（`scripts/drawio_lib.py`、`drawio_render.py` 注释里也写了）：
+> 1. `<script src="viewer.min.js">` 必须放在图形 `div` **之后**，且该 div 必须带
+>    `style="max-width:100%;"` —— 缺任一条会渲染成**全白且不报错**；
+> 2. `mxCell` 的 `value="..."` 里若有双引号（HTML 富文本样式常见），必须转成 `&quot;`，
+>    否则 XML 坏掉、同样全白。
+
+> ⚠️ `gen_design_diagram.py` **不再写** `fig1_system_architecture.png`（该 PNG 归 draw.io 渲染），
+> 只写 `.svg` 与「模块设计一览」；否则会把 draw.io 的图覆盖掉。
+
+### 已知视觉缺陷（2026-10-23 视觉验收记录，留给下一轮）
+
+3 个 agent 逐图看出来的、**尚未全部修掉**的项（已修的见提交 `3fb86a2`）：
+
+**`fig1_system_architecture`**
+1. 顶部干线带标签（`选择→引擎` / `选择→ROM`）离竖向干线太近，读起来像被劈开；
+2. `零片掩码` / `目标图案` / `帧平面` 三个组名与邻近竖线距离 < 10 px；
+3. 板载 `50 MHz 有源晶振` 看起来"没接线" —— `clk` 是全局网络、用模块角标表达，
+   有意不连线，但读者容易误解；建议在图注里点明；
+4. `piece_rom ↔ puzzle_ctrl`、`行计数器 ↔ seg_scan` 两处相邻双向语义，看着像"两头都有箭头"。
+
+**`fig_game_flow`**
+5. `剩余 ≤ 1 s ?` 的 `否` 回边横穿"有按键?→译码"的竖箭头，交叉点紧贴 `是` 字；
+6. `待机 S_IDLE` 框左下角内侧出现过 `否` 标签（分支归属不清）；
+7. `失败 S_FAIL`、`关卡 +1`（框内写"→回到待机"）是终态/文字说明，**没有出线**；
+8. `全系统静默熄灭` 用框内注记代替回边，没有回到 `SW7 = 1 ?` 的线。
+
+**`fig_overview`**
+9. 时钟虚线到 `图案与随机数据` 的竖直段离 `关卡号` 标签偏近；
+10. 容器标题 `内部核心功能框图（6 块 · 10 个 entity）` 离第一条时钟竖线偏近。
+
+**通用**
+11. 三张图在 A4 上最小字号 3.4 ~ 4.1 pt（信息密度决定；再提只能拆图或减少标注）；
+12. `.drawio` 的标签是**无底色**的：某条线若正好从标签下穿过就会"切断"文字。
+    试过给标签加白底 —— 会把方框/连线切出白块，已回退；**正确做法是挪标签或挪线**（逐处手工指定坐标）。
+
 
 上述生成图的**方框集合、文件名、网名、位宽、端口名**全部从 `facts/facts.json` 与
 `rtl/puzzle_top.vhd` 现算，`--check` 会逐条对账 ⇒ "与代码一致"是按构造保证的；
