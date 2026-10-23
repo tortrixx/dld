@@ -93,9 +93,11 @@ def edge(eid, src, tgt, points, text="", *, color=LINE, sw=2, fs=16,
 
 
 def label(cid, x, y, text, *, fs=15, color=INK, font=FONT, bold=False, w=200, h=20,
-          bg=False):
+          bg=False, align="left"):
     # bg=True：白底，用来遮住从标签下面穿过的连线（报告里其它插图也是这么处理的）
-    st = _style(text="", html=1, align="left", verticalAlign="middle",
+    # align：默认 "left"（x 即文字左边缘）；"center" 时 x 是标签框左边、文字在框内居中
+    #        —— 用来让"标题/副标题"真正居中，不依赖字宽估算。
+    st = _style(text="", html=1, align=align, verticalAlign="middle",
                 fontSize=fs, fontFamily=font, fontColor=color,
                 fontStyle=1 if bold else 0, strokeColor="none",
                 fillColor="#FFFFFF" if bg else "none", spacing=2)

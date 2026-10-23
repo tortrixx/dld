@@ -57,17 +57,21 @@ BLOCKS = [
     ("kbd",  120, 276, 300, 136, "键盘输入", "列扫描 · 40 ms 消抖"),
     ("fsm",  500, 276, 300, 136, "游戏控制", "六态状态机 · 倒计时 · 关卡"),
     ("core", 860, 276, 280, 136, "拼图核心", "锚点 · 钳位 · 锁定 · 全图判定"),
-    ("dsp",  1200, 276, 300, 160, "显示系统", "段码 · 数码管扫描 · 点阵行扫描"),
+    ("dsp",  1215, 276, 300, 160, "显示系统", "段码 · 数码管扫描 · 点阵行扫描"),
     ("rom",  860, 470, 280, 160, "图案与随机数据", "零片掩码 · 目标图案 · LFSR"),
     ("aud",  1200, 470, 260, 136, "音效输出", "16 步乐句 · 数控分频"),
-    ("clk",  660, 96, 320, 68, "时钟与节拍（clk_gen）", "50 MHz 分频 → rst + 7 路单周期节拍"),
+    ("clk",  660, 96, 320, 74, "时钟与节拍（clk_gen）", "50 MHz 分频 → rst + 7 路单周期节拍"),
 ]
 EXT = [
     ("dev_disp", 1560, 270, 150, 150, ["数码管", "8×8 双色点阵"]),
     ("dev_buzz", 1560, 470, 150, 90, ["蜂鸣器"]),
 ]
-CONTAINER = (100, 210, 1420, 492, "内部核心功能框图（6 个功能块 · 10 个 entity）")
+CONTAINER = (100, 210, 1440, 492, "内部核心功能框图（6 个功能块 · 10 个 entity）")
 RAIL_Y = 190
+# 容器标题左端 x：放在容器左内边留白处，并避开 x=200（kbd）与 x=650（fsm）两条时钟竖线
+# —— 标题文字宽约 300，落在 215..515 正好卡在两条竖线之间的空档，净距 ≫12 px。
+# drawio 版（gen_drawio_figures.build_overview）复用这个常量，两边保持一致。
+ZONE_TITLE_X = 215
 
 # ---- 连线：(源, 源侧, 目标, 目标侧, 标签, 额外拐点) ----
 EDGES = [
@@ -151,7 +155,7 @@ def build():
     p.append('<rect x="%d" y="%d" width="%d" height="%d" rx="14" fill="#f8fafc" stroke="#cbd5e1" '
              'stroke-width="1.6" stroke-dasharray="9 6"/>' % (cx, cy, cw, ch))
     p.append('<text x="%d" y="%d" font-family="%s" font-size="15" font-weight="bold" '
-             'fill="%s">%s</text>' % (cx + 14, cy + 26, FONT, MUTED, esc(ctitle)))
+             'fill="%s">%s</text>' % (ZONE_TITLE_X, cy + 26, FONT, MUTED, esc(ctitle)))
 
     # ① 先画时钟分配（虚线）—— 后面的方框会压住穿过它们的部分
     p.append('<path d="M 820 90 L 820 %d" fill="none" stroke="%s" stroke-width="1.6" '

@@ -47,8 +47,8 @@ ENT_TITLE = 19.5
 ENT_SUB = 13
 GLUE_TITLE = 15
 GLUE_SUB = 13.5
-EXT_TITLE = 14
-EXT_SUB = 13
+EXT_TITLE = 13
+EXT_SUB = 12
 TAG_SIZE = 14
 BUS_SIZE = 17
 LEGEND_SIZE = 13
@@ -68,7 +68,10 @@ GLUE_LINE = "#64748b"
 
 # ---------------------------------------------------------------- 六列
 COL_X = [24, 192, 462, 806, 1104, 1358]
-COL_W = [104, 146, 180, 164, 190, 122]
+# COL_W[0] 由 104 加到 122：原来 104 宽装不下「50 MHz 有源晶振」，draw.io 会在
+# "有源晶" 与 "振" 之间断行（T1 返工 D）。加宽后 channel(0) 仍有 46 px，
+# 两根主干竖线（ext_btn / ext_kp）分到 10 px，够用。
+COL_W = [122, 146, 180, 164, 190, 122]
 COL_TITLE = ["板载输入器件", "时钟与输入采集", "主控 · 存储 · 随机源",
              "核心引擎与顶层胶合", "显示与音频输出", "板载输出器件"]
 
@@ -118,8 +121,13 @@ EXT_LINES = {
     "ext_buzz": ("无源", "蜂鸣器"),
 }
 GLUE_CN = {"glue_pat": "图案选择锁存", "glue_row": "行计数器+行切片"}
+# 两个虚线胶合框的副标题原来都写「非 entity」，逐字重复（T1 返工 B）；改成
+# 各自说明它"锁存/计数什么"，虚线框的含义已由图例统一解释。
+GLUE_SUBTITLE = {"glue_pat": "锁存 · 组合", "glue_row": "计数 · 切片"}
+# ext_* 框内的三行文字（标题 / 器件名 / 引脚）——自己控制换行，
+# 不让 draw.io 在词中间断行（T1 返工 D）。
 EXT_SUB_TEXT = {"ext_clk": "PIN_18", "ext_btn": "PIN_61", "ext_sw": "PIN_125",
-                "ext_kp": "kp_row/col", "ext_seg": "seg / cat",
+                "ext_kp": "kp_row / kp_col", "ext_seg": "seg / cat",
                 "ext_dot": "ROW/COLR/COLG", "ext_buzz": "PIN_60"}
 
 # ---------------------------------------------------------------- 主干（总线）名字
@@ -138,20 +146,46 @@ TRUNK_CN = {
     ("puzzle_ctrl", "left"): "判定/推进",
     ("glue_pat", "right"): "选择→引擎",
     ("glue_pat", "left"): "选择→ROM",
-    ("glue_row", "right"): "行切片",
+    # 原为「行切片」——与 glue_row 框标题「行计数器+行切片」里的字面重复
+    # （T1 返工 B）；这条线载的是 mat_r[7:0]/mat_g[7:0]/mrow[2:0]，改叫「行数据」。
+    ("glue_row", "right"): "行数据",
     ("disp_format", "right"): "段码",
     ("seg_scan", "right"): "段/位选",
     ("buzzer_ctrl", "right"): "蜂鸣",
 }
 
 BAND_Y0, BAND_DY = 128, 20
+
+# ---------------------------------------------------------------- 避让参数
+# 主干标签必须与任何连线保持的最小间距（px）。draw.io 的标签没有底色，线一旦
+# 贴近就会"切断"文字，所以判据不是"不穿过就行"，而是要求留白。
+LABEL_CLEAR = 10.0
+# 与方框 / 分区标题的间距：方框是**先画标签后画框**（框会盖住标签），只要不重叠
+# 就不会切字；要求 10 px 会把标签挤到离源方框很远的地方（"浮动标签"更糟）。
+LABEL_BOX_CLEAR = 10.0
+# 关联项：标签离自己那根主干的出线段越远越贵，防止它为了躲线而飘走。
+LABEL_NEAR = 8.0
+# 硬口径：标签到自己主干出线段超过这个距离就基本判无效（T1 返工 C）。
+LABEL_OWN_MAX = 30.0
+# 通道内竖线之间的最小间距（不同 (源,出线侧) 主干 / 长途分支竖线都算）。
+X_GAP = 8.0
+X_INSET = 18.0
+# 同一方框同一侧：入线附着点与出线主干口之间的最小间距。二者相等时两根线会在
+# 同一水平线上完全重合，读者会把它看成"一个两端都带箭头的双向连接"。
+LANE_GAP = 16.0
+# 触发"错开"的阈值：入线口离出线口近于这个值就认为视觉上已经粘在一起。
+LANE_MERGE = 8.0
+# 附着点离方框上 / 下边缘的最小距离。
+LANE_INSET = 14.0
+
 LEGEND_Y = 986
 NOTE_Y = 996
 NOTE_LINES = [
     "图例：实线框 = rtl/&lt;同名&gt;.vhd 中的一个 entity（共 11 个，与 puzzle_top.vhd 的 11 条 component 声明、11 个 u_* 例化三方一致）；"
     "虚线框 = 顶层胶合逻辑（非 entity）；浅灰框 = 板载器件",
     "方框左下角角标 = 该模块消费的全局网络：clk 50 MHz ← 有源晶振、rst ← clk_gen、sw7 使能 ← SW7；"
-    "这三路是一对多分配（消费者 10 / 8 / 4 个、共 22 根），逐根画会得到 22 根长线，故用角标表达",
+    "这三路是一对多分配（消费者 10 / 8 / 4 个、共 22 根），逐根画会得到 22 根长线，故用角标表达；"
+    "纯组合模块（disp_format / piece_rom / pattern_rom）不消费全局网络，因此没有角标（不是漏画）",
 ]
 
 
@@ -283,22 +317,15 @@ def build(widths, facts):
         for w in ws:
             w["y_exit"] = y_exit
             w["trunk_ch"] = ch
-            if w["span"] >= 2:
-                w["band_y"] = BAND_Y0 + (i % 5) * BAND_DY
 
-    # 通道内分配主干 x
-    trunk_x = {}
-    per_channel = {}
-    for key, ws in trunk_list:
-        per_channel.setdefault(ws[0]["trunk_ch"], []).append(key)
-    for ch, keys in per_channel.items():
-        x0, x1 = channel(ch)
-        lo, hi = x0 + 18.0, x1 - 18.0
-        keys.sort(key=lambda k: boxes[k[0]].cy)
-        n = len(keys)
-        step = (hi - lo) / (n - 1) if n > 1 else 0.0
-        for i, k in enumerate(keys):
-            trunk_x[k] = lo + i * step if n > 1 else (lo + hi) / 2.0
+    # 顶部干线带：只有**真的用到带**的主干才占档位，否则两个不同源的主干会分到
+    # 同一个 band_y，横段叠成一根（T1 返工 必修1：clk_gen|right 与 game_fsm|right
+    # 原来都在 y=148）。
+    band_keys = [key for key, ws in trunk_list if any(w["span"] >= 2 for w in ws)]
+    for k, key in enumerate(band_keys):
+        for w in trunks[key]:
+            if w["span"] >= 2:
+                w["band_y"] = BAND_Y0 + (k % 5) * BAND_DY
 
     # ---------- 3. 目标入口 y ----------
     def slots(n, lo, hi, gap=26.0):
@@ -322,23 +349,76 @@ def build(widths, facts):
         for w, y in zip(items, slots(len(items), b.y + 18, b.y1 - 18)):
             in_y[w["id"]] = y
 
-    # 长途分叉：目标侧通道里每个目标一个 lane x
-    lane_b = {}
-    by_target_ch = {}
+    # ---------- 3b. 同一方框同一侧：入线口与出线口必须错开 ----------
+    # 【T1 缺陷 4】某侧只有 1 条入线时 slots(1,...) 恰好取到方框中心，而主干出线口
+    # 也正是方框中心 ⇒ 两根线在同一水平线上完全重合，读者看到的是"一个两端都带
+    # 箭头的双向连接"（piece_rom↔puzzle_ctrl、glue_row↔seg_scan 都是这么来的）。
+    # 数据本身是单向的，所以这里只挪附着点（lane / 端点），不改任何连线语义。
+    lane_opts = {}      # (方框, 侧) -> [ (出线口 y, {线 id: 入线口 y}), ... ]
+    for key in sorted(in_items):
+        if key not in trunks:
+            continue                       # 该侧没有出线主干，不可能重合
+        bid, side = key
+        b = boxes[bid]
+        items = sorted(in_items[key], key=lambda w: boxes[w["from"]].cy)
+        cur = [in_y[w["id"]] for w in items]
+        if min(abs(y - b.cy) for y in cur) >= LANE_MERGE:
+            continue                       # 本来就分得开
+        lo, hi = b.y + LANE_INSET, b.y1 - LANE_INSET
+        n = len(items)
+        opts = []
+        if n == 1:
+            # 入线口与出线口各自可以在"原位 / 上移一格 / 下移一格"里挑，
+            # 只要两者相距 >= LANE_GAP。给出全部组合，交给后面的贪心按
+            # "全图交叉 + 视觉粘连"最少的准则挑。
+            y_in = cur[0]
+            lv = [y for y in (y_in - LANE_GAP, y_in, y_in + LANE_GAP) if lo <= y <= hi]
+            for a in lv:
+                for c in lv:
+                    if abs(a - c) >= LANE_GAP - 1e-9:
+                        opts.append((a, {items[0]["id"]: c}))
+        else:
+            # 入线口 + 出线口一起重新铺开，两两间距尽量 >= LANE_GAP
+            gap = min(LANE_GAP, (hi - lo) / n) if n else 0.0
+            start = lo + ((hi - lo) - n * gap) / 2.0
+            pos = [start + i * gap for i in range(n + 1)]
+            for k in range(n + 1):
+                rest = [pos[i] for i in range(n + 1) if i != k]
+                opts.append((pos[k], {w["id"]: y for w, y in zip(items, rest)}))
+        lane_opts[key] = opts
+
+    # ---------- 3c. 通道内 x 槽位：主干竖线与长途分支竖线**共用一套** ----------
+    # 【T1 返工 必修1 / A2~A5】原来"主干 x"和"分支 lane x"各分一套、各自均分，
+    # 两条不同源的竖线会算出同一个 x（788 / 988 / 1086 / 660），在图上叠成一根，
+    # 读者顺着顶部 clk 主干下行会一路追到 rng_lfsr。现在同一个通道里的所有竖线
+    # （不管是哪条主干的干线，还是某根长途线的分支 lane）统一排序、统一铺开，
+    # 保证两两至少隔开 X_GAP。
+    x_items = {}      # 通道号 -> [(排序键, 0=主干/1=分支, 对象), ...]
+    for key, ws in trunk_list:
+        x_items.setdefault(ws[0]["trunk_ch"], []).append((ws[0]["y_exit"], 0, key))
     for w in wires:
         if w["span"] >= 2:
             tc = w["ct"] - 1 if w["in_side"] == "left" else w["ct"]
-            by_target_ch.setdefault(tc, []).append(w)
-    for tc, ws in by_target_ch.items():
-        x0, x1 = channel(tc)
-        lo, hi = x0 + 18.0, x1 - 18.0
-        n = len(ws)
+            x_items.setdefault(tc, []).append((in_y[w["id"]], 1, w["id"]))
+    trunk_x = {}
+    lane_b = {}
+    x_span = {}
+    for ch, items in x_items.items():
+        x0, x1 = channel(ch)
+        lo, hi = x0 + X_INSET, x1 - X_INSET
+        items.sort(key=lambda it: (it[0], it[1]))
+        n = len(items)
         step = (hi - lo) / (n - 1) if n > 1 else 0.0
-        for i, w in enumerate(sorted(ws, key=lambda w: in_y[w["id"]])):
-            lane_b[w["id"]] = lo + i * step if n > 1 else (lo + hi) / 2.0
+        for i, (yk, kind, obj) in enumerate(items):
+            xv = lo + i * step if n > 1 else (lo + hi) / 2.0
+            x_span[obj] = (lo, hi)
+            if kind == 0:
+                trunk_x[obj] = xv
+            else:
+                lane_b[obj] = xv
 
     # ---------- 4. 折线（全部从主干分叉） ----------
-    for w in wires:
+    def route(w):
         bf, bt = boxes[w["from"]], boxes[w["to"]]
         y_o = w["y_exit"]
         y_i = in_y[w["id"]]
@@ -356,6 +436,195 @@ def build(widths, facts):
                 pts.append(p)
         w["pts"] = pts
 
+    for w in wires:
+        route(w)
+
+    def proper_cross(p0, p1, q0, q1):
+        rx, ry = p1[0] - p0[0], p1[1] - p0[1]
+        sx, sy = q1[0] - q0[0], q1[1] - q0[1]
+        den = rx * sy - ry * sx
+        if abs(den) < 1e-12:
+            return False
+        qpx, qpy = q0[0] - p0[0], q0[1] - p0[1]
+        t = (qpx * sy - qpy * sx) / den
+        u = (qpx * ry - qpy * rx) / den
+        return 1e-9 < t < 1 - 1e-9 and 1e-9 < u < 1 - 1e-9
+
+    def cross_total():
+        n = 0
+        for i in range(len(wires)):
+            pa = wires[i]["pts"]
+            for j in range(i + 1, len(wires)):
+                pb = wires[j]["pts"]
+                for k in range(len(pa) - 1):
+                    for m in range(len(pb) - 1):
+                        if proper_cross(pa[k], pa[k + 1], pb[m], pb[m + 1]):
+                            n += 1
+        return n
+
+    def merge_total():
+        """跨主干、水平附着段"y 相近且 x 相邻/重叠"的线对数量。
+
+        这种线对在图上会粘成**一根**连续的线：两端各有一个箭头时，读者会把它
+        读成"双向连接"。所以它比一次普通交叉更糟，必须在选 lane 时一并避开。
+        """
+        segs = []
+        for w in wires:
+            pa = w["pts"]
+            idx = {0, len(pa) - 2}
+            for k in sorted(idx):
+                (x0, y0), (x1, y1) = pa[k], pa[k + 1]
+                if abs(y1 - y0) < 0.6 and abs(x1 - x0) > 2.0:
+                    segs.append((w["key"], min(x0, x1), max(x0, x1), y0))
+        n = 0
+        for i in range(len(segs)):
+            for j in range(i + 1, len(segs)):
+                a, b = segs[i], segs[j]
+                if a[0] == b[0]:
+                    continue                       # 同一主干共用出线段，是有意的
+                if abs(a[3] - b[3]) >= LANE_MERGE:
+                    continue
+                if min(a[2], b[2]) - max(a[1], b[1]) > -4.0:
+                    n += 1
+        return n
+
+    def lane_cost():
+        return cross_total() + 4 * merge_total()
+
+    def apply_lane(key, idx):
+        y_exit, ins = lane_opts[key][idx]
+        for w in trunks[key]:
+            w["y_exit"] = y_exit
+            route(w)
+        for w in in_items[key]:
+            if w["id"] in ins:
+                in_y[w["id"]] = ins[w["id"]]
+                route(w)
+
+    # 出线口"往上还是往下"是二选一，选哪个会影响全图交叉数与"视觉粘连"，所以
+    # 以 (交叉数 + 4×粘连数) 为准则做一次贪心，确定性、不随机。
+    lane_sel = {}
+    for key, opts in sorted(lane_opts.items()):
+        b = boxes[key[0]]
+        lane_sel[key] = min(range(len(opts)),
+                            key=lambda i: (abs(opts[i][0] - b.cy), opts[i][0]))
+    for key in sorted(lane_opts):
+        apply_lane(key, lane_sel[key])
+    base = lane_cost()
+    for key in sorted(lane_opts):
+        best_i, best_c = lane_sel[key], base
+        for i in range(len(lane_opts[key])):
+            if i == lane_sel[key]:
+                continue
+            apply_lane(key, i)
+            c = lane_cost()
+            if c < best_c:
+                best_i, best_c = i, c
+            apply_lane(key, lane_sel[key])
+        if best_i != lane_sel[key]:
+            apply_lane(key, best_i)
+            lane_sel[key], base = best_i, best_c
+
+    # ---------- 4b. 跨主干"共线重合"清零（T1 返工 必修1 A1~A5） ----------
+    # 两个不同源模块的水平段若 y 相差 < 8 px 且 x 相邻/重叠，draw.io 会把它画成
+    # **一根连续直线**（"选择→引擎"的横段 970→988 与 w18 的 988→1104 就差 1 px）。
+    # 3c 已经把竖线分开了，这里把剩下的水平级差逐对拉开：优先挪"入线口"，
+    # 其次挪"出线口"、再挪"干线带档位"，每次只接受让重合对数下降的移动。
+    by_id = {w["id"]: w for w in wires}
+
+    def h_runs():
+        runs = []
+        for w in wires:
+            pa = w["pts"]
+            for k in range(len(pa) - 1):
+                (x0, y0), (x1, y1) = pa[k], pa[k + 1]
+                if abs(y1 - y0) >= 0.6 or abs(x1 - x0) <= 2.0:
+                    continue
+                if k == 0:
+                    ctrl = ("exit", w["key"])
+                elif k == len(pa) - 2:
+                    ctrl = ("entry", w["id"])
+                else:
+                    ctrl = ("band", w["key"])
+                runs.append((w["key"], min(x0, x1), max(x0, x1), y0, ctrl))
+        return runs
+
+    def h_conflicts():
+        runs = h_runs()
+        out = []
+        for i in range(len(runs)):
+            for j in range(i + 1, len(runs)):
+                a, b = runs[i], runs[j]
+                if a[0] == b[0]:
+                    continue                       # 同一主干共用出线段，是有意的
+                if abs(a[3] - b[3]) >= LANE_MERGE:
+                    continue
+                if min(a[2], b[2]) - max(a[1], b[1]) > -4.0:
+                    out.append((a, b))
+        return out
+
+    def level_range(ctrl):
+        kind, ref = ctrl
+        if kind == "entry":
+            b = boxes[by_id[ref]["to"]]
+            return (b.y + LANE_INSET, b.y1 - LANE_INSET)
+        if kind == "exit":
+            b = boxes[ref[0]]
+            return (b.y + LANE_INSET, b.y1 - LANE_INSET)
+        return (BAND_Y0, BAND_Y0 + 4 * BAND_DY)
+
+    def level_get(ctrl):
+        kind, ref = ctrl
+        if kind == "entry":
+            return in_y[ref]
+        if kind == "exit":
+            return trunks[ref][0]["y_exit"]
+        return trunks[ref][0]["band_y"]
+
+    def level_set(ctrl, v):
+        kind, ref = ctrl
+        if kind == "entry":
+            in_y[ref] = v
+            route(by_id[ref])
+        elif kind == "exit":
+            for w in trunks[ref]:
+                w["y_exit"] = v
+                route(w)
+        else:
+            for w in trunks[ref]:
+                if w["span"] >= 2:
+                    w["band_y"] = v
+                route(w)
+
+    for _ in range(60):
+        conf = h_conflicts()
+        if not conf:
+            break
+        base_cross = cross_total()
+        done = False
+        for (a, b) in conf:
+            for seg in (a, b):
+                ctrl = seg[4]
+                lo, hi = level_range(ctrl)
+                cur = level_get(ctrl)
+                for dv in (LANE_MERGE, -LANE_MERGE, 2 * LANE_MERGE, -2 * LANE_MERGE):
+                    nv = cur + dv
+                    if nv < lo or nv > hi or abs(nv - cur) < 1e-9:
+                        continue
+                    level_set(ctrl, nv)
+                    nc = len(h_conflicts())
+                    if nc < len(conf) or (nc == len(conf) and cross_total() < base_cross):
+                        done = True
+                        break
+                    level_set(ctrl, cur)
+                if done:
+                    break
+            if done:
+                break
+        if not done:
+            break
+    h_left = len(h_conflicts())
+
     # ---------- 5. 主干标签（贴在主干起点旁边） ----------
     all_segs = []
     for w in wires:
@@ -366,8 +635,10 @@ def build(widths, facts):
     obstacles.append(R(0, 0, W, 104))
     obstacles.append(R(0, H - 40, W, 40))
     for z in zones:
+        # 分区标题在 drawio 里是**左对齐**画在 z.x+10 的，这里必须用同一位置，
+        # 否则障碍物与实际渲染错位。
         tw = text_w(z["title"], ZONE_SIZE)
-        obstacles.append(R(z["x"] + z["w"] / 2 - tw / 2, z["y"] + 6, tw, 20))
+        obstacles.append(R(z["x"] + 10, z["y"] + 6, tw, 20))
     placed = []
 
     def lrect(txt, x, y, anchor):
@@ -376,31 +647,113 @@ def build(widths, facts):
         x0 = x if anchor == "start" else (x - wdt if anchor == "end" else x - wdt / 2)
         return R(x0, y - hgt / 2, wdt, hgt)
 
-    def penalty(r):
-        p = 0.0
-        for o in obstacles:
-            oo = R(o.x - 3, o.y - 3, o.w + 6, o.h + 6)
-            if overlap(r, oo, 0.0):
-                p += (min(r.x1, oo.x1) - max(r.x, oo.x)) * (min(r.y1, oo.y1) - max(r.y, oo.y))
-        for o in placed:
-            oo = R(o.x - 2, o.y - 2, o.w + 4, o.h + 4)
-            if overlap(r, oo, 0.0):
-                p += 3.0 * (min(r.x1, oo.x1) - max(r.x, oo.x)) * (min(r.y1, oo.y1) - max(r.y, oo.y))
-        for (p0, p1) in all_segs:
-            if seg_rect(p0, p1, r):
-                p += 5000.0
-        return p
+    def intrude(r, o, clear):
+        """r 侵入"外扩 clear 的 o"有多深；0 表示两者间距 >= clear。
 
-    for key, ws in trunk_list:
-        txt = TRUNK_CN.get(key, "")
-        if not txt:
-            continue
-        w0 = ws[0]
-        src = key[0]
-        b = boxes[src]
-        xg = trunk_x[key]
-        y_o = w0["y_exit"]
-        x_out = b.x1 if key[1] == "right" else b.x
+        这是"贴近惩罚"的核心：只有 0 和"穿过去"两档是不够的 —— 标签与线只差
+        1~2 px 时，draw.io 渲染出来就是线切字（T1 缺陷 1/2 就是这么来的）。
+        """
+        ox0, oy0 = o.x - clear, o.y - clear
+        ox1, oy1 = o.x1 + clear, o.y1 + clear
+        ow = min(r.x1, ox1) - max(r.x, ox0)
+        oh = min(r.y1, oy1) - max(r.y, oy0)
+        if ow <= 0.0 or oh <= 0.0:
+            return 0.0
+        return min(ow, oh)
+
+    def seg_box(p0, p1):
+        return R(min(p0[0], p1[0]), min(p0[1], p1[1]),
+                 abs(p1[0] - p0[0]), abs(p1[1] - p0[1]))
+
+    seg_boxes = [(p0, p1, seg_box(p0, p1)) for (p0, p1) in all_segs]
+
+    # 【T1 返工 必修A】分区虚线框的四条边：标签矩形必须离它们 >= LABEL_CLEAR
+    # 且不许跨越。6 个 zone 只比模块框外扩 3 px，所以按"模块框边"定位的线名
+    # 很容易贴到甚至跨到虚线上 —— 这里把四条边与连线同等对待。
+    zone_edges = []
+    for z in zones:
+        zx0, zy0 = z["x"], z["y"]
+        zx1, zy1 = z["x"] + z["w"], z["y"] + z["h"]
+        for p0, p1 in (((zx0, zy0), (zx1, zy0)), ((zx0, zy1), (zx1, zy1)),
+                       ((zx0, zy0), (zx0, zy1)), ((zx1, zy0), (zx1, zy1))):
+            zone_edges.append((p0, p1, seg_box(p0, p1)))
+
+    def rect_seg_dist(r, p0, p1):
+        """矩形到线段的最短距离（0 = 相交）。"""
+        if seg_rect(p0, p1, r):
+            return 0.0
+        bx = seg_box(p0, p1)
+        dx = max(bx.x - r.x1, 0.0, r.x - bx.x1)
+        dy = max(bx.y - r.y1, 0.0, r.y - bx.y1)
+        d = (dx * dx + dy * dy) ** 0.5
+        if d > 0.0:
+            return d
+        # 包围盒相交但线段本身没穿过矩形：退化成"矩形到线段端点"的估计
+        best = 1e18
+        for p in (p0, p1):
+            ex = max(r.x - p[0], 0.0, p[0] - r.x1)
+            ey = max(r.y - p[1], 0.0, p[1] - r.y1)
+            best = min(best, (ex * ex + ey * ey) ** 0.5)
+        return best
+
+    def penalty(r, anchor, others=()):
+        """分层罚分（量级差开，保证优先级严格）：
+
+          1e9 · 真穿过 / 真重叠（线、分区虚线、方框、别的标签）
+          1e6 · 10 px 净距的"亏欠深度"之和（线 / 分区虚线 / 方框 / 标签）
+          1e3 · 到自己主干超过 LABEL_OWN_MAX 的部分
+          8   · 到自己主干的距离本身（越小越贴）
+
+        这样"宁可浮动也不能压线"是被量级保证的，而不是靠调系数碰运气。
+        """
+        hard = 0
+        deficit = 0.0
+        for o in obstacles:
+            if intrude(r, o, 0.0) > 0.0:
+                hard += 1
+            d = intrude(r, o, LABEL_BOX_CLEAR)
+            if d > 0.0:
+                deficit += d
+        for o in others:
+            if intrude(r, o, 0.0) > 0.0:
+                hard += 1
+            d = intrude(r, o, LABEL_CLEAR)
+            if d > 0.0:
+                deficit += d
+        for (p0, p1, bx) in seg_boxes:
+            if seg_rect(p0, p1, r):
+                hard += 1
+            else:
+                d = intrude(r, bx, LABEL_CLEAR)
+                if d > 0.0:
+                    deficit += d
+        for (p0, p1, bx) in zone_edges:
+            if seg_rect(p0, p1, r):
+                hard += 1
+            else:
+                d = intrude(r, bx, LABEL_CLEAR)
+                if d > 0.0:
+                    deficit += d
+        d_own = rect_seg_dist(r, anchor[0], anchor[1])
+        excess = max(0.0, d_own - LABEL_OWN_MAX)
+        return 1e9 * hard + 1e6 * deficit + 1e3 * excess + LABEL_NEAR * d_own
+
+    def refine(txt, x, y, anc, anchor, others, span):
+        """在粗网格最优点附近再细扫一遍（步长 3），找窄缝里的落点。"""
+        best, bestp = None, None
+        steps = int(span // 3)
+        for dx in range(-steps, steps + 1):
+            for dy in range(-steps, steps + 1):
+                xx, yy = x + dx * 3.0, y + dy * 3.0
+                r = lrect(txt, xx, yy, anc)
+                if r.x < 6 or r.x1 > W - 6 or r.y < 6 or r.y1 > H - 26:
+                    continue
+                p = penalty(r, anchor, others)
+                if bestp is None or p < bestp:
+                    best, bestp = (xx, yy, anc, r), p
+        return best, bestp
+
+    def make_cands(b, x_out, xg, y_o):
         cands = []
         # 优先贴在"源方框与竖直干线之间那段水平出线"的上方 / 下方
         for fr in (0.5, 0.3, 0.7, 0.15, 0.85):
@@ -414,26 +767,108 @@ def build(widths, facts):
             cands.append((b.x1 + 8, b.y1 - k, "start"))
             cands.append((b.x - 8, b.y + k, "end"))
             cands.append((b.x - 8, b.y1 - k, "end"))
-        # 兜底：源方框周围的网格
-        for gx in range(int(b.x) - 130, int(b.x1) + 131, 12):
-            for gy in range(int(b.y) - 60, int(b.y1) + 61, 12):
+        # 兜底：源方框周围的网格（比 v3 扩大一圈，给"必须留 10 px"留出落点）
+        for gx in range(int(b.x) - 170, int(b.x1) + 171, 12):
+            for gy in range(int(b.y) - 100, int(b.y1) + 101, 12):
                 cands.append((gx, gy, "middle"))
+        return cands
+
+    def place_label(key, others):
+        """为某根主干找标签落点（others = 其它已放标签的矩形）。
+
+        返回 (x, y, anchor, rect, penalty)；找不到返回 None。
+        """
+        txt = TRUNK_CN.get(key, "")
+        if not txt:
+            return None
+        w0 = trunks[key][0]
+        b = boxes[key[0]]
+        xg = trunk_x[key]
+        y_o = w0["y_exit"]
+        x_out = b.x1 if key[1] == "right" else b.x
+        anchor = ((x_out, y_o), (xg, y_o))      # 该主干自己的出线段
         best, bestp = None, None
-        for (x, y, anc) in cands:
+        for (x, y, anc) in make_cands(b, x_out, xg, y_o):
             r = lrect(txt, x, y, anc)
             if r.x < 6 or r.x1 > W - 6 or r.y < 6 or r.y1 > H - 26:
                 continue
-            p = penalty(r)
-            if p == 0.0:
-                best = (x, y, anc, r)
-                break
+            p = penalty(r, anchor, others)
             if bestp is None or p < bestp:
                 best, bestp = (x, y, anc, r), p
         if best is None:
+            return None
+        # 粗网格步长 10 px，窄缝（例如通道净宽 38 px）可能正好被跨过，
+        # 所以在最优点附近按 2 px 再扫一遍。
+        fine, finep = refine(txt, best[0], best[1], best[2], anchor, others, 12.0)
+        if fine is not None and finep is not None and finep < bestp:
+            best, bestp = fine, finep
+        return (best[0], best[1], best[2], best[3], bestp)
+
+    def d_own_of(key, r):
+        w0 = trunks[key][0]
+        b = boxes[key[0]]
+        x_out = b.x1 if key[1] == "right" else b.x
+        return rect_seg_dist(r, (x_out, w0["y_exit"]), (trunk_x[key], w0["y_exit"]))
+
+    label_order = [k for k, _ws in trunk_list if TRUNK_CN.get(k)]
+    labels_sel = {}
+    for key in label_order:
+        others = [labels_sel[k][3] for k in label_order if k in labels_sel]
+        got = place_label(key, others)
+        if got is not None:
+            labels_sel[key] = got
+
+    # ---------- 5b. 关联精修（T1 返工 C） ----------
+    # 有的主干出线口正好卡在分区虚线框边（例如 game_fsm 的 y=388 距 zone2 右边
+    # 只有 3 px），标签为了躲虚线只能飘到 100 px 外。把"出线口 y"也当成可调量：
+    # 在方框内试几个位置，谁能让标签既守住所有净距、又贴回自己那根线，就用谁。
+    # 判据必须包含 penalty 本身（它才是"零跨越 + 10 px 净距"的保证），
+    # 否则会出现"标签压在自己线上但 d_own=0"这种假优胜。
+    for _pass in range(2):
+      for key in label_order:
+        if key not in labels_sel:
             continue
-        w0["label"] = {"text": txt, "x": round(best[0], 2), "y": round(best[1], 2),
-                       "anchor": best[2], "size": BUS_SIZE}
-        placed.append(best[3])
+        cur_r = labels_sel[key][3]
+        if d_own_of(key, cur_r) <= LABEL_OWN_MAX:
+            continue                       # 已经贴上了，不用动
+        cur_y = trunks[key][0]["y_exit"]
+        b = boxes[key[0]]
+        lo, hi = b.y + LANE_INSET, b.y1 - LANE_INSET
+        best_score, best_sel = (len(h_conflicts()), labels_sel[key][4]), None
+        for yv in sorted({cur_y - 48, cur_y - 32, cur_y - 16,
+                          cur_y + 16, cur_y + 32, cur_y + 48}):
+            if yv < lo or yv > hi:
+                continue
+            for w in trunks[key]:
+                w["y_exit"] = yv
+                route(w)
+            others = [labels_sel[k][3] for k in label_order
+                      if k != key and k in labels_sel]
+            got = place_label(key, others)
+            if got is not None:
+                score = (len(h_conflicts()), got[4])
+                if score < best_score:
+                    best_score, best_sel = score, (yv, got)
+            for w in trunks[key]:
+                w["y_exit"] = cur_y
+                route(w)
+        if best_sel is not None:
+            yv, got = best_sel
+            for w in trunks[key]:
+                w["y_exit"] = yv
+                route(w)
+            labels_sel[key] = got
+
+    for key in label_order:
+        if key not in labels_sel:
+            continue
+        x, y, anc, r, _p = labels_sel[key]
+        w0 = trunks[key][0]
+        txt = TRUNK_CN[key]
+        w0["label"] = {"text": txt, "x": round(x, 2), "y": round(y, 2),
+                       "anchor": anc, "size": BUS_SIZE,
+                       "w": round(text_w(txt, BUS_SIZE) + 10, 2)}
+        placed.append(r)
 
     # ---------- 6. layout JSON ----------
     lay_boxes = []
@@ -448,18 +883,22 @@ def build(widths, facts):
                       "text_w": round(max(text_w(AD.ENTITIES[bid]["title"], ENT_TITLE),
                                           text_w(CN[bid], ENT_SUB)), 2)})
         elif bid in AD.EXTERNAL:
-            b.update({"kind": "ext", "title": AD.EXTERNAL[bid]["title"],
-                      "sub": AD.EXTERNAL[bid]["sub"],
+            # 【T1 返工 D】ext_* 框内固定三行（器件名 / 中文名 / 引脚），换行由
+            # 这里给定，draw.io 不许自己断行（原来 "50 MHz 有源晶振" 被断成
+            # "50 MHz 有源晶" / "振"）。title/sub 仍填第 1/2 行，lines 给全三行。
+            b.update({"kind": "ext",
+                      "title": EXT_LINES[bid][0], "sub": EXT_LINES[bid][1],
+                      "lines": [EXT_LINES[bid][0], EXT_LINES[bid][1], EXT_SUB_TEXT[bid]],
                       "title_size": EXT_TITLE, "sub_size": EXT_SUB, "globals": [],
                       "text_w": round(max(text_w(EXT_LINES[bid][0], EXT_TITLE),
                                           text_w(EXT_LINES[bid][1], EXT_TITLE),
                                           text_w(EXT_SUB_TEXT[bid], EXT_SUB)), 2)})
         else:
-            b.update({"kind": "glue", "title": GLUE_CN[bid], "sub": "非 entity",
+            b.update({"kind": "glue", "title": GLUE_CN[bid], "sub": GLUE_SUBTITLE[bid],
                       "title_size": GLUE_TITLE, "sub_size": GLUE_SUB,
                       "globals": AD.GLOBALS[bid],
                       "text_w": round(max(text_w(GLUE_CN[bid], GLUE_TITLE),
-                                          text_w("非 entity", GLUE_SUB)), 2)})
+                                          text_w(GLUE_SUBTITLE[bid], GLUE_SUB)), 2)})
         lay_boxes.append(b)
 
     lay_wires = []

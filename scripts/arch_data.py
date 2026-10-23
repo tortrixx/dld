@@ -334,6 +334,59 @@ def verify_layout(path: str) -> int:
     return 0
 
 
+# ---------------------------------------------------------------- 图注口径（可现算）
+# 报告 §2.2 的 fig1 图注写死了三个数：「32 条框间连接 / 60 个三元组 / 127 行 port map」。
+# 这三个数必须能被现算复现 —— 前两个由 WIRE_GROUPS 推出，第三个由 facts.json 的
+# port_map 条目求和并与 rtl/puzzle_top.vhd 对账。以下三个函数**只追加**，
+# 不改动上面任何已有函数签名与输出顺序（布局脚本正在并行 import 本模块）。
+def grouped_connections() -> int:
+    """图上实际画的**框间连接**条数 = 按 (源, 目标) 合并后的箭头数。
+
+    WIRE_GROUPS 里同一个 (源, 目标) 可以拆成多组（例如 game_fsm → puzzle_ctrl
+    分了 go/sel/move/conf、mv_*、level 三组），但图上**共用一条主干**只画一根箭头。
+    """
+    return len({(frm, to) for frm, to, _nets in WIRE_GROUPS})
+
+
+def port_map_lines() -> int:
+    """puzzle_top.vhd 的 port map 行数 = facts.json 里 11 个例化的 port_map 条目合计。"""
+    facts = load_facts()
+    insts = facts["entities"]["puzzle_top"]["instantiations"]
+    return sum(len(i.get("port_map") or []) for i in insts)
+
+
+def rtl_port_map_lines(path: str | None = None) -> tuple:
+    """现数 rtl/puzzle_top.vhd：每个 `port map (` 块内**含 `=>` 的行数**。
+
+    返回 (行数, 块数)。只认 port map 块，不会把 `(others => '0')` 之类的聚合算进来。
+    """
+    path = path or os.path.join(ROOT, "rtl", "puzzle_top.vhd")
+    lines = open(path, encoding="utf-8").read().splitlines()
+    total, blocks, i = 0, 0, 0
+    while i < len(lines):
+        if re.search(r"port\s+map\s*\(", lines[i], re.I):
+            blocks += 1
+            depth, j = 0, i
+            while j < len(lines):
+                depth += lines[j].count("(") - lines[j].count(")")
+                if "=>" in lines[j]:
+                    total += 1
+                if depth <= 0 and j > i:
+                    break
+                j += 1
+            i = j + 1
+        else:
+            i += 1
+    return total, blocks
+
+
+def port_map_audit() -> dict:
+    """port map 行数对账：facts.json 求和 vs rtl/puzzle_top.vhd 现数。"""
+    facts_n = port_map_lines()
+    rtl_n, blocks = rtl_port_map_lines()
+    return {"facts": facts_n, "rtl": rtl_n, "blocks": blocks, "match": facts_n == rtl_n}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="系统总体框图的事实源（数据与布局分离）")
     ap.add_argument("--verify-layout", metavar="JSON", help="对账某个布局文件")
@@ -361,6 +414,16 @@ def main() -> int:
           % (len(WIRE_GROUPS), len(wire_triples()), len(all_nets())))
     for f, t, nets in WIRE_GROUPS:
         print("  %-14s → %-16s %s" % (f, t, wire_label(nets, widths)))
+
+    # ↓ 追加：报告 §2.2 fig1 图注里三个数（框间连接 / 三元组 / port map 行）的现算口径
+    pm = port_map_audit()
+    print("框间连接：%d 条（按 (源,目标) 合并后图上画的箭头数；原始 %d 组）"
+          % (grouped_connections(), len(WIRE_GROUPS)))
+    print("展开三元组：%d 个（(源, 目标, 网名)）" % len(wire_triples()))
+    print("port map 行数：%d 行（facts.json 11 个例化的 port_map 条目合计 %d；"
+          "rtl/puzzle_top.vhd 的 %d 个 port map 块内含 `=>` 的行 %d ⇒ %s）"
+          % (pm["facts"], pm["facts"], pm["blocks"], pm["rtl"],
+             "一致" if pm["match"] else "不一致"))
     return 0
 
 
