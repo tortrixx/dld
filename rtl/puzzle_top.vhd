@@ -4,71 +4,58 @@ use IEEE.NUMERIC_STD.ALL;
 use work.puzzle_pkg.ALL;
 
 -- ============================================================================
---  puzzle_top  --  整机顶层
+--  puzzle_top  ——  整机顶层
 --  题目 4：简易拼图游戏（数字电路与逻辑设计实验）
 --  器件：Altera MAX II EPM1270T144C5   工具：Quartus II 9.1   语言：VHDL
 --
---  这是唯一绑定引脚的文件（与 quartus/puzzle.qsf 一起）。
---  每个子模块都用显式 component 声明与具名端口关联来实例化：
---  具名端口映射里少写或写错端口是编译错误，
---  而被省略的那个却可能悄悄留下悬空信号。
+--  本文件是唯一绑定引脚的文件（与 quartus/puzzle.qsf 一起）。
+--  所有子模块都用显式 component 声明与具名端口关联例化：
+--  具名映射里漏写或写错端口是编译错误，可避免悬空信号。
 --
---  框图 <-> 代码对应关系（课程要求实际设计文档中的框图
---  与所实现的电路一致）：
+--  按功能划分为 7 个模块（与 docs/report/fig_overview.png 一致）：
 --
---     S1 clk_gen          时钟分频、tick、复位
---     S2 keypad_scan      4x4 键盘扫描 + 消抖 + 按键单次触发
---     S3 game_fsm         主状态机、倒计时、关卡切换
---     S4 puzzle_ctrl      摆放 / 移动 / 锁定 / 着色引擎
---     S5 pattern_rom      完整图案 ROM
---     S5 piece_rom        零片形状 ROM
---     S5 rng_lfsr         散落用的伪随机数源
---     S6 dot_matrix_scan  8x8 双色点阵行驱动
---     S6 seg_scan         8 位数码管动态扫描 + BCD 译码
---     S6 disp_format      状态 -> 数码管内容
---     S7 buzzer_ctrl      音效
+--     模块 1  时钟与节拍       clk_gen
+--     模块 2  键盘输入         keypad_scan
+--     模块 3  游戏控制         game_fsm
+--     模块 4  拼图核心         puzzle_ctrl
+--     模块 5  显示系统         disp_format / seg_scan / dot_matrix_scan
+--     模块 6  图案与随机数据   piece_rom / pattern_rom / rng_lfsr
+--     模块 7  音效输出         buzzer_ctrl
 --
---  = 11 个子模块 + 本顶层，与框图完全一致。
+--  共 11 个子模块 + 本顶层。
 --
---  点阵是如何驱动的
---  引擎（puzzle_ctrl）内部有**整帧的 64 位帧寄存器** `frame_r`/`frame_g`
---  （每色 64 位、共 128 个触发器，见 rtl/puzzle_ctrl.vhd:249-250），
---  整帧经端口 `o_rowr`/`o_rowg`（各 64 位，本文件 191-192 的 component 声明）
---  送到这里的 `eng_fr`/`eng_fg`（295-297 的信号声明）。
---  本文件再按行计数器 `mrow` 从帧里**切出当前行**（8 个红位 + 8 个绿位），
---  变成每个游戏状态下面板的彩色画面，最后由 dot_matrix_scan 驱动物理行。
---  ⚠️ 本注释早先写"整个设计里没有任何 64 位帧缓存；把整条渲染通路保持 8 位宽，
---     正是引擎能装得下的原因" —— **前半句是错的**（帧寄存器确实存在，就是上面
---     那两个 64 位信号）；后半句真正成立的说法是：**每一拍的组合计算路径只有
---     8 位宽**（一拍只算一行的 row_mask 并把它并进帧），这才是引擎能装进
---     EPM1270 的原因（实测记录见 rtl/puzzle_ctrl.vhd:27-34）。
+--  点阵如何驱动：
+--  引擎（puzzle_ctrl）内部有整帧的 64 位帧寄存器 frame_r / frame_g
+--  （每色 64 位、共 128 个触发器），经 o_rowr / o_rowg 送到本文件的
+--  eng_fr / eng_fg。本文件按行计数器 mrow 从帧里切出当前行（8 红 + 8 绿），
+--  再按游戏状态选择显示内容，最后由 dot_matrix_scan 驱动物理行。
+--  每拍的组合计算路径只有 8 位宽，这是引擎能装进 EPM1270 的关键。
 --
---  硬件说明 —— 这 16 个 LED 是故意不用的。
---  板子把 COLG0..COLG7（点阵绿色列）接到 PIN_38..45，与 LD8..LD15
---  同一组，而 PIN_137..144 由 LD8..LD15 与 VGA 共用。驱动
---  LED 就会让点阵失去绿色，而要求 B6
---  （选中的零片变绿）正依赖这一点。题目 4 没有任何要求
---  用到这些 LED，所以故意把它们留着不用。
+--  硬件说明：PIN_38..45 由点阵绿色列与 LD8..LD15 共用，
+--  而 PIN_137..144 由 LD8..LD15 与 VGA 端口共用。驱动这些 LED
+--  会让点阵失去绿色，而 B6"选中零片变绿"正依赖绿色，
+--  因此本设计刻意不使用这 16 个 LED。
 -- ============================================================================
 
 entity puzzle_top is
     port (
-        clk      : in  std_logic;                       -- PIN_18 板载时钟
-        sw7      : in  std_logic;                       -- PIN_125，拨上 = '1'
-        btn      : in  std_logic;                       -- PIN_61，BTN0 复位
-        kp_row   : in  std_logic_vector(3 downto 0);    -- PIN_111..114
-        kp_col   : out std_logic_vector(3 downto 0);    -- PIN_117..120
-        dot_row  : out std_logic_vector(7 downto 0);    -- PIN_8..1
-        dot_colr : out std_logic_vector(7 downto 0);    -- PIN_22..11
-        dot_colg : out std_logic_vector(7 downto 0);    -- PIN_45..38
-        seg      : out std_logic_vector(7 downto 0);    -- PIN_62..51
-        cat      : out std_logic_vector(7 downto 0);    -- PIN_63..31
-        buzz     : out std_logic                        -- PIN_60
+        clk      : in  std_logic;                       -- PIN_18 板载 50 MHz 主时钟
+        sw7      : in  std_logic;                       -- PIN_125 系统总使能（上拨 = '1'）
+        btn      : in  std_logic;                       -- PIN_61 BTN0 复位（按下 = '1'）
+        kp_row   : in  std_logic_vector(3 downto 0);    -- PIN_111..114 键盘行输入
+        kp_col   : out std_logic_vector(3 downto 0);    -- PIN_117..120 键盘列驱动
+        dot_row  : out std_logic_vector(7 downto 0);    -- PIN_8,7,6,5,4,3,2,1 行选通（低有效）
+        dot_colr : out std_logic_vector(7 downto 0);    -- PIN_22,21,16,15,14,13,12,11 红列
+        dot_colg : out std_logic_vector(7 downto 0);    -- PIN_45,44,43,42,41,40,39,38 绿列
+        seg      : out std_logic_vector(7 downto 0);    -- PIN_62,59,58,57,55,53,52,51 段选（高）
+        cat      : out std_logic_vector(7 downto 0);    -- PIN_63,66,67,68,69,70,30,31 位选（低）
+        buzz     : out std_logic                        -- PIN_60 蜂鸣器
     );
 end entity puzzle_top;
 
 architecture rtl of puzzle_top is
 
+    -- 模块 1：时钟与节拍（clk_gen）
     component clk_gen
         port (
             i_clk      : in  std_logic;
@@ -84,6 +71,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    -- 模块 2：键盘输入（keypad_scan）
     component keypad_scan
         port (
             i_clk     : in  std_logic;
@@ -98,6 +86,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    -- 模块 3：游戏控制（game_fsm）
     component game_fsm
         port (
             i_clk       : in  std_logic;
@@ -128,33 +117,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
-    component piece_rom
-        port (
-            i_level : in  std_logic;
-            o_mask  : out mask_arr_t;
-            o_h     : out dim_arr_t;
-            o_w     : out dim_arr_t;
-            o_n     : out std_logic_vector(2 downto 0)
-        );
-    end component;
-
-    component pattern_rom
-        port (
-            i_level : in  std_logic;
-            i_pat   : in  std_logic_vector(1 downto 0);
-            o_mask  : out std_logic_vector(63 downto 0)
-        );
-    end component;
-
-    component rng_lfsr
-        port (
-            i_clk  : in  std_logic;
-            i_rst  : in  std_logic;
-            i_step : in  std_logic;
-            o_val  : out std_logic_vector(7 downto 0)
-        );
-    end component;
-
+    -- 模块 4：拼图核心（puzzle_ctrl）
     component puzzle_ctrl
         port (
             i_clk     : in  std_logic;
@@ -199,20 +162,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
-    component dot_matrix_scan
-        port (
-            i_clk   : in  std_logic;
-            i_rst   : in  std_logic;
-            i_en    : in  std_logic;
-            i_row   : in  std_logic_vector(2 downto 0);
-            i_colr  : in  std_logic_vector(7 downto 0);
-            i_colg  : in  std_logic_vector(7 downto 0);
-            o_row   : out std_logic_vector(7 downto 0);
-            o_colr  : out std_logic_vector(7 downto 0);
-            o_colg  : out std_logic_vector(7 downto 0)
-        );
-    end component;
-
+    -- 模块 5：显示系统（disp_format / seg_scan / dot_matrix_scan）
     component disp_format
         port (
             i_state : in  std_logic_vector(2 downto 0);
@@ -240,12 +190,55 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    component dot_matrix_scan
+        port (
+            i_clk   : in  std_logic;
+            i_rst   : in  std_logic;
+            i_en    : in  std_logic;
+            i_row   : in  std_logic_vector(2 downto 0);
+            i_colr  : in  std_logic_vector(7 downto 0);
+            i_colg  : in  std_logic_vector(7 downto 0);
+            o_row   : out std_logic_vector(7 downto 0);
+            o_colr  : out std_logic_vector(7 downto 0);
+            o_colg  : out std_logic_vector(7 downto 0)
+        );
+    end component;
+
+    -- 模块 6：图案与随机数据（piece_rom / pattern_rom / rng_lfsr）
+    component piece_rom
+        port (
+            i_level : in  std_logic;
+            o_mask  : out mask_arr_t;
+            o_h     : out dim_arr_t;
+            o_w     : out dim_arr_t;
+            o_n     : out std_logic_vector(2 downto 0)
+        );
+    end component;
+
+    component pattern_rom
+        port (
+            i_level : in  std_logic;
+            i_pat   : in  std_logic_vector(1 downto 0);
+            o_mask  : out std_logic_vector(63 downto 0)
+        );
+    end component;
+
+    component rng_lfsr
+        port (
+            i_clk  : in  std_logic;
+            i_rst  : in  std_logic;
+            i_step : in  std_logic;
+            o_val  : out std_logic_vector(7 downto 0)
+        );
+    end component;
+
+    -- 模块 7：音效输出（buzzer_ctrl）
     component buzzer_ctrl
         port (
             i_clk  : in  std_logic;
             i_rst  : in  std_logic;
             i_en   : in  std_logic;
-            i_sel  : in  std_logic_vector(3 downto 0);   -- A1 v2：4 位码（16 个场景）
+            i_sel  : in  std_logic_vector(3 downto 0);
             i_t4   : in  std_logic;
             o_buzz : out std_logic
         );
@@ -269,9 +262,9 @@ architecture rtl of puzzle_top is
 
     signal sel, move, conf, go : std_logic;
     signal mv_up, mv_dn, mv_lf, mv_rt : std_logic;
-    signal mv_rot   : std_logic;                     -- A4：旋转键（game_fsm -> 引擎）
+    signal mv_rot   : std_logic;
     signal level    : std_logic;
-    signal lvl3     : std_logic;                     -- 第三关（A2 增加关数）
+    signal lvl3     : std_logic;
     signal state    : std_logic_vector(2 downto 0);
     signal gtime    : std_logic_vector(5 downto 0);
     signal gblink   : std_logic;
@@ -294,7 +287,7 @@ architecture rtl of puzzle_top is
     signal piece_n  : std_logic_vector(2 downto 0);
     signal tgt_mask : std_logic_vector(63 downto 0);
 
-    -- 图案库的选择结果（进入预览时锁存：第二关**恒**为固定 PAT3、第三关随机；见下面进程）
+    -- 图案库选择：进入预览时锁存（第二关固定 PAT3，第三关随机）
     signal pat_sel  : std_logic_vector(1 downto 0) := L2_FIXED_PAT;
     signal state_q  : std_logic_vector(2 downto 0) := S_SELF_TEST;  -- 上一拍的状态
 
@@ -306,35 +299,13 @@ architecture rtl of puzzle_top is
     signal mat_r    : std_logic_vector(7 downto 0);
     signal mat_g    : std_logic_vector(7 downto 0);
 
-    -- 结算画面（WIN/FAIL）的闪示节奏：数 2 Hz 半周期，数满后常亮
+    -- 结算画面闪示：数 2 Hz 半周期，数满后常亮
     signal endflash_cnt : unsigned(2 downto 0) := (others => '0');
     signal endflash_on  : std_logic := '0';
 
-    ----------------------------------------------------------------------------
-    -- ⭐ 2026-10-10 第 18 工作阶段：**倒计时告急时显示"目标幽灵"**（降低难度的主要手段）
-    --
-    -- 【为什么加这个】用户反馈"每一关我感觉难度都比较大"。查到的实证结论指向同一个根因：
-    --   **预览只有 5 秒（B4 明文，不可改），之后对局中完全看不到目标图案** ——
-    --   于是玩家要做的是"**回忆**"而不是"**识别**"，而人因工程里"识别远比回忆容易"
-    --   （NN/g 的经典结论），无障碍设计准则也明确要求"允许在对局中提醒当前目标"
-    --   （Game Accessibility Guidelines：*在对局中指示／
-    --   允许提醒当前目标*，最佳实践含"长时间无进展时自动触发"）。
-    --   所以**不是**把图案改简单（那会变无聊，用户明确不要），而是**在玩家卡住时把目标还给他**。
-    --
-    -- 【具体行为】倒计时 **≤ 10 秒** 时，把"**目标图案里还没有被零片盖住的格子**"
-    --   用红列显示出来。零片本身**一点不变**（该红的红、该绿的绿、锁定的还是黄），所以：
-    --     · 拼对的格子被零片盖住 ⇒ 幽灵自然消失 ⇒ **顺带成了"还差哪几格"的进度提示**；
-    --     · 拼错 / 还没拼的地方会亮出来 ⇒ 最后 10 秒从"干着急"变成"看得见目标"。
-    --   ⚠️ 只在**倒计时告急**时出现，不是全程常显 —— 既保留"自己解出来"的成就感，
-    --      也不至于把解谜退化成"描红"（这正是用户说的"不要特别简单无聊"）。
-    --
-    -- 【面积】**实测 +12 LE**（`gtime <= 10` 的 6 位比较 + 每行红列一个 4 输入 LUT4；
---   见 `docs/05` §1A''''.1 的面积账，不要把它当成估算值）。
-    --   这 10 LE 来自**同一轮把【确认】/【旋转】的按键音效删掉所省下的 9 LE**
-    --   —— 即"把打扰背景音乐的按键音，换成真正帮玩家看见目标的提示"，是本轮最划算的一笔交换。
-    ----------------------------------------------------------------------------
+    -- 倒计时告急时的目标提示（"幽灵"）
     signal hint_on    : std_logic := '0';
-    signal hint_blink : std_logic := '0';   -- ⭐ 第 22 工作阶段：hint_on 再与 2 Hz 闪烁相与
+    signal hint_blink : std_logic := '0';
     signal hint_mask  : std_logic_vector(7 downto 0) := (others => '0');
 
     -- 点阵驱动当前点亮的行
@@ -350,20 +321,9 @@ architecture rtl of puzzle_top is
 begin
 
     ----------------------------------------------------------------------------
-    -- 点阵行计数器。它与引擎的帧渲染器走同一个 tick：
-    -- 驱动点亮当前稳定帧的第 r 行，
-    -- 同时引擎为下一帧重建第 r 行。若让两者走
-    -- 不同的 tick（40 Hz 扫描 vs 200 Hz 渲染），显示的行与
-    -- 渲染的行就会互不相关，看起来就是闪烁。
-    --
-    -- ⚠️ 2026-10-08 用户反馈"点阵和数码管都闪得比较明显" —— 根因就是这里的**节拍**：
-    --    原来 mrow 走 tick_200（200 Hz），8 行轮一遍 = 8×5 ms = 40 ms，
-    --    帧刷新率只有 **25 Hz**，低于临界闪烁融合（LED 一般要 > 60 Hz）→ 肉眼可见闪。
-    --    上一条注释说的"40 Hz 扫描 vs 200 Hz 渲染不同源"是**错行**问题，当时把两边都
-    --    改成 200 Hz 消掉了错行，但帧率仍是 25 Hz，闪依旧在。
-    --    现在统一改走 **tick_1k**（1 kHz）：8 行 = 8 ms → **125 Hz**；
-    --    占空比仍是 1/8，亮度不变，只是不再闪。引擎渲染器（puzzle_ctrl）与
-    --    数码管位选（seg_scan）**同步改成 1 kHz**，三者不再有错行问题。
+    -- 点阵行计数器：1 kHz 推进，8 行一轮 = 8 ms，即 125 Hz 刷新率。
+    -- 引擎的行渲染也接同一个 tick，避免"扫描的行"与"渲染的行"不同源
+    -- 造成错行。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -377,30 +337,12 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- 图案的选择点（B10 第二关固定 / A2 第三关随机；2026-10-09 第 12 工作阶段改版）
-    --
-    -- 时机：每次**进入 S_PREVIEW 的那一拍**（按【开始】开局，或过关后进入下一关）
-    --       锁存一次，图案必须在**预览开始前**定下来。
-    -- 选什么：
-    --   · **第三关**（lvl3='1'，A2 新增关）→ 锁 `rnd_val` 低 2 位 → 四幅库随机选
-    --     （这就是提高要求 2 的"多种拼图图案随机选择"）。散落用的随机数由
-    --     puzzle_ctrl 在进入对局后继续推进**同一个** LFSR，而这里只在预览起点采样
-    --     一次，所以两者互不干扰；上一局的散落已把 LFSR 推进了若干步（步数还随拒绝
-    --     采样变化），故**重开一局第三关图案会变**。
-    --   · **第二关**（lvl3='0'）→ 恒锁 `L2_FIXED_PAT`（PAT3 阶梯，**固定**）。
-    --     B10 只说"完整拼图图案自拟"（= 设计者自定，不是题目指定），没说每局要变；
-    --     "随机选择"是**提高要求 2** 的内容，所以放在第三关（详见 puzzle_pkg 的
-    --     L2_FIXED_PAT 说明）。
-    --   · **第一关**：i_level='0' 时 pattern_rom 恒输出图 4-1（B4 指定），pat_sel 被忽略。
-    --
-    -- ⚠️ pat_sel 要比 state 晚一拍才更新（state 是寄存器），这一个时钟里预览会显示
-    --    上一幅图案的一行 —— 肉眼不可见（行扫描 1 ms），而且 puzzle_ctrl 的"整帧判据"
-    --    同时快照了 pat（pat_frm），图案切换的那一帧会被判为"不干净"而不发布判据。
-    --    ⚠️ 第二关→第三关时 `i_level` 与（若第三关恰好抽到 PAT3）`i_pat` 都可能不变，
-    --       所以 puzzle_ctrl 的整帧快照**分辨不出换关**；这不影响判决：换关一定伴随
-    --       一次新的散落（pos 变、locked 清零），而判决还要求 `shuf_seen='1'`
-    --       （本局必须看见过散落忙态）且 `i_shuf_busy='0'` —— 见 puzzle_ctrl 的
-    --       ERR-024/033 说明与 sim/tb_puzzle_top 的三关连过场景。
+    -- 图案选择点：每次进入 S_PREVIEW 的那一拍锁存一次，图案必须在
+    -- 预览开始前定下来。
+    --   第三关（lvl3='1'）-> 取 rnd_val 低 2 位，四幅库随机
+    --   第二关（lvl3='0'）-> 固定 L2_FIXED_PAT（PAT3）
+    --   第一关            -> pattern_rom 忽略 i_pat，恒为图 4-1
+    -- 重开一局第三关时，上一局的散落已推进 LFSR，图案通常会变化。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -412,16 +354,18 @@ begin
                 state_q <= state;
                 if (state = S_PREVIEW) and (state_q /= S_PREVIEW) then
                     if (lvl3 = '1') then
-                        pat_sel <= rnd_val(1 downto 0);   -- 第三关：四幅库随机（A2）
+                        pat_sel <= rnd_val(1 downto 0);   -- 第三关：随机
                     else
-                        pat_sel <= L2_FIXED_PAT;          -- 第二关：固定 PAT3（B10）
+                        pat_sel <= L2_FIXED_PAT;          -- 第二关：固定
                     end if;
                 end if;
             end if;
         end if;
     end process;
 
-    -- S1：时钟、tick、复位
+    -- 子模块例化（按信号流顺序；模块编号见上面的组件声明）
+
+    -- 时钟、tick、复位
     u_clk : clk_gen
         port map (
             i_clk      => clk,
@@ -430,13 +374,13 @@ begin
             o_tick_1k  => t_1k,
             o_tick_200 => t_200,
             o_tick_100 => t_100,
-            o_tick_2hz => open,          -- 第 16 工作阶段：game_fsm 已删 i_tick_2hz，无人读
+            o_tick_2hz => open,          -- 游戏不使用 2 Hz 脉冲
             o_tick_4hz => t_4hz,
             o_tick_1hz => t_1hz,
             o_tick_40  => t_40
         );
 
-    -- S2：键盘
+    -- 键盘
     u_keypad : keypad_scan
         port map (
             i_clk     => clk,
@@ -450,7 +394,7 @@ begin
             o_raw     => kp_raw
         );
 
-    -- S3：主状态机
+    -- 主状态机
     u_fsm : game_fsm
         port map (
             i_clk       => clk,
@@ -480,7 +424,7 @@ begin
             o_lvl3      => lvl3
         );
 
-    -- S5：零片形状库与完整图案
+    -- 零片形状库与完整图案
     u_pieces : piece_rom
         port map (
             i_level => level,
@@ -497,7 +441,7 @@ begin
             o_mask  => tgt_mask
         );
 
-    -- S5：随机数源
+    -- 随机数源
     u_rng : rng_lfsr
         port map (
             i_clk  => clk,
@@ -506,34 +450,19 @@ begin
             o_val  => rnd_val
         );
 
-    -- ⚠️ ERR-023：引擎**始终**拿到真实的目标图案。
+    -- 拼图核心
     --
-    -- 成功判定（ERR-021）是把拼好的画面与目标图案比较，
-    -- 所以对局中把 i_target 置零会让该判定根本无法满足：
-    -- 实测到的现象是"第一关拼对了、按下确认，
-    -- 游戏却仍然显示十字"。
-    --
-    -- 早先置零的理由 —— "对局中不要把零片藏在红色
-    -- 轮廓下面"（ERR-013）—— 现在已在引擎内部处理：
-    -- 它干脆不画目标幽灵（见 puzzle_ctrl 的 ERR-023 说明）。
-    -- 预览仍然显示完整图案，来自 tgt_mask，经 prev_row 送出。
-
-    -- S4：拼图核心
+    -- 引擎始终拿到真实的目标图案：成功判据是"拼好的画面 == 目标图案"，
+    -- 对局中把 i_target 置零会让判据无法满足。引擎内部不画目标虚影，
+    -- 因此零片不会被红色轮廓遮住；预览态由本文件直接切目标掩码显示。
     u_puzzle : puzzle_ctrl
         port map (
             i_clk     => clk,
             i_rst     => rst,
-            i_tick    => t_1k,          -- 引擎行渲染节拍 = **1 kHz**
-                                        -- ⚠️ 内容率**不是** 125 Hz：一行要 npc+2 拍
-                                        -- （`puzzle_ctrl` 的相位 ph = 0..npc+1，第一关 5 拍、
-                                        --   第二/三关 6 拍），8 行一帧 ⇒ 40/48 ms → **内容 25/21 Hz**；
-                                        -- 125 Hz 是**点阵行扫描**的刷新率（`mrow` 每 1 ms 走一行）。
-                                        -- （旧注释把"8 行 = 8 ms"当成了内容帧周期，已改正。）
-                                        -- ⚠️ 2026-10-09 第 13 工作阶段实测：把它从 200 Hz 提到
-                                        -- 1 kHz 在本版是 **±0 LE**（早先那一版曾测到 +76 LE，
-                                        -- 那是当时的结构），而 Fmax 反而 52.57 → 56.23 MHz。
-                                        -- 现在它与点阵扫描（mrow，也走 t_1k）**同源同速**，
-                                        -- 画面不会再"渲染比扫描慢一拍"。见 docs/05 §1.2。
+            i_tick    => t_1k,          -- 行渲染节拍 1 kHz；
+                                        -- 一行 npc+2 拍、8 行一帧 ->
+                                        -- 内容更新率约 25 / 21 Hz，
+                                        -- 点阵扫描率则是 125 Hz
             rnd_step  => rnd_step,
             rnd_val   => rnd_val,
             i_level   => level,
@@ -560,7 +489,7 @@ begin
             i_down    => mv_dn,
             i_left    => mv_lf,
             i_right   => mv_rt,
-            o_ori     => open,          -- A4：仅供模块级仿真观察（顶层不引出引脚）
+            o_ori     => open,          -- 仅供模块级仿真观察
             o_solved  => solved,
             o_all_lock=> all_lock,
             o_busy    => shuf_busy,
@@ -572,7 +501,7 @@ begin
             o_rowg    => eng_fg
         );
 
-    -- S6：数码管内容 + 扫描
+    -- 数码管内容 + 扫描
     u_disp : disp_format
         port map (
             i_state => state,
@@ -588,8 +517,7 @@ begin
         port map (
             i_clk    => clk,
             i_rst    => rst,
-            i_tick   => t_1k,           -- 1 kHz：8 位轮一遍 = 8 ms -> 125 Hz/位
-                                        -- （原来 200 Hz -> 25 Hz/位，用户反馈"数码管也闪"）
+            i_tick   => t_1k,           -- 1 kHz：8 位轮一遍 = 8 ms，125 Hz/位
             i_en     => sw7,
             i_data   => disp_data,
             i_blank  => disp_blank,
@@ -600,14 +528,10 @@ begin
         );
 
     ----------------------------------------------------------------------------
-    -- 从 64 位图案里取出某一行。
-    -- 用于胜利/失败画面，它们是整幅图案常量而不是
-    -- 拼装出来的零片。掩码约定是位下标 = 8*row + col，
-    -- 第 0 行在最上方，所以逻辑第 0 行是位 7..0。
+    -- 从 64 位图案中取出某一行。
+    -- 位下标 = 8*row + col，第 0 行在最上方，因此逻辑第 0 行是位 7..0。
+    -- 结算画面与预览图案都是整幅常量，不需要由引擎拼装。
     ----------------------------------------------------------------------------
-    -- 注意切片顺序：本项目的约定是 bit = 8*row + col，所以
-    -- 逻辑第 0 行是位 7..0（而不是最上面那一片）。第 0 行读 63..56
-    -- 会让两幅结算画面都上下镜像显示。
     with std_logic_vector(mrow) select
         win_row <= WIN_MASK( 7 downto  0) when "000",
                    WIN_MASK(15 downto  8) when "001",
@@ -618,8 +542,6 @@ begin
                    WIN_MASK(55 downto 48) when "110",
                    WIN_MASK(63 downto 56) when others;
 
-    -- 预览行：完整图案，按包（package）内的约定切片，
-    -- 第 0 行占据位 7..0（而不是引擎内部 MSB 在前的布局）。
     with std_logic_vector(mrow) select
         prev_row <= tgt_mask(7 downto 0)   when "000",
                     tgt_mask(15 downto 8)  when "001",
@@ -641,32 +563,23 @@ begin
                     FAIL_MASK(63 downto 56) when others;
 
     ----------------------------------------------------------------------------
-    -- ⭐ 第 18 工作阶段：幽灵提示的使能与"整行掩码"
-    --   `gtime` 是 FSM 的倒计时寄存器（预览=5、对局=30/40/60、其它态无意义）。
-    --   ⚠️ 只在 **S_PLAYING** 的显示分支里用到（见下面 `mat_g` 那一行 = 797 行；
-    --      本注释早先写"见 mat_r 那一行"，已过期 —— `hint_mask` 全工程只在那**一处**被读），
-    --      所以"待机/预览/结算态的 cnt 也可能 ≤10"不会造成任何可见影响
---      （那些分支各自强制赋值，根本不读 hint_mask）。
---      ⚠️ 本注释早先写"待机时 cnt=7"是错的：自检是**数到 cnt=0 才进待机**
---         （game_fsm），且进 S_IDLE 时不重装 cnt ⇒ 待机态 cnt=**0**。
+    -- 倒计时告急提示（"幽灵"）。
+    --
+    -- 倒计时 <= 10 秒时，把目标图案里尚未被零片覆盖的格子显示出来，
+    -- 并以 2 Hz 闪烁。拼对的格子被零片覆盖，幽灵自然消失，
+    -- 因此它同时是"还差哪几格"的进度提示。
+    --
+    -- 用绿色闪烁而不是换一种静态颜色：双色点阵每个点只有
+    -- 灭 / 红 / 绿 / 黄四种状态，而对局中红（普通零片）、绿（选中零片）、
+    -- 黄（锁定零片）已经全部被占用，只能再加一个时间维度来区分。
     ----------------------------------------------------------------------------
     hint_on    <= '1' when (unsigned(gtime) <= 10) else '0';
-    -- ⭐⭐ 第 22 工作阶段：幽灵**以 2 Hz 闪烁**（用户要求"以某一频率闪烁提醒"）。
-    --    `gblink` 是 `game_fsm` 自由走的 2 Hz 方波（自检整屏闪、结算"先闪后常亮"都用它），
-    --    对局中一直在跑 ⇒ 直接借用，**不新增计数器**。
-    --    ⚠️ 代价只有 **1 个 LUT4**（`hint_on and gblink` 这**一个位**）；下面广播成 8 位
-    --       只是连线，不产生逻辑。
     hint_blink <= hint_on and gblink;
     hint_mask  <= (others => hint_blink);
 
     ----------------------------------------------------------------------------
-    -- 结算画面的闪烁节奏：先闪 **2 个 2 Hz 周期**（4 个半周期 = 1 s，抓注意力），
-    -- 然后常亮（远距离读图）。离开 WIN/FAIL 立刻复位。
-    --
-    -- ⚠️ ERR-038（2026-10-09 第 11 工作阶段，审计发现）：原来数的是 **t_2hz**（500 ms
-    --    一个脉冲），4 个脉冲 = **2 s** —— 而注释与文档都写"2 个 2 Hz 周期 = 1 s"，
-    --    又是"把 tick_2hz 当 2 Hz 节拍"的 2 倍记账错误（真正的 2 Hz 半周期是 250 ms）。
-    --    现在数 **t_4hz**（250 ms）：4 个半周期 = **1 s**，与文档一致。
+    -- 结算画面闪示：先闪 1 s（4 个 250 ms 半周期），然后常亮，
+    -- 兼顾"抓注意力"和"远距离读图"。离开 WIN/FAIL 立刻复位。
     ----------------------------------------------------------------------------
     process (clk)
     begin
@@ -688,39 +601,27 @@ begin
     end process;
 
     ----------------------------------------------------------------------------
-    -- 各状态下的点阵内容。
-    --   SELF_TEST : 整屏黄色，以 2 Hz 闪烁   （要求 B1）
-    --   WIN       : 胜利画面（**绿色**粗对勾），先闪后常亮
-    --   FAIL      : 失败画面（**红色**叉），先闪后常亮
-    --   其它      : 引擎渲染出的内容（预览 / 对局）
+    -- 各状态下的点阵内容：
+    --   SELF_TEST  整屏黄色，2 Hz 闪烁（B1）
+    --   IDLE       全暗（B2）
+    --   PREVIEW    完整目标图案（B4）
+    --   PLAYING    引擎画面 + 告急提示
+    --   WIN        绿色粗对勾，先闪后常亮
+    --   FAIL       红色叉，先闪后常亮
     --
-    -- ⚠️ 结算画面的演进（都来自上板反馈）：
-    --   2026-10-08 ① "细对勾闪得效果不好" → 换成**黄色笑脸**（细线勾不出形状）；
-    --              ② 闪烁节奏改成**先闪 2 个 2 Hz 周期再常亮**（一直闪不利于远距离读图，
-    --                 这是自拟改进项 S5 的原意）；自检（B1）仍无条件 2 Hz 闪。
-    --   2026-10-09 ③ 上板再看，笑脸仍"不够直观" → 换回**粗红对勾**（24 格、笔画 3 格宽）：
-    --                 ✓/✗ 是通用"对/错"符号，红色对勾正是中国阅卷的"答对"记号。
-    --              ④ 用户再拍板：**只点绿列** → **绿色粗对勾 / 红色叉**的交通灯配色。
-    --                 绿=通过、红=不通过，颜色本身就是第一判读线索（不再只靠形状区分）；
-    --                 实现即 S_WIN 分支里"mat_g ← win_row、mat_r ← 全 0"一行改动。
+    -- 敏感表必须包含 hint_mask：本进程在 S_PLAYING 分支读它。
     ----------------------------------------------------------------------------
-    -- ⚠️ 2026-10-10 第 18 工作阶段（收尾审查发现）：敏感表**必须包含 `hint_mask`** ——
-    --    **797 行**（`mat_g`）读它，漏列会让**仿真模型**与综合结果不一致（幽灵最多晚
-    --    1 ms 出现/消失，因为 mrow 每 1 ms 变一次会顺带重算）。Quartus 按真实组合
-    --    函数综合、硬件不受影响，但"仿真里对的"是仿真能不能当证据的前提。
-    --    （本注释早先写"第 739 行读它"，行号已过期。）
     process (state, gblink, endflash_on, mrow, eng_fr, eng_fg, win_row, fail_row, prev_row,
              hint_mask)
         variable lv  : std_logic;
-        variable ev  : std_logic;        -- 结算画面的亮度：闪烁相位 or 常亮
+        variable ev  : std_logic;        -- 结算画面的亮度：闪烁相位或常亮
         variable rw  : std_logic_vector(7 downto 0);
         variable gw  : std_logic_vector(7 downto 0);
     begin
         lv := gblink;
         ev := gblink or endflash_on;
 
-        -- 从 64 位图案里切出驱动正在点亮的行。
-        -- 位下标 = 8*row + col，第 0 行在最上，所以第 0 行是最上面那一片。
+        -- 从 64 位帧中切出当前行（帧内第 0 行在最高 8 位）
         case to_integer(mrow) is
             when 0      => rw := eng_fr(63 downto 56); gw := eng_fg(63 downto 56);
             when 1      => rw := eng_fr(55 downto 48); gw := eng_fg(55 downto 48);
@@ -733,89 +634,40 @@ begin
         end case;
 
         if (state = S_SELF_TEST) then
-            -- 整屏黄色，以 2 Hz 闪烁（要求 B1）
+            -- 整屏黄色，2 Hz 闪烁（B1）
             mat_r <= (others => lv);
             mat_g <= (others => lv);
         elsif (state = S_IDLE) then
-            -- B2：待机时点阵是全暗的。这里绝不能显示
-            -- 引擎帧：零片还没有散落（散落发生在
-            -- 开始对局时），否则它们会全部堆在锚点 (0,0) 上。
+            -- 待机全暗。这里不能显示引擎帧：零片尚未散落，
+            -- 否则它们会全部堆在锚点 (0,0)。
             mat_r <= (others => '0');
             mat_g <= (others => '0');
         elsif (state = S_PREVIEW) then
-            -- B4：显示完整图案。它是包里的常量，所以直接
-            -- 从目标掩码里切出来 —— 引擎不参与。
+            -- 显示完整目标图案；引擎不参与。
             mat_r <= prev_row;
             mat_g <= (others => '0');
         elsif (state = S_WIN) then
-            -- 胜利：**绿色粗对勾**（2026-10-09 用户拍板：改成"绿对勾 / 红叉"的
-            --   交通灯配色）。绿 = 通过、红 = 不通过，颜色本身就是第一判读线索，
-            --   比"同色靠形状区分"更直观，也不会和失败画面混淆。
-            --   实现 = 只点绿列（红列全 0）：下面两行的 mat_g 用 win_row，mat_r 清零。
-            --   历史：细红对勾 → 黄笑脸 → 粗红对勾 → **粗绿对勾**。
+            -- 绿色粗对勾：只点绿列，红列清零
             mat_r <= (others => '0');
             mat_g <= win_row and (ev & ev & ev & ev & ev & ev & ev & ev);
         elsif (state = S_FAIL) then
-            -- 失败：**红色**粗叉（只点红列，与绿色的胜利对勾互为反色）
+            -- 红色叉：只点红列，绿列清零
             mat_r <= fail_row and (ev & ev & ev & ev & ev & ev & ev & ev);
             mat_g <= (others => '0');
         else
-            -- S_PLAYING：来自引擎的拼装画面
-            --
-            -- ⭐⭐ 第 22 工作阶段（2026-10-11，**用户上板反馈**）：告急幽灵（≤10 s）
-            --    改成 **绿色 + 2 Hz 闪烁**（改前是**不闪的红**）。
-            --
-            -- 【为什么要改】用户原话："未拼好部分显示出的'幽灵'显示为与拼好零片一样的
-            --   红色，这种效果非常不好。"
-            --   根因是一条**硬件事实**：这块点阵是**双色**的（`dot_matrix_scan` 只有
-            --   `i_colr` / `i_colg` 两列）⇒ 每个点**只有 4 种状态**：
-            --   **灭 / 红 / 绿 / 黄（红+绿）**。而对局中**三种点亮状态已经被零片占满**：
-            --     未锁定、未选中的零片 = **红**（`rw`）
-            --     选中的零片           = **绿**（`gw`，只选中一个）
-            --     已锁定的零片         = **黄**（`rw` + `gw` 同时亮）
-            --   ⇒ **"换一种静态颜色"在硬件上根本不存在** —— 用户说的"排除红/绿/黄"
-            --     之后只剩"灭"，那是看不见的。**只能再加一个"时间"维度去区分。**
-            --
-            -- 【现在的做法】幽灵 = **绿色，且以 2 Hz 闪烁**。这样：
-            --     · **不再是红色** ⇒ 不再和"未锁定的红零片"长得一样（这正是用户的抱怨）；
-            --     · 它是全屏**唯一会闪的东西**（零片全是**静态**的）⇒ 一眼就能挑出来；
-            --     · 闪烁频率就是用户点名的 **2 Hz**（借用 `game_fsm` 自由走的 `gblink`，
-            --       不新增计数器）。
-            --   ⚠️ **为什么不做成"红/绿交替"或"闪黄"**（都更花哨）：装不下。
-            --      · **"红/绿交替"这一版是编译过的**（`SEED 16`）：fit 1268 → **1278** LE，
-            --        实测报错原文 "Design contains **1278** blocks of type logic cell,
-            --        device contains only **1270**"（docs/06 §22.3 的负结果表）；
-            --      · **"闪黄"从未编译过**，只是**手算估计约 +8 LE**、预计也装不下
-            --        （docs/06 §22.3 如实记为"从未编译"）。本注释早先把两版合并成
-            --        "两种写法各要 16 / 8 个额外 LUT4 … 实测报错 1278"，等于把
-            --        **没编译过的那一版**也算进了实测 —— 只有"红/绿交替"有 1278 这条实测。
-            --      本器件当时已经 **1268 / 1270 LE、LAB 127/127**；
-            --      现在这个写法的代价是 **0 LE**（见下）。
-            --
-            -- 【为什么幽灵只画在"完全空着"的目标格上（`not rw`）】
-            --   幽灵占的是**绿列**。若照旧用 `prev_row and (not gw)`，那些"被未锁定零片
-            --   盖住"的格子会**红（来自 `rw`）+ 绿（来自幽灵）** ⇒ 变成**黄色闪烁**，
-            --   那是**假提示**（那些格子并不空，玩家会以为要把那里的零片挪走）。
-            --   ⇒ 幽灵项减掉 `rw`。**可见语义与改前完全一致**：仍是"目标里还空着的格子"。
-            --   ⚠️ 注意**不能**把 `mat_r` 整体写成 `not rw and not gw` —— 那会把
-            --      "没落在目标上的零片"的红列一起抹掉（第 18 工作阶段的教训）。
-            --   ⚠️ 这里**不需要** `(not gw)`：`gw='1'` 的格子本来就整格是绿的（选中块）
-            --      或黄绿同亮（锁定块），`mat_g` 恒为 1，加不加都不变 —— 少一个输入。
-            --
-            -- 【面积】**0 LE**（实测）：改前 `mat_r` 那个 4 输入 LUT4（`rw`/`prev`/`gw`/`hint`）
-            --   被去掉，改后 `mat_g` 的 `gw or (prev and not rw and hint)` 正好也是
-            --   **1 个 4 输入 LUT4/位**（`gw`/`prev`/`rw`/`hint_blink`）⇒ 一进一出打平；
-            --   真正多出来的只有 `hint_on and gblink` 那 **1 个 LUT4**。
+            -- S_PLAYING：引擎画面。
+            -- 绿 = 选中/锁定零片，再叠加"目标中尚未覆盖且告急"的提示；
+            -- 红 = 不属于选中零片的格子。
+            -- 提示项减掉 rw：已被零片盖住的格子不再画幽灵，
+            -- 否则红 + 绿会变成黄色闪烁，形成假提示。
             mat_r <= rw;
             mat_g <= gw or (prev_row and (not rw) and hint_mask);
         end if;
     end process;
 
     ----------------------------------------------------------------------------
-    -- S6：点阵驱动。
-    -- i_row 来自本文件的行计数器（mrow），它按 tick_1k 推进：
-    -- 8 行 = 8 ms -> **125 Hz** 帧刷新率。改版前 mrow 走 tick_200，帧率只有
-    -- 25 Hz，肉眼可见闪（用户 2026-10-08 上板反馈）。
+    -- 点阵驱动。i_row 来自本文件的行计数器 mrow，1 kHz 推进，
+    -- 8 行一轮 = 125 Hz。
     ----------------------------------------------------------------------------
     u_dot : dot_matrix_scan
         port map (
@@ -830,7 +682,7 @@ begin
             o_colg  => dot_colg
         );
 
-    -- S7：声音
+    -- 音效输出
     u_buzz : buzzer_ctrl
         port map (
             i_clk  => clk,
