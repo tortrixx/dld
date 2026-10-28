@@ -26,9 +26,11 @@ entity puzzle_top is
     );
 end entity puzzle_top;
 
+-- 7 个总体模块
+-- 分为 11 个子实体 Component
 architecture rtl of puzzle_top is
 
-    -- 11 个子实体 Component 显式声明 (与框图完全一致)
+    -- 模块 1: 时钟分频与复位生成器
     component clk_gen
         port (
             i_clk      : in  std_logic;
@@ -44,6 +46,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    -- 模块 2: 键盘输入扫描器
     component keypad_scan
         port (
             i_clk     : in  std_logic;
@@ -58,6 +61,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    -- 模块 3: 游戏状态机
     component game_fsm
         port (
             i_clk       : in  std_logic;
@@ -88,6 +92,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    -- 模块 4: 图案与随机数据
     component piece_rom
         port (
             i_level : in  std_logic;
@@ -115,6 +120,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    -- 模块 5: 拼图核心
     component puzzle_ctrl
         port (
             i_clk     : in  std_logic;
@@ -159,7 +165,9 @@ architecture rtl of puzzle_top is
         );
     end component;
 
-    component dot_matrix_scan
+    -- 模块 6: 显示系统
+
+    component dot_matrix_scan  -- 点阵扫描
         port (
             i_clk   : in  std_logic;
             i_rst   : in  std_logic;
@@ -200,6 +208,7 @@ architecture rtl of puzzle_top is
         );
     end component;
 
+    -- 模块 7: 蜂鸣器控制器
     component buzzer_ctrl
         port (
             i_clk  : in  std_logic;
