@@ -1,35 +1,28 @@
 -- ============================================================================
---  keypad_diag_top  --  键盘映射实测（权威引脚约束）
+--  keypad_diag_top  ——  键盘映射实测（权威引脚约束）
 --
 --  目的
 --  -------
---  键盘现在有反应了，但每个键的物理位置仍是一个假设。
---  本次构建把每一个假设都去掉：它显示扫描器测得的原始键号
---  （4*行 + 列，行 0 = 最上）以及当前映射由该键号推出的游戏键，
---  这样两者可以一眼对比。
+--  键盘能响应之后，每个键的物理位置仍是一个假设。本顶层把假设去掉：
+--  它显示扫描器测得的原始键号，以及该键号经映射表推出的游戏键，
+--  两者可以一眼对比。
 --
 --  显示
---      DISP7 DISP6 = 原始键号（0..15），用两位十进制表示（十位、个位）。
---                    要连起来读，例如 "1" "2" = 键号 12。
---                    （以前 DISP7 直接放 4 位原始编码，但
---                     BCD 译码器把 10..15 译成空白，于是键号 ≥ 10
---                     的键读不出来。拆成十位/个位解决了这个问题。）
---      DISP5      = 按键计数器（每接受一个新键就加一）
---      DISP4      = 目前见过的不同键号个数（上限 9）
---      DISP3      = 译码后的游戏键数字
---                      1=UP 2=START 3=DOWN 4=LEFT 5=RIGHT 6=SELECT 7=CONFIRM
---                      8=ROT（KEY8，A4 顺时针 90°）
+--      DISP7 DISP6 = 原始键号 0..15，用两位十进制表示
+--                    （例如 "1" "2" = 键号 12）
+--      DISP5       = 按键计数（每接受一个新键加一）
+--      DISP4       = 已见过的不同键号个数（最多 15）
+--      DISP3       = 译码后的游戏键：
+--                      1=UP 2=START 3=DOWN 4=LEFT
+--                      5=RIGHT 6=SELECT 7=CONFIRM 8=ROT
 --                      0=无键 / 未映射
---      DISP2..DISP0 = 行线 ROW1 ROW2 ROW3 的实时二进制值（原始
---                     电气状态，便于发现悬空的行）
+--      DISP2..DISP0 = 行线 ROW1 ROW2 ROW3 的实时二进制值
 --
---  操作步骤
---  ---------
---  依次按下每个键，读那两位数字（DISP7 DISP6）。这个数字就是
---  修正映射唯一需要的东西。
---  注意：键号 0 与"没有键按下"无法区分（扫描器
---  报 0 = K_NONE），所以 KEY13（左下角）理应什么都不显示，
---  并且绝不能给它分配游戏功能。
+--  操作
+--  ----
+--  依次按下每个键，读 DISP7 DISP6 的两位数字，即该键的原始键号。
+--  键号 0 与"没有键按下"无法区分（扫描器报 0 = K_NONE），
+--  所以 KEY13（左下角）不会显示，也不能分配游戏功能。
 -- ============================================================================
 
 library IEEE;
@@ -63,7 +56,7 @@ architecture rtl of keypad_diag_top is
     signal t_1hz   : std_logic;
     signal t_40    : std_logic;
 
-    signal key     : std_logic_vector(3 downto 0);   -- 来自扫描器的原始键号
+    signal key     : std_logic_vector(3 downto 0);   -- 扫描器上报的原始键号
     signal press   : std_logic;
     signal release : std_logic;
     signal kp_raw  : std_logic_vector(3 downto 0);
@@ -75,13 +68,7 @@ architecture rtl of keypad_diag_top is
 
     signal disp    : std_logic_vector(31 downto 0);
 
-    -- 译码表（与 game_fsm.key_of 一致，这样显示的是同一张映射表）。
-    -- ⚠️ 这两处必须一致：以前这里和 game_fsm 不是同一张表，DISP3 会给出误导性的
-    --    "功能"读数（DISP7 = 原始键号才是权威读数，与映射无关）。
-    -- ⚠️ 2026-10-15：本表原来**缺 K_ROT**（game_fsm 有 `"1011" => K_ROT`），
-    --    于是按 KEY8（原始键号 11）时 DISP3 显示 0 = "未映射"，与本文件
-    --    自称的"同一张表"矛盾。现在补齐（含下面的 key_digit）。
-    -- 物理对照见 rtl/game_fsm.vhd 的注释（板子丝印 KEY1..KEY16）。
+    -- 译码表与 game_fsm.key_of 保持一致，这样 DISP3 显示的就是同一张映射表。
     function key_of(idx : std_logic_vector(3 downto 0))
         return std_logic_vector is
     begin
@@ -93,7 +80,7 @@ architecture rtl of keypad_diag_top is
             when "0101" => return K_LEFT;     -- KEY10
             when "0111" => return K_RIGHT;    -- KEY12
             when "0110" => return K_CONFIRM;  -- KEY11
-            when "1011" => return K_ROT;      -- KEY8（A4 旋转，与 game_fsm.key_of 一致）
+            when "1011" => return K_ROT;      -- KEY8
             when others => return K_NONE;     -- 含 "0000" = 无键（KEY13 不可用）
         end case;
     end function;
@@ -110,7 +97,7 @@ architecture rtl of keypad_diag_top is
             when K_RIGHT   => return "0101";
             when K_SELECT  => return "0110";
             when K_CONFIRM => return "0111";
-            when K_ROT     => return "1000";   -- 【旋转】= 8（K_ROT = "1000"）
+            when K_ROT     => return "1000";
             when others    => return "0000";
         end case;
     end function;
@@ -146,7 +133,7 @@ begin
 
     kdec <= key_of(key);
 
-    -- 统计按下次数，以及已经见过多少个不同的键
+    -- 统计按下次数与已见过的不同键号个数
     process (clk)
     begin
         if rising_edge(clk) then
@@ -169,10 +156,8 @@ begin
         end if;
     end process;
 
-    -- 原始键号用**两位十进制**显示：DISP7 = 十位(0/1)、DISP6 = 个位(0~9)。
-    -- 为什么不用原来"DISP7 直接放 4 位键号"：BCD 译码器把 10~15 译成**空白**，
-    -- 于是键号 ≥10 的键（KEY1~KEY4、KEY7、KEY8）根本读不出来 —— 拆成十位/个位后
-    -- 0~15 全部可读（例如 KEY1 显示 "1""2"）。
+    -- 原始键号用两位十进制显示：BCD 译码器把 10..15 译成空白，
+    -- 拆成十位 / 个位后 0..15 全部可读。
     process (key)
         variable k : integer range 0 to 15;
     begin
