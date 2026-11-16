@@ -4,7 +4,7 @@
 
 `VHDL-93` ｜ `Quartus II 9.1` ｜ `MAX II EPM1270T144C5` ｜ `1264 / 1270 LE` ｜ `Fmax 54.27 MHz` ｜ `184 条断言全绿`
 
-**文档站（答辩速查）**：<https://tortrixx.github.io/dld/>
+**技术展示网站**：<https://tortrixx.github.io/dld/>
 
 ---
 
@@ -26,7 +26,9 @@ python scripts/check_env.py                  # 1. 环境自检（Python / Quartu
 python scripts/gen_project.py puzzle_top     # 2. 生成 quartus/puzzle.qpf + .qsf（.qpf 故意不入库）
 "$env:QUARTUS_ROOT\quartus\bin\quartus_sh.exe" -t scripts/build.tcl   # 3. 编译：map → fit → asm → sta
 python scripts/sim.py run <模块名>            # 4. 仿真：12 个模块/场景、184 条断言
-python -m http.server 3000 --directory docs  # 5. 本地预览文档站
+python -m pip install -r zensical-site/requirements.txt
+python zensical-site/scripts/prepare.py
+# cd zensical-site 后运行 zensical serve 预览技术站
 ```
 
 环境不齐先用 `scripts/bootstrap.ps1`（Windows）/ `scripts/bootstrap.sh`（Linux、macOS）；
@@ -73,7 +75,7 @@ python -m http.server 3000 --directory docs  # 5. 本地预览文档站
 
 | 想了解 | 读 |
 |:---|:---|
-| **逐模块微架构 · 仿真波形分析 · 答辩高频考点** | <https://tortrixx.github.io/dld/>（源文件在 [`docs/`](docs/README.md)） |
+| **系统架构 · 模块实现 · 仿真波形与工程取舍** | <https://tortrixx.github.io/dld/>（维护入口：[`zensical-site/`](zensical-site/README.md)） |
 | 课程交付的实验报告（27 页） | [`docs/report/实验报告_题目4_简易拼图游戏.pdf`](docs/report/实验报告_题目4_简易拼图游戏.pdf) ｜ 重建：`python scripts/build_report.py` |
 | 题目要求怎么理解、每条落在哪、引脚定义 | [`docs/00-规范理解与需求.md`](docs/00-规范理解与需求.md) |
 | 每个模块怎么设计（框图与代码逐条对账） | [`docs/02-模块详细设计.md`](docs/02-模块详细设计.md) |

@@ -1,0 +1,43 @@
+name: Validate Zensical Showcase
+on:
+  pull_request:
+    paths:
+      - 'zensical-site/**'
+      - 'docs/**'
+      - 'facts/**'
+      - 'rtl/**'
+      - 'sim/**'
+      - 'scripts/**'
+      - 'README.md'
+      - 'HANDOVER.md'
+      - '.github/workflows/zensical-preview.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify engineering facts
+        run: python scripts/extract_facts.py --check
+      - name: Preserve legacy documentation checks
+        run: python scripts/check_docs.py
+      - name: Install Zensical
+        run: python -m pip install -r zensical-site/requirements.txt
+      - name: Prepare curated documentation
+        run: python zensical-site/scripts/prepare.py
+      - name: Build Zensical
+        run: cd zensical-site && zensical build --strict
+      - name: Check rendered links, anchors and publication boundary
+        run: python zensical-site/scripts/check_site.py
+      - name: Check privacy
+        run: python scripts/check_privacy.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: zensical-site-preview
+          path: zensical-site/site
+          if-no-files-found: error

@@ -1,117 +1,81 @@
-# ============================================================================
-#  .github/workflows/pages.yml —— 自动化部署 Docsify 文档站到 GitHub Pages
-# ----------------------------------------------------------------------------
-#  线上地址：https://tortrixx.github.io/dld/
-#  文档目录：docs/
-#
-#  设计原则：
-#    · 纯静态轻量部署：Docsify 客户端实时解析 Markdown，无需沉重 Python 构建步骤
-#    · 事实模型一致性校验：每次部署前通过 extract_facts.py --check 确保工程事实最新
-#    · 零外部侵入：不改写硬件 RTL、仿真网表与约束
-# ============================================================================
-
-name: Deploy Docsify to GitHub Pages
-
+name: Deploy technical showcase to Pages
 on:
   push:
     branches: [main]
     paths:
+      - 'zensical-site/**'
       - 'docs/**'
       - 'rtl/**'
       - 'sim/**'
+      - 'quartus/**'
       - 'facts/**'
       - 'scripts/**'
+      - 'README.md'
+      - 'HANDOVER.md'
       - '.github/workflows/pages.yml'
   workflow_dispatch:
-
+    inputs:
+      renderer:
+        description: 'Use docsify only to roll back the website'
+        type: choice
+        default: zensical
+        options: [zensical, docsify]
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
 concurrency:
   group: pages
   cancel-in-progress: false
-
 jobs:
   build-and-verify:
-    name: Verify & Package Docsify
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-
-      - name: Verify Fact Model Consistency
+      - name: Verify fact model
         run: python scripts/extract_facts.py --check
-
-      - name: Verify Essential Docsify Files
-        run: |
-          set -euo pipefail
-          test -f docs/index.html || { echo "Missing docs/index.html"; exit 1; }
-          test -f docs/README.md || { echo "Missing docs/README.md"; exit 1; }
-          test -f docs/_sidebar.md || { echo "Missing docs/_sidebar.md"; exit 1; }
-          test -f docs/.nojekyll || { echo "Missing docs/.nojekyll"; exit 1; }
-          echo "All core Docsify files present and verified."
-
-      # 站点体检：链接/图片是否存在、粗体与原始 HTML 块是否会渲染失败、
-      # index.html 的本地资源是否齐全、站点页是否引用了不会被发布的文件。
-      # 这些故障都不会报错，只会在浏览器里悄悄变丑，所以必须挡在部署之前。
-      - name: Check Docsify Site Integrity
+      - name: Preserve original documentation checks
         run: python scripts/check_docs.py
-
-      # 隐私体检：跟踪文件 + 提交信息 + 作者身份。
-      # ⚠️ actions/checkout 默认只取 1 个提交，所以这里只能挡住"本次提交信息"里的泄漏；
-      #    **全量历史必须本地跑**（脚本会打印实际扫到的提交数，别被 CI 的绿灯骗了）。
-      - name: Check Privacy (files + commit messages + identity)
+      - name: Check privacy
         run: python scripts/check_privacy.py
-
-      # 发布面只保留站点本身。
-      # docs/ 下还放着工程证据文档（00/02/03/05/06-*.md、图/、report/），
-      # 它们是事实模型的取证来源，必须留在仓库里，但**不该对外发布**：
-      # 那些页面不参与站点导航、Markdown 也没有按 docsify 的规则维护。
-      # 这个集合必须与 scripts/check_docs.py 的 PUBLISHED_FILES / PUBLISHED_DIRS 保持一致。
-      - name: Stage Site Files
+      - name: Install pinned Zensical
+        if: inputs.renderer != 'docsify'
+        run: python -m pip install -r zensical-site/requirements.txt
+      - name: Build curated showcase
+        if: inputs.renderer != 'docsify'
         run: |
-          set -euo pipefail
-          rm -rf _site
-          mkdir -p _site
-          cp -r docs/assets   _site/assets
-          cp -r docs/subsystems _site/subsystems
+          python zensical-site/scripts/prepare.py
+          cd zensical-site
+          zensical build --strict
+      - name: Verify rendered publication
+        if: inputs.renderer != 'docsify'
+        run: python zensical-site/scripts/check_site.py
+      - name: Package verified Zensical site
+        if: inputs.renderer != 'docsify'
+        run: |
+          mkdir _site
+          cp -r zensical-site/site/. _site/
+      - name: Package legacy site for rollback
+        if: inputs.renderer == 'docsify'
+        run: |
+          mkdir _site
+          cp -r docs/assets docs/subsystems _site/
           cp docs/index.html docs/README.md docs/_sidebar.md docs/.nojekyll _site/
-          echo "Staged files:"
-          find _site -type f | sort
-
-      - name: Verify Staged Site
-        run: |
-          set -euo pipefail
-          for f in index.html README.md _sidebar.md .nojekyll \
-                   assets/custom.css assets/custom.js assets/vendor/docsify.min.js; do
-            test -f "_site/$f" || { echo "Staged site is missing $f"; exit 1; }
-          done
-          test -d _site/subsystems || { echo "Staged site is missing subsystems/"; exit 1; }
-          echo "Staged site verified."
-
-      - name: Configure GitHub Pages
-        uses: actions/configure-pages@v5
-
-      - name: Upload Pages Artifact
-        uses: actions/upload-pages-artifact@v3
+          test -f _site/assets/vendor/docsify.min.js
+      - uses: actions/upload-pages-artifact@v3
         with:
           path: _site
-
   deploy:
-    name: Deploy to GitHub Pages
     needs: build-and-verify
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - uses: actions/deploy-pages@v4
         id: deployment
-        uses: actions/deploy-pages@v4

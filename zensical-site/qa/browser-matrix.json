@@ -1,0 +1,450 @@
+[
+  {
+    "viewport": 1363,
+    "route": "/dld/",
+    "broken": [],
+    "client": 1348,
+    "heading": "在 CPLD 上实现一款拼图游戏¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/demo/",
+    "broken": [],
+    "client": 1348,
+    "heading": "使用演示¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/architecture/",
+    "broken": [],
+    "client": 1348,
+    "heading": "系统架构¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/hardware/",
+    "broken": [],
+    "client": 1348,
+    "heading": "硬件设计¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/resources/",
+    "broken": [],
+    "client": 1348,
+    "heading": "资源优化¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/decisions/",
+    "broken": [],
+    "client": 1348,
+    "heading": "工程取舍¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/verification/",
+    "broken": [],
+    "client": 1348,
+    "heading": "验证与测试¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/reproducibility/",
+    "broken": [],
+    "client": 1348,
+    "heading": "复现与构建¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/modules/01_system_top/",
+    "broken": [],
+    "client": 1348,
+    "heading": "系统顶层集成¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/modules/02_clock_keypad/",
+    "broken": [],
+    "client": 1348,
+    "heading": "时钟使能与键盘输入¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/modules/03_game_fsm/",
+    "broken": [],
+    "client": 1348,
+    "heading": "游戏主控状态机¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/modules/04_puzzle_engine/",
+    "broken": [],
+    "client": 1348,
+    "heading": "核心拼图引擎¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/modules/05_rom_random/",
+    "broken": [],
+    "client": 1348,
+    "heading": "图案库与随机数¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 1363,
+    "route": "/dld/modules/06_display_audio/",
+    "broken": [],
+    "client": 1348,
+    "heading": "显示与音效驱动¶",
+    "scroll": 1348
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/",
+    "broken": [],
+    "client": 305,
+    "heading": "在 CPLD 上实现一款拼图游戏¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/demo/",
+    "broken": [],
+    "client": 305,
+    "heading": "使用演示¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/architecture/",
+    "broken": [],
+    "client": 305,
+    "heading": "系统架构¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/hardware/",
+    "broken": [],
+    "client": 305,
+    "heading": "硬件设计¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/resources/",
+    "broken": [],
+    "client": 305,
+    "heading": "资源优化¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/decisions/",
+    "broken": [],
+    "client": 305,
+    "heading": "工程取舍¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/verification/",
+    "broken": [],
+    "client": 305,
+    "heading": "验证与测试¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/reproducibility/",
+    "broken": [],
+    "client": 305,
+    "heading": "复现与构建¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/modules/01_system_top/",
+    "broken": [],
+    "client": 305,
+    "heading": "系统顶层集成¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/modules/02_clock_keypad/",
+    "broken": [],
+    "client": 305,
+    "heading": "时钟使能与键盘输入¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/modules/03_game_fsm/",
+    "broken": [],
+    "client": 305,
+    "heading": "游戏主控状态机¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/modules/04_puzzle_engine/",
+    "broken": [],
+    "client": 305,
+    "heading": "核心拼图引擎¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/modules/05_rom_random/",
+    "broken": [],
+    "client": 305,
+    "heading": "图案库与随机数¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 320,
+    "route": "/dld/modules/06_display_audio/",
+    "broken": [],
+    "client": 305,
+    "heading": "显示与音效驱动¶",
+    "scroll": 305
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/",
+    "broken": [],
+    "client": 375,
+    "heading": "在 CPLD 上实现一款拼图游戏¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/demo/",
+    "broken": [],
+    "client": 375,
+    "heading": "使用演示¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/architecture/",
+    "broken": [],
+    "client": 375,
+    "heading": "系统架构¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/hardware/",
+    "broken": [],
+    "client": 375,
+    "heading": "硬件设计¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/resources/",
+    "broken": [],
+    "client": 375,
+    "heading": "资源优化¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/decisions/",
+    "broken": [],
+    "client": 375,
+    "heading": "工程取舍¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/verification/",
+    "broken": [],
+    "client": 375,
+    "heading": "验证与测试¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/reproducibility/",
+    "broken": [],
+    "client": 375,
+    "heading": "复现与构建¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/modules/01_system_top/",
+    "broken": [],
+    "client": 375,
+    "heading": "系统顶层集成¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/modules/02_clock_keypad/",
+    "broken": [],
+    "client": 375,
+    "heading": "时钟使能与键盘输入¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/modules/03_game_fsm/",
+    "broken": [],
+    "client": 375,
+    "heading": "游戏主控状态机¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/modules/04_puzzle_engine/",
+    "broken": [],
+    "client": 375,
+    "heading": "核心拼图引擎¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/modules/05_rom_random/",
+    "broken": [],
+    "client": 375,
+    "heading": "图案库与随机数¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 390,
+    "route": "/dld/modules/06_display_audio/",
+    "broken": [],
+    "client": 375,
+    "heading": "显示与音效驱动¶",
+    "scroll": 375
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/",
+    "broken": [],
+    "client": 753,
+    "heading": "在 CPLD 上实现一款拼图游戏¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/demo/",
+    "broken": [],
+    "client": 753,
+    "heading": "使用演示¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/architecture/",
+    "broken": [],
+    "client": 753,
+    "heading": "系统架构¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/hardware/",
+    "broken": [],
+    "client": 753,
+    "heading": "硬件设计¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/resources/",
+    "broken": [],
+    "client": 753,
+    "heading": "资源优化¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/decisions/",
+    "broken": [],
+    "client": 753,
+    "heading": "工程取舍¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/verification/",
+    "broken": [],
+    "client": 753,
+    "heading": "验证与测试¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/reproducibility/",
+    "broken": [],
+    "client": 753,
+    "heading": "复现与构建¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/modules/01_system_top/",
+    "broken": [],
+    "client": 753,
+    "heading": "系统顶层集成¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/modules/02_clock_keypad/",
+    "broken": [],
+    "client": 753,
+    "heading": "时钟使能与键盘输入¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/modules/03_game_fsm/",
+    "broken": [],
+    "client": 753,
+    "heading": "游戏主控状态机¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/modules/04_puzzle_engine/",
+    "broken": [],
+    "client": 753,
+    "heading": "核心拼图引擎¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/modules/05_rom_random/",
+    "broken": [],
+    "client": 753,
+    "heading": "图案库与随机数¶",
+    "scroll": 753
+  },
+  {
+    "viewport": 768,
+    "route": "/dld/modules/06_display_audio/",
+    "broken": [],
+    "client": 753,
+    "heading": "显示与音效驱动¶",
+    "scroll": 753
+  }
+]

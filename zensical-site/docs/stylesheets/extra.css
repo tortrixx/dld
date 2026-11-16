@@ -1,0 +1,34 @@
+:root {
+  --md-text-font: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
+  --md-code-font: "JetBrains Mono", "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  --showcase-line: var(--md-default-fg-color--lightest);
+}
+.md-grid { max-width: 76rem; }
+.md-content { min-width: 0; }
+.md-typeset { font-size: .82rem; line-height: 1.85; }
+.md-typeset h1 { color: var(--md-default-fg-color); font-weight: 700; letter-spacing: -.025em; line-height: 1.4; }
+.md-typeset h2 { margin-top: 2.2em; font-weight: 650; }
+.md-typeset h3 { font-weight: 600; }
+.md-typeset code { font-size: .83em; overflow-wrap: anywhere; }
+.md-typeset pre code { overflow-wrap: normal; line-height: 1.65; }
+.md-typeset figure { margin: 1.5rem 0; max-width: 100%; }
+.md-typeset img { border: 1px solid var(--showcase-line); border-radius: 6px; height: auto; }
+.md-typeset .twemoji { border: 0; border-radius: 0; }
+.md-typeset figure img { background: white; }
+.md-typeset figcaption { font-size: .68rem; line-height: 1.65; color: var(--md-default-fg-color--light); text-align: left; margin: .5rem 0 0; }
+.md-typeset .hero-demo { max-width: 32rem; margin-inline: auto; }
+.md-typeset .project-metrics { display: grid; grid-template-columns: repeat(4,minmax(0,1fr)); gap: .65rem; margin: 1.5rem 0 .7rem; }
+.md-typeset .project-metrics a { display: flex; flex-direction: column; padding: .85rem .6rem; border: 1px solid var(--showcase-line); border-radius: 6px; color: var(--md-default-fg-color); text-decoration: none; }
+.md-typeset .project-metrics strong { font-size: .95rem; font-weight: 650; white-space: nowrap; }
+.md-typeset .project-metrics span { font-size: .64rem; color: var(--md-default-fg-color--light); margin-top: .25rem; }
+.md-typeset .grid.cards > ul > li { border-radius: 6px; box-shadow: none; }
+.md-typeset table:not([class]) { font-size: .7rem; line-height: 1.7; }
+.md-typeset .eyebrow { color: var(--md-primary-fg-color); font-size: .65rem; font-weight: 650; letter-spacing: .08em; }
+@media (max-width: 700px) {
+  .md-typeset .project-metrics { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  .md-typeset { font-size: .8rem; }
+  .md-typeset h1 { font-size: 1.65em; }
+  .md-typeset .project-metrics strong { font-size: .87rem; }
+}
+[data-md-color-scheme="slate"] .md-typeset .eyebrow { color: #68c9bb; }
+.md-typeset figcaption { font-style: normal; }

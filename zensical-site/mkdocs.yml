@@ -1,0 +1,73 @@
+site_name: "CPLD 拼图游戏 · 技术展示"
+site_description: "基于 MAX II CPLD 与 VHDL-93 的 8×8 双色点阵拼图游戏"
+site_url: "https://tortrixx.github.io/dld/"
+repo_url: "https://github.com/tortrixx/dld"
+repo_name: "tortrixx/dld"
+docs_dir: .generated
+site_dir: site
+theme:
+  variant: modern
+  language: zh
+  font: false
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: 切换深色模式
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: 切换浅色模式
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+    - search.suggest
+    - search.highlight
+nav:
+  - 项目概览: index.md
+  - 项目设计:
+      - 使用演示: demo.md
+      - 系统架构: architecture.md
+      - 硬件设计: hardware.md
+      - 资源优化: resources.md
+      - 工程取舍: decisions.md
+      - 工程验证: verification.md
+      - 复现与构建: reproducibility.md
+  - 模块详解:
+      - 系统顶层: modules/01_system_top.md
+      - 时钟与键盘: modules/02_clock_keypad.md
+      - 游戏状态机: modules/03_game_fsm.md
+      - 拼图引擎: modules/04_puzzle_engine.md
+      - 图案与随机数: modules/05_rom_random.md
+      - 显示与音效: modules/06_display_audio.md
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+  - pymdownx.emoji:
+      emoji_index: !!python/name:zensical.extensions.emoji.twemoji
+      emoji_generator: !!python/name:zensical.extensions.emoji.to_svg
+  - zensical.extensions.glightbox:
+      auto_caption: true
+validation:
+  invalid_links: true
+  invalid_link_anchors: true
+extra_css:
+  - stylesheets/extra.css
+
+extra_javascript:
+  - scripts/legacy-links.js

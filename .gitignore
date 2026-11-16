@@ -126,3 +126,9 @@ venv/
 docs/report/_submission*
 docs/report/_*.typ
 docs/report/_*.pdf
+
+# Zensical staged sources and build cache
+zensical-site/.generated/
+zensical-site/site/
+zensical-site/.cache/
+_zensical_output/
