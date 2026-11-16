@@ -27,11 +27,11 @@ python scripts/sim.py run game_fsm
 ## 文档网站本地运行
 
 ```bash
-python -m pip install 'zensical>=0.1,<0.3'
+python -m pip install -r zensical-site/requirements.txt
 python zensical-site/scripts/prepare.py
 cd zensical-site
 zensical serve
-# 生产构建：zensical build
+# 生产构建：zensical build --strict
 ```
 
 文档站使用从现有源码文档复制生成的独立发布目录，不会写回 `rtl/`、`sim/`、`facts/` 或原始证据文档。

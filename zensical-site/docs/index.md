@@ -1,57 +1,63 @@
+<p class="eyebrow">MAX II · VHDL-93 · DIGITAL LOGIC</p>
+
 # 在 CPLD 上实现一款拼图游戏
 
-**没有 CPU，没有片上 RAM，只有 VHDL 描述的硬件逻辑。**
+从矩阵键盘到双色点阵，从游戏状态机到逐行碰撞检测：在 **EPM1270T144C5** 上，以纯 VHDL 实现完整的三关拼图交互。没有 CPU 和片上 RAM，输入、运算、显示与音效都由硬件逻辑完成。
 
-本项目在 Altera MAX II EPM1270T144C5 CPLD 上实现 8×8 双色点阵拼图游戏。玩家通过 4×4 矩阵键盘选择、移动和旋转零片，完成三关拼图挑战。整个系统包括输入消抖、游戏状态机、碰撞检测、图案查找表、显示扫描和蜂鸣器音效。
+[观看演示](demo.md){ .md-button .md-button--primary }
+[理解系统架构](architecture.md){ .md-button }
 
-![规则模型重放](assets/images/demo-run.gif)
+<figure class="hero-demo" markdown="span">
 
-*软件规则模型生成的演示动画，不是开发板实拍。*
+![软件规则模型重放](assets/images/demo-run.gif)
+
+<figcaption>软件规则模型重放，不是真实硬件录像。用于说明操作与画面规则，不能证明 RTL 或板卡运行结果。</figcaption>
+
+</figure>
+
+## 已有工程基线
 
 <div class="project-metrics">
-  <div><strong>1,264 / 1,270</strong><span>逻辑单元 LE</span></div>
-  <div><strong>127 / 127</strong><span>逻辑阵列块 LAB</span></div>
-  <div><strong>54.27 MHz</strong><span>Fmax</span></div>
-  <div><strong>184</strong><span>验证断言</span></div>
+  <a href="resources/"><strong>{{LE}}</strong><span>逻辑单元 · LE</span></a>
+  <a href="resources/"><strong>{{LAB}}</strong><span>逻辑阵列块 · LAB</span></a>
+  <a href="resources/"><strong>{{FMAX}} MHz</strong><span>静态时序分析 · Fmax</span></a>
+  <a href="verification/"><strong>{{ASSERTIONS}} 条</strong><span>历史验证断言通过</span></a>
 </div>
 
-以上为仓库 README 记录的已验证基线；变更 RTL 后以 [构建证据](https://github.com/tortrixx/dld/blob/main/quartus/build_provenance.json) 和实际报告为准。
+编译记录：**{{BUILD_DATE}}**。读数来自 [构建溯源记录](https://github.com/tortrixx/dld/blob/main/quartus/build_provenance.json)，测试明细见[验证与测试](verification.md)。本次网站迁移不重跑 Quartus，也不新增上板结论。
 
-## 从哪里开始
+## 从系统到实现
 
 <div class="grid cards" markdown>
 
 - :material-chip: **系统架构**
 
-    从时钟、键盘到状态机、拼图引擎和显示输出，理解硬件数据流。
+    单时钟域、使能节拍与 11 个子模块如何协作。
 
-    [阅读架构](architecture.md)
+    [沿信号流阅读](architecture.md)
 
-- :material-puzzle: **模块设计**
+- :material-puzzle: **六组模块**
 
-    阅读 6 组子系统说明，结合真实信号及波形理解实现细节。
+    接口、设计实现与原始仿真波形，按功能组织。
 
-    [查看拼图引擎](modules/04_puzzle_engine.md)
+    [从顶层集成开始](modules/01_system_top.md)
 
-- :material-chart-timeline: **工程验证**
+- :material-chart-timeline: **验证与测试**
 
-    查看 Quartus GUI 波形、仿真断言、资源和时序报告的证据边界。
+    区分软件演示、仿真断言、时序报告与上板记录。
 
-    [查看验证方案](verification.md)
+    [检查证据与限制](verification.md)
 
-- :material-tools: **复现项目**
+- :material-tools: **构建复现**
 
-    了解 VHDL、Quartus II 工程生成、编译、测试和环境要求。
+    配置工程、运行仿真，以及安全地修改 RTL。
 
-    [构建指南](reproducibility.md)
+    [复现工程](reproducibility.md)
 
 </div>
 
-## 项目的关键设计挑战
+## 这个项目值得拆解的地方
 
-1. **资源极限**：127 个 LAB 全部占用，优化重点不只是 LE 数量，更是逻辑装箱与时序收敛。
-2. **无片上 RAM**：图案数据通过逻辑查找表生成，不使用软核处理器。
-3. **时序与交互**：单时钟域组织多个使能节拍，完成输入、显示、游戏控制与音效协同。
-4. **可追溯验证**：仿真断言、截图、构建报告与固件记录共同描述可验证的工程结果。
-
-[:octicons-mark-github-16: 浏览源代码](https://github.com/tortrixx/dld){ .md-button .md-button--primary }
+- **在面积约束下串行化计算**：逐行生成掩码、逐块检查碰撞，让运算单元跨周期复用。[资源优化](resources.md)
+- **让判据与画面一致**：完成条件看逐格覆盖和锁定状态，允许等价铺法。[拼图引擎](modules/04_puzzle_engine.md)
+- **保留明确的工程边界**：初始方向固定、被拒操作无音效，功能取舍有记录可查。[工程取舍](decisions.md)

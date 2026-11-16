@@ -1,30 +1,49 @@
-# 工程验证
+# 验证与测试
 
-文档中的结论必须区分**自动化仿真、软件演示、Quartus 编译报告**与**实际开发板复测**，它们不能互相替代。
+软件演示、RTL 仿真、静态时序分析与硬件验收各有边界。以下是仓库已有证据，不是本次网站维护新产生的硬件测试结果。
 
-## 证据分类
+## 证据分层
 
-| 类别 | 仓库中的来源 | 能证明什么 |
+| 类别 | 能支持的结论 | 不能替代 |
 |---|---|---|
-| 仿真断言 | `sim/rounds/` | 已定义输入与场景下的逻辑行为 |
-| GUI 波形截图 | `docs/图/GUI-*.png` | Quartus 波形查看器中的仿真结果 |
-| 资源与时序 | `quartus/build_provenance.json` 与报告 | 目标器件上综合、布局布线及时序结果 |
-| 软件演示 GIF | `docs/assets/images/demo-run.gif` | 规则模型的可视化，不等同于板卡运行录像 |
-| 上板复测 | `README.md` 与工程记录 | 仓库记录的实际硬件验收结论；没有板卡实拍 |
+| 软件规则模型 GIF | 规则与操作流程的可视化 | RTL 正确性、真实板卡效果 |
+| Python 测试台与 VWF 断言 | 已定义场景中的信号行为 | 未覆盖输入、硬件电气行为 |
+| Quartus GUI 波形 | 所显示观测点的仿真变化 | 截图未捕获的内部信号 |
+| 编译与时序记录 | 指定器件和约束下的资源、时序结果 | 实际运行频率测量、修改后的新结果 |
+| 上板文字记录 | 历史人工验收结论 | 本次现场复测、硬件照片或录像 |
 
-![游戏状态机波形](assets/images/GUI-game_fsm.png)
+## 历史仿真明细
 
-*Quartus GUI 仿真截图，不能作为硬件实拍或实际工作频率的直接证据。*
+表格从 `facts/facts.json` 生成，记录保留了时间、轮次与测试台入口。整机历史测试还有多种场景；下表展示各模块最新记录，总计按事实模型汇总。
 
-## 关键验证结果
+| 模块 | 最新轮次 | 通过 / 总数 | 原始记录时间 | 入口 |
+|---|---|---|---|---|
+{{SIM_TABLE}}
 
-仓库 README 记录 **12 个模块/场景与 184 条断言通过**、**Fmax 54.27 MHz**、**1264 / 1270 LE**、**127 / 127 LAB**。这些是已有构建记录的基线，不代表后续任意 RTL 修改后仍然成立。
+[事实模型](https://github.com/tortrixx/dld/blob/main/facts/facts.json)汇总为 **12 个模块／场景、{{ASSERTIONS}} / {{ASSERTIONS}} 条断言通过**。更新测试后需重新生成事实模型并检查，不能只改这句摘要。
 
-!!! warning "关于仿真时间"
-    部分测试台为了缩短验证时间会压缩时钟参数，因此波形时间轴不能直接视作板卡真实秒数。详见各模块说明及原始测试台。
+## 波形如何阅读
 
-## 深入核对
+![游戏状态机仿真波形](assets/images/GUI-game_fsm.png)
+*Quartus GUI 波形裁图：截图刻度至 204.8 µs，总长 222.02 µs。仿真中的 1 Hz 节拍被压缩为 2 µs，不代表板卡秒数。*
 
-- [仿真原始轮次](https://github.com/tortrixx/dld/tree/main/sim/rounds)
-- [资源报告与工程记录](https://github.com/tortrixx/dld/blob/main/docs/05-%E8%B5%84%E6%BA%90%E5%88%A9%E7%94%A8%E4%B8%8E%E7%BC%96%E8%AF%91%E6%8A%A5%E5%91%8A.md)
-- [硬件调试记录](https://github.com/tortrixx/dld/blob/main/docs/06-%E7%A1%AC%E4%BB%B6%E8%B0%83%E8%AF%95%E8%AE%B0%E5%BD%95.md)
+先核对测试台的时间补丁，再看信号名、触发条件和变化沿。图中没有的信号要回到 VWF 与断言核对。各模块页保留了具体时间窗和波形说明。
+
+- [状态迁移与散落握手](modules/03_game_fsm.md)
+- [碰撞、旋转与等价铺法](modules/04_puzzle_engine.md)
+- [LFSR 周期与复位](modules/05_rom_random.md)
+
+## 本地证据检查
+
+```bash
+python scripts/extract_facts.py --check
+python scripts/check_docs.py
+python scripts/audit_evidence.py
+python scripts/check_geometry.py
+python scripts/check_plans.py
+```
+
+这些命令检查事实、文档、历史证据或软件模型。重新运行 RTL 仿真仍需要 Quartus，详见[构建复现](reproducibility.md)。本次网站构建与浏览器验收记录单独保存在仓库的 `zensical-site/VALIDATION.md`。
+
+!!! warning "当前源码与历史证据的差异"
+    2026-11-16 运行 `audit_evidence.py` 得到 13 FAIL。当前 `puzzle_top.vhd` 的组件声明顺序与历史逻辑指纹不同，仿真和固件指纹门禁未通过。检查差异显示该文件的去注释内容变化集中于声明重排，但本次没有 Quartus 环境，不能据此补签仿真或固件一致性。资源与测试结果均按历史记录展示，后续需在工具环境中重跑完整验证。

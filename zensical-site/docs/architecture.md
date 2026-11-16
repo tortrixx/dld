@@ -26,3 +26,13 @@
 从 [系统顶层](modules/01_system_top.md) 开始逐步阅读，或直接进入 [拼图引擎](modules/04_puzzle_engine.md)。
 
 > 原始数据与真实实现以 [RTL 源码](https://github.com/tortrixx/dld/tree/main/rtl) 和 [facts.json](https://github.com/tortrixx/dld/blob/main/facts/facts.json) 为准。
+
+## 源码中的使能推进
+
+下面的 VHDL 片段在构建时直接从 `rtl/rng_lfsr.vhd` 抽取，展示反馈计算与全零保护。寄存器只在 `i_step` 有效时推进，不能将它描述为自由运行的随机源。
+
+```vhdl
+{{RNG_CODE}}
+```
+
+[阅读完整 LFSR 源码](https://github.com/tortrixx/dld/blob/main/rtl/rng_lfsr.vhd) · [图案与随机数模块](modules/05_rom_random.md)

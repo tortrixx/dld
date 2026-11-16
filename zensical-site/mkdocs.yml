@@ -3,12 +3,12 @@ site_description: "基于 MAX II CPLD 与 VHDL-93 的 8×8 双色点阵拼图游
 site_url: "https://tortrixx.github.io/dld/"
 repo_url: "https://github.com/tortrixx/dld"
 repo_name: "tortrixx/dld"
-docs_dir: docs
-site_dir: ../_zensical_output
+docs_dir: .generated
+site_dir: site
 theme:
-  name: material
   variant: modern
   language: zh
+  font: false
   palette:
     - scheme: default
       primary: teal
@@ -25,13 +25,18 @@ theme:
   features:
     - navigation.sections
     - navigation.top
+    - navigation.footer
     - content.code.copy
     - search.suggest
     - search.highlight
 nav:
   - 项目概览: index.md
   - 项目设计:
+      - 使用演示: demo.md
       - 系统架构: architecture.md
+      - 硬件设计: hardware.md
+      - 资源优化: resources.md
+      - 工程取舍: decisions.md
       - 工程验证: verification.md
       - 复现与构建: reproducibility.md
   - 模块详解:
@@ -50,9 +55,19 @@ markdown_extensions:
       permalink: true
   - pymdownx.details
   - pymdownx.superfences
-  - pymdownx.highlight
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
   - pymdownx.emoji:
-      emoji_index: !!python/name:material.extensions.emoji.twemoji
-      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      emoji_index: !!python/name:zensical.extensions.emoji.twemoji
+      emoji_generator: !!python/name:zensical.extensions.emoji.to_svg
+  - zensical.extensions.glightbox:
+      auto_caption: true
+validation:
+  invalid_links: true
+  invalid_link_anchors: true
 extra_css:
   - stylesheets/extra.css
+
+extra_javascript:
+  - scripts/legacy-links.js

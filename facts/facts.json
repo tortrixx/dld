@@ -40,11 +40,11 @@
     "board_test_top": {
       "entity": "board_test_top",
       "file": "rtl/board_test_top.vhd",
-      "entity_line": 69,
-      "end_entity_line": 88,
+      "entity_line": 42,
+      "end_entity_line": 61,
       "architecture": {
         "name": "rtl",
-        "line": 90
+        "line": 63
       },
       "ports": [
         {
@@ -69,7 +69,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "PIN_61，BTN0 = 最右边，按下 = '1'"
+          "comment": "PIN_61，BTN0，按下 = '1'"
         },
         {
           "name": "kp_row",
@@ -147,7 +147,7 @@
           "instance": "u_clk",
           "entity": "clk_gen",
           "file": "rtl/board_test_top.vhd",
-          "line": 244,
+          "line": 198,
           "port_map": [
             {
               "formal": "i_clk",
@@ -195,7 +195,7 @@
           "instance": "u_keypad",
           "entity": "keypad_scan",
           "file": "rtl/board_test_top.vhd",
-          "line": 258,
+          "line": 212,
           "port_map": [
             {
               "formal": "i_clk",
@@ -239,7 +239,7 @@
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
           "file": "rtl/board_test_top.vhd",
-          "line": 595,
+          "line": 505,
           "port_map": [
             {
               "formal": "i_clk",
@@ -283,7 +283,7 @@
           "instance": "u_seg",
           "entity": "seg_scan",
           "file": "rtl/board_test_top.vhd",
-          "line": 677,
+          "line": 570,
           "port_map": [
             {
               "formal": "i_clk",
@@ -328,18 +328,18 @@
           ]
         }
       ],
-      "loc": 708,
+      "loc": 601,
       "tier": "diag_top",
       "subsystem": "—"
     },
     "buzzer_ctrl": {
       "entity": "buzzer_ctrl",
       "file": "rtl/buzzer_ctrl.vhd",
-      "entity_line": 119,
-      "end_entity_line": 128,
+      "entity_line": 42,
+      "end_entity_line": 51,
       "architecture": {
         "name": "rtl",
-        "line": 130
+        "line": 53
       },
       "ports": [
         {
@@ -372,7 +372,7 @@
           "type": "std_logic_vector(3 downto 0)",
           "width": 4,
           "default": null,
-          "comment": "音效码（本轮由 3 位加宽到 4 位）"
+          "comment": "音效码"
         },
         {
           "name": "i_t4",
@@ -380,7 +380,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "4 Hz tick（250 ms）：一步一个音"
+          "comment": "4 Hz tick：一步一个音"
         },
         {
           "name": "o_buzz",
@@ -393,18 +393,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 529,
+      "loc": 286,
       "tier": "module",
       "subsystem": "S7 音效"
     },
     "clk_gen": {
       "entity": "clk_gen",
       "file": "rtl/clk_gen.vhd",
-      "entity_line": 50,
-      "end_entity_line": 67,
+      "entity_line": 29,
+      "end_entity_line": 42,
       "architecture": {
         "name": "rtl",
-        "line": 69
+        "line": 44
       },
       "ports": [
         {
@@ -453,7 +453,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "10 ms 脉冲（当前无人使用）"
+          "comment": "10 ms 脉冲（当前未使用）"
         },
         {
           "name": "o_tick_2hz",
@@ -461,7 +461,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "500 ms 脉冲（**不是**音效节奏：见文件头 21-23 行；唯一实读者是 board_test_top）"
+          "comment": "500 ms 脉冲（供板级自检计数）"
         },
         {
           "name": "o_tick_4hz",
@@ -469,7 +469,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "250 ms 脉冲（翻转 → 2 Hz 方波）"
+          "comment": "250 ms 脉冲（用于翻转出 2 Hz）"
         },
         {
           "name": "o_tick_1hz",
@@ -485,23 +485,23 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": null
+          "comment": "25 ms 脉冲（供板级自检扫描）"
         }
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 261,
+      "loc": 198,
       "tier": "module",
       "subsystem": "S1 时钟与复位"
     },
     "disp_format": {
       "entity": "disp_format",
       "file": "rtl/disp_format.vhd",
-      "entity_line": 46,
-      "end_entity_line": 56,
+      "entity_line": 30,
+      "end_entity_line": 40,
       "architecture": {
         "name": "rtl",
-        "line": 58
+        "line": 42
       },
       "ports": [
         {
@@ -526,7 +526,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "'1' = 第三关（A2）"
+          "comment": "'1' = 第三关"
         },
         {
           "name": "i_time",
@@ -563,18 +563,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 241,
+      "loc": 207,
       "tier": "module",
       "subsystem": "S6 显示输出"
     },
     "dot_matrix_scan": {
       "entity": "dot_matrix_scan",
       "file": "rtl/dot_matrix_scan.vhd",
-      "entity_line": 60,
-      "end_entity_line": 72,
+      "entity_line": 29,
+      "end_entity_line": 41,
       "architecture": {
         "name": "rtl",
-        "line": 74
+        "line": 43
       },
       "ports": [
         {
@@ -652,18 +652,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 115,
+      "loc": 82,
       "tier": "module",
       "subsystem": "S6 显示输出"
     },
     "game_fsm": {
       "entity": "game_fsm",
       "file": "rtl/game_fsm.vhd",
-      "entity_line": 54,
-      "end_entity_line": 86,
+      "entity_line": 36,
+      "end_entity_line": 64,
       "architecture": {
         "name": "rtl",
-        "line": 88
+        "line": 66
       },
       "ports": [
         {
@@ -704,7 +704,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "ERR-038：翻转它 → 2 Hz 方波"
+          "comment": "翻转它得到 2 Hz 方波"
         },
         {
           "name": "i_press",
@@ -752,7 +752,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "散落请求：**电平**（请求/应答握手，"
+          "comment": "散落请求：电平握手"
         },
         {
           "name": "o_up",
@@ -792,7 +792,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "A4: 90° 旋转请求（1 拍）"
+          "comment": "90° 旋转请求（1 拍）"
         },
         {
           "name": "o_level",
@@ -800,7 +800,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "'0' = 第一关，'1' = 第二关/第三关"
+          "comment": "'0' = 第一关，'1' = 第二/三关"
         },
         {
           "name": "o_lvl3",
@@ -808,7 +808,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "'1' = 第三关（A2：增加关数）"
+          "comment": "'1' = 第三关"
         },
         {
           "name": "o_state",
@@ -864,23 +864,23 @@
           "type": "std_logic_vector(3 downto 0)",
           "width": 4,
           "default": null,
-          "comment": "音效选择码（4 位，A1 v2）"
+          "comment": "音效选择码"
         }
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 602,
+      "loc": 404,
       "tier": "module",
       "subsystem": "S3 游戏控制"
     },
     "keypad_diag_top": {
       "entity": "keypad_diag_top",
       "file": "rtl/keypad_diag_top.vhd",
-      "entity_line": 40,
-      "end_entity_line": 54,
+      "entity_line": 33,
+      "end_entity_line": 47,
       "architecture": {
         "name": "rtl",
-        "line": 56
+        "line": 49
       },
       "ports": [
         {
@@ -978,7 +978,7 @@
           "instance": "u_clk",
           "entity": "clk_gen",
           "file": "rtl/keypad_diag_top.vhd",
-          "line": 120,
+          "line": 107,
           "port_map": [
             {
               "formal": "i_clk",
@@ -1026,7 +1026,7 @@
           "instance": "u_keypad",
           "entity": "keypad_scan",
           "file": "rtl/keypad_diag_top.vhd",
-          "line": 134,
+          "line": 121,
           "port_map": [
             {
               "formal": "i_clk",
@@ -1070,7 +1070,7 @@
           "instance": "u_seg",
           "entity": "seg_scan",
           "file": "rtl/keypad_diag_top.vhd",
-          "line": 195,
+          "line": 180,
           "port_map": [
             {
               "formal": "i_clk",
@@ -1118,7 +1118,7 @@
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
           "file": "rtl/keypad_diag_top.vhd",
-          "line": 209,
+          "line": 194,
           "port_map": [
             {
               "formal": "i_clk",
@@ -1159,18 +1159,18 @@
           ]
         }
       ],
-      "loc": 224,
+      "loc": 209,
       "tier": "diag_top",
       "subsystem": "—"
     },
     "keypad_raw_top": {
       "entity": "keypad_raw_top",
       "file": "rtl/keypad_raw_top.vhd",
-      "entity_line": 35,
-      "end_entity_line": 49,
+      "entity_line": 29,
+      "end_entity_line": 43,
       "architecture": {
         "name": "rtl",
-        "line": 51
+        "line": 45
       },
       "ports": [
         {
@@ -1268,7 +1268,7 @@
           "instance": "u_seg",
           "entity": "seg_scan",
           "file": "rtl/keypad_raw_top.vhd",
-          "line": 110,
+          "line": 104,
           "port_map": [
             {
               "formal": "i_clk",
@@ -1316,7 +1316,7 @@
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
           "file": "rtl/keypad_raw_top.vhd",
-          "line": 124,
+          "line": 118,
           "port_map": [
             {
               "formal": "i_clk",
@@ -1357,18 +1357,18 @@
           ]
         }
       ],
-      "loc": 139,
+      "loc": 133,
       "tier": "diag_top",
       "subsystem": "—"
     },
     "keypad_scan": {
       "entity": "keypad_scan",
       "file": "rtl/keypad_scan.vhd",
-      "entity_line": 52,
-      "end_entity_line": 64,
+      "entity_line": 28,
+      "end_entity_line": 40,
       "architecture": {
         "name": "rtl",
-        "line": 66
+        "line": 42
       },
       "ports": [
         {
@@ -1446,18 +1446,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 328,
+      "loc": 255,
       "tier": "module",
       "subsystem": "S2 键盘输入"
     },
     "pattern_rom": {
       "entity": "pattern_rom",
       "file": "rtl/pattern_rom.vhd",
-      "entity_line": 33,
-      "end_entity_line": 39,
+      "entity_line": 22,
+      "end_entity_line": 28,
       "architecture": {
         "name": "rtl",
-        "line": 41
+        "line": 30
       },
       "ports": [
         {
@@ -1487,18 +1487,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 49,
+      "loc": 38,
       "tier": "module",
       "subsystem": "S5 图案与零片数据"
     },
     "piece_rom": {
       "entity": "piece_rom",
       "file": "rtl/piece_rom.vhd",
-      "entity_line": 27,
-      "end_entity_line": 35,
+      "entity_line": 21,
+      "end_entity_line": 29,
       "architecture": {
         "name": "rtl",
-        "line": 37
+        "line": 31
       },
       "ports": [
         {
@@ -1544,18 +1544,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 61,
+      "loc": 54,
       "tier": "module",
       "subsystem": "S5 图案与零片数据"
     },
     "puzzle_ctrl": {
       "entity": "puzzle_ctrl",
       "file": "rtl/puzzle_ctrl.vhd",
-      "entity_line": 60,
-      "end_entity_line": 114,
+      "entity_line": 42,
+      "end_entity_line": 84,
       "architecture": {
         "name": "rtl",
-        "line": 116
+        "line": 86
       },
       "ports": [
         {
@@ -1580,7 +1580,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "行渲染节拍：顶层给 **1 kHz**"
+          "comment": "行渲染节拍：顶层给 1 kHz"
         },
         {
           "name": "rnd_step",
@@ -1612,7 +1612,7 @@
           "type": "std_logic_vector(1 downto 0)",
           "width": 2,
           "default": null,
-          "comment": "图案库下标（A2/S1）："
+          "comment": "图案库下标（用于帧快照）"
         },
         {
           "name": "i_sh0",
@@ -1756,7 +1756,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "【旋转】键（A4）：1 拍脉冲，"
+          "comment": "【旋转】：1 拍，顺时针 90°"
         },
         {
           "name": "i_up",
@@ -1796,7 +1796,7 @@
           "type": "std_logic_vector(7 downto 0)",
           "width": 8,
           "default": null,
-          "comment": "四块各 2 位的朝向（A4，仿真用）"
+          "comment": "四块各 2 位的朝向（仿真观察）"
         },
         {
           "name": "o_solved",
@@ -1873,18 +1873,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 1130,
+      "loc": 905,
       "tier": "module",
       "subsystem": "S4 拼图引擎"
     },
     "puzzle_top": {
       "entity": "puzzle_top",
       "file": "rtl/puzzle_top.vhd",
-      "entity_line": 54,
-      "end_entity_line": 68,
+      "entity_line": 28,
+      "end_entity_line": 42,
       "architecture": {
         "name": "rtl",
-        "line": 70
+        "line": 44
       },
       "ports": [
         {
@@ -1893,7 +1893,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "PIN_18 板载时钟"
+          "comment": "PIN_18 板载 50 MHz 主时钟"
         },
         {
           "name": "sw7",
@@ -1901,7 +1901,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "PIN_125，拨上 = '1'"
+          "comment": "PIN_125 系统总使能（上拨 = '1'）"
         },
         {
           "name": "btn",
@@ -1909,7 +1909,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "PIN_61，BTN0 复位"
+          "comment": "PIN_61 BTN0 复位（按下 = '1'）"
         },
         {
           "name": "kp_row",
@@ -1917,7 +1917,7 @@
           "type": "std_logic_vector(3 downto 0)",
           "width": 4,
           "default": null,
-          "comment": "PIN_111..114"
+          "comment": "PIN_111..114 键盘行输入"
         },
         {
           "name": "kp_col",
@@ -1925,7 +1925,7 @@
           "type": "std_logic_vector(3 downto 0)",
           "width": 4,
           "default": null,
-          "comment": "PIN_117..120"
+          "comment": "PIN_117..120 键盘列驱动"
         },
         {
           "name": "dot_row",
@@ -1933,7 +1933,7 @@
           "type": "std_logic_vector(7 downto 0)",
           "width": 8,
           "default": null,
-          "comment": "PIN_8..1"
+          "comment": "PIN_8,7,6,5,4,3,2,1 行选通（低有效）"
         },
         {
           "name": "dot_colr",
@@ -1941,7 +1941,7 @@
           "type": "std_logic_vector(7 downto 0)",
           "width": 8,
           "default": null,
-          "comment": "PIN_22..11"
+          "comment": "PIN_22,21,16,15,14,13,12,11 红列"
         },
         {
           "name": "dot_colg",
@@ -1949,7 +1949,7 @@
           "type": "std_logic_vector(7 downto 0)",
           "width": 8,
           "default": null,
-          "comment": "PIN_45..38"
+          "comment": "PIN_45,44,43,42,41,40,39,38 绿列"
         },
         {
           "name": "seg",
@@ -1957,7 +1957,7 @@
           "type": "std_logic_vector(7 downto 0)",
           "width": 8,
           "default": null,
-          "comment": "PIN_62..51"
+          "comment": "PIN_62,59,58,57,55,53,52,51 段选（高）"
         },
         {
           "name": "cat",
@@ -1965,7 +1965,7 @@
           "type": "std_logic_vector(7 downto 0)",
           "width": 8,
           "default": null,
-          "comment": "PIN_63..31"
+          "comment": "PIN_63,66,67,68,69,70,30,31 位选（低）"
         },
         {
           "name": "buzz",
@@ -1973,20 +1973,20 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "PIN_60"
+          "comment": "PIN_60 蜂鸣器"
         }
       ],
       "components_declared": [
         "clk_gen",
         "keypad_scan",
         "game_fsm",
+        "puzzle_ctrl",
+        "disp_format",
+        "seg_scan",
+        "dot_matrix_scan",
         "piece_rom",
         "pattern_rom",
         "rng_lfsr",
-        "puzzle_ctrl",
-        "dot_matrix_scan",
-        "disp_format",
-        "seg_scan",
         "buzzer_ctrl"
       ],
       "instantiations": [
@@ -1994,7 +1994,7 @@
           "instance": "u_clk",
           "entity": "clk_gen",
           "file": "rtl/puzzle_top.vhd",
-          "line": 425,
+          "line": 357,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2042,7 +2042,7 @@
           "instance": "u_keypad",
           "entity": "keypad_scan",
           "file": "rtl/puzzle_top.vhd",
-          "line": 440,
+          "line": 372,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2086,7 +2086,7 @@
           "instance": "u_fsm",
           "entity": "game_fsm",
           "file": "rtl/puzzle_top.vhd",
-          "line": 454,
+          "line": 386,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2194,7 +2194,7 @@
           "instance": "u_pieces",
           "entity": "piece_rom",
           "file": "rtl/puzzle_top.vhd",
-          "line": 484,
+          "line": 416,
           "port_map": [
             {
               "formal": "i_level",
@@ -2222,7 +2222,7 @@
           "instance": "u_pattern",
           "entity": "pattern_rom",
           "file": "rtl/puzzle_top.vhd",
-          "line": 493,
+          "line": 425,
           "port_map": [
             {
               "formal": "i_level",
@@ -2242,7 +2242,7 @@
           "instance": "u_rng",
           "entity": "rng_lfsr",
           "file": "rtl/puzzle_top.vhd",
-          "line": 501,
+          "line": 433,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2266,7 +2266,7 @@
           "instance": "u_puzzle",
           "entity": "puzzle_ctrl",
           "file": "rtl/puzzle_top.vhd",
-          "line": 522,
+          "line": 446,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2430,7 +2430,7 @@
           "instance": "u_disp",
           "entity": "disp_format",
           "file": "rtl/puzzle_top.vhd",
-          "line": 576,
+          "line": 493,
           "port_map": [
             {
               "formal": "i_state",
@@ -2466,7 +2466,7 @@
           "instance": "u_seg",
           "entity": "seg_scan",
           "file": "rtl/puzzle_top.vhd",
-          "line": 587,
+          "line": 504,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2514,7 +2514,7 @@
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
           "file": "rtl/puzzle_top.vhd",
-          "line": 820,
+          "line": 660,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2558,7 +2558,7 @@
           "instance": "u_buzz",
           "entity": "buzzer_ctrl",
           "file": "rtl/puzzle_top.vhd",
-          "line": 834,
+          "line": 674,
           "port_map": [
             {
               "formal": "i_clk",
@@ -2587,18 +2587,18 @@
           ]
         }
       ],
-      "loc": 844,
+      "loc": 684,
       "tier": "top",
       "subsystem": "—"
     },
     "rng_lfsr": {
       "entity": "rng_lfsr",
       "file": "rtl/rng_lfsr.vhd",
-      "entity_line": 23,
-      "end_entity_line": 30,
+      "entity_line": 18,
+      "end_entity_line": 25,
       "architecture": {
         "name": "rtl",
-        "line": 32
+        "line": 27
       },
       "ports": [
         {
@@ -2636,18 +2636,18 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 55,
+      "loc": 50,
       "tier": "module",
       "subsystem": "S5 图案与零片数据"
     },
     "seg_scan": {
       "entity": "seg_scan",
       "file": "rtl/seg_scan.vhd",
-      "entity_line": 39,
-      "end_entity_line": 58,
+      "entity_line": 29,
+      "end_entity_line": 44,
       "architecture": {
         "name": "rtl",
-        "line": 60
+        "line": 46
       },
       "ports": [
         {
@@ -2672,7 +2672,7 @@
           "type": "std_logic",
           "width": 1,
           "default": null,
-          "comment": "位选推进节拍：设计用 1 kHz"
+          "comment": "位选推进节拍（1 kHz）"
         },
         {
           "name": "i_en",
@@ -2733,7 +2733,7 @@
       ],
       "components_declared": [],
       "instantiations": [],
-      "loc": 187,
+      "loc": 161,
       "tier": "module",
       "subsystem": "S6 显示输出"
     }
@@ -2743,755 +2743,755 @@
       "package": "puzzle_pkg",
       "file": "rtl/puzzle_pkg.vhd",
       "line": 19,
-      "body_line": 619,
-      "loc": 840,
+      "body_line": 368,
+      "loc": 550,
       "constants": [
         {
           "name": "MASK_ZERO",
           "type": "std_logic_vector(63 downto 0)",
           "value": "(others => '0')",
           "comment": null,
-          "line": 28
+          "line": 29
         },
         {
           "name": "L1_TARGET_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000111000001110000011100000111000000000000000000\"",
           "comment": null,
-          "line": 155
+          "line": 125
         },
         {
           "name": "L1_P0",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000000000000111\"",
           "comment": null,
-          "line": 160
+          "line": 130
         },
         {
           "name": "L1_P1",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000010000001100000111\"",
           "comment": null,
-          "line": 170
+          "line": 133
         },
         {
           "name": "L1_P2",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000001100000010\"",
           "comment": null,
-          "line": 173
+          "line": 136
         },
         {
           "name": "L2_TARGET_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000001111000011110000111100001111000000000000000000\"",
           "comment": null,
-          "line": 189
+          "line": 141
         },
         {
           "name": "L2_PAT0",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000001111000011110000111100001111000000000000000000\"",
-          "comment": "田（= 原图案）",
-          "line": 240
+          "comment": "田（4x4 实心方块）",
+          "line": 160
         },
         {
           "name": "L2_PAT1",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000111000011111000111110000111000000000000000000\"",
           "comment": "十（胖十字）",
-          "line": 242
+          "line": 162
         },
         {
           "name": "L2_PAT2",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000111100111100001111000000111100000000000000000\"",
           "comment": "S/Z 锯齿",
-          "line": 244
+          "line": 164
         },
         {
           "name": "L2_PAT3",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000001110000011110000111110000111100000000000000000\"",
           "comment": "阶梯",
-          "line": 246
+          "line": 166
         },
         {
           "name": "L2_PATS",
           "type": "pat_arr_t",
           "value": "(L2_PAT0, L2_PAT1, L2_PAT2, L2_PAT3)",
           "comment": null,
-          "line": 251
+          "line": 171
         },
         {
           "name": "L2_PAT_N",
           "type": "integer",
           "value": "4",
           "comment": null,
-          "line": 252
+          "line": 172
         },
         {
           "name": "L2_FIXED_PAT",
           "type": "std_logic_vector(1 downto 0)",
           "value": "\"11\"",
-          "comment": "3 == L2_PAT3（阶梯）",
-          "line": 273
+          "comment": "3 == L2_PAT3",
+          "line": 177
         },
         {
           "name": "L2_P0",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000000000000111\"",
           "comment": "Q0 1x3 横条 3 格",
-          "line": 277
+          "line": 181
         },
         {
           "name": "L2_P1",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000000000000000100000001\"",
           "comment": "Q1 1x2 竖条 2 格",
-          "line": 279
+          "line": 183
         },
         {
           "name": "L2_P2",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000001000000010000000111\"",
           "comment": "Q2 J 形 5 格",
-          "line": 281
+          "line": 185
         },
         {
           "name": "L2_P3",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000000000000000000000000000000000000000001100000011100000001\"",
           "comment": "Q3 六格块 6 格",
-          "line": 283
+          "line": 187
         },
         {
           "name": "PIECE_ORI_INIT",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"10\" & \"10\" & \"01\" & \"01\"",
           "comment": null,
-          "line": 310
+          "line": 196
         },
         {
           "name": "L1_TGT0",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0010\"",
           "comment": "(2,2)",
-          "line": 323
+          "line": 201
         },
         {
           "name": "L1_TGT1",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0011\" & \"0010\"",
           "comment": "(3,2)",
-          "line": 324
+          "line": 202
         },
         {
           "name": "L1_TGT2",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0100\" & \"0011\"",
           "comment": "(4,3)",
-          "line": 325
+          "line": 203
         },
         {
           "name": "L1_TGT3",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0000\" & \"0000\"",
           "comment": "未使用",
-          "line": 326
+          "line": 204
         },
         {
           "name": "L2_TGT0",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0101\" & \"0011\"",
           "comment": "Q0 @ (5,3)",
-          "line": 332
+          "line": 207
         },
         {
           "name": "L2_TGT1",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0100\" & \"0010\"",
           "comment": "Q1 @ (4,2)",
-          "line": 333
+          "line": 208
         },
         {
           "name": "L2_TGT2",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0011\"",
           "comment": "Q2 @ (2,3)",
-          "line": 334
+          "line": 209
         },
         {
           "name": "L2_TGT3",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0010\"",
           "comment": "Q3 @ (2,2)",
-          "line": 335
+          "line": 210
         },
         {
           "name": "L2_PAT3_TGT0",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0010\"",
           "comment": "Q0 @ (2,2)",
-          "line": 344
+          "line": 214
         },
         {
           "name": "L2_PAT3_TGT1",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0010\" & \"0001\"",
           "comment": "Q1 @ (2,1)",
-          "line": 345
+          "line": 215
         },
         {
           "name": "L2_PAT3_TGT2",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0011\" & \"0011\"",
           "comment": "Q2 @ (3,3)",
-          "line": 346
+          "line": 216
         },
         {
           "name": "L2_PAT3_TGT3",
           "type": "std_logic_vector(7 downto 0)",
           "value": "\"0011\" & \"0010\"",
           "comment": "Q3 @ (3,2)",
-          "line": 347
+          "line": 217
         },
         {
           "name": "WIN_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000111000011111000110110011000101110000111000001100000010000000\"",
           "comment": null,
-          "line": 374
+          "line": 232
         },
         {
           "name": "FAIL_MASK",
           "type": "std_logic_vector(63 downto 0)",
           "value": "\"0000000011000011011001100011110000111100011001101100001100000000\"",
           "comment": null,
-          "line": 378
+          "line": 235
         },
         {
           "name": "PIECE_MAX_DIM",
           "type": "integer",
           "value": "3",
           "comment": null,
-          "line": 385
+          "line": 240
         },
         {
           "name": "CLK_HZ",
           "type": "integer",
           "value": "50_000_000",
           "comment": null,
-          "line": 394
+          "line": 247
         },
         {
           "name": "CNT_1K",
           "type": "integer",
           "value": "CLK_HZ / 1_000 - 1",
           "comment": null,
-          "line": 397
+          "line": 250
         },
         {
           "name": "CNT_200",
           "type": "integer",
           "value": "1_000 / 200 - 1",
           "comment": null,
-          "line": 400
+          "line": 252
         },
         {
           "name": "CNT_100",
           "type": "integer",
           "value": "200 / 100 - 1",
-          "comment": "原\"100 Hz 时基\"：无使用者",
-          "line": 406
+          "comment": null,
+          "line": 255
         },
         {
           "name": "CNT_2HZ",
           "type": "integer",
           "value": "100 / 2 - 1",
-          "comment": "原\"闪烁 / 自检闪示\"：无使用者",
-          "line": 407
+          "comment": null,
+          "line": 256
         },
         {
           "name": "CNT_1HZ",
           "type": "integer",
           "value": "100 / 1 - 1",
-          "comment": "原\"秒计数器\"：无使用者",
-          "line": 410
+          "comment": null,
+          "line": 257
         },
         {
           "name": "CNT_4HZ",
           "type": "integer",
           "value": "100 / 4 - 1",
           "comment": null,
-          "line": 421
+          "line": 261
         },
         {
           "name": "T_POR_MS",
           "type": "integer",
           "value": "10",
           "comment": null,
-          "line": 427
+          "line": 265
         },
         {
           "name": "CNT_POR",
           "type": "integer",
           "value": "T_POR_MS - 1",
-          "comment": "饱和值：计到它就释放",
-          "line": 428
+          "comment": null,
+          "line": 266
         },
         {
           "name": "T_BTN_MS",
           "type": "integer",
           "value": "20",
           "comment": null,
-          "line": 431
+          "line": 269
         },
         {
           "name": "CNT_BTN",
           "type": "integer",
           "value": "T_BTN_MS - 1",
           "comment": null,
-          "line": 434
+          "line": 271
         },
         {
           "name": "T_SELFTEST",
           "type": "integer",
           "value": "2",
-          "comment": "B1/B2 ：自检持续 2 s",
-          "line": 439
+          "comment": "B1/B2：自检标称 2 s",
+          "line": 276
         },
         {
           "name": "T_SELFTEST_T4",
           "type": "integer",
           "value": "7",
-          "comment": "倒计数初值：8 拍 x 250 ms（≤2 s，见上）",
-          "line": 458
+          "comment": null,
+          "line": 279
         },
         {
           "name": "T_PREVIEW",
           "type": "integer",
           "value": "5",
-          "comment": "B4/B10：预览持续 5 s",
-          "line": 459
+          "comment": "B4/B10：预览 5 s",
+          "line": 280
         },
         {
           "name": "T_LEVEL1",
           "type": "integer",
           "value": "30",
-          "comment": "B5    ：第一关限时 30 s",
-          "line": 460
+          "comment": "B5：第一关限时 30 s",
+          "line": 281
         },
         {
           "name": "T_LEVEL2",
           "type": "integer",
           "value": "40",
-          "comment": "B10   ：第二关限时 40 s",
-          "line": 461
+          "comment": "B10：第二关限时 40 s",
+          "line": 282
         },
         {
           "name": "T_LEVEL3",
           "type": "integer",
           "value": "60",
-          "comment": "A2    ：第三关限时 60 s（自拟）",
-          "line": 474
+          "comment": null,
+          "line": 284
         },
         {
           "name": "DEBOUNCE_MAX",
           "type": "integer",
           "value": "3",
           "comment": null,
-          "line": 503
+          "line": 292
         },
         {
           "name": "SEED_DEFAULT",
           "type": "std_logic_vector(7 downto 0)",
           "value": "x\"5A\"",
           "comment": null,
-          "line": 506
+          "line": 295
         },
         {
           "name": "S_SELF_TEST",
           "type": "state_t",
           "value": "\"000\"",
           "comment": null,
-          "line": 513
+          "line": 302
         },
         {
           "name": "S_IDLE",
           "type": "state_t",
           "value": "\"001\"",
           "comment": null,
-          "line": 514
+          "line": 303
         },
         {
           "name": "S_PREVIEW",
           "type": "state_t",
           "value": "\"010\"",
           "comment": null,
-          "line": 515
+          "line": 304
         },
         {
           "name": "S_PLAYING",
           "type": "state_t",
           "value": "\"011\"",
           "comment": null,
-          "line": 516
+          "line": 305
         },
         {
           "name": "S_WIN",
           "type": "state_t",
           "value": "\"100\"",
           "comment": null,
-          "line": 517
+          "line": 306
         },
         {
           "name": "S_FAIL",
           "type": "state_t",
           "value": "\"101\"",
           "comment": null,
-          "line": 518
+          "line": 307
         },
         {
           "name": "K_NONE",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0000\"",
           "comment": null,
-          "line": 523
+          "line": 312
         },
         {
           "name": "K_START",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0001\"",
-          "comment": "\"start\"",
-          "line": 524
+          "comment": null,
+          "line": 313
         },
         {
           "name": "K_SELECT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0010\"",
-          "comment": "\"select\"",
-          "line": 525
+          "comment": null,
+          "line": 314
         },
         {
           "name": "K_CONFIRM",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0011\"",
-          "comment": "\"confirm\"",
-          "line": 526
+          "comment": null,
+          "line": 315
         },
         {
           "name": "K_UP",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0100\"",
-          "comment": "\"up\"",
-          "line": 527
+          "comment": null,
+          "line": 316
         },
         {
           "name": "K_DOWN",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0101\"",
-          "comment": "\"down\"",
-          "line": 528
+          "comment": null,
+          "line": 317
         },
         {
           "name": "K_LEFT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0110\"",
-          "comment": "\"left\"",
-          "line": 529
+          "comment": null,
+          "line": 318
         },
         {
           "name": "K_RIGHT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0111\"",
-          "comment": "\"right\"",
-          "line": 530
+          "comment": null,
+          "line": 319
         },
         {
           "name": "K_ROT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1000\"",
-          "comment": "\"rotate\" 顺时针 90°",
-          "line": 534
+          "comment": null,
+          "line": 321
         },
         {
           "name": "SND_NONE",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0000\"",
           "comment": "静音（待机）",
-          "line": 564
+          "line": 332
         },
         {
           "name": "SND_SELF",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0001\"",
           "comment": "自检：POST 单声短鸣",
-          "line": 565
+          "line": 333
         },
         {
           "name": "SND_PREVIEW",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0010\"",
-          "comment": "预览倒计时\"准备\"声",
-          "line": 566
+          "comment": "预览\"准备\"声",
+          "line": 334
         },
         {
           "name": "SND_CLEAR",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0011\"",
           "comment": "过关（短上行号角）",
-          "line": 567
+          "line": 335
         },
         {
           "name": "SND_WRONG",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0100\"",
           "comment": "拼错（下行警示）",
-          "line": 568
+          "line": 336
         },
         {
           "name": "SND_KEY",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0101\"",
-          "comment": "按键（短促）",
-          "line": 569
+          "comment": "按键（保留，当前不发出）",
+          "line": 337
         },
         {
           "name": "SND_WIN",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0110\"",
-          "comment": "通关长号角（胜利）",
-          "line": 570
+          "comment": "通关长号角",
+          "line": 338
         },
         {
           "name": "SND_FAIL",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0111\"",
           "comment": "失败 / Game Over",
-          "line": 571
+          "line": 339
         },
         {
           "name": "SND_BGM1",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1000\"",
           "comment": "第一关背景音乐",
-          "line": 572
+          "line": 340
         },
         {
           "name": "SND_BGM2",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1001\"",
           "comment": "第二关背景音乐",
-          "line": 573
+          "line": 341
         },
         {
           "name": "SND_BGM3",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1011\"",
           "comment": "第三关背景音乐",
-          "line": 574
+          "line": 342
         },
         {
           "name": "SND_ROT",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1010\"",
-          "comment": "旋转 90°",
-          "line": 575
+          "comment": "旋转（保留，当前不发出）",
+          "line": 343
         },
         {
           "name": "SND_CONF",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1100\"",
-          "comment": "确认 / 变黄锁定",
-          "line": 576
+          "comment": "确认（保留，当前不发出）",
+          "line": 344
         },
         {
           "name": "SND_SEL",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1101\"",
-          "comment": "选择零片",
-          "line": 577
+          "comment": "选择（保留，当前不发出）",
+          "line": 345
         },
         {
           "name": "SND_MOVE",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1110\"",
-          "comment": "移动一步",
-          "line": 578
+          "comment": "移动（保留，当前不发出）",
+          "line": 346
         },
         {
           "name": "SND_TIME",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1111\"",
-          "comment": "⚠️ 预留：原\"最后 5 秒催促\"，",
-          "line": 579
+          "comment": "预留（当前不发出）",
+          "line": 347
         },
         {
           "name": "DIG_BLANK",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1111\"",
           "comment": null,
-          "line": 608
+          "line": 357
         },
         {
           "name": "DIG_A",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1010\"",
           "comment": "A: a b c e f g",
-          "line": 609
+          "line": 358
         },
         {
           "name": "DIG_P",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1011\"",
           "comment": "P: a b e f g",
-          "line": 610
+          "line": 359
         },
         {
           "name": "DIG_S",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1100\"",
           "comment": "S: a c d f g（= '5'）",
-          "line": 611
+          "line": 360
         },
         {
           "name": "DIG_F",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1101\"",
           "comment": "F: a e f g",
-          "line": 612
+          "line": 361
         },
         {
           "name": "DIG_L",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"1110\"",
           "comment": "L: d e f",
-          "line": 613
+          "line": 362
         },
         {
           "name": "DIG_I",
           "type": "std_logic_vector(3 downto 0)",
           "value": "\"0001\"",
           "comment": "I: 用 '1' 的形状",
-          "line": 614
+          "line": 363
         }
       ],
       "types": [
         {
           "name": "dim_arr_t",
           "def": "array (0 to 3) of std_logic_vector(2 downto 0)",
-          "line": 26
+          "line": 27
         },
         {
           "name": "pat_arr_t",
           "def": "array (0 to 3) of std_logic_vector(63 downto 0)",
-          "line": 250
+          "line": 170
         }
       ],
       "subtypes": [
         {
           "name": "state_t",
           "def": "std_logic_vector(2 downto 0)",
-          "line": 511
+          "line": 300
         }
       ],
       "functions": [
         {
           "name": "mk_cell",
+          "line": 37
+        },
+        {
+          "name": "popcount",
           "line": 40
         },
         {
-          "name": "popcount",
-          "line": 43
-        },
-        {
           "name": "mask_to_px",
-          "line": 53
+          "line": 44
         },
         {
           "name": "shift_mask",
-          "line": 60
+          "line": 49
         },
         {
           "name": "srl8",
-          "line": 71
+          "line": 59
         },
         {
           "name": "row24",
-          "line": 86
+          "line": 68
         },
         {
           "name": "rot_row",
-          "line": 122
+          "line": 94
         },
         {
           "name": "rot_off_r",
-          "line": 128
+          "line": 99
         },
         {
           "name": "rot_off_c",
-          "line": 132
+          "line": 103
         },
         {
           "name": "oh",
-          "line": 138
+          "line": 109
         },
         {
           "name": "ow",
-          "line": 141
+          "line": 112
         },
         {
           "name": "ori_next",
-          "line": 146
+          "line": 117
         },
         {
           "name": "mk_cell",
-          "line": 621
+          "line": 370
         },
         {
           "name": "popcount",
-          "line": 628
+          "line": 377
         },
         {
           "name": "mask_to_px",
-          "line": 643
+          "line": 389
         },
         {
           "name": "shift_mask",
-          "line": 660
+          "line": 399
         },
         {
           "name": "srl8",
-          "line": 703
+          "line": 430
         },
         {
           "name": "row24",
-          "line": 738
+          "line": 453
         },
         {
           "name": "rot_row",
-          "line": 766
+          "line": 477
         },
         {
           "name": "rot_off_r",
-          "line": 795
+          "line": 505
         },
         {
           "name": "rot_off_c",
-          "line": 807
+          "line": 517
         },
         {
           "name": "oh",
-          "line": 819
+          "line": 529
         },
         {
           "name": "ow",
-          "line": 826
+          "line": 536
         },
         {
           "name": "ori_next",
-          "line": 833
+          "line": 543
         }
       ]
     }
@@ -3509,25 +3509,25 @@
         {
           "instance": "u_clk",
           "entity": "clk_gen",
-          "line": 244,
+          "line": 198,
           "file": "rtl/board_test_top.vhd"
         },
         {
           "instance": "u_keypad",
           "entity": "keypad_scan",
-          "line": 258,
+          "line": 212,
           "file": "rtl/board_test_top.vhd"
         },
         {
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
-          "line": 595,
+          "line": 505,
           "file": "rtl/board_test_top.vhd"
         },
         {
           "instance": "u_seg",
           "entity": "seg_scan",
-          "line": 677,
+          "line": 570,
           "file": "rtl/board_test_top.vhd"
         }
       ],
@@ -3540,25 +3540,25 @@
         {
           "instance": "u_clk",
           "entity": "clk_gen",
-          "line": 120,
+          "line": 107,
           "file": "rtl/keypad_diag_top.vhd"
         },
         {
           "instance": "u_keypad",
           "entity": "keypad_scan",
-          "line": 134,
+          "line": 121,
           "file": "rtl/keypad_diag_top.vhd"
         },
         {
           "instance": "u_seg",
           "entity": "seg_scan",
-          "line": 195,
+          "line": 180,
           "file": "rtl/keypad_diag_top.vhd"
         },
         {
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
-          "line": 209,
+          "line": 194,
           "file": "rtl/keypad_diag_top.vhd"
         }
       ],
@@ -3566,13 +3566,13 @@
         {
           "instance": "u_seg",
           "entity": "seg_scan",
-          "line": 110,
+          "line": 104,
           "file": "rtl/keypad_raw_top.vhd"
         },
         {
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
-          "line": 124,
+          "line": 118,
           "file": "rtl/keypad_raw_top.vhd"
         }
       ],
@@ -3584,67 +3584,67 @@
         {
           "instance": "u_clk",
           "entity": "clk_gen",
-          "line": 425,
+          "line": 357,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_keypad",
           "entity": "keypad_scan",
-          "line": 440,
+          "line": 372,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_fsm",
           "entity": "game_fsm",
-          "line": 454,
+          "line": 386,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_pieces",
           "entity": "piece_rom",
-          "line": 484,
+          "line": 416,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_pattern",
           "entity": "pattern_rom",
-          "line": 493,
+          "line": 425,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_rng",
           "entity": "rng_lfsr",
-          "line": 501,
+          "line": 433,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_puzzle",
           "entity": "puzzle_ctrl",
-          "line": 522,
+          "line": 446,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_disp",
           "entity": "disp_format",
-          "line": 576,
+          "line": 493,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_seg",
           "entity": "seg_scan",
-          "line": 587,
+          "line": 504,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_dot",
           "entity": "dot_matrix_scan",
-          "line": 820,
+          "line": 660,
           "file": "rtl/puzzle_top.vhd"
         },
         {
           "instance": "u_buzz",
           "entity": "buzzer_ctrl",
-          "line": 834,
+          "line": 674,
           "file": "rtl/puzzle_top.vhd"
         }
       ],
@@ -3665,25 +3665,25 @@
           {
             "instance": "u_clk",
             "entity": "clk_gen",
-            "line": 244,
+            "line": 198,
             "file": "rtl/board_test_top.vhd"
           },
           {
             "instance": "u_keypad",
             "entity": "keypad_scan",
-            "line": 258,
+            "line": 212,
             "file": "rtl/board_test_top.vhd"
           },
           {
             "instance": "u_dot",
             "entity": "dot_matrix_scan",
-            "line": 595,
+            "line": 505,
             "file": "rtl/board_test_top.vhd"
           },
           {
             "instance": "u_seg",
             "entity": "seg_scan",
-            "line": 677,
+            "line": 570,
             "file": "rtl/board_test_top.vhd"
           }
         ]
@@ -3694,25 +3694,25 @@
           {
             "instance": "u_clk",
             "entity": "clk_gen",
-            "line": 120,
+            "line": 107,
             "file": "rtl/keypad_diag_top.vhd"
           },
           {
             "instance": "u_keypad",
             "entity": "keypad_scan",
-            "line": 134,
+            "line": 121,
             "file": "rtl/keypad_diag_top.vhd"
           },
           {
             "instance": "u_seg",
             "entity": "seg_scan",
-            "line": 195,
+            "line": 180,
             "file": "rtl/keypad_diag_top.vhd"
           },
           {
             "instance": "u_dot",
             "entity": "dot_matrix_scan",
-            "line": 209,
+            "line": 194,
             "file": "rtl/keypad_diag_top.vhd"
           }
         ]
@@ -3723,13 +3723,13 @@
           {
             "instance": "u_seg",
             "entity": "seg_scan",
-            "line": 110,
+            "line": 104,
             "file": "rtl/keypad_raw_top.vhd"
           },
           {
             "instance": "u_dot",
             "entity": "dot_matrix_scan",
-            "line": 124,
+            "line": 118,
             "file": "rtl/keypad_raw_top.vhd"
           }
         ]
@@ -3740,67 +3740,67 @@
           {
             "instance": "u_clk",
             "entity": "clk_gen",
-            "line": 425,
+            "line": 357,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_keypad",
             "entity": "keypad_scan",
-            "line": 440,
+            "line": 372,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_fsm",
             "entity": "game_fsm",
-            "line": 454,
+            "line": 386,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_pieces",
             "entity": "piece_rom",
-            "line": 484,
+            "line": 416,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_pattern",
             "entity": "pattern_rom",
-            "line": 493,
+            "line": 425,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_rng",
             "entity": "rng_lfsr",
-            "line": 501,
+            "line": 433,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_puzzle",
             "entity": "puzzle_ctrl",
-            "line": 522,
+            "line": 446,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_disp",
             "entity": "disp_format",
-            "line": 576,
+            "line": 493,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_seg",
             "entity": "seg_scan",
-            "line": 587,
+            "line": 504,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_dot",
             "entity": "dot_matrix_scan",
-            "line": 820,
+            "line": 660,
             "file": "rtl/puzzle_top.vhd"
           },
           {
             "instance": "u_buzz",
             "entity": "buzzer_ctrl",
-            "line": 834,
+            "line": 674,
             "file": "rtl/puzzle_top.vhd"
           }
         ]
@@ -3810,67 +3810,67 @@
       {
         "instance": "u_clk",
         "entity": "clk_gen",
-        "line": 425,
+        "line": 357,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_keypad",
         "entity": "keypad_scan",
-        "line": 440,
+        "line": 372,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_fsm",
         "entity": "game_fsm",
-        "line": 454,
+        "line": 386,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_pieces",
         "entity": "piece_rom",
-        "line": 484,
+        "line": 416,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_pattern",
         "entity": "pattern_rom",
-        "line": 493,
+        "line": 425,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_rng",
         "entity": "rng_lfsr",
-        "line": 501,
+        "line": 433,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_puzzle",
         "entity": "puzzle_ctrl",
-        "line": 522,
+        "line": 446,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_disp",
         "entity": "disp_format",
-        "line": 576,
+        "line": 493,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_seg",
         "entity": "seg_scan",
-        "line": 587,
+        "line": 504,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_dot",
         "entity": "dot_matrix_scan",
-        "line": 820,
+        "line": 660,
         "file": "rtl/puzzle_top.vhd"
       },
       {
         "instance": "u_buzz",
         "entity": "buzzer_ctrl",
-        "line": 834,
+        "line": 674,
         "file": "rtl/puzzle_top.vhd"
       }
     ]
