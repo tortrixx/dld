@@ -36,7 +36,17 @@
 
 ## 发布状态
 
-PR CI 与正式部署结果待远端执行后补记。正式上线必须在 Pages deploy 作业成功后，再用浏览器检查 `https://tortrixx.github.io/dld/`，不能以预览构建成功代替。
+PR #2 已合并，正式站点已上线并完成浏览器复核。
+
+- PR 构建：[43870864476](https://github.com/tortrixx/dld/actions/runs/43870864476)，conclusion=success。
+- 合并提交：`cdf1ebc72131d483d5436757b7eb77341f1aba74`。
+- Pages 构建与部署：[43871017583](https://github.com/tortrixx/dld/actions/runs/43871017583)，build-and-verify、deploy 均 success。
+- 正式地址：<https://tortrixx.github.io/dld/>。
+- 线上实测：首页 h1、四张导航卡片和 GIF 正常；文档 scrollWidth 等于 clientWidth。
+- 深层 `modules/03_game_fsm/` 的状态图及 GUI 波形均加载成功。
+- 深色模式实际切换到 slate；中文“旋转”得到 9 个结果，点击首个结果成功到达工程取舍对应锚点。
+- 正式站点已恢复浅色并保留供检查。此记录更新不改变站点发布源。
+
 
 ## 修改文件分组
 
